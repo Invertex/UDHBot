@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using ImageSharp;
+using ImageSharp.Drawing.Brushes;
 using ImageSharp.PixelFormats;
 using SixLabors.Fonts;
 using SixLabors.Primitives;
@@ -123,6 +125,9 @@ namespace DiscordBot
             Image<Rgba32> profileCard = Image.Load(backgroundPath);
             Image<Rgba32> profileFg = Image.Load(foregroundPath);
             Image<Rgba32> avatar;
+            Image<Rgba32> triangle = Image.Load(
+                SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                @"\images\triangle.png");
             Stream stream;
             string avatarUrl = user.GetAvatarUrl();
             ulong userId = user.Id;
@@ -153,7 +158,28 @@ namespace DiscordBot
             float endX = (float) ((xp - xpLow) / (xpHigh - xpLow) * 250f);
 
             profileCard.DrawImage(profileFg, 100f, new Size(profileFg.Width, profileFg.Height), Point.Empty);
+            
+            var u = user as IGuildUser;
+            IRole mainRole = null;
+            foreach (var id in u.RoleIds)
+            {
+                var role = u.Guild.GetRole(id);
+                if (mainRole == null)
+                    mainRole = u.Guild.GetRole(id);
+                else if (role.Position > mainRole.Position)
+                {
+                    mainRole = role;
+                }
+            }
+            var c = mainRole.Color;
+            //Console.WriteLine($"{u.Guild.GetRole(u.RoleIds.Last())}  {c.R} {c.G} {c.B} {c.RawValue}");
+         
+            RecolorBrush<Rgba32> brush = new RecolorBrush<Rgba32>(Rgba32.White,
+                new Rgba32(c.R, c.G, c.B), .25f);
 
+            triangle.Fill(brush);
+
+            profileCard.DrawImage(triangle, 100f, new Size(triangle.Width, triangle.Height), new Point(346, 14));
             //profileCard.Fill(new Rgba32(.5f, .5f, .5f, .5f), new RectangleF(20, 20, 376, 88)); //Background
 
             profileCard.Fill(Rgba32.FromHex("#3f3f3f"),
@@ -168,7 +194,8 @@ namespace DiscordBot
                 new PointF(167, 60));
             profileCard.DrawText("Karma Points:    " + karma, _defaultFont, Rgba32.FromHex("#3C3C3C"),
                 new PointF(167, 77));
-            profileCard.DrawText("Total XP:              " + xp, _defaultFont, Rgba32.FromHex("#3C3C3C"), new PointF(167, 94));
+            profileCard.DrawText("Total XP:              " + xp, _defaultFont, Rgba32.FromHex("#3C3C3C"),
+                new PointF(167, 94));
 
             profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                              $@"\images\profiles\{user.Username}-profile.png");
