@@ -26,6 +26,7 @@ namespace DiscordBot
         private FontCollection _fontCollection;
         private Font _defaultFont;
         private Font _nameFont;
+        private Font _levelFont;
 
         //TODO : NOT HARDCODE
         private const int _xpMinPerMessage = 5;
@@ -42,11 +43,15 @@ namespace DiscordBot
 
             _fontCollection = new FontCollection();
             _defaultFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\fonts\georgia.ttf")
-                .CreateFont(12);
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                         @"\fonts\OpenSans-Regular.ttf")
+                .CreateFont(16);
             _nameFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\fonts\georgia.ttf")
-                .CreateFont(18);
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\fonts\Consolas.ttf")
+                .CreateFont(24);
+            _levelFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\fonts\Consolas.ttf")
+                .CreateFont(59);
         }
 
         public async Task UpdateXp(SocketMessage messageParam)
@@ -113,7 +118,10 @@ namespace DiscordBot
         {
             var backgroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                                  @"\images\background.png";
+            var foregroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                                 @"\images\foreground.png";
             Image<Rgba32> profileCard = Image.Load(backgroundPath);
+            Image<Rgba32> profileFg = Image.Load(foregroundPath);
             Image<Rgba32> avatar;
             Stream stream;
             string avatarUrl = user.GetAvatarUrl();
@@ -139,24 +147,28 @@ namespace DiscordBot
             double xpLow = GetXpLow((int) level);
             double xpHigh = GetXpHigh((int) level);
 
-            const float startX = 80;
-            const float startY = 60;
-            const float height = 10;
+            const float startX = 104;
+            const float startY = 39;
+            const float height = 16;
             float endX = (float) ((xp - xpLow) / (xpHigh - xpLow) * 250f);
 
-            profileCard.Fill(new Rgba32(.5f, .5f, .5f, .5f), new RectangleF(20, 20, 376, 88)); //Background
+            profileCard.DrawImage(profileFg, 100f, new Size(profileFg.Width, profileFg.Height), Point.Empty);
 
-            profileCard.Fill(new Rgba32(1f, 1f, 1f, .75f),
-                new RectangleF(startX, startY, 250, height)); //XP bar background
-            profileCard.Fill(new Rgba32(.5f, .5f, .5f, 1f),
+            //profileCard.Fill(new Rgba32(.5f, .5f, .5f, .5f), new RectangleF(20, 20, 376, 88)); //Background
+
+            profileCard.Fill(Rgba32.FromHex("#3f3f3f"),
+                new RectangleF(startX, startY, 232, height)); //XP bar background
+            profileCard.Fill(Rgba32.FromHex("#00f0ff"),
                 new RectangleF(startX + 1, startY + 1, endX, height - 2)); //XP bar
-            profileCard.DrawImage(avatar, 100f, new Size(32, 32), new Point(40, 50));
-            profileCard.DrawText(user.Username + "#" + user.Discriminator, _nameFont, Rgba32.AntiqueWhite,
-                new PointF(192, 20));
-            profileCard.DrawText("Level " + level, _defaultFont, Rgba32.AntiqueWhite, new PointF(83, 70));
-            profileCard.DrawText("Total xp " + xp, _defaultFont, Rgba32.AntiqueWhite, new PointF(256, 70));
-            profileCard.DrawText("#" + rank, _defaultFont, Rgba32.AntiqueWhite, new PointF(256, 80));
-            profileCard.DrawText("kp:" + karma, _defaultFont, Rgba32.AntiqueWhite, new PointF(256, 90));
+            profileCard.DrawImage(avatar, 100f, new Size(80, 80), new Point(16, 28));
+            profileCard.DrawText(user.Username + "#" + user.Discriminator, _nameFont, Rgba32.FromHex("#3C3C3C"),
+                new PointF(144, 8));
+            profileCard.DrawText(level.ToString(), _levelFont, Rgba32.FromHex("#3C3C3C"), new PointF(98, 35));
+            profileCard.DrawText("Server Rank        #" + rank, _defaultFont, Rgba32.FromHex("#3C3C3C"),
+                new PointF(167, 60));
+            profileCard.DrawText("Karma Points:    " + karma, _defaultFont, Rgba32.FromHex("#3C3C3C"),
+                new PointF(167, 77));
+            profileCard.DrawText("Total XP:              " + xp, _defaultFont, Rgba32.FromHex("#3C3C3C"), new PointF(167, 94));
 
             profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                              $@"\images\profiles\{user.Username}-profile.png");
