@@ -29,7 +29,7 @@ namespace DiscordBot
 
         public static ulong GetBotAnnouncementChannel()
         {
-            return SettingsHandler.LoadValueUlong("announcementChannel", JsonFile.Settings);
+            return SettingsHandler.LoadValueUlong("botAnnouncementChannel/id", JsonFile.Settings);
         }
     }
 }

@@ -1,3 +1,9 @@
 [3/7/17 08:52:46] Sirus has muted Sirus for 5 seconds 
 [3/7/17 08:52:52] Sirus has deleted message `!mute <@84252127995658240> 5` from channel bottest 
 [3/7/17 08:55:09] Sirus has deleted message `!unmute <@84252127995658240>` from channel bottest 
+[4/7/17 00:21:51] Sirus has removed 3 messages from bottest 
+[4/7/17 00:21:51] 2BDroid has deleted message `User not found.` from channel bottest 
+[4/7/17 00:21:51] 2BDroid has deleted message `Sequence contains no matching element` from channel bottest 
+[4/7/17 00:21:51] Sirus has deleted message `!mute <@84252127995658240> 3` from channel bottest 
+[4/7/17 00:21:51] Sirus has deleted message `!clear 3` from channel bottest 
+[4/7/17 00:21:57] 2BDroid has deleted message `Messages deleted.` from channel bottest 
