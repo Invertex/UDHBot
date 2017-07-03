@@ -1,7 +1,7 @@
 {
   "runtimeTarget": {
     "name": ".NETCoreApp,Version=v1.1",
-    "signature": "3849abdca107ef68f41ae238debd747bbab4ea90"
+    "signature": "d97b4abce37568d24dec984982ce7db7082b701e"
   },
   "compilationOptions": {},
   "targets": {
@@ -13,6 +13,7 @@
           "ImageSharp.Drawing": "1.0.0-alpha9-00164",
           "Microsoft.NETCore.Portable.Compatibility": "1.0.1",
           "MySql.Data": "7.0.7-m61",
+          "Newtonsoft.Json": "10.0.3",
           "System.Data.Common": "4.3.0",
           "System.ValueTuple": "4.4.0-preview2-25405-01"
         },
@@ -41,7 +42,7 @@
       },
       "discord.net.core/1.0.0-rc2": {
         "dependencies": {
-          "Newtonsoft.Json": "10.0.2",
+          "Newtonsoft.Json": "10.0.3",
           "System.Collections.Immutable": "1.3.1",
           "System.Interactive.Async": "3.1.1"
         },
@@ -140,7 +141,7 @@
         "dependencies": {
           "Microsoft.Extensions.Configuration": "1.0.0",
           "Microsoft.Extensions.Configuration.FileExtensions": "1.0.0",
-          "Newtonsoft.Json": "10.0.2",
+          "Newtonsoft.Json": "10.0.3",
           "System.Runtime.Serialization.Primitives": "4.3.0"
         },
         "runtime": {
@@ -219,7 +220,7 @@
           "lib/netstandard1.6/MySql.Data.dll": {}
         }
       },
-      "newtonsoft.json/10.0.2": {
+      "newtonsoft.json/10.0.3": {
         "dependencies": {
           "System.ComponentModel.TypeConverter": "4.3.0",
           "System.Runtime.Serialization.Formatters": "4.3.0",
@@ -594,12 +595,12 @@
       "path": "mysql.data/7.0.7-m61",
       "hashPath": "mysql.data.7.0.7-m61.nupkg.sha512"
     },
-    "newtonsoft.json/10.0.2": {
+    "newtonsoft.json/10.0.3": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-iwElSU2IXmwGvytJsezyDML2ZWDkG2JzTYzlU/BNlmzMdlmRvbnwITsGGY74gwVEpDli1UdOLkMT7/3jxWvXzA==",
-      "path": "newtonsoft.json/10.0.2",
-      "hashPath": "newtonsoft.json.10.0.2.nupkg.sha512"
+      "sha512": "sha512-wBM7i7i3U2WX0ecor4zdVGvgrwFUjuigBoHKiL+nH39fCOpCPjBY3RDqJM32edvdyTAVdjzlccHsg41+/+zpSA==",
+      "path": "newtonsoft.json/10.0.3",
+      "hashPath": "newtonsoft.json.10.0.3.nupkg.sha512"
     },
     "runtime.native.system.data.sqlclient.sni/4.0.0": {
       "type": "package",

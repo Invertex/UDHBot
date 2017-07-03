@@ -1,0 +1,5 @@
+﻿{
+    "help": "Displays all available commands to the user.",
+    "role add": "Adds a role to you.",
+    "role remove": "Removes a role from you."
+}

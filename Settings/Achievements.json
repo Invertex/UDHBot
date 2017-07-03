@@ -1,0 +1,85 @@
+﻿{
+    "newJoiner": {
+        "name": "Into the World.",
+        "description": "You stepped forward into the great unknown : The Unity Dev Hub.",
+        "xp": "0",
+        "requirement": "JoinedServer"
+    },
+    "firstMessage": {
+        "name": "Hello World!",
+        "description": "You sent your very first message into the grand world!",
+        "xp": "0",
+        "requirement": "SentFirstMessage"
+    },
+    "firstKarma": {
+        "name": "Why Thank You.",
+        "description": "Someone thanked you!",
+        "xp": "0",
+        "requirement": "KarmaGained",
+        "value": "1"
+    },
+    "levelUp1": {
+        "name": "Level-Up!",
+        "description": "You got enough xp to level up to Level 1!",
+        "xp": "0"
+    },
+    "levelUp2": {
+        "name": "",
+        "description": "You got enough xp to level up to Level 10!",
+        "xp": "0"
+    },
+    "role1": {
+        "name": "",
+        "description": "",
+        "xp": "0"
+    },
+
+    "karmaHelper1": {
+        "name": "Thanks!",
+        "description": "You helped out 2 different people in the same day!",
+        "xp": "0"
+    },
+    "karmaHelper2": {
+        "name": "Thanks a bunch!",
+        "description": "You helped out 10 different people in the same day!",
+        "xp": "0"
+    },
+    "karmaHelper3": {
+        "name": "Thanks a ton!",
+        "description": "You helped out 25 different people in the same day!",
+        "xp": "0"
+    },
+
+    "levelStreak": {
+        "name": "",
+        "description": "",
+        "xp": "0"
+    },
+
+    "topRank1": {
+        "name": "The Start of a Journey",
+        "description": "You got into the top 100 users in the leaderboard!",
+        "xp": "0"
+    },
+    "topRank2": {
+        "name": "Traveling to Mordor",
+        "description": "You got into the top 20 users in the leaderboard!",
+        "xp": "0"
+    },
+    "topRank3": {
+        "name": "The Final Stretch",
+        "description": "You got into the top 10 users in the leaderboard!",
+        "xp": "0"
+    },
+    "topRank4": {
+        "name": "The One True Wearer of the Ring",
+        "description": "You got number ONE in the leaderboard!",
+        "xp": "0"
+    },
+
+    "welcomeUser1": {
+        "name": "",
+        "description": "",
+        "xp": "0"
+    }
+}

@@ -41,8 +41,12 @@ namespace DiscordBot
             _xpCooldown = new Dictionary<ulong, DateTime>();
 
             _fontCollection = new FontCollection();
-            _defaultFont = _fontCollection.Install(Settings.GetServerRootPath() + @"\fonts\georgia.ttf").CreateFont(12);
-            _nameFont = _fontCollection.Install(Settings.GetServerRootPath() + @"\fonts\georgia.ttf").CreateFont(18);
+            _defaultFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\fonts\georgia.ttf")
+                .CreateFont(12);
+            _nameFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\fonts\georgia.ttf")
+                .CreateFont(18);
         }
 
         public async Task UpdateXp(SocketMessage messageParam)
@@ -80,9 +84,9 @@ namespace DiscordBot
 
         public async Task LevelUp(ulong userId)
         {
-            int level = (int)_database.GetUserLevel(userId);
+            int level = (int) _database.GetUserLevel(userId);
             uint xp = _database.GetUserXp(userId);
-            
+
             double xpLow = GetXpLow(level);
             double xpHigh = GetXpHigh(level);
 
@@ -90,7 +94,7 @@ namespace DiscordBot
             {
                 _database.AddUserLevel(userId, 1);
             }
-            
+
             //TODO: Add level up message
         }
 
@@ -107,7 +111,8 @@ namespace DiscordBot
 
         public async Task<string> GenerateProfileCard(IUser user)
         {
-            var backgroundPath = Settings.GetServerRootPath() + @"\images\background.png";
+            var backgroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                                 @"\images\background.png";
             Image<Rgba32> profileCard = Image.Load(backgroundPath);
             Image<Rgba32> avatar;
             Stream stream;
@@ -116,7 +121,8 @@ namespace DiscordBot
 
             if (string.IsNullOrEmpty(avatarUrl))
             {
-                avatar = Image.Load(Settings.GetServerRootPath() + @"\images\default.png");
+                avatar = Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                                    @"\images\default.png");
             }
             else
             {
@@ -137,7 +143,7 @@ namespace DiscordBot
             const float startY = 60;
             const float height = 10;
             float endX = (float) ((xp - xpLow) / (xpHigh - xpLow) * 250f);
-            
+
             profileCard.Fill(new Rgba32(.5f, .5f, .5f, .5f), new RectangleF(20, 20, 376, 88)); //Background
 
             profileCard.Fill(new Rgba32(1f, 1f, 1f, .75f),
@@ -152,8 +158,26 @@ namespace DiscordBot
             profileCard.DrawText("#" + rank, _defaultFont, Rgba32.AntiqueWhite, new PointF(256, 80));
             profileCard.DrawText("kp:" + karma, _defaultFont, Rgba32.AntiqueWhite, new PointF(256, 90));
 
-            profileCard.Save(Settings.GetServerRootPath() + $@"\images\profiles\{user.Username}-profile.png");
-            return Settings.GetServerRootPath() + $@"\images\profiles\{user.Username}-profile.png";
+            profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                             $@"\images\profiles\{user.Username}-profile.png");
+            return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                   $@"\images\profiles\{user.Username}-profile.png";
+        }
+
+        public Embed WelcomeMessage(string icon, string name, ushort discriminator)
+        {
+            icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
+            var builder = new EmbedBuilder()
+                .WithDescription($"Welcome **{(name) + "#" + discriminator}** to the server!")
+                .WithColor(new Color(0x12D687))
+                .WithAuthor(author =>
+                {
+                    author
+                        .WithName(name)
+                        .WithIconUrl(icon);
+                });
+            var embed = builder.Build();
+            return embed;
         }
     }
 }

@@ -18,6 +18,7 @@ namespace DiscordBot
         private LoggingService _logging;
         private DatabaseService _database;
         private ProfileService _profile;
+        private HoldingPenService _holdingPen;
 
         private string _token = "";
 
@@ -28,6 +29,8 @@ namespace DiscordBot
 
         public async Task MainAsync()
         {
+            _token = SettingsHandler.LoadValueString("token", JsonFile.Settings);
+            
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info,
@@ -39,13 +42,15 @@ namespace DiscordBot
             _logging = new LoggingService(_client);
             _database = new DatabaseService();
             _profile = new ProfileService(_database);
+            _holdingPen = new HoldingPenService();
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_logging);
             _serviceCollection.AddSingleton(_database);
             _serviceCollection.AddSingleton(_profile);
+            _serviceCollection.AddSingleton(_holdingPen);
             _services = _serviceCollection.BuildServiceProvider();
-            
-            
+
+
             await InstallCommands();
 
             _client.Log += Logger;
@@ -96,12 +101,22 @@ namespace DiscordBot
             _client.MessageReceived += _profile.UpdateXp;
             _client.MessageDeleted += (x, y) =>
             {
-                _logging.LogAction($"{x.Value.Author.Username} has deleted message `{x.Value.Content}` from channel {y.Name}");
+                _logging.LogAction(
+                    $"{x.Value.Author.Username} has deleted message `{x.Value.Content}` from channel {y.Name}");
                 return Task.CompletedTask;
             };
-            
+            _client.UserJoined += UserJoined;
+
             // Discover all of the commands in this assembly and load them.
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
+        }
+
+        private async Task UserJoined(SocketGuildUser user)
+        {
+            _logging.LogAction($"User Joined: {user.Username}");
+            ulong general = SettingsHandler.LoadValueUlong("generalChannel", JsonFile.Settings);
+            Embed em = _profile.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+            await (_client.GetChannel(general) as SocketTextChannel).SendMessageAsync(string.Empty, false, em);
         }
 
         public async Task HandleCommand(SocketMessage messageParam)
@@ -113,8 +128,9 @@ namespace DiscordBot
 
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
+            char prefix = SettingsHandler.LoadValueChar("prefix", JsonFile.Settings);
             // Determine if the message is a command, based on if it starts with '!' or a mention prefix
-            if (!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
+            if (!(message.HasCharPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
                 return;
             // Create a Command Context
             var context = new CommandContext(_client, message);

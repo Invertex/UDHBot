@@ -13,7 +13,7 @@ namespace DiscordBot
 
         public DatabaseService()
         {
-            _connection = Settings.GetDbConnectionString();
+            _connection = SettingsHandler.LoadValueString("dbConnectionString", JsonFile.Settings);
         }
 
         public void AddUserXp(ulong id, uint xp)

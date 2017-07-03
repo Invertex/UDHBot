@@ -24,7 +24,7 @@ namespace DiscordBot
 
             if (logToFile)
             {
-                File.AppendAllText(Settings.GetServerRootPath() + @"\log.txt", $"[{DateTime.Now:d/M/yy HH:mm:ss}] {action} {Environment.NewLine}");
+                File.AppendAllText(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\log.txt", $"[{DateTime.Now:d/M/yy HH:mm:ss}] {action} {Environment.NewLine}");
             }
         }
     }
