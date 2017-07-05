@@ -10,13 +10,13 @@ namespace DiscordBot
     {
         private readonly LoggingService _logging;
         private readonly DatabaseService _database;
-        private readonly ProfileService _profile;
+        private readonly UserService _user;
 
-        public UserModule(LoggingService logging, DatabaseService database, ProfileService profile)
+        public UserModule(LoggingService logging, DatabaseService database, UserService user)
         {
             _logging = logging;
             _database = database;
-            _profile = profile;
+            _user = user;
         }
         
         [Command("help"), Summary("Display help for an user")]
@@ -70,7 +70,7 @@ namespace DiscordBot
             var rank = _database.GetUserRank(id);
 
 
-            await Context.Channel.SendFileAsync(await _profile.GenerateProfileCard(user));
+            await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(user));
             await ReplyAsync($"{username} has {xp} xp and {karma} karma which  makes him #{rank}");
         }
 

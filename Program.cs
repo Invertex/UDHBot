@@ -17,7 +17,7 @@ namespace DiscordBot
         private IServiceCollection _serviceCollection;
         private LoggingService _logging;
         private DatabaseService _database;
-        private ProfileService _profile;
+        private UserService _user;
         private HoldingPenService _holdingPen;
 
         private string _token = "";
@@ -41,12 +41,12 @@ namespace DiscordBot
             _commands = new CommandService();
             _logging = new LoggingService(_client);
             _database = new DatabaseService();
-            _profile = new ProfileService(_database);
+            _user = new UserService(_database);
             _holdingPen = new HoldingPenService();
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_logging);
             _serviceCollection.AddSingleton(_database);
-            _serviceCollection.AddSingleton(_profile);
+            _serviceCollection.AddSingleton(_user);
             _serviceCollection.AddSingleton(_holdingPen);
             _services = _serviceCollection.BuildServiceProvider();
 
@@ -98,7 +98,7 @@ namespace DiscordBot
         {
             // Hook the MessageReceived Event into our Command Handler
             _client.MessageReceived += HandleCommand;
-            _client.MessageReceived += _profile.UpdateXp;
+            _client.MessageReceived += _user.UpdateXp;
             _client.MessageDeleted += (x, y) =>
             {
                 _logging.LogAction(
@@ -115,7 +115,7 @@ namespace DiscordBot
         {
             _logging.LogAction($"User Joined: {user.Username}");
             ulong general = SettingsHandler.LoadValueUlong("generalChannel", JsonFile.Settings);
-            Embed em = _profile.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+            Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
             await (_client.GetChannel(general) as SocketTextChannel).SendMessageAsync(string.Empty, false, em);
         }
 

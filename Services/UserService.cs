@@ -18,7 +18,7 @@ using Image = ImageSharp.Image;
 
 namespace DiscordBot
 {
-    public class ProfileService
+    public class UserService
     {
         private readonly DatabaseService _database;
 
@@ -37,7 +37,7 @@ namespace DiscordBot
         private const int _minCooldown = 3;
         private const int _maxCooldown = 5;
 
-        public ProfileService(DatabaseService database)
+        public UserService(DatabaseService database)
         {
             rand = new Random();
             _database = database;
