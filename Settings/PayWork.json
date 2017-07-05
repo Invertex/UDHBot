@@ -1,0 +1,12 @@
+{
+  "daysToBeLockedOut": "1",
+  "daysToRemoveMessage": "3",
+  
+  "looking-for-work:mute": "331687562089463808",
+  "hiring:mute": "331687675079819264",
+  "collaboration:mute": "331687732176879637",
+  
+  "looking-for-work": "206829581041139712",
+  "hiring": "331674608598253568",
+  "collaboration": "264335890791399425"
+}
