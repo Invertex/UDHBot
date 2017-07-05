@@ -99,7 +99,7 @@ namespace DiscordBot
                 work = new Work(messageParam.Author as IGuildUser, messageParam.Timestamp.DateTime, messageParam, messageParam.Channel, SettingsHandler.LoadValueUlong("collaboration:mute", JsonFile.PayWork));
                 await UserRemoveAccess(work);
                 await MessageRemove(work);
-                await DuplicateUserMsg(work.Channel, work.User, messageParam.Timestamp, messageParam.Content, work.User.Username, work.User.GetAvatarUrl();
+                await DuplicateUserMsg(work.Channel, work.User, messageParam.Timestamp, messageParam.Content, work.User.Username, work.User.GetAvatarUrl());
             }
             if(flag == true) allWork.Add(work);
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -17,8 +18,10 @@ namespace DiscordBot
         private IServiceCollection _serviceCollection;
         private LoggingService _logging;
         private DatabaseService _database;
-        private ProfileService _profile;
+        private UserService _user;
+        private WorkService _work;
         private HoldingPenService _holdingPen;
+        private Timer _updateTimer;
 
         private string _token = "";
 
@@ -30,7 +33,7 @@ namespace DiscordBot
         public async Task MainAsync()
         {
             _token = SettingsHandler.LoadValueString("token", JsonFile.Settings);
-            
+
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info,
@@ -41,19 +44,22 @@ namespace DiscordBot
             _commands = new CommandService();
             _logging = new LoggingService(_client);
             _database = new DatabaseService();
-            _profile = new ProfileService(_database);
+            _user = new UserService(_database, _logging);
             _holdingPen = new HoldingPenService();
+            _work = new WorkService();
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_logging);
             _serviceCollection.AddSingleton(_database);
-            _serviceCollection.AddSingleton(_profile);
+            _serviceCollection.AddSingleton(_user);
             _serviceCollection.AddSingleton(_holdingPen);
+            _serviceCollection.AddSingleton(_work);
             _services = _serviceCollection.BuildServiceProvider();
 
 
             await InstallCommands();
 
             _client.Log += Logger;
+            _updateTimer = new Timer(OnUpdate, "State", 1000, 1000);
 
             // await InitCommands();
 
@@ -67,6 +73,11 @@ namespace DiscordBot
             };
 
             await Task.Delay(-1);
+        }
+
+        private void OnUpdate(object obj)
+        {
+            _work.TimerUpdate();
         }
 
         private static Task Logger(LogMessage message)
@@ -98,9 +109,14 @@ namespace DiscordBot
         {
             // Hook the MessageReceived Event into our Command Handler
             _client.MessageReceived += HandleCommand;
-            _client.MessageReceived += _profile.UpdateXp;
+            _client.MessageReceived += _user.UpdateXp;
+            _client.MessageReceived += _user.Thanks;
+            _client.MessageReceived += _work.OnMessageAdded;
             _client.MessageDeleted += (x, y) =>
             {
+                if (x.Value.Author.IsBot)
+                    return Task.CompletedTask;
+
                 _logging.LogAction(
                     $"{x.Value.Author.Username} has deleted message `{x.Value.Content}` from channel {y.Name}");
                 return Task.CompletedTask;
@@ -115,7 +131,7 @@ namespace DiscordBot
         {
             _logging.LogAction($"User Joined: {user.Username}");
             ulong general = SettingsHandler.LoadValueUlong("generalChannel", JsonFile.Settings);
-            Embed em = _profile.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+            Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
             await (_client.GetChannel(general) as SocketTextChannel).SendMessageAsync(string.Empty, false, em);
         }
 
