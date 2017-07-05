@@ -1,10 +1,10 @@
 ﻿{
   "version": "1.0.0",
   "restore": {
-    "projectUniqueName": "B:\\CSharp\\Perso\\DiscordBot\\DiscordBot.csproj",
+    "projectUniqueName": "D:\\Users\\Nomnom\\RiderProjects\\UDHBot\\DiscordBot.csproj",
     "projectName": "DiscordBot",
-    "projectPath": "B:\\CSharp\\Perso\\DiscordBot\\DiscordBot.csproj",
-    "outputPath": "B:\\CSharp\\Perso\\DiscordBot\\obj\\",
+    "projectPath": "D:\\Users\\Nomnom\\RiderProjects\\UDHBot\\DiscordBot.csproj",
+    "outputPath": "D:\\Users\\Nomnom\\RiderProjects\\UDHBot\\obj\\",
     "projectStyle": "PackageReference",
     "originalTargetFrameworks": [
       "netcoreapp1.1"
@@ -20,7 +20,7 @@
       "dependencies": {
         "Microsoft.NETCore.App": {
           "target": "Package",
-          "version": "1.1.2"
+          "version": "1.1.1"
         },
         "Discord.Net": {
           "target": "Package",

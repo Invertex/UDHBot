@@ -7,3 +7,12 @@ B:\CSharp\Perso\DiscordBot\obj\Debug\netcoreapp1.1\DiscordBot.AssemblyInfo.cs
 B:\CSharp\Perso\DiscordBot\obj\Debug\netcoreapp1.1\DiscordBot.dll
 B:\CSharp\Perso\DiscordBot\obj\Debug\netcoreapp1.1\DiscordBot.pdb
 B:\CSharp\Perso\DiscordBot\obj\Debug\netcoreapp1.1\DiscordBot.csprojResolveAssemblyReference.cache
+D:\Users\Nomnom\RiderProjects\UDHBot\bin\Debug\netcoreapp1.1\DiscordBot.deps.json
+D:\Users\Nomnom\RiderProjects\UDHBot\bin\Debug\netcoreapp1.1\DiscordBot.runtimeconfig.json
+D:\Users\Nomnom\RiderProjects\UDHBot\bin\Debug\netcoreapp1.1\DiscordBot.runtimeconfig.dev.json
+D:\Users\Nomnom\RiderProjects\UDHBot\bin\Debug\netcoreapp1.1\DiscordBot.dll
+D:\Users\Nomnom\RiderProjects\UDHBot\bin\Debug\netcoreapp1.1\DiscordBot.pdb
+D:\Users\Nomnom\RiderProjects\UDHBot\obj\Debug\netcoreapp1.1\DiscordBot.csprojResolveAssemblyReference.cache
+D:\Users\Nomnom\RiderProjects\UDHBot\obj\Debug\netcoreapp1.1\DiscordBot.AssemblyInfo.cs
+D:\Users\Nomnom\RiderProjects\UDHBot\obj\Debug\netcoreapp1.1\DiscordBot.dll
+D:\Users\Nomnom\RiderProjects\UDHBot\obj\Debug\netcoreapp1.1\DiscordBot.pdb

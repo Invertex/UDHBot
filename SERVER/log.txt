@@ -7,3 +7,43 @@
 [4/7/17 00:21:51] Sirus has deleted message `!mute <@84252127995658240> 3` from channel bottest 
 [4/7/17 00:21:51] Sirus has deleted message `!clear 3` from channel bottest 
 [4/7/17 00:21:57] 2BDroid has deleted message `Messages deleted.` from channel bottest 
+[4/7/17 01:32:41] Nomnom has deleted message `sad` from channel private-channel 
+[4/7/17 01:32:53] Majora has deleted message `Nomnom has deleted message `sad` from channel private-channel` from channel announcements 
+[4/7/17 04:46:25] Nomnom has deleted message `test` from channel work-for-you 
+[4/7/17 04:49:46] Nomnom has deleted message `test` from channel work-for-you 
+[4/7/17 04:52:13] Nomnom has deleted message `test` from channel work-for-me 
+[4/7/17 04:53:32] Majora has deleted message `Pong` from channel work-for-me 
+[4/7/17 04:53:34] Nomnom has deleted message `test` from channel work-for-me 
+[4/7/17 05:00:00] Majora has deleted message `Pong` from channel work-for-me 
+[4/7/17 05:00:05] Troy has deleted message `Now hiring to come bring me soda and coffee upon request. Payment will be cigarettes and beer. No negotiations. 888-555-BEER` from channel work-for-me 
+[4/7/17 05:24:25] Nomnom has deleted message `Hiring` from channel hiring 
+[4/7/17 05:26:22] Nomnom has deleted message `test` from channel hiring 
+[4/7/17 05:40:30] Nomnom has deleted message `.` from channel hiring 
+[4/7/17 05:41:53] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 05:43:05] Nomnom has deleted message `aa` from channel hiring 
+[4/7/17 05:47:00] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 05:49:28] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 05:50:16] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 05:58:15] Majora has deleted message `a` from channel hiring 
+[4/7/17 05:58:17] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 05:58:41] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 06:00:12] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 06:00:14] Majora has deleted message `` from channel hiring 
+[4/7/17 06:00:58] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 06:02:07] Nomnom has deleted message `a` from channel looking-for-work 
+[4/7/17 12:11:26] Nomnom has deleted message `e` from channel hiring 
+[4/7/17 12:11:28] Majora has deleted message `` from channel hiring 
+[4/7/17 12:18:29] Nomnom has deleted message `Hir me` from channel hiring 
+[4/7/17 12:20:38] Nomnom has deleted message `Hire me bois` from channel hiring 
+[4/7/17 12:21:16] Majora has deleted message `` from channel hiring 
+[4/7/17 12:23:20] Nomnom has deleted message `Hiring bois` from channel hiring 
+[4/7/17 12:23:58] Majora has deleted message `` from channel hiring 
+[4/7/17 12:25:36] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 12:27:35] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 12:28:45] Nomnom has deleted message `a` from channel hiring 
+[4/7/17 12:29:48] Nomnom has deleted message `hiring` from channel hiring 
+[4/7/17 12:31:26] Nomnom has deleted message `hiring` from channel hiring 
+[4/7/17 12:33:06] Nomnom has deleted message `Hiring` from channel hiring 
+[4/7/17 12:34:15] Nomnom has deleted message `adadaddadadaa` from channel hiring 
+[4/7/17 12:34:23] Majora has deleted message `` from channel hiring 
+[4/7/17 12:36:23] Nomnom has deleted message `a` from channel hiring 

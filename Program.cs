@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -19,6 +20,9 @@ namespace DiscordBot
         private DatabaseService _database;
         private ProfileService _profile;
         private HoldingPenService _holdingPen;
+        private WorkService _work;
+
+        private Timer _updateTimer;
 
         private string _token = "";
 
@@ -44,16 +48,19 @@ namespace DiscordBot
             _profile = new ProfileService(_database);
             _holdingPen = new HoldingPenService();
             _serviceCollection = new ServiceCollection();
+            _work = new WorkService();
             _serviceCollection.AddSingleton(_logging);
             _serviceCollection.AddSingleton(_database);
             _serviceCollection.AddSingleton(_profile);
             _serviceCollection.AddSingleton(_holdingPen);
+            _serviceCollection.AddSingleton(_work);
             _services = _serviceCollection.BuildServiceProvider();
 
 
             await InstallCommands();
 
             _client.Log += Logger;
+            _updateTimer = new Timer(OnUpdate, "State", 1000, 1000);
 
             // await InitCommands();
 
@@ -67,6 +74,11 @@ namespace DiscordBot
             };
 
             await Task.Delay(-1);
+        }
+
+        private void OnUpdate(object obj)
+        {
+            _work.TimerUpdate();
         }
 
         private static Task Logger(LogMessage message)
@@ -97,8 +109,9 @@ namespace DiscordBot
         public async Task InstallCommands()
         {
             // Hook the MessageReceived Event into our Command Handler
-            _client.MessageReceived += HandleCommand;
-            _client.MessageReceived += _profile.UpdateXp;
+            //_client.MessageReceived += HandleCommand;
+            //_client.MessageReceived += _profile.UpdateXp;
+            _client.MessageReceived += _work.OnMessageAdded;
             _client.MessageDeleted += (x, y) =>
             {
                 _logging.LogAction(

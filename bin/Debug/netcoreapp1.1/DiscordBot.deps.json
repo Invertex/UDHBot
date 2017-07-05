@@ -1,7 +1,7 @@
 {
   "runtimeTarget": {
     "name": ".NETCoreApp,Version=v1.1",
-    "signature": "d97b4abce37568d24dec984982ce7db7082b701e"
+    "signature": "b3c9edc1f365004eaf1e8eeb1855bfb2a55aa779"
   },
   "compilationOptions": {},
   "targets": {
@@ -52,7 +52,8 @@
       },
       "discord.net.rest/1.0.0-rc2": {
         "dependencies": {
-          "Discord.Net.Core": "1.0.0-rc2"
+          "Discord.Net.Core": "1.0.0-rc2",
+          "System.Net.Http": "4.3.2"
         },
         "runtime": {
           "lib/netstandard1.3/Discord.Net.Rest.dll": {}
@@ -383,6 +384,18 @@
         },
         "runtime": {
           "lib/netstandard1.0/System.Memory.dll": {}
+        }
+      },
+      "system.net.http/4.3.2": {
+        "runtimeTargets": {
+          "runtimes/unix/lib/netstandard1.6/System.Net.Http.dll": {
+            "rid": "unix",
+            "assetType": "runtime"
+          },
+          "runtimes/win/lib/netstandard1.3/System.Net.Http.dll": {
+            "rid": "win",
+            "assetType": "runtime"
+          }
         }
       },
       "system.net.websockets/4.3.0": {
@@ -734,6 +747,13 @@
       "sha512": "sha512-fpticQQnqSE6mOjajuAqypTuWRJ/6fDLozurzt2gXoFFWyl7CsrcrR6f5WBN9e+GCGQDyeeSs3yC7pncvZLgdA==",
       "path": "system.memory/4.4.0-preview1-25305-02",
       "hashPath": "system.memory.4.4.0-preview1-25305-02.nupkg.sha512"
+    },
+    "system.net.http/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-y7hv0o0weI0j0mvEcBOdt1F3CAADiWlcw3e54m8TfYiRmBPDIsHElx8QUPDlY4x6yWXKPGN0Z2TuXCTPgkm5WQ==",
+      "path": "system.net.http/4.3.2",
+      "hashPath": "system.net.http.4.3.2.nupkg.sha512"
     },
     "system.net.websockets/4.3.0": {
       "type": "package",
