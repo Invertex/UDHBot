@@ -1,9 +1,0 @@
-B:\CSharp\Perso\DiscordBot\bin\Debug\netcoreapp1.1\DiscordBot.deps.json
-B:\CSharp\Perso\DiscordBot\bin\Debug\netcoreapp1.1\DiscordBot.runtimeconfig.json
-B:\CSharp\Perso\DiscordBot\bin\Debug\netcoreapp1.1\DiscordBot.runtimeconfig.dev.json
-B:\CSharp\Perso\DiscordBot\bin\Debug\netcoreapp1.1\DiscordBot.dll
-B:\CSharp\Perso\DiscordBot\bin\Debug\netcoreapp1.1\DiscordBot.pdb
-B:\CSharp\Perso\DiscordBot\obj\Debug\netcoreapp1.1\DiscordBot.AssemblyInfo.cs
-B:\CSharp\Perso\DiscordBot\obj\Debug\netcoreapp1.1\DiscordBot.dll
-B:\CSharp\Perso\DiscordBot\obj\Debug\netcoreapp1.1\DiscordBot.pdb
-B:\CSharp\Perso\DiscordBot\obj\Debug\netcoreapp1.1\DiscordBot.csprojResolveAssemblyReference.cache
