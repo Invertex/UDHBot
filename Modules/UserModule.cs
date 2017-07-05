@@ -11,7 +11,7 @@ namespace DiscordBot
         private readonly LoggingService _logging;
         private readonly DatabaseService _database;
         private readonly UserService _user;
-
+        
         public UserModule(LoggingService logging, DatabaseService database, UserService user)
         {
             _logging = logging;

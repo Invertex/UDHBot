@@ -30,7 +30,7 @@ namespace DiscordBot
         public async Task MainAsync()
         {
             _token = SettingsHandler.LoadValueString("token", JsonFile.Settings);
-            
+
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info,
@@ -41,7 +41,7 @@ namespace DiscordBot
             _commands = new CommandService();
             _logging = new LoggingService(_client);
             _database = new DatabaseService();
-            _user = new UserService(_database);
+            _user = new UserService(_database, _logging);
             _holdingPen = new HoldingPenService();
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_logging);
@@ -99,8 +99,12 @@ namespace DiscordBot
             // Hook the MessageReceived Event into our Command Handler
             _client.MessageReceived += HandleCommand;
             _client.MessageReceived += _user.UpdateXp;
+            _client.MessageReceived += _user.Thanks;
             _client.MessageDeleted += (x, y) =>
             {
+                if (x.Value.Author.IsBot)
+                    return Task.CompletedTask;
+
                 _logging.LogAction(
                     $"{x.Value.Author.Username} has deleted message `{x.Value.Content}` from channel {y.Name}");
                 return Task.CompletedTask;
@@ -130,7 +134,8 @@ namespace DiscordBot
             int argPos = 0;
             char prefix = SettingsHandler.LoadValueChar("prefix", JsonFile.Settings);
             // Determine if the message is a command, based on if it starts with '!' or a mention prefix
-            if (!(message.HasCharPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
+            if (!(message.HasCharPrefix(prefix, ref argPos) ||
+                  message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
                 return;
             // Create a Command Context
             var context = new CommandContext(_client, message);

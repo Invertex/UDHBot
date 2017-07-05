@@ -33,6 +33,15 @@ namespace DiscordBot
             oldLevel = Convert.ToUInt32(reader);
             UpdateAttributeFromUser(id, "level", oldLevel + level);
         }
+
+        public void AddUserKarma(ulong id, uint karma)
+        {
+            uint oldKarma;
+            string reader = GetAttributeFromUser(id, "karma");
+
+            oldKarma = Convert.ToUInt32(reader);
+            UpdateAttributeFromUser(id,  "karma", oldKarma + karma);
+        }
         
         public uint GetUserXp(ulong id)
         {

@@ -1,0 +1,11 @@
+{
+    /*Thanks parameters*/
+    "thanks": [
+        "thanks",
+        "thank you",
+        "thx",
+        "thanx",
+        "thankyou"
+    ],
+    "thanksCooldown": 60 //In seconds
+}
