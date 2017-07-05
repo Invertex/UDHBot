@@ -37,12 +37,10 @@ namespace DiscordBot
 
         private readonly int _thanksCooldownTime;
 
-        //TODO : NOT HARDCODE
-        private const int _xpMinPerMessage = 5;
-
-        private const int _xpMaxPerMessage = 30;
-        private const int _minCooldown = 3;
-        private const int _maxCooldown = 5;
+        private readonly int _xpMinPerMessage;
+        private readonly int _xpMaxPerMessage;
+        private readonly int _xpMinCooldown;
+        private readonly int _xpMaxCooldown;
 
         public UserService(DatabaseService database, LoggingService logging)
         {
@@ -68,6 +66,14 @@ namespace DiscordBot
                 .CreateFont(59);
 
             /*
+            Init XP
+            */
+            
+            _xpMinPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
+            _xpMaxPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
+            _xpMinCooldown = SettingsHandler.LoadValueInt("xpMinCooldown", JsonFile.UserSettings);
+            _xpMaxCooldown = SettingsHandler.LoadValueInt("xpMaxCooldown", JsonFile.UserSettings);
+            /*
             Init thanks
             */
             StringBuilder sbThanks = new StringBuilder();
@@ -91,7 +97,7 @@ namespace DiscordBot
                 return;
 
             ulong id = messageParam.Author.Id;
-            int waitTime = rand.Next(_minCooldown, _maxCooldown);
+            int waitTime = rand.Next(_xpMinCooldown, _xpMaxCooldown);
             float baseXp = rand.Next(_xpMinPerMessage, _xpMaxPerMessage);
             float bonusXp = 0;
 
@@ -116,12 +122,12 @@ namespace DiscordBot
 
             _database.AddUserXp(id, (uint) Math.Round(baseXp + bonusXp));
 
-            await LevelUp(id);
+            await LevelUp(messageParam, id);
 
             //TODO: add xp gain on website
         }
 
-        public async Task LevelUp(ulong userId)
+        public async Task LevelUp(SocketMessage messageParam, ulong userId)
         {
             int level = (int) _database.GetUserLevel(userId);
             uint xp = _database.GetUserXp(userId);
@@ -129,12 +135,12 @@ namespace DiscordBot
             double xpLow = GetXpLow(level);
             double xpHigh = GetXpHigh(level);
 
-            if (xp > xpHigh)
-            {
-                _database.AddUserLevel(userId, 1);
-            }
+            if (xp < xpHigh)
+                return;
+            _database.AddUserLevel(userId, 1);
 
-            //TODO: Add level up message
+            await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
+            //TODO: Add level up card
         }
 
         private double GetXpLow(int level)
@@ -193,9 +199,9 @@ namespace DiscordBot
 
             var u = user as IGuildUser;
             IRole mainRole = null;
-            foreach (var id in u.RoleIds)
+            foreach (ulong id in u.RoleIds)
             {
-                var role = u.Guild.GetRole(id);
+                IRole role = u.Guild.GetRole(id);
                 if (mainRole == null)
                     mainRole = u.Guild.GetRole(id);
                 else if (role.Position > mainRole.Position)
@@ -203,10 +209,10 @@ namespace DiscordBot
                     mainRole = role;
                 }
             }
-            var c = mainRole.Color;
+            Color c = mainRole.Color;
             //Console.WriteLine($"{u.Guild.GetRole(u.RoleIds.Last())}  {c.R} {c.G} {c.B} {c.RawValue}");
 
-            RecolorBrush<Rgba32> brush = new RecolorBrush<Rgba32>(Rgba32.White,
+            var brush = new RecolorBrush<Rgba32>(Rgba32.White,
                 new Rgba32(c.R, c.G, c.B), .25f);
 
             triangle.Fill(brush);
@@ -256,14 +262,13 @@ namespace DiscordBot
             if (messageParam.Author.IsBot)
                 return;
 
-            
+
             if (_thanksCooldown.ContainsKey(messageParam.Author.Id))
             {
                 Console.WriteLine(_thanksCooldown[messageParam.Author.Id].ToString("h:mm:ss tt zz"));
                 Console.WriteLine(DateTime.Now.ToString("h:mm:ss tt zz"));
                 if (_thanksCooldown[messageParam.Author.Id] > DateTime.Now)
                 {
-                    
                     await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must wait " +
                         $"{(DateTime.Now - _thanksCooldown[messageParam.Author.Id]).ToString("ss")} " +
