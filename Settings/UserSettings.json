@@ -1,0 +1,17 @@
+{
+    /*Thanks parameters*/
+    "thanks": [
+        "thanks",
+        "thank you",
+        "thx",
+        "thanx",
+        "thankyou"
+    ],
+    "thanksCooldown": 60, //In seconds
+
+    /*Xp parameters*/
+    "xpMinPerMessage": 10,
+    "xpMaxPerMessage": 30,
+    "xpMinCooldown": 60,
+    "xpMaxCooldown": 180
+}

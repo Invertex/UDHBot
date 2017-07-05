@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using Discord;
@@ -29,6 +30,7 @@ namespace DiscordBot
 
         public static ulong GetBotAnnouncementChannel()
         {
+            Console.WriteLine(SettingsHandler.LoadValueUlong("botAnnouncementChannel/id", JsonFile.Settings));
             return SettingsHandler.LoadValueUlong("botAnnouncementChannel/id", JsonFile.Settings);
         }
     }

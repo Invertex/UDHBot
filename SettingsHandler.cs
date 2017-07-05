@@ -13,8 +13,7 @@ namespace DiscordBot
         Settings,
         Commands,
         Roles,
-        Achievements,
-        PayWork
+        Achievements
     }
     class SettingsHandler
     {

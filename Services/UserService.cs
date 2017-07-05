@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
@@ -12,37 +13,46 @@ using Discord.WebSocket;
 using ImageSharp;
 using ImageSharp.Drawing.Brushes;
 using ImageSharp.PixelFormats;
+using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
 using SixLabors.Fonts;
 using SixLabors.Primitives;
 using Image = ImageSharp.Image;
 
 namespace DiscordBot
 {
-    public class ProfileService
+    public class UserService
     {
         private readonly DatabaseService _database;
+        private readonly LoggingService _logging;
 
         private Dictionary<ulong, DateTime> _xpCooldown;
+        private Dictionary<ulong, DateTime> _thanksCooldown;
         private Random rand;
 
         private FontCollection _fontCollection;
         private Font _defaultFont;
         private Font _nameFont;
         private Font _levelFont;
+        private string _thanksRegex;
 
-        //TODO : NOT HARDCODE
-        private const int _xpMinPerMessage = 5;
+        private readonly int _thanksCooldownTime;
 
-        private const int _xpMaxPerMessage = 30;
-        private const int _minCooldown = 3;
-        private const int _maxCooldown = 5;
+        private readonly int _xpMinPerMessage;
+        private readonly int _xpMaxPerMessage;
+        private readonly int _xpMinCooldown;
+        private readonly int _xpMaxCooldown;
 
-        public ProfileService(DatabaseService database)
+        public UserService(DatabaseService database, LoggingService logging)
         {
             rand = new Random();
             _database = database;
+            _logging = logging;
             _xpCooldown = new Dictionary<ulong, DateTime>();
+            _thanksCooldown = new Dictionary<ulong, DateTime>();
 
+            /*
+            Init font for the profile card
+            */
             _fontCollection = new FontCollection();
             _defaultFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
@@ -54,12 +64,40 @@ namespace DiscordBot
             _levelFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\fonts\Consolas.ttf")
                 .CreateFont(59);
+
+            /*
+            Init XP
+            */
+            
+            _xpMinPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
+            _xpMaxPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
+            _xpMinCooldown = SettingsHandler.LoadValueInt("xpMinCooldown", JsonFile.UserSettings);
+            _xpMaxCooldown = SettingsHandler.LoadValueInt("xpMaxCooldown", JsonFile.UserSettings);
+            /*
+            Init thanks
+            */
+            StringBuilder sbThanks = new StringBuilder();
+            string[] thx = SettingsHandler.LoadValueStringArray("thanks", JsonFile.UserSettings);
+            sbThanks.Append("(");
+            for (int i = 0; i < thx.Length; i++)
+            {
+                if (i < thx.Length - 1)
+                    sbThanks.Append(thx[i] + "|");
+                else //Remove pipe if it's the last element
+                    sbThanks.Append(thx[i]);
+            }
+            sbThanks.Append(")");
+            _thanksRegex = sbThanks.ToString();
+            _thanksCooldownTime = SettingsHandler.LoadValueInt("thanksCooldown", JsonFile.UserSettings);
         }
 
         public async Task UpdateXp(SocketMessage messageParam)
         {
+            if (messageParam.Author.IsBot)
+                return;
+
             ulong id = messageParam.Author.Id;
-            int waitTime = rand.Next(_minCooldown, _maxCooldown);
+            int waitTime = rand.Next(_xpMinCooldown, _xpMaxCooldown);
             float baseXp = rand.Next(_xpMinPerMessage, _xpMaxPerMessage);
             float bonusXp = 0;
 
@@ -84,12 +122,12 @@ namespace DiscordBot
 
             _database.AddUserXp(id, (uint) Math.Round(baseXp + bonusXp));
 
-            await LevelUp(id);
+            await LevelUp(messageParam, id);
 
             //TODO: add xp gain on website
         }
 
-        public async Task LevelUp(ulong userId)
+        public async Task LevelUp(SocketMessage messageParam, ulong userId)
         {
             int level = (int) _database.GetUserLevel(userId);
             uint xp = _database.GetUserXp(userId);
@@ -97,12 +135,12 @@ namespace DiscordBot
             double xpLow = GetXpLow(level);
             double xpHigh = GetXpHigh(level);
 
-            if (xp > xpHigh)
-            {
-                _database.AddUserLevel(userId, 1);
-            }
+            if (xp < xpHigh)
+                return;
+            _database.AddUserLevel(userId, 1);
 
-            //TODO: Add level up message
+            await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
+            //TODO: Add level up card
         }
 
         private double GetXpLow(int level)
@@ -158,12 +196,12 @@ namespace DiscordBot
             float endX = (float) ((xp - xpLow) / (xpHigh - xpLow) * 250f);
 
             profileCard.DrawImage(profileFg, 100f, new Size(profileFg.Width, profileFg.Height), Point.Empty);
-            
+
             var u = user as IGuildUser;
             IRole mainRole = null;
-            foreach (var id in u.RoleIds)
+            foreach (ulong id in u.RoleIds)
             {
-                var role = u.Guild.GetRole(id);
+                IRole role = u.Guild.GetRole(id);
                 if (mainRole == null)
                     mainRole = u.Guild.GetRole(id);
                 else if (role.Position > mainRole.Position)
@@ -171,10 +209,10 @@ namespace DiscordBot
                     mainRole = role;
                 }
             }
-            var c = mainRole.Color;
+            Color c = mainRole.Color;
             //Console.WriteLine($"{u.Guild.GetRole(u.RoleIds.Last())}  {c.R} {c.G} {c.B} {c.RawValue}");
-         
-            RecolorBrush<Rgba32> brush = new RecolorBrush<Rgba32>(Rgba32.White,
+
+            var brush = new RecolorBrush<Rgba32>(Rgba32.White,
                 new Rgba32(c.R, c.G, c.B), .25f);
 
             triangle.Fill(brush);
@@ -217,6 +255,73 @@ namespace DiscordBot
                 });
             var embed = builder.Build();
             return embed;
+        }
+
+        public async Task Thanks(SocketMessage messageParam)
+        {
+            if (messageParam.Author.IsBot)
+                return;
+
+
+            if (_thanksCooldown.ContainsKey(messageParam.Author.Id))
+            {
+                Console.WriteLine(_thanksCooldown[messageParam.Author.Id].ToString("h:mm:ss tt zz"));
+                Console.WriteLine(DateTime.Now.ToString("h:mm:ss tt zz"));
+                if (_thanksCooldown[messageParam.Author.Id] > DateTime.Now)
+                {
+                    await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} you must wait " +
+                        $"{(DateTime.Now - _thanksCooldown[messageParam.Author.Id]).ToString("ss")} " +
+                        "seconds before giving another karma point");
+                    return;
+                }
+                _thanksCooldown.Remove(messageParam.Author.Id);
+            }
+
+            Match match = Regex.Match(messageParam.Content, _thanksRegex);
+            if (match.Success)
+            {
+                IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
+                if (mentions.Count > 0)
+                {
+                    bool mentionedSelf = false;
+                    bool mentionedBot = false;
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append($"**{messageParam.Author.Username}** gave karma to **");
+                    foreach (SocketUser user in mentions)
+                    {
+                        if (user.IsBot)
+                        {
+                            mentionedBot = true;
+                            continue;
+                        }
+                        if (user.Id == messageParam.Author.Id)
+                        {
+                            mentionedSelf = true;
+                            continue;
+                        }
+                        _database.AddUserKarma(user.Id, 1);
+                        sb.Append(user.Username + " ");
+                    }
+                    sb.Append("**");
+                    if (mentionedSelf)
+                        await messageParam.Channel.SendMessageAsync(
+                            $"{messageParam.Author.Mention} you can't give karma to yourself.");
+                    if (mentionedBot)
+                        await messageParam.Channel.SendMessageAsync(
+                            $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:");
+                    if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2)
+                    ) //Don't give karma cooldown if user only mentionned himself or the bot or both
+                        return;
+
+                    _thanksCooldown.Add(messageParam.Author.Id, DateTime.Now.Add(new TimeSpan(0, 0, 0, _thanksCooldownTime)));
+                    Console.WriteLine(_thanksCooldown[messageParam.Author.Id].ToString("h:mm:ss tt zz"));
+
+                    await messageParam.Channel.SendMessageAsync(sb.ToString());
+                    _logging.LogAction(sb + " in channel " + messageParam.Channel.Name);
+                }
+            }
         }
     }
 }

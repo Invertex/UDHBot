@@ -10,21 +10,21 @@ namespace DiscordBot
     {
         private readonly LoggingService _logging;
         private readonly DatabaseService _database;
-        private readonly ProfileService _profile;
+        private readonly UserService _user;
 
-        public UserModule(LoggingService logging, DatabaseService database, ProfileService profile)
+        public UserModule(LoggingService logging, DatabaseService database, UserService user)
         {
             _logging = logging;
             _database = database;
-            _profile = profile;
+            _user = user;
         }
-        
+
         [Command("help"), Summary("Display help for an user")]
         async Task DisplayHelp(IUser user, int arg)
         {
             //TODO: To implement
-        }    
-        
+        }
+
         [Command("slap"), Summary("Slap the specified user(s)")]
         async Task SlapUser(params IUser[] users)
         {
@@ -49,29 +49,39 @@ namespace DiscordBot
             await ReplyAsync($"{user.Username} has {xp} xp.");
         }
 
+
         [Command("profile"), Summary("Display profile card of user")]
-        async Task DisplayProfile(IUser user = null)
+        async Task DisplayProfile()
         {
             ulong id;
             string username;
-            if (user == null)
-            {
-                id = Context.Client.CurrentUser.Id;
-                username = Context.User.Username;
-            }
-            else
-            {
-                id = user.Id;
-                username = user.Username;
-            }
+            id = Context.Message.Author.Id;
+            username = Context.Message.Author.Username;
 
             var xp = _database.GetUserXp(id);
             var karma = _database.GetUserKarma(id);
             var rank = _database.GetUserRank(id);
 
 
-            await Context.Channel.SendFileAsync(await _profile.GenerateProfileCard(user));
-            await ReplyAsync($"{username} has {xp} xp and {karma} karma which  makes him #{rank}");
+            await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(Context.Message.Author));
+            //await ReplyAsync($"{username} has {xp} xp and {karma} karma which  makes him #{rank}");
+        }
+
+        [Command("profile"), Summary("Display profile card of user")]
+        async Task DisplayProfile(IUser user)
+        {
+            ulong id;
+            string username;
+            id = user.Id;
+            username = user.Username;
+
+            var xp = _database.GetUserXp(id);
+            var karma = _database.GetUserKarma(id);
+            var rank = _database.GetUserRank(id);
+
+
+            await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(user));
+            //await ReplyAsync($"{username} has {xp} xp and {karma} karma which  makes him #{rank}");
         }
 
         [Command("quote"), Summary("Quote a message")]
@@ -81,13 +91,15 @@ namespace DiscordBot
             TODO: TO FIX : only work for messages posted while the bot was up
             */
             var builder = new EmbedBuilder()
-                    .WithColor(new Color(200, 128, 128))
-                    .WithTimestamp(message.Timestamp)
-                    .WithFooter(footer => {
-                        footer
-                            .WithText($"In channel {message.Channel.Name}");
-                    })
-                .WithAuthor(author => {
+                .WithColor(new Color(200, 128, 128))
+                .WithTimestamp(message.Timestamp)
+                .WithFooter(footer =>
+                {
+                    footer
+                        .WithText($"In channel {message.Channel.Name}");
+                })
+                .WithAuthor(author =>
+                {
                     author
                         .WithName($"{message.Author.Username}")
                         .WithIconUrl(message.Author.GetAvatarUrl());
@@ -117,7 +129,7 @@ namespace DiscordBot
             {
                 _logging = logging;
             }
-            
+
             [Command("add"), Summary("Add a role to current user")]
             [RequireUserPermission(GuildPermission.ManageRoles)]
             async Task AddRoleUser(IRole role)
@@ -128,7 +140,7 @@ namespace DiscordBot
                     return;
                 }
                 var u = Context.User as IGuildUser;
-                
+
                 u.AddRoleAsync(role);
                 await ReplyAsync($"{u.Username} you now have the role of `{role.Name}`");
                 _logging.LogAction($"{Context.User.Username} has added role {role} to himself in {Context.Channel.Name}");
@@ -145,12 +157,11 @@ namespace DiscordBot
                 }
 
                 var u = Context.User as IGuildUser;
-            
+
                 u.RemoveRoleAsync(role);
                 await ReplyAsync($"{u.Username} your role of `{role.Name}` has been removed");
                 _logging.LogAction($"{Context.User.Username} has removed role {role} from himself in {Context.Channel.Name}");
             }
         }
-        
     }
 }
