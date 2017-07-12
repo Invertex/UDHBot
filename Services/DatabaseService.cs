@@ -48,39 +48,44 @@ namespace DiscordBot
             uint xp;
             string reader = GetAttributeFromUser(id, "exp");
 
-            xp = System.Convert.ToUInt32(reader);
+            xp = Convert.ToUInt32(reader);
 
             return xp;
         }
         
         public uint GetUserKarma(ulong id)
         {
-            uint karma = 0;
+            uint karma;
             string reader = GetAttributeFromUser(id, "karma");
 
-            karma = System.Convert.ToUInt32(reader);
+            karma = Convert.ToUInt32(reader);
 
             return karma;
         }
         
         public uint GetUserRank(ulong id)
         {
-            uint rank = 0;
+            uint rank;
             string reader = GetAttributeFromUser(id, "rank");
 
-            rank = System.Convert.ToUInt32(reader);
+            rank = Convert.ToUInt32(reader);
 
             return rank;
         }
         
         public uint GetUserLevel(ulong id)
         {
-            uint level = 0;
+            uint level;
             string reader = GetAttributeFromUser(id, "level");
 
-            level = System.Convert.ToUInt32(reader);
+            level = Convert.ToUInt32(reader);
 
             return level;
+        }
+
+        public string GetUserJoinDate(ulong id)
+        {
+            return GetAttributeFromUser(id, "joinDate");
         }
 
         private void UpdateAttributeFromUser(ulong id, string attribute, uint value)

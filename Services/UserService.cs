@@ -36,6 +36,7 @@ namespace DiscordBot
         private string _thanksRegex;
 
         private readonly int _thanksCooldownTime;
+        private readonly int _thanksMinJoinTime;
 
         private readonly int _xpMinPerMessage;
         private readonly int _xpMaxPerMessage;
@@ -68,7 +69,7 @@ namespace DiscordBot
             /*
             Init XP
             */
-            
+
             _xpMinPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
             _xpMaxPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
             _xpMinCooldown = SettingsHandler.LoadValueInt("xpMinCooldown", JsonFile.UserSettings);
@@ -89,6 +90,7 @@ namespace DiscordBot
             sbThanks.Append(")");
             _thanksRegex = sbThanks.ToString();
             _thanksCooldownTime = SettingsHandler.LoadValueInt("thanksCooldown", JsonFile.UserSettings);
+            _thanksMinJoinTime = SettingsHandler.LoadValueInt("thanksMinJoinTime", JsonFile.UserSettings);
         }
 
         public async Task UpdateXp(SocketMessage messageParam)
@@ -262,65 +264,75 @@ namespace DiscordBot
             if (messageParam.Author.IsBot)
                 return;
 
+            Match match = Regex.Match(messageParam.Content, _thanksRegex);
+            if (!match.Success)
+                return;
 
-            if (_thanksCooldown.ContainsKey(messageParam.Author.Id))
+
+            ulong userId = messageParam.Author.Id;
+
+            if (_thanksCooldown.ContainsKey(userId))
             {
-                Console.WriteLine(_thanksCooldown[messageParam.Author.Id].ToString("h:mm:ss tt zz"));
-                Console.WriteLine(DateTime.Now.ToString("h:mm:ss tt zz"));
-                if (_thanksCooldown[messageParam.Author.Id] > DateTime.Now)
+                if (_thanksCooldown[userId] > DateTime.Now)
                 {
                     await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must wait " +
-                        $"{(DateTime.Now - _thanksCooldown[messageParam.Author.Id]).ToString("ss")} " +
+                        $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
                         "seconds before giving another karma point");
                     return;
                 }
-                _thanksCooldown.Remove(messageParam.Author.Id);
+                _thanksCooldown.Remove(userId);
             }
 
-            Match match = Regex.Match(messageParam.Content, _thanksRegex);
-            if (match.Success)
+            DateTime joinDate;
+            DateTime.TryParse(_database.GetUserJoinDate(userId), out joinDate);
+            var j = DateTime.Now - TimeSpan.FromSeconds(_thanksMinJoinTime);
+            
+            if (joinDate > j)
             {
-                IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
-                if (mentions.Count > 0)
+                await messageParam.Channel.SendMessageAsync(
+                    $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.");
+                return;
+            }
+
+            IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
+            if (mentions.Count > 0)
+            {
+                bool mentionedSelf = false;
+                bool mentionedBot = false;
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append($"**{messageParam.Author.Username}** gave karma to **");
+                foreach (SocketUser user in mentions)
                 {
-                    bool mentionedSelf = false;
-                    bool mentionedBot = false;
-                    StringBuilder sb = new StringBuilder();
-
-                    sb.Append($"**{messageParam.Author.Username}** gave karma to **");
-                    foreach (SocketUser user in mentions)
+                    if (user.IsBot)
                     {
-                        if (user.IsBot)
-                        {
-                            mentionedBot = true;
-                            continue;
-                        }
-                        if (user.Id == messageParam.Author.Id)
-                        {
-                            mentionedSelf = true;
-                            continue;
-                        }
-                        _database.AddUserKarma(user.Id, 1);
-                        sb.Append(user.Username + " ");
+                        mentionedBot = true;
+                        continue;
                     }
-                    sb.Append("**");
-                    if (mentionedSelf)
-                        await messageParam.Channel.SendMessageAsync(
-                            $"{messageParam.Author.Mention} you can't give karma to yourself.");
-                    if (mentionedBot)
-                        await messageParam.Channel.SendMessageAsync(
-                            $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:");
-                    if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2)
-                    ) //Don't give karma cooldown if user only mentionned himself or the bot or both
-                        return;
-
-                    _thanksCooldown.Add(messageParam.Author.Id, DateTime.Now.Add(new TimeSpan(0, 0, 0, _thanksCooldownTime)));
-                    Console.WriteLine(_thanksCooldown[messageParam.Author.Id].ToString("h:mm:ss tt zz"));
-
-                    await messageParam.Channel.SendMessageAsync(sb.ToString());
-                    _logging.LogAction(sb + " in channel " + messageParam.Channel.Name);
+                    if (user.Id == userId)
+                    {
+                        mentionedSelf = true;
+                        continue;
+                    }
+                    _database.AddUserKarma(user.Id, 1);
+                    sb.Append(user.Username + " ");
                 }
+                sb.Append("**");
+                if (mentionedSelf)
+                    await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} you can't give karma to yourself.");
+                if (mentionedBot)
+                    await messageParam.Channel.SendMessageAsync(
+                        $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:");
+                if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2)
+                ) //Don't give karma cooldown if user only mentionned himself or the bot or both
+                    return;
+
+                _thanksCooldown.Add(userId, DateTime.Now.Add(new TimeSpan(0, 0, 0, _thanksCooldownTime)));
+
+                await messageParam.Channel.SendMessageAsync(sb.ToString());
+                _logging.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
         }
     }

@@ -8,6 +8,7 @@
         "thankyou"
     ],
     "thanksCooldown": 60, //In seconds
+    "thanksMinJoinTime": 600,
 
     /*Xp parameters*/
     "xpMinPerMessage": 10,

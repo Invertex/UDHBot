@@ -20,9 +20,8 @@ namespace DiscordBot
         private DatabaseService _database;
         private UserService _user;
         private WorkService _work;
-        private HoldingPenService _holdingPen;
-        private Timer _updateTimer;
-
+        private PublisherService _publisher;
+        
         private string _token = "";
 
         static void Main(string[] args)
@@ -45,22 +44,21 @@ namespace DiscordBot
             _logging = new LoggingService(_client);
             _database = new DatabaseService();
             _user = new UserService(_database, _logging);
-            _holdingPen = new HoldingPenService();
             _work = new WorkService();
+            _publisher = new PublisherService();
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_logging);
             _serviceCollection.AddSingleton(_database);
             _serviceCollection.AddSingleton(_user);
-            _serviceCollection.AddSingleton(_holdingPen);
             _serviceCollection.AddSingleton(_work);
+            _serviceCollection.AddSingleton(_publisher);
             _services = _serviceCollection.BuildServiceProvider();
 
 
             await InstallCommands();
 
             _client.Log += Logger;
-            _updateTimer = new Timer(OnUpdate, "State", 1000, 1000);
-
+            
             // await InitCommands();
 
             await _client.LoginAsync(TokenType.Bot, _token);
@@ -82,7 +80,7 @@ namespace DiscordBot
 
         private static Task Logger(LogMessage message)
         {
-            var cc = Console.ForegroundColor;
+            ConsoleColor cc = Console.ForegroundColor;
             switch (message.Severity)
             {
                 case LogSeverity.Critical:
@@ -132,7 +130,10 @@ namespace DiscordBot
             _logging.LogAction($"User Joined: {user.Username}");
             ulong general = SettingsHandler.LoadValueUlong("generalChannel", JsonFile.Settings);
             Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
-            await (_client.GetChannel(general) as SocketTextChannel).SendMessageAsync(string.Empty, false, em);
+            
+            var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
+            if (socketTextChannel != null)
+                await socketTextChannel.SendMessageAsync(string.Empty, false, em);
         }
 
         public async Task HandleCommand(SocketMessage messageParam)
