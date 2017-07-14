@@ -1,8 +1,10 @@
 ﻿using System.Xml.Linq;
 using System;
 using System.Data.SqlClient;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 using MySql.Data.MySqlClient;
 
 namespace DiscordBot
@@ -24,7 +26,7 @@ namespace DiscordBot
             oldXp = Convert.ToUInt32(reader);
             UpdateAttributeFromUser(id, "exp", oldXp + xp);
         }
-        
+
         public void AddUserLevel(ulong id, uint level)
         {
             uint oldLevel;
@@ -40,9 +42,9 @@ namespace DiscordBot
             string reader = GetAttributeFromUser(id, "karma");
 
             oldKarma = Convert.ToUInt32(reader);
-            UpdateAttributeFromUser(id,  "karma", oldKarma + karma);
+            UpdateAttributeFromUser(id, "karma", oldKarma + karma);
         }
-        
+
         public uint GetUserXp(ulong id)
         {
             uint xp;
@@ -52,7 +54,7 @@ namespace DiscordBot
 
             return xp;
         }
-        
+
         public uint GetUserKarma(ulong id)
         {
             uint karma;
@@ -62,7 +64,7 @@ namespace DiscordBot
 
             return karma;
         }
-        
+
         public uint GetUserRank(ulong id)
         {
             uint rank;
@@ -72,7 +74,7 @@ namespace DiscordBot
 
             return rank;
         }
-        
+
         public uint GetUserLevel(ulong id)
         {
             uint level;
@@ -88,8 +90,54 @@ namespace DiscordBot
             return GetAttributeFromUser(id, "joinDate");
         }
 
+        public void UpdateUserName(ulong id, string name)
+        {
+            UpdateAttributeFromUser(id, "username", name);
+        }
+
+        public void UpdateUserAvatar(ulong id, string avatar)
+        {
+            UpdateAttributeFromUser(id, "avatarUrl", avatar);
+        }
+
+        public void AddNewUser(SocketGuildUser user)
+        {
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand(
+                    $"INSERT INTO users SET username='{user.Username}', userid='{user.Id}', discriminator='{user.DiscriminatorValue}'," +
+                    $"avatar='{user.AvatarId}', " +
+                    $"bot='{(user.IsBot ? 1 : 0)}', status='{user.Status}', joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'", connection);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void DeleteUser(ulong id)
+        {
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand($"DELETE FROM users WHERE userid='{id}'", connection);
+                var command2 = new MySqlCommand($"INSERT users_remove SELECT * FROM users WHERE userid='{id}'", connection);
+                connection.Open();
+                command2.ExecuteNonQuery();
+                command.ExecuteNonQuery();
+            }
+        }
+
         private void UpdateAttributeFromUser(ulong id, string attribute, uint value)
         {
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand($"UPDATE users SET {attribute}={value} WHERE userid='{id}'", connection);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private void UpdateAttributeFromUser(ulong id, string attribute, string value)
+        {
+            value = MySqlHelper.EscapeString(value);
             using (var connection = new MySqlConnection(_connection))
             {
                 var command = new MySqlCommand($"UPDATE users SET {attribute}={value} WHERE userid='{id}'", connection);

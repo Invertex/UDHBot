@@ -10,7 +10,9 @@ namespace DiscordBot
 {
     public static class Settings
     {
-        private static List<string> _assignableRoles;
+        public static List<string> _assignableRoles;
+
+        private static string _commandList;
 
 
         static Settings()
@@ -32,6 +34,16 @@ namespace DiscordBot
         {
             Console.WriteLine(SettingsHandler.LoadValueUlong("botAnnouncementChannel/id", JsonFile.Settings));
             return SettingsHandler.LoadValueUlong("botAnnouncementChannel/id", JsonFile.Settings);
+        }
+
+        public static void SetCommandList(string commandList)
+        {
+            _commandList = commandList;
+        }
+
+        public static string GetCommandList()
+        {
+            return _commandList;
         }
     }
 }

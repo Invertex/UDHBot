@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
@@ -21,7 +23,7 @@ namespace DiscordBot
         private UserService _user;
         private WorkService _work;
         private PublisherService _publisher;
-        
+
         private string _token = "";
 
         static void Main(string[] args)
@@ -58,7 +60,7 @@ namespace DiscordBot
             await InstallCommands();
 
             _client.Log += Logger;
-            
+
             // await InitCommands();
 
             await _client.LoginAsync(TokenType.Bot, _token);
@@ -120,9 +122,22 @@ namespace DiscordBot
                 return Task.CompletedTask;
             };
             _client.UserJoined += UserJoined;
+            _client.GuildMemberUpdated += UserUpdated;
+            _client.UserLeft += UserLeft;
 
             // Discover all of the commands in this assembly and load them.
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
+
+            StringBuilder commandList = new StringBuilder();
+            foreach (var c in _commands.Commands.Where(x => x.Module.Name == "UserModule"))
+            {
+                commandList.Append($"**{c.Name}** : {c.Summary}\n");
+            }
+            foreach (var c in _commands.Commands.Where(x => x.Module.Name == "role"))
+            {
+                commandList.Append($"**role {c.Name}** : {c.Summary}\n");
+            }
+            Settings.SetCommandList(commandList.ToString());
         }
 
         private async Task UserJoined(SocketGuildUser user)
@@ -130,10 +145,44 @@ namespace DiscordBot
             _logging.LogAction($"User Joined: {user.Username}");
             ulong general = SettingsHandler.LoadValueUlong("generalChannel", JsonFile.Settings);
             Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
-            
+
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
             if (socketTextChannel != null)
                 await socketTextChannel.SendMessageAsync(string.Empty, false, em);
+
+            await _logging.LogAction(
+                $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+
+            _database.AddNewUser(user);
+            
+            //TODO: add users when bot was offline
+        }
+
+        private async Task UserUpdated(SocketGuildUser oldUser, SocketGuildUser user)
+        {
+            if (oldUser.Nickname != user.Nickname)
+            {
+                _logging.LogAction(
+                    $"User {oldUser.Nickname ?? oldUser.Username}#{oldUser.DiscriminatorValue} changed his " +
+                    $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
+                _database.UpdateUserName(user.Id, user.Nickname);
+            }
+            if (oldUser.AvatarId != user.AvatarId)
+            {
+                var avatar = user.GetAvatarUrl();
+                _database.UpdateUserAvatar(user.Id, avatar);
+            }
+        }
+
+        private async Task UserLeft(SocketGuildUser user)
+        {
+            DateTime joinDate;
+            DateTime.TryParse(_database.GetUserJoinDate(user.Id), out joinDate);
+            string timeStayed = (DateTime.Now - joinDate).ToString("dd days and HH hours");
+
+            await _logging.LogAction(
+                $"User Left - After {timeStayed} {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+            _database.DeleteUser(user.Id);
         }
 
         public async Task HandleCommand(SocketMessage messageParam)

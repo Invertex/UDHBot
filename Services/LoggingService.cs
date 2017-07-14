@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 
@@ -14,7 +15,7 @@ namespace DiscordBot
             _client = client;
         }
 
-        public async void LogAction(string action, bool logToFile = true, bool logToChannel = true)
+        public async Task LogAction(string action, bool logToFile = true, bool logToChannel = true)
         {
             if (logToChannel)
             {
