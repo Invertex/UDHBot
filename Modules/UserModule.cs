@@ -66,10 +66,12 @@ namespace DiscordBot
             var rank = _database.GetUserRank(id);
 
 
-            await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(Context.Message.Author));
+            IUserMessage profile = await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(Context.Message.Author));
 
             await Task.Delay(10000);
             await Context.Message.DeleteAsync();
+            await Task.Delay(TimeSpan.FromMinutes(1d));
+            await profile.DeleteAsync();
         }
 
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
@@ -85,10 +87,12 @@ namespace DiscordBot
             var rank = _database.GetUserRank(id);
 
 
-            await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(user));
+            IUserMessage profile = await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(user));
 
             await Task.Delay(10000);
             await Context.Message.DeleteAsync();
+            await Task.Delay(TimeSpan.FromMinutes(1d));
+            await profile.DeleteAsync();
         }
 
         [Command("quote"), Summary("Quote a message in current channel. Syntax : !quote messageid")]
@@ -117,7 +121,7 @@ namespace DiscordBot
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
         }
-        
+
         [Command("quote"), Summary("Quote a message. Syntax : !quote #channelname messageid")]
         async Task QuoteMessage(IMessageChannel channel, ulong id)
         {

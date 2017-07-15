@@ -135,6 +135,8 @@ namespace DiscordBot
         {
             if (message.Value.Author.IsBot || channel.Id == SettingsHandler.LoadValueUlong("botAnnouncementChannel", JsonFile.Settings))
                 return;
+            
+            Console.WriteLine("before embed");
 
             var builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
@@ -152,7 +154,9 @@ namespace DiscordBot
                 .AddField("Deleted message", message.Value.Content);
             var embed = builder.Build();
             
-            await _logging.LogAction("", true, true, embed);
+            Console.WriteLine(embed);
+            
+            await _logging.LogAction(" ", true, true, embed);
         }
 
 
