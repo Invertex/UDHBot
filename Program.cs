@@ -147,7 +147,7 @@ namespace DiscordBot
                 .WithAuthor(author =>
                 {
                     author
-                        .WithName($"{message.Value.Author.Username}")
+                        .WithName($"{message.Value.Author.Username}");
                 })
                 .AddField("Deleted message", message.Value.Content);
             var embed = builder.Build();
