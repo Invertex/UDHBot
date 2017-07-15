@@ -159,19 +159,17 @@ namespace DiscordBot
 
         private async Task UserJoined(SocketGuildUser user)
         {
-            await _logging.LogAction($"User Joined: {user.Username}");
+            //TODO: Fixed embed not working
             ulong general = SettingsHandler.LoadValueUlong("generalChannel", JsonFile.Settings);
-            Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+            //Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
 
-            Console.WriteLine("general channel id : " + general);
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
             if (socketTextChannel != null)
             {
-                Console.WriteLine("error couldn't find general channel");
-                await socketTextChannel.SendMessageAsync(string.Empty, false, em);
-                await socketTextChannel.SendMessageAsync($"Welcome to Unity Developer Hub **{user.Username}** !");
+                await socketTextChannel.SendMessageAsync($"Welcome to Unity Developer Hub **{user.Username}#{user.DiscriminatorValue}** !");
+                //await socketTextChannel.SendMessageAsync(string.Empty, false, em);
             }
-
+            
             await _logging.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
