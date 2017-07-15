@@ -57,13 +57,13 @@ namespace DiscordBot
             _fontCollection = new FontCollection();
             _defaultFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                         @"\fonts\OpenSans-Regular.ttf")
+                         @"/fonts/OpenSans-Regular.ttf")
                 .CreateFont(16);
             _nameFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\fonts\Consolas.ttf")
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
                 .CreateFont(24);
             _levelFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"\fonts\Consolas.ttf")
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
                 .CreateFont(59);
 
             /*
@@ -159,15 +159,15 @@ namespace DiscordBot
         public async Task<string> GenerateProfileCard(IUser user)
         {
             var backgroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                 @"\images\background.png";
+                                 @"/images/background.png";
             var foregroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                 @"\images\foreground.png";
+                                 @"/images/foreground.png";
             Image<Rgba32> profileCard = ImageSharp.Image.Load(backgroundPath);
             Image<Rgba32> profileFg = ImageSharp.Image.Load(foregroundPath);
             Image<Rgba32> avatar;
             Image<Rgba32> triangle = ImageSharp.Image.Load(
                 SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                @"\images\triangle.png");
+                @"/images/triangle.png");
             Stream stream;
             string avatarUrl = user.GetAvatarUrl();
             ulong userId = user.Id;
@@ -175,7 +175,7 @@ namespace DiscordBot
             if (string.IsNullOrEmpty(avatarUrl))
             {
                 avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                    @"\images\default.png");
+                                    @"/images/default.png");
             }
             else
             {
@@ -236,9 +236,9 @@ namespace DiscordBot
                 new PointF(167, 94));
 
             profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                             $@"\images\profiles\{user.Username}-profile.png");
+                             $@"/images/profiles/{user.Username}-profile.png");
             return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                   $@"\images\profiles\{user.Username}-profile.png";
+                   $@"/images/profiles/{user.Username}-profile.png";
         }
 
         public Embed WelcomeMessage(string icon, string name, ushort discriminator)

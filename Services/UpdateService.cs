@@ -41,9 +41,9 @@ namespace DiscordBot
 
         private void ReadDataFromFile()
         {
-            if (File.Exists($"{Settings.GetServerRootPath()}\\botdata.json"))
+            if (File.Exists($"{Settings.GetServerRootPath()}/botdata.json"))
             {
-                string json = File.ReadAllText($"{Settings.GetServerRootPath()}\\botdata.json");
+                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/botdata.json");
                 _botData = JsonConvert.DeserializeObject<BotData>(json);
             }
             else
@@ -58,7 +58,7 @@ namespace DiscordBot
             while (true)
             {
                 var json = JsonConvert.SerializeObject(_botData);
-                File.WriteAllText($"{Settings.GetServerRootPath()}\\botdata.json", json);
+                File.WriteAllText($"{Settings.GetServerRootPath()}/botdata.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
                 await Task.Delay(TimeSpan.FromSeconds(20d), _token);
             }
