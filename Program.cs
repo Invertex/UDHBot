@@ -38,7 +38,7 @@ namespace DiscordBot
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Info,
+                LogLevel = LogSeverity.Debug,
                 AlwaysDownloadUsers = true,
                 MessageCacheSize = 50
             });
