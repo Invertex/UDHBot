@@ -160,14 +160,14 @@ namespace DiscordBot
         private async Task UserJoined(SocketGuildUser user)
         {
             //TODO: Fixed embed not working
-            ulong general = SettingsHandler.LoadValueUlong("generalChannel", JsonFile.Settings);
-            //Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+            ulong general = SettingsHandler.LoadValueUlong("generalChannel/id", JsonFile.Settings);
+            Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
 
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
             if (socketTextChannel != null)
             {
                 await socketTextChannel.SendMessageAsync($"Welcome to Unity Developer Hub **{user.Username}#{user.DiscriminatorValue}** !");
-                //await socketTextChannel.SendMessageAsync(string.Empty, false, em);
+                await socketTextChannel.SendMessageAsync(string.Empty, false, em);
             }
             
             await _logging.LogAction(
