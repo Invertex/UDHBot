@@ -1,10 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
+using Discord;
 using Discord.Net.Rest;
 using Discord.WebSocket;
+using ImageSharp;
+using MailKit.Net.Smtp;
+using MimeKit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -12,8 +19,30 @@ namespace DiscordBot
 {
     public class PublisherService
     {
-        public PublisherService()
+        private readonly DiscordSocketClient _client;
+        private readonly DatabaseService _database;
+
+        private Dictionary<uint, string> _verificationCodes;
+
+        public PublisherService(DiscordSocketClient client, DatabaseService database)
         {
+            _client = client;
+            _database = database;
+            _verificationCodes = new Dictionary<uint, string>();
+        }
+
+        public async Task PublisherAdvertising(uint packageId, string mention)
+        {
+            Console.WriteLine("pub1 " + packageId);
+            PackageObject package = await GetPackage(packageId);
+            PackageHeadObject packageHead = await GetPackageHead(packageId);
+            PriceObject packagePrice = await GetPackagePrice(packageId);
+            Console.WriteLine("pub2");
+            (string, Stream) r = await GetPublisherAdvertisting(mention, package, packageHead, packagePrice);
+            Console.WriteLine("pub3");
+
+            var channel = _client.GetChannel(Settings.GetUnityNewsChannel()) as ISocketMessageChannel;
+            await channel.SendFileAsync(r.Item2, "image.jpg", r.Item1);
         }
 
         /*
@@ -58,18 +87,19 @@ namespace DiscordBot
         {
             using (var httpClient = new HttpClient())
             {
+                httpClient.Timeout = TimeSpan.FromSeconds(10);
                 string json = await httpClient.GetStringAsync(
                     $"https://www.assetstore.unity3d.com/api/en-US/content/price/{packageId}.json");
                 return JsonConvert.DeserializeObject<PriceObject>(json);
             }
         }
 
-        public string PublisherAdvertisting(string userMention, string publisherName, PackageObject package, PackageHeadObject packageHead,
-            PriceObject packagePrice)
+        public async Task<(string, Stream)> GetPublisherAdvertisting(string userMention, PackageObject package,
+            PackageHeadObject packageHead, PriceObject packagePrice)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("**--- Publisher everyday Advertising ---**\n\n");
-            sb.Append($"Today's daily advertisting goes to {userMention} (**{publisherName}**\n");
+            sb.Append($"Today's daily advertisting goes to {userMention} (**{packageHead.result.publisher}**)\n");
             sb.Append($"With their package : {packageHead.result.title}, priced at {packagePrice.price}\n");
             sb.Append("For any inquiry you can contact them here on **Unity Developer Hub** by mentioning them in the chat or PM.\n\n");
             sb.Append("*Rating* ");
@@ -81,7 +111,76 @@ namespace DiscordBot
             sb.Append("To be part of this kind of advertising use `!pInfo` for more informations.");
             //TODO: add image
 
-            return sb.ToString();
+            Stream image;
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
+                image = await httpClient.GetStreamAsync($"https:{package.content.keyimage.big}");
+                //image = ImageSharp.Image.Load(img);
+            }
+            return (sb.ToString(), image);
+        }
+
+        public async Task<(bool, string)> VerifyPackage(uint packageId)
+        {
+            PackageObject package = await GetPackage(packageId);
+            if (package.content == null) //Package doesn't exist
+                return (false, $"The package id {packageId} doesn't exist.");
+            if (package.content.publisher.support_email.Length < 2)
+                return (false, "Your package must have a support email defined to be validated.");
+
+            string name = (await GetPackageHead(packageId)).result.publisher;
+
+            await SendVerificationCode(name, package.content.publisher.support_email, packageId);
+            return (true,
+                "An email with a validation code was sent. Please type !verify *packageId* *code* to validate your package.\nThis code will be valid for 30 minutes."
+                );
+        }
+
+        public async Task SendVerificationCode(string name, string email, uint packageId)
+        {
+            Console.WriteLine("mail");
+            byte[] random = new byte[9];
+            RandomNumberGenerator rand = RandomNumberGenerator.Create();
+            rand.GetBytes(random);
+
+            string code = Convert.ToBase64String(random);
+
+            _verificationCodes.Add(packageId, code);
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Unity Developer Hub", SettingsHandler.LoadValueString("gmail", JsonFile.Settings)));
+            message.To.Add(new MailboxAddress(name, email));
+            message.Subject = "Unity Developer Hub Package Validation";
+            message.Body = new TextPart("plain")
+            {
+                Text = @"Here's your validation code : " + code
+            };
+
+            using (var client = new SmtpClient())
+            {
+                await client.ConnectAsync("smtp.gmail.com", 587);
+
+                client.AuthenticationMechanisms.Remove("XOAUTH2");
+                await client.AuthenticateAsync("unitydeveloperhub", SettingsHandler.LoadValueString("gmailPassword", JsonFile.Settings));
+
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+
+            //TODO: Delete code after 30min
+        }
+
+        public async Task<string> ValidatePackageWithCode(IUser user, uint packageId, string code)
+        {
+            string c;
+            if (!_verificationCodes.TryGetValue(packageId, out c))
+                return "An error occured while trying to validate your package. Please verify your packageId is valid";
+            if (c != code)
+                return "The verification code is not valid. Please verify it and try again.";
+
+            _database.AddPublisherPackage(user.Username, user.DiscriminatorValue.ToString(), user.Id.ToString(), packageId);
+
+            return "Your package has been verified and added to the daily advertisement list.";
         }
     }
 }

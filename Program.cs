@@ -23,6 +23,7 @@ namespace DiscordBot
         private UserService _user;
         private WorkService _work;
         private PublisherService _publisher;
+        private UpdateService _update;
 
         private string _token = "";
 
@@ -47,13 +48,16 @@ namespace DiscordBot
             _database = new DatabaseService();
             _user = new UserService(_database, _logging);
             _work = new WorkService();
-            _publisher = new PublisherService();
+            _publisher = new PublisherService(_client, _database);
+            _update = new UpdateService(_logging, _publisher, _database);
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_logging);
             _serviceCollection.AddSingleton(_database);
             _serviceCollection.AddSingleton(_user);
-            _serviceCollection.AddSingleton(_work);
+            //_serviceCollection.AddSingleton(_work);
+            //TODO: rework work service
             _serviceCollection.AddSingleton(_publisher);
+            _serviceCollection.AddSingleton(_update);
             _services = _serviceCollection.BuildServiceProvider();
 
 
@@ -73,11 +77,6 @@ namespace DiscordBot
             };
 
             await Task.Delay(-1);
-        }
-
-        private void OnUpdate(object obj)
-        {
-            _work.TimerUpdate();
         }
 
         private static Task Logger(LogMessage message)

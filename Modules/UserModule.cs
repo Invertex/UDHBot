@@ -11,17 +11,26 @@ namespace DiscordBot
         private readonly LoggingService _logging;
         private readonly DatabaseService _database;
         private readonly UserService _user;
-        
-        public UserModule(LoggingService logging, DatabaseService database, UserService user)
+        private readonly PublisherService _publisher;
+
+        public UserModule(LoggingService logging, DatabaseService database, UserService user, PublisherService publisher)
         {
             _logging = logging;
             _database = database;
             _user = user;
+            _publisher = publisher;
         }
 
         [Command("help"), Summary("Display available commands (this). Syntax : !help")]
         async Task DisplayHelp()
         {
+            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+            {
+                await Task.Delay(1000);
+                await Context.Message.DeleteAsync();
+                return;
+            }
+
             await ReplyAsync(Settings.GetCommandList());
         }
 
@@ -40,6 +49,8 @@ namespace DiscordBot
             sb.Append($"around a bit with a large {slaps[random.Next() % 3]}");
 
             await Context.Channel.SendMessageAsync(sb.ToString());
+            await Task.Delay(1000);
+            await Context.Message.DeleteAsync();
         }
 
         [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
@@ -56,7 +67,9 @@ namespace DiscordBot
 
 
             await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(Context.Message.Author));
-            //await ReplyAsync($"{username} has {xp} xp and {karma} karma which  makes him #{rank}");
+
+            await Task.Delay(10000);
+            await Context.Message.DeleteAsync();
         }
 
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
@@ -73,15 +86,14 @@ namespace DiscordBot
 
 
             await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(user));
-            //await ReplyAsync($"{username} has {xp} xp and {karma} karma which  makes him #{rank}");
+
+            await Task.Delay(10000);
+            await Context.Message.DeleteAsync();
         }
 
         [Command("quote"), Summary("Quote a message. Syntax : !quote #channelname messageid")]
         async Task QuoteMessage(IMessageChannel channel, ulong id)
         {
-            /*/
-            TODO: TO FIX : only work for messages posted while the bot was up
-            */
             var message = await channel.GetMessageAsync(id);
             Console.WriteLine($"message {message.Author.Username}  {message.Channel.Name}");
             var builder = new EmbedBuilder()
@@ -101,6 +113,7 @@ namespace DiscordBot
                 .AddField("Original message", message.Content);
             var embed = builder.Build();
             await ReplyAsync("", false, embed);
+            await Task.Delay(1000);
             await Context.Message.DeleteAsync();
         }
 
@@ -112,6 +125,61 @@ namespace DiscordBot
             var coin = new[] {"Heads", "Tails"};
 
             await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}** !");
+            await Task.Delay(1000);
+            await Context.Message.DeleteAsync();
+        }
+
+        [Command("pinfo"), Summary("Information on how to get the publisher role. Syntax : !pinfo")]
+        async Task PublisherInfo()
+        {
+            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+            {
+                await Task.Delay(1000);
+                await Context.Message.DeleteAsync();
+                return;
+            }
+
+            Random rand = new Random();
+            var coin = new[] {"Heads", "Tails"};
+
+            await ReplyAsync($"\n" +
+                             "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
+                             "``!pkg ID`` - To add your package to Publisher everyday Advertising , ID means the digits on your package link.\n" +
+                             "``!tst ID`` - a faster way to check the packages if happens that ``!pgk ID`` timeouts or it gives error reply. ``!tst``" +
+                             "has less checks to do and runs faster... Note that executing this command doesn't add the package on the database\n" +
+                             "\n");
+
+            await Task.Delay(10000);
+            await Context.Message.DeleteAsync();
+        }
+
+        [Command("pkg"), Summary("Add your published package to the daily advertising. Syntax : !pkg packageId")]
+        [Alias("package")]
+        async Task Package(uint packageId)
+        {
+            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+            {
+                await Task.Delay(1000);
+                await Context.Message.DeleteAsync();
+                return;
+            }
+
+            (bool, string) verif = await _publisher.VerifyPackage(packageId);
+            await ReplyAsync(verif.Item2);
+        }
+
+        [Command("verify"), Summary("Verify a package with the code received by email. Syntax : !verify packageId code")]
+        async Task VerifyPackage(uint packageId, string code)
+        {
+            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+            {
+                await Task.Delay(1000);
+                await Context.Message.DeleteAsync();
+                return;
+            }
+
+            string verif = await _publisher.ValidatePackageWithCode(Context.Message.Author, packageId, code);
+            await ReplyAsync(verif);
         }
 
         [Group("role")]
@@ -128,6 +196,13 @@ namespace DiscordBot
             [RequireUserPermission(GuildPermission.ManageRoles)]
             async Task AddRoleUser(IRole role)
             {
+                if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+                {
+                    await Task.Delay(1000);
+                    await Context.Message.DeleteAsync();
+                    return;
+                }
+
                 if (!Settings.IsRoleAssignable(role))
                 {
                     await ReplyAsync("This role is not assigneable");
@@ -137,13 +212,20 @@ namespace DiscordBot
 
                 u.AddRoleAsync(role);
                 await ReplyAsync($"{u.Username} you now have the role of `{role.Name}`");
-                _logging.LogAction($"{Context.User.Username} has added role {role} to himself in {Context.Channel.Name}");
+                await _logging.LogAction($"{Context.User.Username} has added role {role} to himself in {Context.Channel.Name}");
             }
 
             [Command("remove"), Summary("Remove a role from yourself. Syntax : !role remove role")]
             [Alias("delete")]
             async Task RemoveRoleUser(IRole role)
             {
+                if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+                {
+                    await Task.Delay(1000);
+                    await Context.Message.DeleteAsync();
+                    return;
+                }
+
                 if (!Settings.IsRoleAssignable(role))
                 {
                     await ReplyAsync("Role is not assigneable");
@@ -154,12 +236,19 @@ namespace DiscordBot
 
                 u.RemoveRoleAsync(role);
                 await ReplyAsync($"{u.Username} your role of `{role.Name}` has been removed");
-                _logging.LogAction($"{Context.User.Username} has removed role {role} from himself in {Context.Channel.Name}");
+                await _logging.LogAction($"{Context.User.Username} has removed role {role} from himself in {Context.Channel.Name}");
             }
 
             [Command("list"), Summary("Display the list of roles. Syntax : !role list")]
             async Task ListRole()
             {
+                if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+                {
+                    await Task.Delay(1000);
+                    await Context.Message.DeleteAsync();
+                    return;
+                }
+
                 await ReplyAsync("**The following roles are available on this server** :\n" +
                                  "\n" +
                                  "We offer multiple roles to show what you specialize in, so if you are particularly good at anything, assign your role! \n" +

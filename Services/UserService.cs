@@ -162,10 +162,10 @@ namespace DiscordBot
                                  @"\images\background.png";
             var foregroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                                  @"\images\foreground.png";
-            Image<Rgba32> profileCard = Image.Load(backgroundPath);
-            Image<Rgba32> profileFg = Image.Load(foregroundPath);
+            Image<Rgba32> profileCard = ImageSharp.Image.Load(backgroundPath);
+            Image<Rgba32> profileFg = ImageSharp.Image.Load(foregroundPath);
             Image<Rgba32> avatar;
-            Image<Rgba32> triangle = Image.Load(
+            Image<Rgba32> triangle = ImageSharp.Image.Load(
                 SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                 @"\images\triangle.png");
             Stream stream;
@@ -174,7 +174,7 @@ namespace DiscordBot
 
             if (string.IsNullOrEmpty(avatarUrl))
             {
-                avatar = Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                                     @"\images\default.png");
             }
             else
@@ -183,7 +183,7 @@ namespace DiscordBot
                 {
                     stream = await http.GetStreamAsync(new Uri(avatarUrl));
                 }
-                avatar = Image.Load(stream);
+                avatar = ImageSharp.Image.Load(stream);
             }
             uint xp = _database.GetUserXp(userId);
             uint rank = _database.GetUserRank(userId);
@@ -212,16 +212,14 @@ namespace DiscordBot
                 }
             }
             Color c = mainRole.Color;
-            //Console.WriteLine($"{u.Guild.GetRole(u.RoleIds.Last())}  {c.R} {c.G} {c.B} {c.RawValue}");
-
+            
             var brush = new RecolorBrush<Rgba32>(Rgba32.White,
                 new Rgba32(c.R, c.G, c.B), .25f);
 
             triangle.Fill(brush);
 
             profileCard.DrawImage(triangle, 100f, new Size(triangle.Width, triangle.Height), new Point(346, 14));
-            //profileCard.Fill(new Rgba32(.5f, .5f, .5f, .5f), new RectangleF(20, 20, 376, 88)); //Background
-
+            
             profileCard.Fill(Rgba32.FromHex("#3f3f3f"),
                 new RectangleF(startX, startY, 232, height)); //XP bar background
             profileCard.Fill(Rgba32.FromHex("#00f0ff"),

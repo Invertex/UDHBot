@@ -32,8 +32,22 @@ namespace DiscordBot
 
         public static ulong GetBotAnnouncementChannel()
         {
-            Console.WriteLine(SettingsHandler.LoadValueUlong("botAnnouncementChannel/id", JsonFile.Settings));
             return SettingsHandler.LoadValueUlong("botAnnouncementChannel/id", JsonFile.Settings);
+        }
+
+        public static ulong GetUnityNewsChannel()
+        {
+            return SettingsHandler.LoadValueUlong("unityNewsChannel/id", JsonFile.Settings);
+        }
+
+        public static ulong GetBotCommandsChannel()
+        {
+            return SettingsHandler.LoadValueUlong("botCommandsChannel/id", JsonFile.Settings);
+        }
+
+        public static string GetServerRootPath()
+        {
+            return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings);
         }
 
         public static void SetCommandList(string commandList)

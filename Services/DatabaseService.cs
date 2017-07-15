@@ -18,6 +18,50 @@ namespace DiscordBot
             _connection = SettingsHandler.LoadValueString("dbConnectionString", JsonFile.Settings);
         }
 
+        /*
+        **Publisher Stuff
+        */
+        public uint GetPublisherAdCount()
+        {
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand("SELECT COUNT(*) FROM advertisment", connection);
+                connection.Open();
+                return Convert.ToUInt32(command.ExecuteScalar());
+            }
+        }
+
+        public (uint, string) GetPublisherAd(uint id)
+        {
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand($"Select username, discriminator, packageID FROM advertisment WHERE id='{id}'", connection);
+                connection.Open();
+                MySqlDataReader reader;
+                using (reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        return (Convert.ToUInt32(reader["packageID"]), $"{reader["username"]}#{reader["discriminator"]}");
+                    }
+                }
+            }
+            return (0, null);
+        }
+
+        public void AddPublisherPackage(string username, string discriminator, string userid, uint packageID)
+        {
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand(
+                    $"INSERT INTO advertisment SET username='{username}', discriminator='{discriminator}', userid='{userid}', packageID='{packageID}', date='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'",
+                    connection);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+
         public void AddUserXp(ulong id, uint xp)
         {
             uint oldXp;
