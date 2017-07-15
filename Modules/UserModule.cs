@@ -220,7 +220,6 @@ namespace DiscordBot
             }
 
             [Command("add"), Summary("Add a role to yourself. Syntax : !role add role")]
-            [RequireUserPermission(GuildPermission.ManageRoles)]
             async Task AddRoleUser(IRole role)
             {
                 if (Context.Channel.Id != Settings.GetBotCommandsChannel())
