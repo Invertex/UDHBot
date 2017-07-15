@@ -38,7 +38,7 @@ namespace DiscordBot
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Debug,
+                LogLevel = LogSeverity.Verbose,
                 AlwaysDownloadUsers = true,
                 MessageCacheSize = 50
             });
@@ -169,6 +169,7 @@ namespace DiscordBot
             {
                 Console.WriteLine("error couldn't find general channel");
                 await socketTextChannel.SendMessageAsync(string.Empty, false, em);
+                await socketTextChannel.SendMessageAsync($"Welcome to Unity Developer Hub **{user.Username}** !");
             }
 
             await _logging.LogAction(
@@ -199,8 +200,9 @@ namespace DiscordBot
         {
             DateTime joinDate;
             DateTime.TryParse(_database.GetUserJoinDate(user.Id), out joinDate);
+            Console.WriteLine("user left1");
             string timeStayed = (DateTime.Now - joinDate).ToString("dd days and HH hours");
-
+Console.WriteLine("user left2");
             await _logging.LogAction(
                 $"User Left - After {timeStayed} {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
             _database.DeleteUser(user.Id);
