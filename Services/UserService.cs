@@ -218,7 +218,7 @@ namespace DiscordBot
 
             triangle.Fill(brush);
 
-            profileCard.DrawImage(triangle, 100f, new Size(triangle.Width, triangle.Height), new Point(346, 14));
+            profileCard.DrawImage(triangle, 100f, new Size(triangle.Width, triangle.Height), new Point(346, 17));
             
             profileCard.Fill(Rgba32.FromHex("#3f3f3f"),
                 new RectangleF(startX, startY, 232, height)); //XP bar background

@@ -91,6 +91,33 @@ namespace DiscordBot
             await Context.Message.DeleteAsync();
         }
 
+        [Command("quote"), Summary("Quote a message in current channel. Syntax : !quote messageid")]
+        async Task QuoteMessage(ulong id)
+        {
+            IMessageChannel channel = Context.Channel;
+            var message = await channel.GetMessageAsync(id);
+            Console.WriteLine($"message {message.Author.Username}  {message.Channel.Name}");
+            var builder = new EmbedBuilder()
+                .WithColor(new Color(200, 128, 128))
+                .WithTimestamp(message.Timestamp)
+                .WithFooter(footer =>
+                {
+                    footer
+                        .WithText($"In channel {message.Channel.Name}");
+                })
+                .WithAuthor(author =>
+                {
+                    author
+                        .WithName($"{message.Author.Username}")
+                        .WithIconUrl(message.Author.GetAvatarUrl());
+                })
+                .AddField("Original message", message.Content);
+            var embed = builder.Build();
+            await ReplyAsync("", false, embed);
+            await Task.Delay(1000);
+            await Context.Message.DeleteAsync();
+        }
+        
         [Command("quote"), Summary("Quote a message. Syntax : !quote #channelname messageid")]
         async Task QuoteMessage(IMessageChannel channel, ulong id)
         {
