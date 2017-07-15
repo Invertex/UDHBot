@@ -210,7 +210,7 @@ namespace DiscordBot
                 }
                 var u = Context.User as IGuildUser;
 
-                u.AddRoleAsync(role);
+                await u.AddRoleAsync(role);
                 await ReplyAsync($"{u.Username} you now have the role of `{role.Name}`");
                 await _logging.LogAction($"{Context.User.Username} has added role {role} to himself in {Context.Channel.Name}");
             }
@@ -234,7 +234,7 @@ namespace DiscordBot
 
                 var u = Context.User as IGuildUser;
 
-                u.RemoveRoleAsync(role);
+                await u.RemoveRoleAsync(role);
                 await ReplyAsync($"{u.Username} your role of `{role.Name}` has been removed");
                 await _logging.LogAction($"{Context.User.Username} has removed role {role} from himself in {Context.Channel.Name}");
             }

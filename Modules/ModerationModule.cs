@@ -24,9 +24,9 @@ namespace DiscordBot
         {
             var u = user as IGuildUser;
 
-            u.AddRoleAsync(Settings.GetMutedRole(Context.Guild));
+            await u.AddRoleAsync(Settings.GetMutedRole(Context.Guild));
             await ReplyAsync("User " + user + " has been muted for " + arg + " seconds.");
-            _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
+            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
 
             await Context.Message.DeleteAsync();
 
@@ -42,7 +42,7 @@ namespace DiscordBot
 
             Context.Message?.DeleteAsync();
 
-            u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
+            await u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
             await ReplyAsync("User " + user + " has been unmuted.");
         }
 
@@ -58,9 +58,9 @@ namespace DiscordBot
             }
 
             var u = user as IGuildUser;
-            u.AddRoleAsync(role);
+            await u.AddRoleAsync(role);
             await ReplyAsync("Role " + role + " has been added to " + user);
-            _logging.LogAction($"{Context.User.Username} has added role {role} to {u.Username}");
+            await _logging.LogAction($"{Context.User.Username} has added role {role} to {u.Username}");
         }
 
         [Command("removerole"), Summary("Remove a role from a user")]
@@ -76,9 +76,9 @@ namespace DiscordBot
 
             var u = user as IGuildUser;
 
-            u.RemoveRoleAsync(role);
+            await u.RemoveRoleAsync(role);
             await ReplyAsync("Role " + role + " has been removed from " + user);
-            _logging.LogAction($"{Context.User.Username} has removed role {role} from {u.Username}");
+            await _logging.LogAction($"{Context.User.Username} has removed role {role} from {u.Username}");
         }
 
         [Command("clear"), Summary("Remove last x messages")]
@@ -94,7 +94,7 @@ namespace DiscordBot
             var m = await ReplyAsync("Messages deleted.");
             await Task.Delay(5000);
             await m.DeleteAsync();
-            _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
+            await _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
         }
 
         [Command("kick"), Summary("Kick a user")]
@@ -104,7 +104,7 @@ namespace DiscordBot
             var u = user as IGuildUser;
 
             await u.KickAsync();
-            _logging.LogAction($"{Context.User.Username} has kicked {u.Username}");
+            await _logging.LogAction($"{Context.User.Username} has kicked {u.Username}");
         }
 
         [Command("ban"), Summary("Ban an user")]
@@ -112,7 +112,7 @@ namespace DiscordBot
         async Task BanUser(IUser user)
         {
             await Context.Guild.AddBanAsync(user, 7, RequestOptions.Default);
-            _logging.LogAction($"{Context.User.Username} has banned {user.Username}");
+            await _logging.LogAction($"{Context.User.Username} has banned {user.Username}");
         }
     }
 }

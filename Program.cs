@@ -161,7 +161,7 @@ namespace DiscordBot
         {
             if (oldUser.Nickname != user.Nickname)
             {
-                _logging.LogAction(
+                await _logging.LogAction(
                     $"User {oldUser.Nickname ?? oldUser.Username}#{oldUser.DiscriminatorValue} changed his " +
                     $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
                 _database.UpdateUserName(user.Id, user.Nickname);
