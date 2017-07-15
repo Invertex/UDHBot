@@ -136,9 +136,8 @@ namespace DiscordBot
             if (message.Value.Author.IsBot)
                 return;
             
-            Console.WriteLine("before embed");
-
-            var builder = new EmbedBuilder()
+            
+            EmbedBuilder builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
                 .WithTimestamp(message.Value.Timestamp)
                 .WithFooter(footer =>
@@ -152,9 +151,7 @@ namespace DiscordBot
                         .WithName($"{message.Value.Author.Username}");
                 })
                 .AddField("Deleted message", message.Value.Content);
-            var embed = builder.Build();
-            
-            Console.WriteLine(embed);
+            Embed embed = builder.Build();
             
             await _logging.LogAction(" ", true, true, embed);
         }
@@ -166,9 +163,13 @@ namespace DiscordBot
             ulong general = SettingsHandler.LoadValueUlong("generalChannel", JsonFile.Settings);
             Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
 
+            Console.WriteLine("general channel id : " + general);
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
             if (socketTextChannel != null)
+            {
+                Console.WriteLine("error couldn't find general channel");
                 await socketTextChannel.SendMessageAsync(string.Empty, false, em);
+            }
 
             await _logging.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
