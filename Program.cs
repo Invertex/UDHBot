@@ -152,7 +152,7 @@ namespace DiscordBot
                 .AddField("Deleted message", message.Value.Content);
             var embed = builder.Build();
             
-            await _logging.LogAction("", false, false, embed);
+            await _logging.LogAction("", true, true, embed);
         }
 
 
