@@ -25,12 +25,13 @@ namespace DiscordBot
             var u = user as IGuildUser;
 
             await u.AddRoleAsync(Settings.GetMutedRole(Context.Guild));
-            await ReplyAsync("User " + user + " has been muted for " + arg + " seconds.");
+            IUserMessage reply = await ReplyAsync("User " + user + " has been muted for " + arg + " seconds.");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
 
             await Context.Message.DeleteAsync();
 
-            await Task.Delay((int)arg * 1000);
+            await Task.Delay((int) arg * 1000);
+            await reply.DeleteAsync();
             await UnmuteUser(user);
         }
 
@@ -43,7 +44,9 @@ namespace DiscordBot
             Context.Message?.DeleteAsync();
 
             await u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
-            await ReplyAsync("User " + user + " has been unmuted.");
+            IUserMessage reply = await ReplyAsync("User " + user + " has been unmuted.");
+            await Task.Delay(TimeSpan.FromSeconds(10d));
+            await reply.DeleteAsync();
         }
 
         [Command("addrole"), Summary("Add a role to a user")]

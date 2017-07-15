@@ -133,7 +133,7 @@ namespace DiscordBot
 
         private async Task MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
-            if (message.Value.Author.IsBot || channel.Id == SettingsHandler.LoadValueUlong("botAnnouncementChannel", JsonFile.Settings))
+            if (message.Value.Author.IsBot)
                 return;
             
             Console.WriteLine("before embed");
