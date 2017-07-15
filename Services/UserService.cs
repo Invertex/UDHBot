@@ -330,7 +330,7 @@ namespace DiscordBot
                 _thanksCooldown.Add(userId, DateTime.Now.Add(new TimeSpan(0, 0, 0, _thanksCooldownTime)));
 
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
-                _logging.LogAction(sb + " in channel " + messageParam.Channel.Name);
+                await _logging.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
         }
     }

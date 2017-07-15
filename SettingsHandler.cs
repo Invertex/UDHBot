@@ -90,8 +90,7 @@ namespace DiscordBot
             for (int i = 0; i < split.Length; i++)
             {
                 string newS = split[i];
-                string tmp = "";
-
+                
                 newS = newS.Replace("\"", "").Replace(",", "");
                 newS = Regex.Replace(newS, @"\s", "");
                 newS = Regex.Replace(newS, @"\t", "");

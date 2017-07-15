@@ -111,15 +111,7 @@ namespace DiscordBot
             _client.MessageReceived += _user.UpdateXp;
             _client.MessageReceived += _user.Thanks;
             _client.MessageReceived += _work.OnMessageAdded;
-            _client.MessageDeleted += (x, y) =>
-            {
-                if (x.Value.Author.IsBot)
-                    return Task.CompletedTask;
-
-                _logging.LogAction(
-                    $"{x.Value.Author.Username} has deleted message `{x.Value.Content}` from channel {y.Name}");
-                return Task.CompletedTask;
-            };
+            _client.MessageDeleted += MessageDeleted;
             _client.UserJoined += UserJoined;
             _client.GuildMemberUpdated += UserUpdated;
             _client.UserLeft += UserLeft;
@@ -139,9 +131,19 @@ namespace DiscordBot
             Settings.SetCommandList(commandList.ToString());
         }
 
+        private async Task MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        {
+            if (message.Value.Author.IsBot)
+                return;
+
+            await _logging.LogAction(
+                $"{message.Value.Author.Username} has deleted message `{message.Value.Content}` from channel {channel.Name}");
+        }
+
+
         private async Task UserJoined(SocketGuildUser user)
         {
-            _logging.LogAction($"User Joined: {user.Username}");
+            await _logging.LogAction($"User Joined: {user.Username}");
             ulong general = SettingsHandler.LoadValueUlong("generalChannel", JsonFile.Settings);
             Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
 
@@ -153,7 +155,7 @@ namespace DiscordBot
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
             _database.AddNewUser(user);
-            
+
             //TODO: add users when bot was offline
         }
 

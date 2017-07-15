@@ -20,7 +20,7 @@ namespace DiscordBot
         [Command("mute"), Summary("Mute a user for a fixed duration")]
         [Alias("shutup", "stfu")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        async Task MuteUser(IUser user, int arg)
+        async Task MuteUser(IUser user, uint arg)
         {
             var u = user as IGuildUser;
 
@@ -30,7 +30,7 @@ namespace DiscordBot
 
             await Context.Message.DeleteAsync();
 
-            await Task.Delay(arg * 1000);
+            await Task.Delay((int)arg * 1000);
             await UnmuteUser(user);
         }
 
