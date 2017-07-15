@@ -122,7 +122,6 @@ namespace DiscordBot
         async Task QuoteMessage(IMessageChannel channel, ulong id)
         {
             var message = await channel.GetMessageAsync(id);
-            Console.WriteLine($"message {message.Author.Username}  {message.Channel.Name}");
             var builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
                 .WithTimestamp(message.Timestamp)

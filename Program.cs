@@ -136,8 +136,23 @@ namespace DiscordBot
             if (message.Value.Author.IsBot || channel.Id == SettingsHandler.LoadValueUlong("botAnnouncementChannel", JsonFile.Settings))
                 return;
 
-            await _logging.LogAction(
-                $"{message.Value.Author.Username} has deleted message `{message.Value.Content}` from channel {channel.Name}");
+            var builder = new EmbedBuilder()
+                .WithColor(new Color(200, 128, 128))
+                .WithTimestamp(message.Value.Timestamp)
+                .WithFooter(footer =>
+                {
+                    footer
+                        .WithText($"In channel {message.Value.Channel.Name}");
+                })
+                .WithAuthor(author =>
+                {
+                    author
+                        .WithName($"{message.Value.Author.Username}")
+                })
+                .AddField("Deleted message", message.Value.Content);
+            var embed = builder.Build();
+            
+            await _logging.LogAction("", false, false, embed);
         }
 
 
@@ -207,7 +222,7 @@ namespace DiscordBot
             if (!result.IsSuccess)
             {
                 IUserMessage m = await context.Channel.SendMessageAsync(result.ErrorReason);
-                Task.Delay(10000);
+                await Task.Delay(10000);
                 await m.DeleteAsync();
             }
         }

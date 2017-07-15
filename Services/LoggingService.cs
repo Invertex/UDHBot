@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 
@@ -15,12 +16,12 @@ namespace DiscordBot
             _client = client;
         }
 
-        public async Task LogAction(string action, bool logToFile = true, bool logToChannel = true)
+        public async Task LogAction(string action, bool logToFile = true, bool logToChannel = true, Embed embed = null)
         {
             if (logToChannel)
             {
                 var channel = _client.GetChannel(Settings.GetBotAnnouncementChannel()) as ISocketMessageChannel;
-                await channel.SendMessageAsync(action);
+                await channel.SendMessageAsync(action, false, embed);
             }
 
             if (logToFile)
