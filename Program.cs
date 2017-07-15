@@ -38,7 +38,8 @@ namespace DiscordBot
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Info,
+                
+                LogLevel = LogSeverity.Critical,
                 AlwaysDownloadUsers = true,
                 MessageCacheSize = 50
             });
@@ -133,7 +134,7 @@ namespace DiscordBot
 
         private async Task MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
-            if (message.Value.Author.IsBot)
+            if (message.Value.Author.IsBot || channel.Id == SettingsHandler.LoadValueUlong("botAnnouncementChannel", JsonFile.Settings))
                 return;
 
             await _logging.LogAction(
