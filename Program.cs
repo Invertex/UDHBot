@@ -38,8 +38,7 @@ namespace DiscordBot
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                
-                LogLevel = LogSeverity.Critical,
+                LogLevel = LogSeverity.Info,
                 AlwaysDownloadUsers = true,
                 MessageCacheSize = 50
             });
@@ -206,7 +205,11 @@ namespace DiscordBot
             // rather an object stating if the command executed successfully)
             var result = await _commands.ExecuteAsync(context, argPos, _services);
             if (!result.IsSuccess)
-                await context.Channel.SendMessageAsync(result.ErrorReason);
+            {
+                IUserMessage m = await context.Channel.SendMessageAsync(result.ErrorReason);
+                Task.Delay(10000);
+                await m.DeleteAsync();
+            }
         }
     }
 }
