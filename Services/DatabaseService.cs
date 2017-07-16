@@ -161,15 +161,22 @@ namespace DiscordBot
             }
         }
 
-        public void DeleteUser(ulong id)
+        public async void DeleteUser(ulong id)
         {
-            using (var connection = new MySqlConnection(_connection))
+            try
             {
-                var command = new MySqlCommand($"DELETE FROM users WHERE userid='{id}'", connection);
-                var command2 = new MySqlCommand($"INSERT users_remove SELECT * FROM users WHERE userid='{id}'", connection);
-                connection.Open();
-                command2.ExecuteNonQuery();
-                command.ExecuteNonQuery();
+                using (var connection = new MySqlConnection(_connection))
+                {
+                    var command = new MySqlCommand($"DELETE FROM users WHERE userid='{id}'", connection);
+                    var command2 = new MySqlCommand($"INSERT users_remove SELECT * FROM users WHERE userid='{id}'", connection);
+                    connection.Open();
+                    command2.ExecuteNonQuery();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception e)
+            {
+                await _logging.LogAction($"Error when trying to delete user {id} : {e}");
             }
         }
 
