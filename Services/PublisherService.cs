@@ -178,6 +178,9 @@ namespace DiscordBot
             if (c != code)
                 return "The verification code is not valid. Please verify it and try again.";
 
+            var u = user as SocketGuildUser;
+            IRole publisher = u.Guild.GetRole(SettingsHandler.LoadValueUlong("publisherRoleID", JsonFile.Settings));
+            await u.AddRoleAsync(publisher);
             _database.AddPublisherPackage(user.Username, user.DiscriminatorValue.ToString(), user.Id.ToString(), packageId);
 
             return "Your package has been verified and added to the daily advertisement list.";
