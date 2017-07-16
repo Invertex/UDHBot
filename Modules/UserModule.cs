@@ -60,8 +60,8 @@ namespace DiscordBot
 
             await Task.Delay(10000);
             await Context.Message.DeleteAsync();
-            await Task.Delay(TimeSpan.FromMinutes(1d));
-            await profile.DeleteAsync();
+            /*await Task.Delay(TimeSpan.FromMinutes(1d));
+            await profile.DeleteAsync();*/
         }
 
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
@@ -71,8 +71,8 @@ namespace DiscordBot
 
             await Task.Delay(10000);
             await Context.Message.DeleteAsync();
-            await Task.Delay(TimeSpan.FromMinutes(1d));
-            await profile.DeleteAsync();
+           /* await Task.Delay(TimeSpan.FromMinutes(1d));
+            await profile.DeleteAsync();*/
         }
 
         [Command("quote"), Summary("Quote a message in current channel. Syntax : !quote messageid")]
