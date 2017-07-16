@@ -235,7 +235,7 @@ namespace DiscordBot
             profileCard.DrawText("Total XP:              " + xp, _defaultFont, Rgba32.FromHex("#3C3C3C"),
                 new PointF(167, 94));
 
-            profileCard.Resize(400, 112);
+            profileCard.Resize(400, 120);
             
             profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                              $@"/images/profiles/{user.Username}-profile.png");
