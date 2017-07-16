@@ -79,7 +79,7 @@ namespace DiscordBot
             */
             StringBuilder sbThanks = new StringBuilder();
             string[] thx = SettingsHandler.LoadValueStringArray("thanks", JsonFile.UserSettings);
-            sbThanks.Append("(");
+            sbThanks.Append("((?i)");
             for (int i = 0; i < thx.Length; i++)
             {
                 if (i < thx.Length - 1)
