@@ -135,8 +135,8 @@ namespace DiscordBot
         {
             if (message.Value.Author.IsBot)
                 return;
-            
-            
+
+
             EmbedBuilder builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
                 .WithTimestamp(message.Value.Timestamp)
@@ -152,7 +152,7 @@ namespace DiscordBot
                 })
                 .AddField("Deleted message", message.Value.Content);
             Embed embed = builder.Build();
-            
+
             await _logging.LogAction(" ", true, true, embed);
         }
 
@@ -166,15 +166,14 @@ namespace DiscordBot
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
             if (socketTextChannel != null)
             {
-                await socketTextChannel.SendMessageAsync($"Welcome to Unity Developer Hub **{user.Username}#{user.DiscriminatorValue}** !");
                 await socketTextChannel.SendMessageAsync(string.Empty, false, em);
             }
-            
+
             await _logging.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
             _database.AddNewUser(user);
-            
+
             //TODO: add users when bot was offline
         }
 
@@ -199,10 +198,11 @@ namespace DiscordBot
             DateTime joinDate;
             DateTime.TryParse(_database.GetUserJoinDate(user.Id), out joinDate);
             Console.WriteLine("user left1");
-            string timeStayed = (DateTime.Now - joinDate).ToString("dd days and HH hours");
-Console.WriteLine("user left2");
+            TimeSpan timeStayed = DateTime.Now - joinDate;
+            Console.WriteLine("user left2");
             await _logging.LogAction(
-                $"User Left - After {timeStayed} {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +
+                $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
             _database.DeleteUser(user.Id);
         }
 
