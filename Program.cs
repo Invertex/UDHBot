@@ -110,7 +110,7 @@ namespace DiscordBot
             _client.MessageReceived += HandleCommand;
             _client.MessageReceived += _user.UpdateXp;
             _client.MessageReceived += _user.Thanks;
-            _client.MessageReceived += _work.OnMessageAdded;
+            //_client.MessageReceived += _work.OnMessageAdded;
             _client.MessageDeleted += MessageDeleted;
             _client.UserJoined += UserJoined;
             _client.GuildMemberUpdated += UserUpdated;

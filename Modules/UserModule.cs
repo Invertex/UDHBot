@@ -56,16 +56,6 @@ namespace DiscordBot
         [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
         async Task DisplayProfile()
         {
-            ulong id;
-            string username;
-            id = Context.Message.Author.Id;
-            username = Context.Message.Author.Username;
-
-            var xp = _database.GetUserXp(id);
-            var karma = _database.GetUserKarma(id);
-            var rank = _database.GetUserRank(id);
-
-
             IUserMessage profile = await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(Context.Message.Author));
 
             await Task.Delay(10000);
@@ -77,16 +67,6 @@ namespace DiscordBot
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
         async Task DisplayProfile(IUser user)
         {
-            ulong id;
-            string username;
-            id = user.Id;
-            username = user.Username;
-
-            var xp = _database.GetUserXp(id);
-            var karma = _database.GetUserKarma(id);
-            var rank = _database.GetUserRank(id);
-
-
             IUserMessage profile = await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(user));
 
             await Task.Delay(10000);
