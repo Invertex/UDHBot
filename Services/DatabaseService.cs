@@ -163,7 +163,7 @@ namespace DiscordBot
                     var command = new MySqlCommand(
                         $"INSERT INTO users SET username='{user.Username}', userid='{user.Id}', discriminator='{user.DiscriminatorValue}'," +
                         $"avatar='{user.AvatarId}', " +
-                        $"avatarURL='{user.GetAvatarUrl()},'" +
+                        $"avatarURL='{user.GetAvatarUrl()}'," +
                         $"bot='{(user.IsBot ? 1 : 0)}', status='{user.Status}', joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'", connection);
                     connection.Open();
                     command.ExecuteNonQuery();
