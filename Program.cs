@@ -43,7 +43,11 @@ namespace DiscordBot
                 MessageCacheSize = 50
             });
 
-            _commands = new CommandService();
+            _commands = new CommandService(new CommandServiceConfig()
+            {
+                CaseSensitiveCommands = false,
+                DefaultRunMode = RunMode.Async
+            });
             _logging = new LoggingService(_client);
             _database = new DatabaseService(_logging);
             _user = new UserService(_database, _logging);
@@ -133,7 +137,7 @@ namespace DiscordBot
 
         private async Task MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
-            if (message.Value.Author.IsBot)
+            if (message.Value.Author.IsBot || channel.Id == Settings.GetBotAnnouncementChannel())
                 return;
 
 
