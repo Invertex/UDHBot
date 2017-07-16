@@ -54,13 +54,20 @@ namespace DiscordBot
 
         public void AddPublisherPackage(string username, string discriminator, string userid, uint packageID)
         {
-            using (var connection = new MySqlConnection(_connection))
+            try
             {
-                var command = new MySqlCommand(
-                    $"INSERT INTO advertisment SET username='{username}', discriminator='{discriminator}', userid='{userid}', packageID='{packageID}', date='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'",
-                    connection);
-                connection.Open();
-                command.ExecuteNonQuery();
+                using (var connection = new MySqlConnection(_connection))
+                {
+                    var command = new MySqlCommand(
+                        $"INSERT INTO advertisment SET username='{username}', discriminator='{discriminator}', userid='{userid}', packageID='{packageID}', date='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'",
+                        connection);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception e)
+            {
+                _logging.LogAction($"Error when trying to add package {packageID} from {username}#{discriminator} - {userid} : {e}");
             }
         }
 
@@ -149,15 +156,23 @@ namespace DiscordBot
 
         public async void AddNewUser(SocketGuildUser user)
         {
-            using (var connection = new MySqlConnection(_connection))
+            try
             {
-                var command = new MySqlCommand(
-                    $"INSERT INTO users SET username='{user.Username}', userid='{user.Id}', discriminator='{user.DiscriminatorValue}'," +
-                    $"avatar='{user.AvatarId}', " +
-                    $"bot='{(user.IsBot ? 1 : 0)}', status='{user.Status}', joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'", connection);
-                connection.Open();
-                command.ExecuteNonQuery();
-                await _logging.LogAction($"User {user.Username}#{user.DiscriminatorValue} succesfully added to the databse.", true, false);
+                using (var connection = new MySqlConnection(_connection))
+                {
+                    var command = new MySqlCommand(
+                        $"INSERT INTO users SET username='{user.Username}', userid='{user.Id}', discriminator='{user.DiscriminatorValue}'," +
+                        $"avatar='{user.AvatarId}', " +
+                        $"bot='{(user.IsBot ? 1 : 0)}', status='{user.Status}', joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'", connection);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                    await _logging.LogAction($"User {user.Username}#{user.DiscriminatorValue} succesfully added to the databse.", true,
+                        false);
+                }
+            }
+            catch (Exception e)
+            {
+                await _logging.LogAction($"Error when trying to add user {user.Id} to the database : {e}", true, false);
             }
         }
 
@@ -176,45 +191,69 @@ namespace DiscordBot
             }
             catch (Exception e)
             {
-                await _logging.LogAction($"Error when trying to delete user {id} : {e}");
+                await _logging.LogAction($"Error when trying to delete user {id} from the database : {e}", true, false);
             }
         }
 
-        private void UpdateAttributeFromUser(ulong id, string attribute, uint value)
+        private async void UpdateAttributeFromUser(ulong id, string attribute, uint value)
         {
-            using (var connection = new MySqlConnection(_connection))
+            try
             {
-                var command = new MySqlCommand($"UPDATE users SET {attribute}={value} WHERE userid='{id}'", connection);
-                connection.Open();
-                command.ExecuteNonQuery();
+                using (var connection = new MySqlConnection(_connection))
+                {
+                    var command = new MySqlCommand($"UPDATE users SET {attribute}={value} WHERE userid='{id}'", connection);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception e)
+            {
+                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}", true,
+                    false);
             }
         }
 
-        private void UpdateAttributeFromUser(ulong id, string attribute, string value)
+        private async void UpdateAttributeFromUser(ulong id, string attribute, string value)
         {
-            value = MySqlHelper.EscapeString(value);
-            using (var connection = new MySqlConnection(_connection))
+            try
             {
-                var command = new MySqlCommand($"UPDATE users SET {attribute}={value} WHERE userid='{id}'", connection);
-                connection.Open();
-                command.ExecuteNonQuery();
+                value = MySqlHelper.EscapeString(value);
+                using (var connection = new MySqlConnection(_connection))
+                {
+                    var command = new MySqlCommand($"UPDATE users SET {attribute}={value} WHERE userid='{id}'", connection);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception e)
+            {
+                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}", true,
+                    false);
             }
         }
 
         private string GetAttributeFromUser(ulong id, string attribute)
         {
-            using (var connection = new MySqlConnection(_connection))
+            try
             {
-                var command = new MySqlCommand($"Select {attribute} FROM users WHERE userid='{id}'", connection);
-                connection.Open();
-                MySqlDataReader reader;
-                using (reader = command.ExecuteReader())
+                using (var connection = new MySqlConnection(_connection))
                 {
-                    while (reader.Read())
+                    var command = new MySqlCommand($"Select {attribute} FROM users WHERE userid='{id}'", connection);
+                    connection.Open();
+                    MySqlDataReader reader;
+                    using (reader = command.ExecuteReader())
                     {
-                        return reader[attribute].ToString();
+                        while (reader.Read())
+                        {
+                            return reader[attribute].ToString();
+                        }
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                _logging.LogAction($"Error when trying to get attribute {attribute} from user {id} : {e}", true,
+                    false);
             }
 
             return null;

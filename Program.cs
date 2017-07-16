@@ -153,7 +153,10 @@ namespace DiscordBot
                 .AddField("Deleted message", message.Value.Content);
             Embed embed = builder.Build();
 
-            await _logging.LogAction(" ", true, true, embed);
+            await _logging.LogAction(
+                $"User {message.Value.Author.Username}#{message.Value.Author.DiscriminatorValue} has " +
+                $"deleted the message\n{message.Value.Content}\n from channel #{channel.Name}", true, false);
+            await _logging.LogAction(" ", false, true, embed);
         }
 
 
@@ -197,9 +200,7 @@ namespace DiscordBot
         {
             DateTime joinDate;
             DateTime.TryParse(_database.GetUserJoinDate(user.Id), out joinDate);
-            Console.WriteLine("user left1");
             TimeSpan timeStayed = DateTime.Now - joinDate;
-            Console.WriteLine("user left2");
             await _logging.LogAction(
                 $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +
                 $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
