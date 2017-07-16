@@ -13,9 +13,12 @@ namespace DiscordBot
     {
         private string _connection { get; }
 
-        public DatabaseService()
+        private readonly LoggingService _logging;
+
+        public DatabaseService(LoggingService logging)
         {
             _connection = SettingsHandler.LoadValueString("dbConnectionString", JsonFile.Settings);
+            _logging = logging;
         }
 
         /*
@@ -144,7 +147,7 @@ namespace DiscordBot
             UpdateAttributeFromUser(id, "avatarUrl", avatar);
         }
 
-        public void AddNewUser(SocketGuildUser user)
+        public async void AddNewUser(SocketGuildUser user)
         {
             using (var connection = new MySqlConnection(_connection))
             {
@@ -154,6 +157,7 @@ namespace DiscordBot
                     $"bot='{(user.IsBot ? 1 : 0)}', status='{user.Status}', joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'", connection);
                 connection.Open();
                 command.ExecuteNonQuery();
+                await _logging.LogAction($"User {user.Username}#{user.DiscriminatorValue} succesfully added to the databse.", true, false);
             }
         }
 

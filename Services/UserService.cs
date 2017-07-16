@@ -244,8 +244,8 @@ namespace DiscordBot
         public Embed WelcomeMessage(string icon, string name, ushort discriminator)
         {
             icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
-            var builder = new EmbedBuilder()
-                .WithDescription($"Welcome **{(name) + "#" + discriminator}** to the server!")
+            EmbedBuilder builder = new EmbedBuilder()
+                .WithDescription($"Welcome to Unity Developer Hub **{name}#{discriminator}** !")
                 .WithColor(new Color(0x12D687))
                 .WithAuthor(author =>
                 {
@@ -253,7 +253,7 @@ namespace DiscordBot
                         .WithName(name)
                         .WithIconUrl(icon);
                 });
-            var embed = builder.Build();
+            Embed embed = builder.Build();
             return embed;
         }
 

@@ -45,7 +45,7 @@ namespace DiscordBot
 
             _commands = new CommandService();
             _logging = new LoggingService(_client);
-            _database = new DatabaseService();
+            _database = new DatabaseService(_logging);
             _user = new UserService(_database, _logging);
             _work = new WorkService();
             _publisher = new PublisherService(_client, _database);
@@ -174,7 +174,7 @@ namespace DiscordBot
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
             _database.AddNewUser(user);
-
+            
             //TODO: add users when bot was offline
         }
 
