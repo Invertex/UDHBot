@@ -175,7 +175,7 @@ namespace DiscordBot
             if (string.IsNullOrEmpty(avatarUrl))
             {
                 avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                    @"/images/default.png");
+                                               @"/images/default.png");
             }
             else
             {
@@ -212,14 +212,14 @@ namespace DiscordBot
                 }
             }
             Color c = mainRole.Color;
-            
+
             var brush = new RecolorBrush<Rgba32>(Rgba32.White,
                 new Rgba32(c.R, c.G, c.B), .25f);
 
             triangle.Fill(brush);
 
             profileCard.DrawImage(triangle, 100f, new Size(triangle.Width, triangle.Height), new Point(346, 17));
-            
+
             profileCard.Fill(Rgba32.FromHex("#3f3f3f"),
                 new RectangleF(startX, startY, 232, height)); //XP bar background
             profileCard.Fill(Rgba32.FromHex("#00f0ff"),
@@ -267,35 +267,35 @@ namespace DiscordBot
                 return;
 
 
-            ulong userId = messageParam.Author.Id;
-
-            if (_thanksCooldown.ContainsKey(userId))
-            {
-                if (_thanksCooldown[userId] > DateTime.Now)
-                {
-                    await messageParam.Channel.SendMessageAsync(
-                        $"{messageParam.Author.Mention} you must wait " +
-                        $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
-                        "seconds before giving another karma point");
-                    return;
-                }
-                _thanksCooldown.Remove(userId);
-            }
-
-            DateTime joinDate;
-            DateTime.TryParse(_database.GetUserJoinDate(userId), out joinDate);
-            var j = DateTime.Now - TimeSpan.FromSeconds(_thanksMinJoinTime);
-            
-            if (joinDate > j)
-            {
-                await messageParam.Channel.SendMessageAsync(
-                    $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.");
-                return;
-            }
-
             IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
             if (mentions.Count > 0)
             {
+                ulong userId = messageParam.Author.Id;
+
+                if (_thanksCooldown.ContainsKey(userId))
+                {
+                    if (_thanksCooldown[userId] > DateTime.Now)
+                    {
+                        await messageParam.Channel.SendMessageAsync(
+                            $"{messageParam.Author.Mention} you must wait " +
+                            $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
+                            "seconds before giving another karma point");
+                        return;
+                    }
+                    _thanksCooldown.Remove(userId);
+                }
+
+                DateTime joinDate;
+                DateTime.TryParse(_database.GetUserJoinDate(userId), out joinDate);
+                var j = DateTime.Now - TimeSpan.FromSeconds(_thanksMinJoinTime);
+
+                if (joinDate > j)
+                {
+                    await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.");
+                    return;
+                }
+
                 bool mentionedSelf = false;
                 bool mentionedBot = false;
                 StringBuilder sb = new StringBuilder();
