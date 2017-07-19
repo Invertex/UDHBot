@@ -123,6 +123,7 @@ namespace DiscordBot
 
         public async Task<(bool, string)> VerifyPackage(uint packageId)
         {
+            Console.WriteLine("enters verify package");
             PackageObject package = await GetPackage(packageId);
             if (package.content == null) //Package doesn't exist
                 return (false, $"The package id {packageId} doesn't exist.");
@@ -131,7 +132,10 @@ namespace DiscordBot
 
             string name = (await GetPackageHead(packageId)).result.publisher;
 
+            Console.WriteLine("before sending verification code");
+            
             await SendVerificationCode(name, package.content.publisher.support_email, packageId);
+            Console.WriteLine("after sending verification code");
             return (true,
                 "An email with a validation code was sent. Please type !verify *packageId* *code* to validate your package.\nThis code will be valid for 30 minutes."
                 );
