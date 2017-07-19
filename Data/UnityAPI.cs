@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 public class Rating
 {
-    public int count { get; set; }
+    public object count { get; set; }
     public int average { get; set; }
 }
 
@@ -30,7 +30,7 @@ public class Publisher
     public string label { get; set; }
     public string id { get; set; }
     public string support_email { get; set; }
-    public string support_url { get; set; }
+    public object support_url { get; set; }
 }
 
 public class Link
@@ -55,6 +55,7 @@ public class Image
 {
     public string link { get; set; }
     public string width { get; set; }
+    public string name { get; set; }
     public string type { get; set; }
     public string height { get; set; }
     public string thumb { get; set; }
@@ -65,9 +66,9 @@ public class Keyimage
 {
     public string small { get; set; }
     public string big { get; set; }
-    public string small_legacy { get; set; }
+    public object small_legacy { get; set; }
     public object facebook { get; set; }
-    public string big_legacy { get; set; }
+    public object big_legacy { get; set; }
     public string icon { get; set; }
     public string icon75 { get; set; }
     public string icon25 { get; set; }
@@ -108,7 +109,7 @@ public class Content
     public string id { get; set; }
     public Publisher publisher { get; set; }
     public string sizetext { get; set; }
-    public List<List> list { get; set; }
+    public List<object> list { get; set; }
     public Link link { get; set; }
     public List<Image> images { get; set; }
     public Flags flags { get; set; }
