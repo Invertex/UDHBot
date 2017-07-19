@@ -22,7 +22,7 @@ namespace DiscordBot
 
         public static bool IsRoleAssignable(IRole role)
         {
-            return _assignableRoles.Contains(role.Name);
+            return _assignableRoles.Contains(role.Name, StringComparer.CurrentCultureIgnoreCase);
         }
 
         public static IRole GetMutedRole(IGuild guild)
