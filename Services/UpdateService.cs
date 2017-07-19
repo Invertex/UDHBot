@@ -82,6 +82,7 @@ namespace DiscordBot
                     
                     await _logging.LogAction("Posted new daily publisher ad.", true, false);
                     _botData.LastPublisherCheck = DateTime.Now;
+                    _botData.LastPublisherId = id;
                 }
                 await Task.Delay(TimeSpan.FromMinutes(5d), token);
             }
