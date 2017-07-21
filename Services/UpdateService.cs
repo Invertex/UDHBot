@@ -12,6 +12,9 @@ namespace DiscordBot
         public uint LastPublisherId;
     }
 
+    //TODO: Download all avatars to cache them
+    //TODO: Update everyone's rank
+    
     public class UpdateService
     {
         private readonly LoggingService _logging;

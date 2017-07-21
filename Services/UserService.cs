@@ -289,9 +289,9 @@ namespace DiscordBot
 
                 DateTime joinDate;
                 DateTime.TryParse(_database.GetUserJoinDate(userId), out joinDate);
-                var j = DateTime.Now - TimeSpan.FromSeconds(_thanksMinJoinTime);
+                var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
 
-                if (joinDate > j)
+                if (j > DateTime.Now)
                 {
                     await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.");
