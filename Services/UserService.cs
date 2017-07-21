@@ -42,6 +42,8 @@ namespace DiscordBot
         private readonly int _xpMaxPerMessage;
         private readonly int _xpMinCooldown;
         private readonly int _xpMaxCooldown;
+        
+        //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
         public UserService(DatabaseService database, LoggingService logging)
         {

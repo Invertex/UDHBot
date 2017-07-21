@@ -140,6 +140,7 @@ namespace DiscordBot
         }
 
         [Command("pinfo"), Summary("Information on how to get the publisher role. Syntax : !pinfo")]
+        [Alias("publisherinfo")]
         async Task PublisherInfo()
         {
             if (Context.Channel.Id != Settings.GetBotCommandsChannel())
@@ -155,9 +156,7 @@ namespace DiscordBot
             await ReplyAsync($"\n" +
                              "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
                              "``!pkg ID`` - To add your package to Publisher everyday Advertising , ID means the digits on your package link.\n" +
-                             "``!tst ID`` - a faster way to check the packages if happens that ``!pgk ID`` timeouts or it gives error reply. ``!tst``" +
-                             "has less checks to do and runs faster... Note that executing this command doesn't add the package on the database\n" +
-                             "\n");
+                             "``!verify packageId verifCode`` - Verify your package with the code send to your email.");
 
             await Task.Delay(10000);
             await Context.Message.DeleteAsync();
@@ -263,11 +262,7 @@ namespace DiscordBot
                                  "We offer multiple roles to show what you specialize in, so if you are particularly good at anything, assign your role! \n" +
                                  "You can have multiple specialties and your color is determined by the highest role you hold \n" +
                                  "\n" +
-                                 "```Publishers role can be assigned only with verification by executing **" +
-                                 "!publisher XXXX** digits from Unity Asset Store Publisher Page.\n" +
-                                 "You will receive a message on the email **Support E-mail** that's provided, if there's no email provided the verification will fail, contact a moderator for verification. \n" +
-                                 "In the email is a verification code that you must type it in chat **" +
-                                 "!publisher verify XXXX** code that's provided in email. \n" +
+                                 "`To get the publisher role type **!pinfo** and follow the instructions." +
                                  "https://www.assetstore.unity3d.com/en/#!/search/page=1/sortby=popularity/query=publisher:7285 <= Example Digits```\n");
                 await ReplyAsync("```!role add/remove Artists - The Graphic Designers, Artists and Modellers. \n" +
                                  "!role add/remove 3DModelers - People behind every vertex. \n" +
