@@ -71,6 +71,22 @@ namespace DiscordBot
             }
         }
 
+        /*
+        Update Service
+        */
+        public void UpdateUserRanks()
+        {
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand(
+                    "SET @prev_value = NULL; SET @rank_count = 0; " +
+                    "UPDATE users SET rank = @rank_count := IF(@prev_value = rank, @rank_count, @rank_count + 1 " +
+                    "ORDER BY exp DESC", connection);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
 
         public void AddUserXp(ulong id, uint xp)
         {

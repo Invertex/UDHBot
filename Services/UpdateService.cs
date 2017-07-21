@@ -13,7 +13,6 @@ namespace DiscordBot
     }
 
     //TODO: Download all avatars to cache them
-    //TODO: Update everyone's rank
     
     public class UpdateService
     {
@@ -39,7 +38,8 @@ namespace DiscordBot
         {
             ReadDataFromFile();
             SaveDataToFile();
-            CheckDailyPublisher(_token);
+            CheckDailyPublisher();
+            UpdateUserRanks();
         }
 
         private void ReadDataFromFile()
@@ -67,9 +67,9 @@ namespace DiscordBot
             }
         }
 
-        private async Task CheckDailyPublisher(CancellationToken token)
+        private async Task CheckDailyPublisher()
         {
-            await Task.Delay(TimeSpan.FromSeconds(10d));
+            await Task.Delay(TimeSpan.FromSeconds(10d), _token);
             while (true)
             {
                 if (_botData.LastPublisherCheck < DateTime.Now - TimeSpan.FromDays(1d))
@@ -87,7 +87,17 @@ namespace DiscordBot
                     _botData.LastPublisherCheck = DateTime.Now;
                     _botData.LastPublisherId = (uint)id;
                 }
-                await Task.Delay(TimeSpan.FromMinutes(5d), token);
+                await Task.Delay(TimeSpan.FromMinutes(5d), _token);
+            }
+        }
+
+        private async Task UpdateUserRanks()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30d), _token);
+            while (true)
+            {
+                _database.UpdateUserRanks();
+                await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
         }
     }
