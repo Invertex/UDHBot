@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
@@ -32,6 +33,64 @@ namespace DiscordBot
             }
 
             await ReplyAsync(Settings.GetCommandList());
+        }
+
+        [Command("rules"), Summary("Get the of the current channel by DM. Syntax : !rules")]
+        async Task Rules()
+        {
+            Rules(Context.Channel);
+            await Context.Message.DeleteAsync();
+        }
+
+        [Command("rules"), Summary("Get the rules of the mentionned channel by DM. !rules #channel")]
+        async Task Rules(IMessageChannel channel)
+        {
+            Rule rule = Settings.GetRule(channel.Id);
+            IUserMessage m;
+            IDMChannel dm = await Context.User.CreateDMChannelAsync();
+            if (rule == null)
+                await dm.SendMessageAsync(
+                    "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)");
+            else
+                await dm.SendMessageAsync(
+                    $"{rule.header}{(rule.content.Length > 0 ? rule.content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
+
+            Task deleteAsync = Context.Message?.DeleteAsync();
+            if (deleteAsync != null) await deleteAsync;
+        }
+
+        [Command("globalrules"), Summary("Get the Global Rules by DM. Syntax : !globalrules")]
+        async Task GlobalRules(int seconds = 60)
+        {
+            string globalRules = Settings.GetRule(0).content;
+            IDMChannel dm = await Context.User.CreateDMChannelAsync();
+            await dm.SendMessageAsync(globalRules);
+            await Context.Message.DeleteAsync();
+        }
+
+        [Command("channels"), Summary("Get description of the channels by DM. Syntax : !channels")]
+        async Task ChannelsDescription()
+        {
+            //Display rules of this channel for x seconds
+            List<string> headers = Settings.GetChannelsHeader();
+            StringBuilder sb = new StringBuilder();
+            foreach (var h in headers)
+                sb.Append(h + "\n");
+            string text = sb.ToString();
+
+            IDMChannel dm = await Context.User.CreateDMChannelAsync();
+
+            if (sb.ToString().Length > 2000)
+            {
+                await dm.SendMessageAsync(text.Substring(0, 2000));
+                await dm.SendMessageAsync(text.Substring(2000, text.Length));
+            }
+            else
+            {
+                await dm.SendMessageAsync(text);
+            }
+
+            await Context.Message.DeleteAsync();
         }
 
         [Command("slap"), Summary("Slap the specified user(s). Syntax : !slap @user1 [@user2 @user3...]")]

@@ -138,18 +138,12 @@ namespace DiscordBot
             IDMChannel dm = await Context.User.CreateDMChannelAsync();
             if (rule == null)
                 m = await ReplyAsync(
-                    "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`");
+                    "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)");
             else
             {
                 m = await ReplyAsync(
                     $"{rule.header}{(rule.content.Length > 0 ? rule.content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
-                await dm.SendMessageAsync(
-                    $"{rule.header}{(rule.content.Length > 0 ? rule.content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
             }
-
-            if (rule == null)
-                await dm.SendMessageAsync(
-                    "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)");
 
             Task deleteAsync = Context.Message?.DeleteAsync();
             if (deleteAsync != null) await deleteAsync;
@@ -184,13 +178,28 @@ namespace DiscordBot
             StringBuilder sb = new StringBuilder();
             foreach (var h in headers)
                 sb.Append(h + "\n");
-            var m = await ReplyAsync(sb.ToString());
+            string text = sb.ToString();
+            IUserMessage m;
+            IUserMessage m2 = null;
+
+            if (sb.ToString().Length > 2000)
+            {
+                m = await ReplyAsync(text.Substring(0, 2000));
+                m2 = await ReplyAsync(text.Substring(2000, text.Length));
+            }
+            else
+            {
+                m = await ReplyAsync(text);
+            }
+
             await Context.Message.DeleteAsync();
 
             if (seconds == -1)
                 return;
             await Task.Delay(seconds * 1000);
             await m.DeleteAsync();
+            Task deleteAsync = m2?.DeleteAsync();
+            if (deleteAsync != null) await deleteAsync;
         }
     }
 }
