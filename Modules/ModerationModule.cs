@@ -165,7 +165,7 @@ namespace DiscordBot
         async Task GlobalRules(int seconds = 60)
         {
             //Display rules of this channel for x seconds
-            string globalRules = Settings.GetRule(0).text;
+            string globalRules = Settings.GetRule(0).content;
             var m = await ReplyAsync(globalRules);
             await Context.Message.DeleteAsync();
 
