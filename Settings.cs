@@ -16,7 +16,7 @@ namespace DiscordBot
         public string header;
         public string text;
     }
-    
+
     public static class Settings
     {
         public static List<string> _assignableRoles;
@@ -73,6 +73,11 @@ namespace DiscordBot
         {
             List<Rule> rules = JsonConvert.DeserializeObject<List<Rule>>(SettingsHandler.GetJsonString("Rules"));
             return rules.FirstOrDefault(x => x.id == ruleId);
+        }
+
+        public static List<string> GetChannelsHeader()
+        {
+            return JsonConvert.DeserializeObject<List<Rule>>(SettingsHandler.GetJsonString("Rules")).Select(x => x.header).ToList();
         }
     }
 }

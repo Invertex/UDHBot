@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -134,7 +135,7 @@ namespace DiscordBot
             //Display rules of this channel for x seconds
             Rule rule = Settings.GetRule((int) channel.Id);
             IUserMessage m;
-            if (rule.header.Length < 1)
+            if (rule == null)
                 m = await ReplyAsync(
                     "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`");
             else
@@ -142,7 +143,7 @@ namespace DiscordBot
                     $"{rule.header}{(rule.text.Length > 0 ? rule.text : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`")}");
 
             IDMChannel dm = await Context.User.GetDMChannelAsync();
-            if (rule.header.Length < 1)
+            if (rule == null)
                 await dm.SendMessageAsync(
                     "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`");
             else
@@ -165,6 +166,24 @@ namespace DiscordBot
             //Display rules of this channel for x seconds
             string globalRules = Settings.GetRule(0).text;
             var m = await ReplyAsync(globalRules);
+            await Context.Message.DeleteAsync();
+
+            if (seconds == -1)
+                return;
+            await Task.Delay(seconds * 1000);
+            await m.DeleteAsync();
+        }
+        
+        [Command("channels"), Summary("Get a description of the channels.")]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        async Task ChannelsDescription(int seconds = 60)
+        {
+            //Display rules of this channel for x seconds
+            List<string> headers = Settings.GetChannelsHeader();
+            StringBuilder sb = new StringBuilder();
+            foreach (var h in headers)
+            sb.Append(h + "\n");
+            var m = await ReplyAsync(sb.ToString());
             await Context.Message.DeleteAsync();
 
             if (seconds == -1)
