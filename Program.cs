@@ -166,7 +166,6 @@ namespace DiscordBot
 
         private async Task UserJoined(SocketGuildUser user)
         {
-            //TODO: Fixed embed not working
             ulong general = SettingsHandler.LoadValueUlong("generalChannel/id", JsonFile.Settings);
             Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
 
@@ -180,6 +179,14 @@ namespace DiscordBot
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
             _database.AddNewUser(user);
+            
+            string globalRules = Settings.GetRule(0).content;
+            IDMChannel dm = await user.CreateDMChannelAsync();
+            await dm.SendMessageAsync(
+                "Hello and welcome to Unity Developer Hub !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
+                "Please also read the additional informations in the **#welcome** channel." +
+                "You can get all the available commands on the server by typing !help in the **#bot-commands** channel.");
+            await dm.SendMessageAsync(globalRules);
 
             //TODO: add users when bot was offline
         }
