@@ -135,20 +135,21 @@ namespace DiscordBot
             //Display rules of this channel for x seconds
             Rule rule = Settings.GetRule(channel.Id);
             IUserMessage m;
+            IDMChannel dm = await Context.User.CreateDMChannelAsync();
             if (rule == null)
                 m = await ReplyAsync(
                     "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`");
             else
+            {
                 m = await ReplyAsync(
-                    $"{rule.header}{(rule.text.Length > 0 ? rule.text : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`")}");
+                    $"{rule.header}{(rule.content.Length > 0 ? rule.content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
+                await dm.SendMessageAsync(
+                    $"{rule.header}{(rule.content.Length > 0 ? rule.content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
+            }
 
-            IDMChannel dm = await Context.User.GetDMChannelAsync();
             if (rule == null)
                 await dm.SendMessageAsync(
-                    "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`");
-            else
-                await dm.SendMessageAsync(
-                    $"{rule.header}{(rule.text.Length > 0 ? rule.text : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`")}");
+                    "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)");
 
             Task deleteAsync = Context.Message?.DeleteAsync();
             if (deleteAsync != null) await deleteAsync;
@@ -173,7 +174,7 @@ namespace DiscordBot
             await Task.Delay(seconds * 1000);
             await m.DeleteAsync();
         }
-        
+
         [Command("channels"), Summary("Get a description of the channels.")]
         [RequireUserPermission(GuildPermission.KickMembers)]
         async Task ChannelsDescription(int seconds = 60)
@@ -182,7 +183,7 @@ namespace DiscordBot
             List<string> headers = Settings.GetChannelsHeader();
             StringBuilder sb = new StringBuilder();
             foreach (var h in headers)
-            sb.Append(h + "\n");
+                sb.Append(h + "\n");
             var m = await ReplyAsync(sb.ToString());
             await Context.Message.DeleteAsync();
 

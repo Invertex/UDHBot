@@ -14,7 +14,7 @@ namespace DiscordBot
     {
         public ulong id;
         public string header;
-        public string text;
+        public string content;
     }
 
     public static class Settings
