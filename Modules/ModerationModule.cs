@@ -133,7 +133,7 @@ namespace DiscordBot
         async Task Rules(IMessageChannel channel, int seconds = 60)
         {
             //Display rules of this channel for x seconds
-            Rule rule = Settings.GetRule((int) channel.Id);
+            Rule rule = Settings.GetRule(channel.Id);
             IUserMessage m;
             if (rule == null)
                 m = await ReplyAsync(

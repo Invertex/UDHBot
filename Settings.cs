@@ -12,7 +12,7 @@ namespace DiscordBot
 {
     public class Rule
     {
-        public int id;
+        public ulong id;
         public string header;
         public string text;
     }
@@ -69,7 +69,7 @@ namespace DiscordBot
             return _commandList;
         }
 
-        public static Rule GetRule(int ruleId)
+        public static Rule GetRule(ulong ruleId)
         {
             List<Rule> rules = JsonConvert.DeserializeObject<List<Rule>>(SettingsHandler.GetJsonString("Rules"));
             return rules.FirstOrDefault(x => x.id == ruleId);
