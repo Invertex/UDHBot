@@ -41,7 +41,8 @@ namespace DiscordBot
         {
             var u = user as IGuildUser;
 
-            Context.Message?.DeleteAsync();
+            Task deleteAsync = Context.Message?.DeleteAsync();
+            if (deleteAsync != null) await deleteAsync;
 
             await u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
             IUserMessage reply = await ReplyAsync("User " + user + " has been unmuted.");
@@ -116,6 +117,60 @@ namespace DiscordBot
         {
             await Context.Guild.AddBanAsync(user, 7, RequestOptions.Default);
             await _logging.LogAction($"{Context.User.Username} has banned {user.Username}");
+        }
+
+        [Command("rules"), Summary("Display rules of the current channel.")]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        async Task Rules(int seconds = 60)
+        {
+            Rules(Context.Channel, seconds);
+            await Context.Message.DeleteAsync();
+        }
+
+        [Command("rules"), Summary("Display rules of the mentionned channel.")]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        async Task Rules(IMessageChannel channel, int seconds = 60)
+        {
+            //Display rules of this channel for x seconds
+            Rule rule = Settings.GetRule((int) channel.Id);
+            IUserMessage m;
+            if (rule.header.Length < 1)
+                m = await ReplyAsync(
+                    "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`");
+            else
+                m = await ReplyAsync(
+                    $"{rule.header}{(rule.text.Length > 0 ? rule.text : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`")}");
+
+            IDMChannel dm = await Context.User.GetDMChannelAsync();
+            if (rule.header.Length < 1)
+                await dm.SendMessageAsync(
+                    "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`");
+            else
+                await dm.SendMessageAsync(
+                    $"{rule.header}{(rule.text.Length > 0 ? rule.text : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`")}");
+
+            Task deleteAsync = Context.Message?.DeleteAsync();
+            if (deleteAsync != null) await deleteAsync;
+
+            if (seconds == -1)
+                return;
+            await Task.Delay(seconds * 1000);
+            await m.DeleteAsync();
+        }
+
+        [Command("globalrules"), Summary("Display globalrules in current channel.")]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        async Task GlobalRules(int seconds = 60)
+        {
+            //Display rules of this channel for x seconds
+            string globalRules = Settings.GetRule(0).text;
+            var m = await ReplyAsync(globalRules);
+            await Context.Message.DeleteAsync();
+
+            if (seconds == -1)
+                return;
+            await Task.Delay(seconds * 1000);
+            await m.DeleteAsync();
         }
     }
 }

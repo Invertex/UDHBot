@@ -143,7 +143,9 @@ namespace DiscordBot
                 return;
             _database.AddUserLevel(userId, 1);
 
-            await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
+            var message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
+            await Task.Delay(TimeSpan.FromSeconds(60d));
+            await message.DeleteAsync();
             //TODO: Add level up card
         }
 

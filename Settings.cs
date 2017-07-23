@@ -1,13 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using Discord;
 using Discord.Commands;
+using Newtonsoft.Json;
 using SixLabors.Fonts;
 
 namespace DiscordBot
 {
+    public class Rule
+    {
+        public int id;
+        public string header;
+        public string text;
+    }
+    
     public static class Settings
     {
         public static List<string> _assignableRoles;
@@ -58,6 +67,12 @@ namespace DiscordBot
         public static string GetCommandList()
         {
             return _commandList;
+        }
+
+        public static Rule GetRule(int ruleId)
+        {
+            List<Rule> rules = JsonConvert.DeserializeObject<List<Rule>>(SettingsHandler.GetJsonString("Rules"));
+            return rules.FirstOrDefault(x => x.id == ruleId);
         }
     }
 }

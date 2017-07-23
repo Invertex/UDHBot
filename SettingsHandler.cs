@@ -107,7 +107,7 @@ namespace DiscordBot
             SettingLine.Add(key, value);
         }
 
-        private static string GetJsonString(string file)
+        public static string GetJsonString(string file)
         {
             return File.ReadAllText($"./Settings/{file}.json");
         }
