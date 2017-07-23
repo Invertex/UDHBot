@@ -174,10 +174,10 @@ namespace DiscordBot
         async Task ChannelsDescription(int seconds = 60)
         {
             //Display rules of this channel for x seconds
-            List<string> headers = Settings.GetChannelsHeader();
+            List<(ulong, string)> headers = Settings.GetChannelsHeader();
             StringBuilder sb = new StringBuilder();
             foreach (var h in headers)
-                sb.Append(h + "\n");
+                sb.Append($"{await Context.Guild.GetChannelAsync(h.Item1)} - {h.Item2}\n");
             string text = sb.ToString();
             IUserMessage m;
             IUserMessage m2 = null;
@@ -185,7 +185,7 @@ namespace DiscordBot
             if (sb.ToString().Length > 2000)
             {
                 m = await ReplyAsync(text.Substring(0, 2000));
-                m2 = await ReplyAsync(text.Substring(2000, text.Length));
+                m2 = await ReplyAsync(text.Substring(2000));
             }
             else
             {

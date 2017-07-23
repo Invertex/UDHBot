@@ -75,9 +75,9 @@ namespace DiscordBot
             return rules.FirstOrDefault(x => x.id == ruleId);
         }
 
-        public static List<string> GetChannelsHeader()
+        public static List<(ulong, string)> GetChannelsHeader()
         {
-            return JsonConvert.DeserializeObject<List<Rule>>(SettingsHandler.GetJsonString("Rules")).Select(x => x.header).ToList();
+            return JsonConvert.DeserializeObject<List<Rule>>(SettingsHandler.GetJsonString("Rules")).Select(x => (x.id, x.header)).ToList();
         }
     }
 }
