@@ -13,6 +13,8 @@ namespace DiscordBot
     {
         private readonly LoggingService _logging;
 
+        int _test;
+        
         public ModerationModule(LoggingService logging)
         {
             _logging = logging;
