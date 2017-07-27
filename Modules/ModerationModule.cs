@@ -33,10 +33,8 @@ namespace DiscordBot
 
             await Task.Delay((int) arg * 1000);
             await reply.DeleteAsync();
-            Console.WriteLine("before unmute user");
             await UnmuteUser(user);
-            Console.WriteLine("after unmute user");
-        }
+            }
 
         [Command("unmute"), Summary("Unmute a muted user")]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -178,8 +176,9 @@ namespace DiscordBot
             //Display rules of this channel for x seconds
             List<(ulong, string)> headers = Settings.GetChannelsHeader();
             StringBuilder sb = new StringBuilder();
+
             foreach (var h in headers)
-                sb.Append($"{await Context.Guild.GetChannelAsync(h.Item1)} - {h.Item2}\n");
+                sb.Append($"{(await Context.Guild.GetTextChannelAsync(h.Item1))?.Mention} - {h.Item2}\n");
             string text = sb.ToString();
             IUserMessage m;
             IUserMessage m2 = null;

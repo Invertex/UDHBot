@@ -75,7 +75,7 @@ namespace DiscordBot
             List<(ulong, string)> headers = Settings.GetChannelsHeader();
             StringBuilder sb = new StringBuilder();
             foreach (var h in headers)
-                sb.Append($"{await Context.Guild.GetChannelAsync(h.Item1)} - {h.Item2}\n");
+                sb.Append($"{(await Context.Guild.GetTextChannelAsync(h.Item1))?.Mention} - {h.Item2}\n");
             string text = sb.ToString();
 
             IDMChannel dm = await Context.User.CreateDMChannelAsync();
