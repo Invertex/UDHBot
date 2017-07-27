@@ -44,8 +44,8 @@ namespace DiscordBot
         {
             var u = user as IGuildUser;
 
-            Task deleteAsync = Context.Message?.DeleteAsync();
-            if (deleteAsync != null) await deleteAsync;
+            //TODO: fix doesn't work when called from mute
+            //await Context.Message?.DeleteAsync();
 
             await u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
             IUserMessage reply = await ReplyAsync("User " + user + " has been unmuted.");
