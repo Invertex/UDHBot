@@ -128,7 +128,7 @@ namespace DiscordBot
         {
             IUserMessage profile = await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(user));
 
-            await Task.Delay(10000);
+            await Task.Delay(1000);
             await Context.Message.DeleteAsync();
             await Task.Delay(TimeSpan.FromMinutes(1d));
             await profile.DeleteAsync();

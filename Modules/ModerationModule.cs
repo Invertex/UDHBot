@@ -13,8 +13,6 @@ namespace DiscordBot
     {
         private readonly LoggingService _logging;
 
-        int _test;
-        
         public ModerationModule(LoggingService logging)
         {
             _logging = logging;
@@ -35,7 +33,9 @@ namespace DiscordBot
 
             await Task.Delay((int) arg * 1000);
             await reply.DeleteAsync();
+            Console.WriteLine("before unmute user");
             await UnmuteUser(user);
+            Console.WriteLine("after unmute user");
         }
 
         [Command("unmute"), Summary("Unmute a muted user")]
