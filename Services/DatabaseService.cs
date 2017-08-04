@@ -80,7 +80,7 @@ namespace DiscordBot
             {
                 var command = new MySqlCommand(
                     "SET @prev_value = NULL; SET @rank_count = 0; " +
-                    "UPDATE users SET rank = @rank_count := IF(@prev_value = rank, @rank_count, @rank_count + 1 " +
+                    "UPDATE users SET rank = @rank_count := IF(@prev_value = rank, @rank_count, @rank_count + 1) " +
                     "ORDER BY exp DESC", connection);
                 connection.Open();
                 command.ExecuteNonQuery();

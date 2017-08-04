@@ -25,7 +25,8 @@ namespace DiscordBot
         [Command("help"), Summary("Display available commands (this). Syntax : !help")]
         async Task DisplayHelp()
         {
-            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+            //TODO: Be possible in DM
+            if (Context.Channel.Id == Settings.GetBotCommandsChannel())
             {
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
@@ -43,6 +44,7 @@ namespace DiscordBot
         }
 
         [Command("rules"), Summary("Get the rules of the mentionned channel by DM. !rules #channel")]
+        [Alias("rule")]
         async Task Rules(IMessageChannel channel)
         {
             Rule rule = Settings.GetRule(channel.Id);
