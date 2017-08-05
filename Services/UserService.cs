@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using ImageSharp;
 using ImageSharp.Drawing.Brushes;
@@ -143,9 +144,10 @@ namespace DiscordBot
                 return;
             _database.AddUserLevel(userId, 1);
 
-            var message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
-            await Task.Delay(TimeSpan.FromSeconds(60d));
-            await message.DeleteAsync();
+            RestUserMessage message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
+            //TODO: investigate why this is not running async
+            /*await Task.Delay(TimeSpan.FromSeconds(60d));
+            await message.DeleteAsync();*/
             //TODO: Add level up card
         }
 
