@@ -31,14 +31,14 @@ namespace DiscordBot
             _verificationCodes = new Dictionary<uint, string>();
         }
 
-        public async Task PublisherAdvertising(uint packageId, string mention)
+        public async Task PublisherAdvertising(uint packageId, ulong userid)
         {
             Console.WriteLine("pub1 " + packageId);
             PackageObject package = await GetPackage(packageId);
             PackageHeadObject packageHead = await GetPackageHead(packageId);
             PriceObject packagePrice = await GetPackagePrice(packageId);
             Console.WriteLine("pub2");
-            (string, Stream) r = await GetPublisherAdvertisting(mention, package, packageHead, packagePrice);
+            (string, Stream) r = await GetPublisherAdvertisting(userid, package, packageHead, packagePrice);
             Console.WriteLine("pub3");
 
             var channel = _client.GetChannel(Settings.GetUnityNewsChannel()) as ISocketMessageChannel;
@@ -94,19 +94,19 @@ namespace DiscordBot
             }
         }
 
-        public async Task<(string, Stream)> GetPublisherAdvertisting(string userMention, PackageObject package,
+        public async Task<(string, Stream)> GetPublisherAdvertisting(ulong userid, PackageObject package,
             PackageHeadObject packageHead, PriceObject packagePrice)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("**--- Publisher everyday Advertising ---**\n\n");
-            sb.Append($"Today's daily advertisting goes to @{userMention} (**{packageHead.result.publisher}**)\n");
+            sb.Append($"Today's daily advertisting goes to @{_client.GetUser(userid).Mention} (**{packageHead.result.publisher}**)\n");
             sb.Append($"With their package : {packageHead.result.title}, priced at {packagePrice.price}\n");
             sb.Append("For any inquiry you can contact them here on **Unity Developer Hub** by mentioning them in the chat or PM.\n\n");
             sb.Append("*Rating* ");
             for (int i = 0; i < package.content.rating.average; i++)
                 sb.Append("★");
             sb.Append($"(:bust_in_silhouette:{package.content.rating.count})\n");
-            sb.Append($"Unity Asset Store Link - https://www.assetstore.unity3d.com/en/#!/content/{package.content.link.id}\n");
+            sb.Append($"Unity Asset Store Link - https://www.assetstore.unity3d.com/en/#!/content/{package.content.link.id}?utm_source=udh&utm_medium=discord\n");
             sb.Append($"```{package.content.description.Substring(0, 250)}[...]```\n");
             sb.Append("To be part of this kind of advertising use `!pInfo` for more informations.");
             //TODO: add image

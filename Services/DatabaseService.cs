@@ -34,22 +34,22 @@ namespace DiscordBot
             }
         }
 
-        public (uint, string) GetPublisherAd(uint id)
+        public (uint, ulong) GetPublisherAd(uint id)
         {
             using (var connection = new MySqlConnection(_connection))
             {
-                var command = new MySqlCommand($"Select username, discriminator, packageID FROM advertisment WHERE id='{id}'", connection);
+                var command = new MySqlCommand($"Select username, userid, packageID FROM advertisment WHERE id='{id}'", connection);
                 connection.Open();
                 MySqlDataReader reader;
                 using (reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        return (Convert.ToUInt32(reader["packageID"]), $"{reader["username"]}#{reader["discriminator"]}");
+                        return (Convert.ToUInt32(reader["packageID"]), Convert.ToUInt64(reader["userid"]));
                     }
                 }
             }
-            return (0, null);
+            return (0, 0);
         }
 
         public void AddPublisherPackage(string username, string discriminator, string userid, uint packageID)

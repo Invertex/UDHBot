@@ -80,7 +80,7 @@ namespace DiscordBot
                     {
                         id = _random.Next((int) count);
                         } while (id == _botData.LastPublisherId);
-                    (uint, string) ad = _database.GetPublisherAd((uint) id);
+                    (uint, ulong) ad = _database.GetPublisherAd((uint) id);
                     await _publisher.PublisherAdvertising(ad.Item1, ad.Item2);
                     
                     await _logging.LogAction("Posted new daily publisher ad.", true, false);
