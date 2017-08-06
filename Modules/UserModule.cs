@@ -26,7 +26,7 @@ namespace DiscordBot
         async Task DisplayHelp()
         {
             //TODO: Be possible in DM
-            if (Context.Channel.Id == Settings.GetBotCommandsChannel())
+            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
             {
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
