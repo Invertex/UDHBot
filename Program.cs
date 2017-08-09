@@ -24,6 +24,7 @@ namespace DiscordBot
         private WorkService _work;
         private PublisherService _publisher;
         private UpdateService _update;
+        private AudioService _audio;
 
         private string _token = "";
 
@@ -54,6 +55,7 @@ namespace DiscordBot
             _work = new WorkService();
             _publisher = new PublisherService(_client, _database);
             _update = new UpdateService(_logging, _publisher, _database);
+            _audio = new AudioService(_logging, _client);
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_logging);
             _serviceCollection.AddSingleton(_database);
@@ -62,6 +64,7 @@ namespace DiscordBot
             //TODO: rework work service
             _serviceCollection.AddSingleton(_publisher);
             _serviceCollection.AddSingleton(_update);
+            _serviceCollection.AddSingleton(_audio);
             _services = _serviceCollection.BuildServiceProvider();
 
 
@@ -77,6 +80,7 @@ namespace DiscordBot
             _client.Ready += () =>
             {
                 Console.WriteLine("Bot is connected");
+                _audio.Music();
                 return Task.CompletedTask;
             };
 
@@ -109,7 +113,7 @@ namespace DiscordBot
         }
 
         public async Task InstallCommands()
-        {
+        {          
             // Hook the MessageReceived Event into our Command Handler
             _client.MessageReceived += HandleCommand;
             _client.MessageReceived += _user.UpdateXp;
