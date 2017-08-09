@@ -42,25 +42,26 @@ namespace DiscordBot
 
         }
         
-        private Process CreateStream(string path)
+    private Process CreateStream(string path)
+    {
+        return Process.Start(new ProcessStartInfo
         {
-            var ffmpeg = new ProcessStartInfo
-            {
-                FileName = "ffmpeg",
-                Arguments = $"-i {path} -ac 2 -f s16le -ar 48000 pipe:1",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-            };
-            return Process.Start(ffmpeg);
-        }
+            FileName = "ffmpeg",
+            Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
+            UseShellExecute = false,
+            RedirectStandardOutput = true
+        });
+    }
         
         private async Task SendAsync(IAudioClient client, string path)
         {
             // Create FFmpeg using the previous example
             Process ffmpeg = CreateStream(path);
             Stream output = ffmpeg.StandardOutput.BaseStream;
-            AudioOutStream discord = client.CreatePCMStream(AudioApplication.Mixed);
+            AudioOutStream discord = client.CreatePCMStream(AudioApplication.Music, 48000);
+            System.Console.WriteLine("before copy");
             await output.CopyToAsync(discord);
+            System.Console.WriteLine("copied");
             await discord.FlushAsync();
         }
     }
