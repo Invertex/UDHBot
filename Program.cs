@@ -80,7 +80,7 @@ namespace DiscordBot
             _client.Ready += () =>
             {
                 Console.WriteLine("Bot is connected");
-                _audio.Music();
+                //_audio.Music();
                 return Task.CompletedTask;
             };
 

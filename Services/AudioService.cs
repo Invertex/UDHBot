@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Discord;
@@ -35,9 +36,14 @@ namespace DiscordBot
 
             while (true)
             {
-                await SendAsync(_audioClient, Settings.GetServerRootPath() + @"/music/kanashii.mp3");
-                await Task.Delay(1000);
-                await SendAsync(_audioClient, Settings.GetServerRootPath() + @"/music/oddloop.mp3");
+                try
+                {
+                    await SendAsync(_audioClient, Settings.GetServerRootPath() + @"/music/kanashii.mp3");
+                    await Task.Delay(1000);
+                    await SendAsync(_audioClient, Settings.GetServerRootPath() + @"/music/oddloop.mp3");
+                }
+                catch (Exception e)
+                {}
             }
 
         }

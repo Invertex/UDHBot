@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Discord;
 using Discord.Net.Rest;
 using Discord.WebSocket;
@@ -97,6 +98,8 @@ namespace DiscordBot
         public async Task<(string, Stream)> GetPublisherAdvertisting(ulong userid, PackageObject package,
             PackageHeadObject packageHead, PriceObject packagePrice)
         {
+            string descStrippedHtml = Regex.Replace(package.content.description, "<.*?>", String.Empty);
+            
             StringBuilder sb = new StringBuilder();
             sb.Append("**--- Publisher everyday Advertising ---**\n\n");
             sb.Append($"Today's daily advertisting goes to @{_client.GetUser(userid).Mention} (**{packageHead.result.publisher}**)\n");
@@ -107,7 +110,7 @@ namespace DiscordBot
                 sb.Append("★");
             sb.Append($"(:bust_in_silhouette:{package.content.rating.count})\n");
             sb.Append($"Unity Asset Store Link - https://www.assetstore.unity3d.com/en/#!/content/{package.content.link.id}?utm_source=udh&utm_medium=discord\n");
-            sb.Append($"```{package.content.description.Substring(0, 250)}[...]```\n");
+            sb.Append($"```{descStrippedHtml.Substring(0, 250)}[...]```\n");
             sb.Append("To be part of this kind of advertising use `!pInfo` for more informations.");
             //TODO: add image
 
