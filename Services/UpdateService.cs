@@ -13,7 +13,7 @@ namespace DiscordBot
     }
 
     //TODO: Download all avatars to cache them
-    
+
     public class UpdateService
     {
         private readonly LoggingService _logging;
@@ -79,13 +79,12 @@ namespace DiscordBot
                     do
                     {
                         id = _random.Next((int) count);
-                        } while (id == _botData.LastPublisherId);
-                    (uint, ulong) ad = _database.GetPublisherAd((uint) id);
-                    await _publisher.PublisherAdvertising(ad.Item1, ad.Item2);
-                    
+                    } while (id == _botData.LastPublisherId);
+
+                    await _publisher.PostAd((uint) id);
                     await _logging.LogAction("Posted new daily publisher ad.", true, false);
                     _botData.LastPublisherCheck = DateTime.Now;
-                    _botData.LastPublisherId = (uint)id;
+                    _botData.LastPublisherId = (uint) id;
                 }
                 await Task.Delay(TimeSpan.FromMinutes(5d), _token);
             }

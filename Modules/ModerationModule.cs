@@ -12,10 +12,12 @@ namespace DiscordBot
     public class ModerationModule : ModuleBase
     {
         private readonly LoggingService _logging;
+        private readonly PublisherService _publisher;
 
-        public ModerationModule(LoggingService logging)
+        public ModerationModule(LoggingService logging, PublisherService publisher)
         {
             _logging = logging;
+            _publisher = publisher;
         }
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
@@ -201,6 +203,14 @@ namespace DiscordBot
             await m.DeleteAsync();
             Task deleteAsync = m2?.DeleteAsync();
             if (deleteAsync != null) await deleteAsync;
+        }
+        
+        [Command("ad"), Summary("Post ad with databaseid")]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        async Task BanUser(uint dbId)
+        {
+            await _publisher.PostAd(dbId);
+            await ReplyAsync("Ad posted.");
         }
     }
 }

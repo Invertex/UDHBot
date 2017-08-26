@@ -32,6 +32,12 @@ namespace DiscordBot
             _verificationCodes = new Dictionary<uint, string>();
         }
 
+        public async Task PostAd(uint id)
+        {
+            (uint, ulong) ad = _database.GetPublisherAd(id);
+            await PublisherAdvertising(ad.Item1, ad.Item2);
+        }
+        
         public async Task PublisherAdvertising(uint packageId, ulong userid)
         {
             Console.WriteLine("pub1 " + packageId);
@@ -99,6 +105,7 @@ namespace DiscordBot
             PackageHeadObject packageHead, PriceObject packagePrice)
         {
             string descStrippedHtml = Regex.Replace(package.content.description, "<.*?>", String.Empty);
+            descStrippedHtml = Regex.Replace(package.content.description, "&nbsp;", String.Empty);
             
             StringBuilder sb = new StringBuilder();
             sb.Append("**--- Publisher everyday Advertising ---**\n\n");
