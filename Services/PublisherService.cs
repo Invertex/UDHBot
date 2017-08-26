@@ -105,7 +105,7 @@ namespace DiscordBot
             PackageHeadObject packageHead, PriceObject packagePrice)
         {
             string descStrippedHtml = Regex.Replace(package.content.description, "<.*?>", String.Empty);
-            descStrippedHtml = Regex.Replace(package.content.description, "&nbsp;", String.Empty);
+            descStrippedHtml = Regex.Replace(descStrippedHtml, "&nbsp;", String.Empty);
             
             StringBuilder sb = new StringBuilder();
             sb.Append("**--- Publisher everyday Advertising ---**\n\n");
