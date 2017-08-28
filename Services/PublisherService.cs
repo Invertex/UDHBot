@@ -109,7 +109,7 @@ namespace DiscordBot
             
             StringBuilder sb = new StringBuilder();
             sb.Append("**--- Publisher everyday Advertising ---**\n\n");
-            sb.Append($"Today's daily advertisting goes to @{_client.GetUser(userid).Mention} (**{packageHead.result.publisher}**)\n");
+            sb.Append($"Today's daily advertisting goes to {_client.GetUser(userid).Mention} (**{packageHead.result.publisher}**)\n");
             sb.Append($"With their package : {packageHead.result.title}, priced at {packagePrice.price}\n");
             sb.Append("For any inquiry you can contact them here on **Unity Developer Hub** by mentioning them in the chat or PM.\n\n");
             sb.Append("*Rating* ");
