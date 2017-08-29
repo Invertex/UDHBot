@@ -323,7 +323,7 @@ namespace DiscordBot
                                  "We offer multiple roles to show what you specialize in, so if you are particularly good at anything, assign your role! \n" +
                                  "You can have multiple specialties and your color is determined by the highest role you hold \n" +
                                  "\n" +
-                                 "`To get the publisher role type **!pinfo** and follow the instructions." +
+                                 "```To get the publisher role type **!pinfo** and follow the instructions." +
                                  "https://www.assetstore.unity3d.com/en/#!/search/page=1/sortby=popularity/query=publisher:7285 <= Example Digits```\n");
                 await ReplyAsync("```!role add/remove Artists - The Graphic Designers, Artists and Modellers. \n" +
                                  "!role add/remove 3DModelers - People behind every vertex. \n" +
@@ -334,7 +334,6 @@ namespace DiscordBot
                                  "!role add/remove Audio-Artists - The unsung heroes of sound effects .\n" +
                                  "!role add/remove Generalists - Generalist may refer to a person with a wide array of knowledge.\n" +
                                  "!role add/remove Hobbyists - A person who is interested in Unity3D or Game Making as a hobby.\n" +
-                                 "!role add/remove Helpers - A friend and helper of all those who seek to live in the spirit..\n" +
                                  "!role add/remove Vector-Artists - The people who love to have infinite resolution.\n" +
                                  "!role add/remove Voxel-Artist - People who love to voxelize the world.\n" +
                                  "!role add/remove Students - The eager learners among us, never stop learning. \n" +
