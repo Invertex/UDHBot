@@ -76,14 +76,21 @@ namespace DiscordBot
         */
         public void UpdateUserRanks()
         {
-            using (var connection = new MySqlConnection(_connection))
+            try
             {
-                var command = new MySqlCommand(
-                    "SET @prev_value = NULL; SET @rank_count = 0; " +
-                    "UPDATE users SET rank = @rank_count := IF(@prev_value = rank, @rank_count, @rank_count + 1) " +
-                    "ORDER BY exp DESC", connection);
-                connection.Open();
-                command.ExecuteNonQuery();
+                using (var connection = new MySqlConnection(_connection))
+                {
+                    var command = new MySqlCommand(
+                        "SET @prev_value = NULL; SET @rank_count = 0; " +
+                        "UPDATE users SET rank = @rank_count := IF(@prev_value = rank, @rank_count, @rank_count + 1) " +
+                        "ORDER BY exp DESC", connection);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception e)
+            {
+                _logging.LogAction($"Error when trying to update ranks : {e}", true, false);
             }
         }
 
