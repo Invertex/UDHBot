@@ -177,10 +177,12 @@ namespace DiscordBot
                 using (var connection = new MySqlConnection(_connection))
                 {
                     var command = new MySqlCommand(
-                        $"INSERT INTO users SET username='{user.Username}', userid='{user.Id}', discriminator='{user.DiscriminatorValue}'," +
+                        $"INSERT INTO users SET username=@Username, userid='{user.Id}', discriminator='{user.DiscriminatorValue}'," +
                         $"avatar='{user.AvatarId}', " +
                         $"avatarURL='{user.GetAvatarUrl()}'," +
-                        $"bot='{(user.IsBot ? 1 : 0)}', status='{user.Status}', joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'", connection);
+                        $"bot='{(user.IsBot ? 1 : 0)}', status=@Status, joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'", connection);
+                    command.Parameters.AddWithValue("@Username", user.Username);
+                    command.Parameters.AddWithValue("@Status", user.Status);
                     connection.Open();
                     command.ExecuteNonQuery();
                     await _logging.LogAction($"User {user.Username}#{user.DiscriminatorValue} succesfully added to the databse.", true,
@@ -218,7 +220,8 @@ namespace DiscordBot
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"UPDATE users SET {attribute}={value} WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
+                    command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
                     command.ExecuteNonQuery();
                 }
@@ -237,7 +240,8 @@ namespace DiscordBot
                 value = MySqlHelper.EscapeString(value);
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"UPDATE users SET {attribute}={value} WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
+                    command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
                     command.ExecuteNonQuery();
                 }
