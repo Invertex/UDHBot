@@ -65,7 +65,7 @@ namespace DiscordBot
                 .CreateFont(59);            
             _levelFontSmall = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
-                .CreateFont(52);
+                .CreateFont(45);
 
             /*
             Init XP
@@ -199,7 +199,7 @@ namespace DiscordBot
             const float startX = 104;
             const float startY = 39;
             const float height = 16;
-            float endX = (float) ((xp - xpLow) / (xpHigh - xpLow) * 250f);
+            float endX = (float) ((xp - xpLow) / (xpHigh - xpLow) * 232f);
 
             profileCard.DrawImage(profileFg, 100f, new Size(profileFg.Width, profileFg.Height), Point.Empty);
 
@@ -225,7 +225,7 @@ namespace DiscordBot
             profileCard.DrawImage(triangle, 100f, new Size(triangle.Width, triangle.Height), new Point(346, 17));
 
             profileCard.Fill(Rgba32.FromHex("#3f3f3f"),
-                new RectangleF(startX, startY, 220, height)); //XP bar background
+                new RectangleF(startX, startY, 232, height)); //XP bar background
             profileCard.Fill(Rgba32.FromHex("#00f0ff"),
                 new RectangleF(startX + 1, startY + 1, endX, height - 2)); //XP bar
             profileCard.DrawImage(avatar, 100f, new Size(80, 80), new Point(16, 28));
