@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -13,11 +10,8 @@ using Discord.Rest;
 using Discord.WebSocket;
 using ImageSharp;
 using ImageSharp.Drawing.Brushes;
-using ImageSharp.PixelFormats;
-using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
 using SixLabors.Fonts;
 using SixLabors.Primitives;
-using Image = ImageSharp.Image;
 
 namespace DiscordBot
 {
@@ -34,6 +28,7 @@ namespace DiscordBot
         private Font _defaultFont;
         private Font _nameFont;
         private Font _levelFont;
+        private Font _levelFontSmall;
         private string _thanksRegex;
 
         private readonly int _thanksCooldownTime;
@@ -67,7 +62,10 @@ namespace DiscordBot
                 .CreateFont(22);
             _levelFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
-                .CreateFont(59);
+                .CreateFont(59);            
+            _levelFontSmall = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
+                .CreateFont(52);
 
             /*
             Init XP
@@ -227,13 +225,13 @@ namespace DiscordBot
             profileCard.DrawImage(triangle, 100f, new Size(triangle.Width, triangle.Height), new Point(346, 17));
 
             profileCard.Fill(Rgba32.FromHex("#3f3f3f"),
-                new RectangleF(startX, startY, 232, height)); //XP bar background
+                new RectangleF(startX, startY, 220, height)); //XP bar background
             profileCard.Fill(Rgba32.FromHex("#00f0ff"),
                 new RectangleF(startX + 1, startY + 1, endX, height - 2)); //XP bar
             profileCard.DrawImage(avatar, 100f, new Size(80, 80), new Point(16, 28));
             profileCard.DrawText(user.Username, _nameFont, Rgba32.FromHex("#3C3C3C"),
                 new PointF(144, 8));
-            profileCard.DrawText(level.ToString(), _levelFont, Rgba32.FromHex("#3C3C3C"), new PointF(98, 35));
+            profileCard.DrawText(level.ToString(), level < 100 ? _levelFont : _levelFontSmall, Rgba32.FromHex("#3C3C3C"), new PointF(98, 35));
             profileCard.DrawText("Server Rank        #" + rank, _defaultFont, Rgba32.FromHex("#3C3C3C"),
                 new PointF(167, 60));
             profileCard.DrawText("Karma Points:    " + karma, _defaultFont, Rgba32.FromHex("#3C3C3C"),
