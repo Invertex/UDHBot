@@ -13,11 +13,13 @@ namespace DiscordBot
     {
         private readonly LoggingService _logging;
         private readonly PublisherService _publisher;
+        private readonly UpdateService _update;
 
-        public ModerationModule(LoggingService logging, PublisherService publisher)
+        public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update)
         {
             _logging = logging;
             _publisher = publisher;
+            _update = update;
         }
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
@@ -36,7 +38,7 @@ namespace DiscordBot
             await Task.Delay((int) arg * 1000);
             await reply.DeleteAsync();
             await UnmuteUser(user);
-            }
+        }
 
         [Command("unmute"), Summary("Unmute a muted user")]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -204,13 +206,20 @@ namespace DiscordBot
             Task deleteAsync = m2?.DeleteAsync();
             if (deleteAsync != null) await deleteAsync;
         }
-        
+
         [Command("ad"), Summary("Post ad with databaseid")]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        async Task BanUser(uint dbId)
+        async Task PostAd(uint dbId)
         {
             await _publisher.PostAd(dbId);
             await ReplyAsync("Ad posted.");
+        }
+
+        [Command("forcead"), Summary("Force post ad")]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        async Task ForcePostAd()
+        {
+            await _update.CheckDailyPublisher(true);
         }
     }
 }

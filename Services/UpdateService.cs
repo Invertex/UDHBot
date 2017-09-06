@@ -67,25 +67,29 @@ namespace DiscordBot
             }
         }
 
-        private async Task CheckDailyPublisher()
+        public async Task CheckDailyPublisher(bool force = false)
         {
             await Task.Delay(TimeSpan.FromSeconds(10d), _token);
             while (true)
             {
-                if (_botData.LastPublisherCheck < DateTime.Now - TimeSpan.FromDays(1d))
+                if (_botData.LastPublisherCheck < DateTime.Now - TimeSpan.FromDays(1d) || force)
                 {
                     uint count = _database.GetPublisherAdCount();
-                    int id;
+                    ulong id;
+                    uint rand;
                     do
                     {
-                        id = _random.Next((int) count);
+                        rand = (uint)_random.Next((int) count);
+                        id = _database.GetPublisherAd(rand).userId;
                     } while (id == _botData.LastPublisherId);
 
-                    await _publisher.PostAd((uint) id);
+                    await _publisher.PostAd(rand);
                     await _logging.LogAction("Posted new daily publisher ad.", true, false);
                     _botData.LastPublisherCheck = DateTime.Now;
                     _botData.LastPublisherId = (uint) id;
                 }
+                if (force)
+                    return;
                 await Task.Delay(TimeSpan.FromMinutes(5d), _token);
             }
         }

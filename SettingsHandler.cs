@@ -81,7 +81,7 @@ namespace DiscordBot
         }
         public static bool LoadValueBool(string path, JsonFile file)
         {
-            return LoadValue(path, file)[0] == "0" ? false : true;
+            return LoadValue(path, file)[0] != "0";
         }
         public static string[] StringToArray(string value)
         {

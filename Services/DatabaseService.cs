@@ -34,7 +34,7 @@ namespace DiscordBot
             }
         }
 
-        public (uint, ulong) GetPublisherAd(uint id)
+        public (uint pkgId, ulong userId) GetPublisherAd(uint id)
         {
             using (var connection = new MySqlConnection(_connection))
             {
