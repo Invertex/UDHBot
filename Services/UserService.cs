@@ -144,8 +144,7 @@ namespace DiscordBot
 
             RestUserMessage message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
             //TODO: investigate why this is not running async
-            await Task.Delay(TimeSpan.FromSeconds(60d)).ConfigureAwait(false);
-            await message.DeleteAsync();
+            Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(t => message.DeleteAsync());
             //TODO: Add level up card
         }
 

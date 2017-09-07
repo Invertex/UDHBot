@@ -122,9 +122,11 @@ namespace DiscordBot
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");
-            await Task.Delay(5000).ConfigureAwait(false);
-            await m.DeleteAsync();
-            await _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
+            Task.Delay(5000).ContinueWith(t =>
+            {
+                m.DeleteAsync();
+                _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
+            });
         }
 
         [Command("kick"), Summary("Kick a user")]
