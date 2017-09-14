@@ -9,7 +9,7 @@ namespace DiscordBot
     public class BotData
     {
         public DateTime LastPublisherCheck;
-        public uint LastPublisherId;
+        public ulong LastPublisherId;
     }
 
     //TODO: Download all avatars to cache them
@@ -86,7 +86,7 @@ namespace DiscordBot
                     await _publisher.PostAd(rand);
                     await _logging.LogAction("Posted new daily publisher ad.", true, false);
                     _botData.LastPublisherCheck = DateTime.Now;
-                    _botData.LastPublisherId = (uint) id;
+                    _botData.LastPublisherId = (ulong) id;
                 }
                 if (force)
                     return;

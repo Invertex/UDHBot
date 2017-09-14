@@ -139,6 +139,7 @@ namespace DiscordBot
         [Command("quote"), Summary("Quote a message in current channel. Syntax : !quote messageid")]
         async Task QuoteMessage(ulong id)
         {
+        await Context.Message.DeleteAsync();
             IMessageChannel channel = Context.Channel;
             var message = await channel.GetMessageAsync(id);
             Console.WriteLine($"message {message.Author.Username}  {message.Channel.Name}");
@@ -158,9 +159,7 @@ namespace DiscordBot
                 })
                 .AddField("Original message", message.Content);
             var embed = builder.Build();
-            await ReplyAsync("", false, embed);
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
+            await ReplyAsync("", false, embed);            
         }
 
         [Command("quote"), Summary("Quote a message. Syntax : !quote #channelname messageid")]
