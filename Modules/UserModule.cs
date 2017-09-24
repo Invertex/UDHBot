@@ -49,7 +49,7 @@ namespace DiscordBot
         {
             Rule rule = Settings.GetRule(channel.Id);
             IUserMessage m;
-            IDMChannel dm = await Context.User.CreateDMChannelAsync();
+            IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
             if (rule == null)
                 await dm.SendMessageAsync(
                     "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)");
@@ -65,7 +65,7 @@ namespace DiscordBot
         async Task GlobalRules(int seconds = 60)
         {
             string globalRules = Settings.GetRule(0).content;
-            IDMChannel dm = await Context.User.CreateDMChannelAsync();
+            IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync(globalRules);
             await Context.Message.DeleteAsync();
         }
@@ -80,7 +80,7 @@ namespace DiscordBot
                 sb.Append($"{(await Context.Guild.GetTextChannelAsync(h.Item1))?.Mention} - {h.Item2}\n");
             string text = sb.ToString();
 
-            IDMChannel dm = await Context.User.CreateDMChannelAsync();
+            IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
 
             if (sb.ToString().Length > 2000)
             {

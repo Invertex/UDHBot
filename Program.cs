@@ -185,7 +185,7 @@ namespace DiscordBot
             _database.AddNewUser(user);
             
             string globalRules = Settings.GetRule(0).content;
-            IDMChannel dm = await user.CreateDMChannelAsync();
+            IDMChannel dm = await user.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync(
                 "Hello and welcome to Unity Developer Hub !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
                 "Please also read the additional informations in the **#welcome** channel." +

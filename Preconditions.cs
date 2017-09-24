@@ -12,7 +12,7 @@ namespace DiscordBot
     {
         public override Task<PreconditionResult> CheckPermissions(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            SocketGuildUser user = context.Message.Author as SocketGuildUser;
+                    SocketGuildUser user = context.Message.Author as SocketGuildUser;
             
             if (user.Roles.Any(x => x.Id == 228015486120624130))
             {

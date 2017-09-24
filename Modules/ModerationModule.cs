@@ -50,7 +50,7 @@ namespace DiscordBot
             await u.AddRoleAsync(Settings.GetMutedRole(Context.Guild));
             IUserMessage reply = await ReplyAsync($"User {user} has been muted for {arg} seconds. Reason : {message}");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds. Reason : {message}");
-            IDMChannel dm = await user.CreateDMChannelAsync();
+            IDMChannel dm = await user.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync($"You have been muted from UDH for {arg} seconds for the following reason : {message}. " +
                                       $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
 
@@ -141,9 +141,9 @@ namespace DiscordBot
 
         [Command("ban"), Summary("Ban an user")]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        async Task BanUser(IUser user)
+        async Task BanUser(IUser user, string reason)
         {
-            await Context.Guild.AddBanAsync(user, 7, RequestOptions.Default);
+            await Context.Guild.AddBanAsync(user, 7, reason, RequestOptions.Default);
             await _logging.LogAction($"{Context.User.Username} has banned {user.Username}");
         }
 
@@ -162,7 +162,7 @@ namespace DiscordBot
             //Display rules of this channel for x seconds
             Rule rule = Settings.GetRule(channel.Id);
             IUserMessage m;
-            IDMChannel dm = await Context.User.CreateDMChannelAsync();
+            IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
             if (rule == null)
                 m = await ReplyAsync(
                     "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)");
