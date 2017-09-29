@@ -143,6 +143,8 @@ namespace DiscordBot
         {
             if (message.Value.Author.IsBot || channel.Id == Settings.GetBotAnnouncementChannel())
                 return;
+                
+                var content = message.Value.Content?.Substring(0, 800);
 
 
             EmbedBuilder builder = new EmbedBuilder()
@@ -158,15 +160,14 @@ namespace DiscordBot
                     author
                         .WithName($"{message.Value.Author.Username}");
                 })
-                .AddField("Deleted message", message.Value.Content);
+                .AddField("Deleted message", content);
             Embed embed = builder.Build();
 
             await _logging.LogAction(
                 $"User {message.Value.Author.Username}#{message.Value.Author.DiscriminatorValue} has " +
-                $"deleted the message\n{message.Value.Content}\n from channel #{channel.Name}", true, false);
+                $"deleted the message\n{content}\n from channel #{channel.Name}", true, false);
             await _logging.LogAction(" ", false, true, embed);
         }
-
 
         private async Task UserJoined(SocketGuildUser user)
         {
