@@ -182,11 +182,20 @@ namespace DiscordBot
             }
             else
             {
-                using (var http = new HttpClient())
+                try
                 {
-                    stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                    using (var http = new HttpClient())
+                    {
+                        stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                    }
+                    avatar = ImageSharp.Image.Load(stream);
                 }
-                avatar = ImageSharp.Image.Load(stream);
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                                                   @"/images/default.png");
+                }
             }
             uint xp = _database.GetUserXp(userId);
             uint rank = _database.GetUserRank(userId);
