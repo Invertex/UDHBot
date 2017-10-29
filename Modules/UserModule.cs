@@ -201,9 +201,9 @@ namespace DiscordBot
 
         [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
         [Alias("subtitles", "sub", "subs")]
-        async Task Subtitles(IMessage message, string text)
+        async Task Subtitles(string text)
         {
-            var msg = await _user.SubtitleImage(message, text);
+            var msg = await _user.SubtitleImage(Context.Message, text);
             if (msg.Length < 6)
                 await ReplyAsync("Sorry, there was an error processing your image.");
             else

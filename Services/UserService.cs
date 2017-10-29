@@ -354,13 +354,13 @@ namespace DiscordBot
         public async Task<string> SubtitleImage(IMessage message, string text)
         {
             var attachments = message.Attachments;
-            IAttachment file = null;
+            Attachment file = null;
             Image<Rgba32> image = null;
             
             foreach (var a in attachments)
             {
-                if (Regex.Match(a.Filename, @"/\.(gif|jpg|jpeg|tiff|png)$/i").Success)
-                    file = a;
+                if (Regex.Match(a.Filename, @"(.*?)\.(jpg|jpeg|png|gif)$").Success)
+                    file = (Attachment)a;
             }
 
             if (file == null)
@@ -374,11 +374,9 @@ namespace DiscordBot
                     {
                         response.EnsureSuccessStatusCode();
 
-                        using (StreamReader reader = new StreamReader(await response.Content.ReadAsStreamAsync()))
-                        {
-                            image = ImageSharp.Image.Load(reader.ReadToEnd());
+                        byte[] reader = await response.Content.ReadAsByteArrayAsync();
+                        image = ImageSharp.Image.Load(reader);
                         }
-                    }
                 }
             }
             catch (Exception e)
@@ -388,7 +386,7 @@ namespace DiscordBot
             }
 
             float beginHeight = image.Height - (image.Height * 0.3f);
-            float beginWidth = image.Width - (image.Width * .25f);
+            float beginWidth = (image.Width * .25f);
             float totalWidth = image.Width / 2f;
 
             image.DrawText(text, _nameFont, Rgba32.Black, new PointF(beginHeight, beginWidth), new TextGraphicsOptions(true)
