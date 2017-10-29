@@ -199,6 +199,17 @@ namespace DiscordBot
             await Context.Message.DeleteAsync();
         }
 
+        [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
+        [Alias("subtitles", "sub", "subs")]
+        async Task Subtitles(IMessage message, string text)
+        {
+            var msg = await _user.SubtitleImage(message, text);
+            if (msg.Length < 6)
+                await ReplyAsync("Sorry, there was an error processing your image.");
+            else
+                await Context.Channel.SendFileAsync(msg);
+        }
+
         [Command("pinfo"), Summary("Information on how to get the publisher role. Syntax : !pinfo")]
         [Alias("publisherinfo")]
         async Task PublisherInfo()

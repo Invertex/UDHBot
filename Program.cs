@@ -144,8 +144,9 @@ namespace DiscordBot
             if (message.Value.Author.IsBot || channel.Id == Settings.GetBotAnnouncementChannel())
                 return;
                 
-                var content = message.Value.Content?.Substring(0, 800);
-
+                var content = message.Value.Content;
+                if (content.Length > 800)
+					content = content.Substring(0, 800);
 
             EmbedBuilder builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))

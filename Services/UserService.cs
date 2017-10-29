@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,9 +10,11 @@ using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
 using ImageSharp;
+using ImageSharp.Drawing;
 using ImageSharp.Drawing.Brushes;
 using SixLabors.Fonts;
 using SixLabors.Primitives;
+using Image = ImageSharp.Image;
 
 namespace DiscordBot
 {
@@ -346,6 +349,60 @@ namespace DiscordBot
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _logging.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
+        }
+
+        public async Task<string> SubtitleImage(IMessage message, string text)
+        {
+            var attachments = message.Attachments;
+            IAttachment file = null;
+            Image<Rgba32> image = null;
+            
+            foreach (var a in attachments)
+            {
+                if (Regex.Match(a.Filename, @"/\.(gif|jpg|jpeg|tiff|png)$/i").Success)
+                    file = a;
+            }
+
+            if (file == null)
+                return "";
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    using (HttpResponseMessage response = await client.GetAsync(file.Url))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        using (StreamReader reader = new StreamReader(await response.Content.ReadAsStreamAsync()))
+                        {
+                            image = ImageSharp.Image.Load(reader.ReadToEnd());
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Failed to load image : " + e);
+                return "";
+            }
+
+            float beginHeight = image.Height - (image.Height * 0.3f);
+            float beginWidth = image.Width - (image.Width * .25f);
+            float totalWidth = image.Width / 2f;
+
+            image.DrawText(text, _nameFont, Rgba32.Black, new PointF(beginHeight, beginWidth), new TextGraphicsOptions(true)
+            {
+                WrapTextWidth = totalWidth,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+
+
+            string path = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                          $@"/images/subtitles/{message.Author}-{message.Id}.png";
+            image.Save(path);
+
+            return path;
         }
     }
 }
