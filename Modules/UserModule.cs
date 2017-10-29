@@ -208,6 +208,7 @@ namespace DiscordBot
                 await ReplyAsync("Sorry, there was an error processing your image.");
             else
                 await Context.Channel.SendFileAsync(msg);
+            await Context.Message.DeleteAsync();
         }
 
         [Command("pinfo"), Summary("Information on how to get the publisher role. Syntax : !pinfo")]

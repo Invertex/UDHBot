@@ -389,7 +389,7 @@ namespace DiscordBot
             float beginWidth = (image.Width * .25f);
             float totalWidth = image.Width / 2f;
 
-            image.DrawText(text, _nameFont, Rgba32.Black, new PointF(beginHeight, beginWidth), new TextGraphicsOptions(true)
+            image.DrawText(text, _nameFont, Rgba32.Red, new PointF(beginWidth, beginHeight), new TextGraphicsOptions(true)
             {
                 WrapTextWidth = totalWidth,
                 HorizontalAlignment = HorizontalAlignment.Center
