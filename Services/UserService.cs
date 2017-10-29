@@ -32,6 +32,8 @@ namespace DiscordBot
         private Font _nameFont;
         private Font _levelFont;
         private Font _levelFontSmall;
+        private Font _subtitlesBlackFont;
+        private Font _subtitlesWhiteFont;
         private string _thanksRegex;
 
         private readonly int _thanksCooldownTime;
@@ -69,6 +71,13 @@ namespace DiscordBot
             _levelFontSmall = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
                 .CreateFont(45);
+            
+            _subtitlesBlackFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
+                .CreateFont(80);
+            _subtitlesWhiteFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
+                .CreateFont(75);
 
             /*
             Init XP
@@ -386,15 +395,35 @@ namespace DiscordBot
             }
 
             float beginHeight = image.Height - (image.Height * 0.3f);
-            float beginWidth = (image.Width * .25f);
-            float totalWidth = image.Width / 2f;
+            float beginWidth = (image.Width * .10f);
+            float totalWidth = image.Width *.8f;
 
-            image.DrawText(text, _nameFont, Rgba32.Red, new PointF(beginWidth, beginHeight), new TextGraphicsOptions(true)
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth -4, beginHeight), new TextGraphicsOptions(true)
             {
                 WrapTextWidth = totalWidth,
                 HorizontalAlignment = HorizontalAlignment.Center
             });
-
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth +4, beginHeight), new TextGraphicsOptions(true)
+            {
+                WrapTextWidth = totalWidth,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight -4), new TextGraphicsOptions(true)
+            {
+                WrapTextWidth = totalWidth,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight +4), new TextGraphicsOptions(true)
+            {
+                WrapTextWidth = totalWidth,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+            
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.White, new PointF(beginWidth, beginHeight), new TextGraphicsOptions(true)
+            {
+                WrapTextWidth = totalWidth,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
 
             string path = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                           $@"/images/subtitles/{message.Author}-{message.Id}.png";
