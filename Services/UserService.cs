@@ -398,6 +398,7 @@ namespace DiscordBot
             float beginWidth = (image.Width * .10f);
             float totalWidth = image.Width *.8f;
 
+            //Shitty outline effect
             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth -4, beginHeight), new TextGraphicsOptions(true)
             {
                 WrapTextWidth = totalWidth,

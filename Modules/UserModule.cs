@@ -207,7 +207,7 @@ namespace DiscordBot
             if (msg.Length < 6)
                 await ReplyAsync("Sorry, there was an error processing your image.");
             else
-                await Context.Channel.SendFileAsync(msg);
+                await Context.Channel.SendFileAsync(msg, $"From {Context.Message.Author.Mention}");
             await Context.Message.DeleteAsync();
         }
 
