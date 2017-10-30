@@ -12,6 +12,7 @@ using Discord.WebSocket;
 using ImageSharp;
 using ImageSharp.Drawing;
 using ImageSharp.Drawing.Brushes;
+using ImageSharp.Formats;
 using SixLabors.Fonts;
 using SixLabors.Primitives;
 using Image = ImageSharp.Image;
@@ -43,7 +44,7 @@ namespace DiscordBot
         private readonly int _xpMaxPerMessage;
         private readonly int _xpMinCooldown;
         private readonly int _xpMaxCooldown;
-        
+
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
         public UserService(DatabaseService database, LoggingService logging)
@@ -67,11 +68,11 @@ namespace DiscordBot
                 .CreateFont(22);
             _levelFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
-                .CreateFont(59);            
+                .CreateFont(59);
             _levelFontSmall = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
                 .CreateFont(45);
-            
+
             _subtitlesBlackFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
                 .CreateFont(80);
@@ -251,7 +252,8 @@ namespace DiscordBot
             profileCard.DrawImage(avatar, 100f, new Size(80, 80), new Point(16, 28));
             profileCard.DrawText(user.Username, _nameFont, Rgba32.FromHex("#3C3C3C"),
                 new PointF(144, 8));
-            profileCard.DrawText(level.ToString(), level < 100 ? _levelFont : _levelFontSmall, Rgba32.FromHex("#3C3C3C"), new PointF(98, 35));
+            profileCard.DrawText(level.ToString(), level < 100 ? _levelFont : _levelFontSmall, Rgba32.FromHex("#3C3C3C"),
+                new PointF(98, 35));
             profileCard.DrawText("Server Rank        #" + rank, _defaultFont, Rgba32.FromHex("#3C3C3C"),
                 new PointF(167, 60));
             profileCard.DrawText("Karma Points:    " + karma, _defaultFont, Rgba32.FromHex("#3C3C3C"),
@@ -260,7 +262,7 @@ namespace DiscordBot
                 new PointF(167, 94));
 
             profileCard.Resize(400, 120);
-            
+
             profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                              $@"/images/profiles/{user.Username}-profile.png");
             return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
@@ -365,11 +367,11 @@ namespace DiscordBot
             var attachments = message.Attachments;
             Attachment file = null;
             Image<Rgba32> image = null;
-            
+
             foreach (var a in attachments)
             {
                 if (Regex.Match(a.Filename, @"(.*?)\.(jpg|jpeg|png|gif)$").Success)
-                    file = (Attachment)a;
+                    file = (Attachment) a;
             }
 
             if (file == null)
@@ -385,7 +387,7 @@ namespace DiscordBot
 
                         byte[] reader = await response.Content.ReadAsByteArrayAsync();
                         image = ImageSharp.Image.Load(reader);
-                        }
+                    }
                 }
             }
             catch (Exception e)
@@ -396,30 +398,30 @@ namespace DiscordBot
 
             float beginHeight = image.Height - (image.Height * 0.3f);
             float beginWidth = (image.Width * .10f);
-            float totalWidth = image.Width *.8f;
+            float totalWidth = image.Width * .8f;
 
             //Shitty outline effect
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth -4, beginHeight), new TextGraphicsOptions(true)
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight), new TextGraphicsOptions(true)
             {
                 WrapTextWidth = totalWidth,
                 HorizontalAlignment = HorizontalAlignment.Center
             });
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth +4, beginHeight), new TextGraphicsOptions(true)
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight), new TextGraphicsOptions(true)
             {
                 WrapTextWidth = totalWidth,
                 HorizontalAlignment = HorizontalAlignment.Center
             });
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight -4), new TextGraphicsOptions(true)
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight - 4), new TextGraphicsOptions(true)
             {
                 WrapTextWidth = totalWidth,
                 HorizontalAlignment = HorizontalAlignment.Center
             });
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight +4), new TextGraphicsOptions(true)
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight + 4), new TextGraphicsOptions(true)
             {
                 WrapTextWidth = totalWidth,
                 HorizontalAlignment = HorizontalAlignment.Center
             });
-            
+
             image.DrawText(text, _subtitlesWhiteFont, Rgba32.White, new PointF(beginWidth, beginHeight), new TextGraphicsOptions(true)
             {
                 WrapTextWidth = totalWidth,
@@ -428,7 +430,7 @@ namespace DiscordBot
 
             string path = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                           $@"/images/subtitles/{message.Author}-{message.Id}.png";
-            image.Save(path);
+            image.Save(path, new JpegEncoder {Quality = 95});
 
             return path;
         }
