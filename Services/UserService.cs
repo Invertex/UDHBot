@@ -125,7 +125,7 @@ namespace DiscordBot
                     return;
             }
 
-            uint karma = _database.GetUserKarma(id);
+            int karma = _database.GetUserKarma(id);
             if (messageParam.Author.Game != null)
                 if (Regex.Match(messageParam.Author.Game.Value.ToString(), "(Unity.+)").Length > 0)
                     bonusXp += baseXp / 4;
@@ -212,7 +212,7 @@ namespace DiscordBot
             }
             uint xp = _database.GetUserXp(userId);
             uint rank = _database.GetUserRank(userId);
-            uint karma = _database.GetUserKarma(userId);
+            int karma = _database.GetUserKarma(userId);
             uint level = _database.GetUserLevel(userId);
             double xpLow = GetXpLow((int) level);
             double xpHigh = GetXpHigh((int) level);

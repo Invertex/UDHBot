@@ -132,12 +132,12 @@ namespace DiscordBot
             return xp;
         }
 
-        public uint GetUserKarma(ulong id)
+        public int GetUserKarma(ulong id)
         {
-            uint karma;
+            int karma;
             string reader = GetAttributeFromUser(id, "karma");
 
-            karma = Convert.ToUInt32(reader);
+            karma = Convert.ToInt32(reader);
 
             return karma;
         }
