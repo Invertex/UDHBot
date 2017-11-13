@@ -136,7 +136,7 @@ namespace DiscordBot
             _xpCooldown.Add(id, DateTime.Now.Add(new TimeSpan(0, 0, 0, waitTime)));
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
-            _database.AddUserXp(id, (uint) Math.Round(baseXp + bonusXp));
+            _database.AddUserXp(id, (int) Math.Round(baseXp + bonusXp));
 
             await LevelUp(messageParam, id);
 

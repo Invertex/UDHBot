@@ -95,12 +95,12 @@ namespace DiscordBot
         }
 
 
-        public void AddUserXp(ulong id, uint xp)
+        public void AddUserXp(ulong id, int xp)
         {
-            uint oldXp;
+            int oldXp;
             string reader = GetAttributeFromUser(id, "exp");
 
-            oldXp = Convert.ToUInt32(reader);
+            oldXp = Convert.ToInt32(reader);
             UpdateAttributeFromUser(id, "exp", oldXp + xp);
         }
 
@@ -113,12 +113,12 @@ namespace DiscordBot
             UpdateAttributeFromUser(id, "level", oldLevel + level);
         }
 
-        public void AddUserKarma(ulong id, uint karma)
+        public void AddUserKarma(ulong id, int karma)
         {
-            uint oldKarma;
+            int oldKarma;
             string reader = GetAttributeFromUser(id, "karma");
 
-            oldKarma = Convert.ToUInt32(reader);
+            oldKarma = Convert.ToInt32(reader);
             UpdateAttributeFromUser(id, "karma", oldKarma + karma);
         }
 
@@ -221,6 +221,25 @@ namespace DiscordBot
             }
         }
 
+        private async void UpdateAttributeFromUser(ulong id, string attribute, int value)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(_connection))
+                {
+                    var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
+                    command.Parameters.AddWithValue("@Value", value);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception e)
+            {
+                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}", true,
+                    false);
+            }
+        }
+        
         private async void UpdateAttributeFromUser(ulong id, string attribute, uint value)
         {
             try
