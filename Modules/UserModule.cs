@@ -197,7 +197,7 @@ namespace DiscordBot
         async Task CompileCode(params string[] code)
         {
             string codeComplete =
-                $"using System;\nusing System.Collections.Generic;\n\n\tpublic class Hello\n\t{{\n\t\tpublic static void Main()\n\t\t{{\n\t\t\t{String.Join("", code)}\n\t\t}}\n\t}}\n";
+                $"using System;\nusing System.Collections.Generic;\n\n\tpublic class Hello\n\t{{\n\t\tpublic static void Main()\n\t\t{{\n\t\t\t{String.Join(" ", code)}\n\t\t}}\n\t}}\n";
 
             var parameters = new Dictionary<string, string>
             {
@@ -208,7 +208,7 @@ namespace DiscordBot
             var content = new FormUrlEncodedContent(parameters);
 
             var message = await ReplyAsync("Please wait a moment, trying to compile your code interpreted as\n" +
-                                           $"```cs\n {codeComplete}```");
+                                           $"```cs\n{codeComplete}```");
 
             using (HttpClient client = new HttpClient())
             {
