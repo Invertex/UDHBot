@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using DiscordBot.Extensions;
+using Newtonsoft.Json;
 
 namespace DiscordBot
 {
@@ -139,7 +143,7 @@ namespace DiscordBot
         [Command("quote"), Summary("Quote a message in current channel. Syntax : !quote messageid")]
         async Task QuoteMessage(ulong id)
         {
-        await Context.Message.DeleteAsync();
+            await Context.Message.DeleteAsync();
             IMessageChannel channel = Context.Channel;
             var message = await channel.GetMessageAsync(id);
             Console.WriteLine($"message {message.Author.Username}  {message.Channel.Name}");
@@ -159,7 +163,7 @@ namespace DiscordBot
                 })
                 .AddField("Original message", message.Content);
             var embed = builder.Build();
-            await ReplyAsync("", false, embed);            
+            await ReplyAsync("", false, embed);
         }
 
         [Command("quote"), Summary("Quote a message. Syntax : !quote #channelname messageid")]
@@ -185,6 +189,74 @@ namespace DiscordBot
             await ReplyAsync("", false, embed);
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
+        }
+
+        [Command("compile"), Summary("Try to compile a snippet of C# code. Be sure to escape your strings. Syntax : !compile \"Your code\"")]
+        [Alias("code", "compute", "assert")]
+        async Task CompileCode(params string[] code)
+        {
+            string codeComplete = $"using System;\nusing System.Collections.Generic;\n\n\tpublic class Hello\n\t{{\n\t\tpublic static void Main()\n\t\t{{\n\t\t\t{String.Join("", code)}\n\t\t}}\n\t}}\n";
+
+            var parameters = new Dictionary<string, string>
+            {
+                {"source_code", codeComplete},
+                {"language", "csharp"},
+                {"api_key", "guest"}
+            };
+            var content = new FormUrlEncodedContent(parameters);
+
+            var message = await ReplyAsync("Please wait a moment, trying to compile your code interpreted as\n" +
+                                           $"```cs\n {codeComplete}```");
+
+            using (HttpClient client = new HttpClient())
+            {
+                HttpResponseMessage httpResponse = await client.PostAsync("http://api.paiza.io/runners/create", content);
+                var response = JsonConvert.DeserializeObject<Dictionary<string, string>>(await httpResponse.Content.ReadAsStringAsync());
+
+                string id = response["id"];
+                string status;
+                DateTime startTime = DateTime.Now;
+                int maxTime = 30;
+
+                do
+                {
+                    httpResponse = await client.GetAsync($"http://api.paiza.io/runners/get_details?id={id}&api_key=guest");
+                    response = JsonConvert.DeserializeObject<Dictionary<string, string>>(await httpResponse.Content.ReadAsStringAsync());
+                    status = response["status"];
+                    await Task.Delay(300);
+                } while (status != "completed" && (DateTime.Now - startTime).TotalSeconds < maxTime);
+
+                string newMessage;
+                
+                if (status != "completed")
+                {
+                    newMessage = (message.Content + "The code didn't compile in time.").Truncate(1990);
+                    await message.ModifyAsync(m => m.Content = newMessage);
+                    return;
+                }
+                string build_stddout = response["build_stdout"];
+                string stdout = response["stdout"];
+                string stderr = response["stderr"];
+                string build_stderr = response["build_stderr"];
+                string result = response["build_result"];
+
+
+
+                if (result == "failure")
+                {
+                    newMessage = (message.Content + "The code resulted in a failure.\n"
+                                                  + $"```cs\n{build_stddout}```\n" +
+                                                  $"```cs\n{build_stderr}").Truncate(1990) + "```";
+                    await message.ModifyAsync(m => m.Content = newMessage);
+                }
+                else
+                {
+                    newMessage = (message.Content + "Result : "
+                                                  + $"```cs\n{stdout}```" +
+                                                  $"```cs\n{stderr}").Truncate(1990) + "```";
+                    await message.ModifyAsync(m => m.Content = newMessage);
+                }
+            }
         }
 
         [Command("coinflip"), Summary("Flip a coin and see the result. Syntax : !coinflip")]

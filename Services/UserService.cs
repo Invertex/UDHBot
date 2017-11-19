@@ -74,12 +74,12 @@ namespace DiscordBot
                 .CreateFont(45);
 
             _subtitlesBlackFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/OpenSansEmoji.ttf")
                 .CreateFont(80);
             _subtitlesWhiteFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/OpenSansEmoji.ttf")
                 .CreateFont(75);
-
+            
             /*
             Init XP
             */
@@ -404,7 +404,7 @@ namespace DiscordBot
             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight), new TextGraphicsOptions(true)
             {
                 WrapTextWidth = totalWidth,
-                HorizontalAlignment = HorizontalAlignment.Center
+                HorizontalAlignment = HorizontalAlignment.Center,
             });
             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight), new TextGraphicsOptions(true)
             {
