@@ -261,7 +261,7 @@ namespace DiscordBot
                                                   $"```cs\n{stderr}\n";
                 }
                 
-                httpResponse = await client.PostAsync("https://hastebin.com/documents", new StringContent(fullMessage));
+                httpResponse = await client.PostAsync("https://hastebin.com/documents", new StringContent(fullMessage.Truncate(10000)));
                 response = JsonConvert.DeserializeObject<Dictionary<string, string>>(await httpResponse.Content.ReadAsStringAsync());
                 
                 newMessage = ($"\nFull result : https://hastebin.com/{response["key"]}\n" + fullMessage).Truncate(1990) + "```";
