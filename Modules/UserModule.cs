@@ -191,11 +191,13 @@ namespace DiscordBot
             await Context.Message.DeleteAsync();
         }
 
-        [Command("compile"), Summary("Try to compile a snippet of C# code. Be sure to escape your strings. Syntax : !compile \"Your code\"")]
+        [Command("compile"),
+         Summary("Try to compile a snippet of C# code. Be sure to escape your strings. Syntax : !compile \"Your code\"")]
         [Alias("code", "compute", "assert")]
         async Task CompileCode(params string[] code)
         {
-            string codeComplete = $"using System;\nusing System.Collections.Generic;\n\n\tpublic class Hello\n\t{{\n\t\tpublic static void Main()\n\t\t{{\n\t\t\t{String.Join("", code)}\n\t\t}}\n\t}}\n";
+            string codeComplete =
+                $"using System;\nusing System.Collections.Generic;\n\n\tpublic class Hello\n\t{{\n\t\tpublic static void Main()\n\t\t{{\n\t\t\t{String.Join("", code)}\n\t\t}}\n\t}}\n";
 
             var parameters = new Dictionary<string, string>
             {
@@ -227,7 +229,7 @@ namespace DiscordBot
                 } while (status != "completed" && (DateTime.Now - startTime).TotalSeconds < maxTime);
 
                 string newMessage;
-                
+
                 if (status != "completed")
                 {
                     newMessage = (message.Content + "The code didn't compile in time.").Truncate(1990);
@@ -240,22 +242,30 @@ namespace DiscordBot
                 string build_stderr = response["build_stderr"];
                 string result = response["build_result"];
 
-
-
+                string fullMessage;
+                
                 if (result == "failure")
                 {
-                    newMessage = (message.Content + "The code resulted in a failure.\n"
-                                                  + $"```cs\n{build_stddout}```\n" +
-                                                  $"```cs\n{build_stderr}\n").Truncate(1990) + "```";
-                    await message.ModifyAsync(m => m.Content = newMessage);
+                    fullMessage = message.Content + "The code resulted in a failure.\n"
+                                                  + (build_stddout.Length > 0
+                                                      ? $"```cs\n{build_stddout}```\n"
+                                                      : "") +
+                                                  (build_stderr.Length > 0
+                                                      ? $"```cs\n{build_stderr}\n"
+                                                      : "```");
                 }
                 else
                 {
-                    newMessage = (message.Content + "Result : "
-                                                  + $"```cs\n{stdout}```" +
-                                                  $"```cs\n{stderr}\n").Truncate(1990) + "```";
-                    await message.ModifyAsync(m => m.Content = newMessage);
+                    fullMessage = message.Content + "Result : "
+                                                  + (stdout.Length > 0 ? $"```cs\n{stdout}```" : "") +
+                                                  $"```cs\n{stderr}\n";
                 }
+                
+                httpResponse = await client.PostAsync("https://hastebin.com/documents", new StringContent(fullMessage));
+                response = JsonConvert.DeserializeObject<Dictionary<string, string>>(await httpResponse.Content.ReadAsStringAsync());
+                
+                newMessage = ($"\nFull result : https://hastebin.com/{response["key"]}\n" + fullMessage).Truncate(1990) + "```";
+                await message.ModifyAsync(m => m.Content = newMessage);
             }
         }
 
