@@ -246,14 +246,14 @@ namespace DiscordBot
                 {
                     newMessage = (message.Content + "The code resulted in a failure.\n"
                                                   + $"```cs\n{build_stddout}```\n" +
-                                                  $"```cs\n{build_stderr}").Truncate(1990) + "```";
+                                                  $"```cs\n{build_stderr}\n").Truncate(1990) + "```";
                     await message.ModifyAsync(m => m.Content = newMessage);
                 }
                 else
                 {
                     newMessage = (message.Content + "Result : "
                                                   + $"```cs\n{stdout}```" +
-                                                  $"```cs\n{stderr}").Truncate(1990) + "```";
+                                                  $"```cs\n{stderr}\n").Truncate(1990) + "```";
                     await message.ModifyAsync(m => m.Content = newMessage);
                 }
             }
