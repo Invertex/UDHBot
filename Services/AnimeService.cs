@@ -100,7 +100,7 @@ namespace DiscordBot
         {
             var json = @"{
               Page(page: 1, perPage: 50) {
-                media(search:" + "\"" + title + "\"" + @")
+                media(type:ANIME, search:" + "\"" + title + "\"" + @")
                        {
                           id,
                           idMal,
