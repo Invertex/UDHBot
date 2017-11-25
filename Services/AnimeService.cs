@@ -65,24 +65,27 @@ namespace DiscordBot
            
             var channel = _client.GetChannel(Settings.GetAnimeChannel()) as ISocketMessageChannel;
 
-            var airingAnimes = await GetAiringAnimes(7);
-
             string reply = "こんにちは! This is 2B with your Weekly Anime Schedule !\n Here's what will be airing in the next 7 days !\n";
-            
-            foreach (var anime in airingAnimes.data.Page.airingSchedules)
-            {
-                string malUrl = $"https://myanimelist.net/anime/{anime.media.idMal}";
-                TimeSpan timeUntilAiring = TimeSpan.FromSeconds((double) anime.timeUntilAiring);
-                var secondTitle = anime.media.title.english ?? anime.media.title.native;
-                string daysString = timeUntilAiring.Days > 0 ? timeUntilAiring.Days + "d " : "";
-                daysString += timeUntilAiring.Hours > 0 ? timeUntilAiring.Hours + "h " : "";
-                daysString += timeUntilAiring.Minutes > 0 ? timeUntilAiring.Minutes + "min" : "";
 
-                string episodeCount = anime.episode + (anime.media.episodes != null ? "/" + anime.media.episodes : "");
-                
-                reply += $"**{anime.media.title.romaji}** ({secondTitle}) - *Next airing episode* : **{episodeCount}** " +
-                         $"in *{daysString}* "+ // at *{DateTime.Now + timeUntilAiring}*(UTC+1) " +
-                         $"<{malUrl}>\n";
+            for (int i = 1; i < 10; i++)
+            {
+                var airingAnimes = await GetAiringAnimes(7, i);
+
+                foreach (var anime in airingAnimes.data.Page.airingSchedules)
+                {
+                    string malUrl = $"https://myanimelist.net/anime/{anime.media.idMal}";
+                    TimeSpan timeUntilAiring = TimeSpan.FromSeconds((double) anime.timeUntilAiring);
+                    var secondTitle = anime.media.title.english ?? anime.media.title.native;
+                    string daysString = timeUntilAiring.Days > 0 ? timeUntilAiring.Days + "d " : "";
+                    daysString += timeUntilAiring.Hours > 0 ? timeUntilAiring.Hours + "h " : "";
+                    daysString += timeUntilAiring.Minutes > 0 ? timeUntilAiring.Minutes + "min" : "";
+
+                    string episodeCount = anime.episode + (anime.media.episodes != null ? "/" + anime.media.episodes : "");
+
+                    reply += $"**{anime.media.title.romaji}** ({secondTitle}) - *Next airing episode* : **{episodeCount}** " +
+                             $"in *{daysString}* " + // at *{DateTime.Now + timeUntilAiring}*(UTC+1) " +
+                             $"<{malUrl}>\n";
+                }
             }
 
             var str = reply.MessageSplit(1990);
@@ -93,12 +96,12 @@ namespace DiscordBot
             }
         }
         
-        public async Task<AnilistResponse> GetAiringAnimes(int days)
+        public async Task<AnilistResponse> GetAiringAnimes(int days, int page = 1)
         {
             int timeUntilAiring = 60 * 60 * 24 * days;
             
             var json = @"{
-                Page(page: 1, perPage: 50) {
+                Page(page: " + page + @", perPage: 50) {
                   airingSchedules(notYetAired: true, airingAt_greater: 604800, sort: TIME_DESC) {
                     id
                     timeUntilAiring

@@ -74,6 +74,9 @@ namespace DiscordBot
             {
                 var json = JsonConvert.SerializeObject(_botData);
                 File.WriteAllText($"{Settings.GetServerRootPath()}/botdata.json", json);
+
+                json = JsonConvert.SerializeObject(_animeData);
+                File.WriteAllText($"{Settings.GetServerRootPath()}/animedata.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
                 await Task.Delay(TimeSpan.FromSeconds(20d), _token);
             }
