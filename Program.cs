@@ -15,16 +15,17 @@ namespace DiscordBot
     {
         private DiscordSocketClient _client;
 
-        private CommandService _commands;
+        private CommandService _commandService;
         private IServiceProvider _services;
         private IServiceCollection _serviceCollection;
-        private LoggingService _logging;
-        private DatabaseService _database;
-        private UserService _user;
-        private WorkService _work;
-        private PublisherService _publisher;
-        private UpdateService _update;
-        private AudioService _audio;
+        private LoggingService _loggingService;
+        private DatabaseService _databaseService;
+        private UserService _userService;
+        private WorkService _workService;
+        private PublisherService _publisherService;
+        private UpdateService _updateService;
+        private AudioService _audioService;
+        private AnimeService _animeService;
 
         private string _token = "";
 
@@ -44,27 +45,29 @@ namespace DiscordBot
                 MessageCacheSize = 50
             });
 
-            _commands = new CommandService(new CommandServiceConfig()
+            _commandService = new CommandService(new CommandServiceConfig()
             {
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Async
             });
-            _logging = new LoggingService(_client);
-            _database = new DatabaseService(_logging);
-            _user = new UserService(_database, _logging);
-            _work = new WorkService();
-            _publisher = new PublisherService(_client, _database);
-            _update = new UpdateService(_logging, _publisher, _database);
-            _audio = new AudioService(_logging, _client);
+            _loggingService = new LoggingService(_client);
+            _databaseService = new DatabaseService(_loggingService);
+            _userService = new UserService(_databaseService, _loggingService);
+            _workService = new WorkService();
+            _publisherService = new PublisherService(_client, _databaseService);
+            _animeService = new AnimeService(_client);
+            _updateService = new UpdateService(_loggingService, _publisherService, _databaseService, _animeService);
+            _audioService = new AudioService(_loggingService, _client);
             _serviceCollection = new ServiceCollection();
-            _serviceCollection.AddSingleton(_logging);
-            _serviceCollection.AddSingleton(_database);
-            _serviceCollection.AddSingleton(_user);
+            _serviceCollection.AddSingleton(_loggingService);
+            _serviceCollection.AddSingleton(_databaseService);
+            _serviceCollection.AddSingleton(_userService);
             //_serviceCollection.AddSingleton(_work);
             //TODO: rework work service
-            _serviceCollection.AddSingleton(_publisher);
-            _serviceCollection.AddSingleton(_update);
-            _serviceCollection.AddSingleton(_audio);
+            _serviceCollection.AddSingleton(_publisherService);
+            _serviceCollection.AddSingleton(_updateService);
+            _serviceCollection.AddSingleton(_audioService);
+            _serviceCollection.AddSingleton(_animeService);
             _services = _serviceCollection.BuildServiceProvider();
 
 
@@ -116,8 +119,8 @@ namespace DiscordBot
         {          
             // Hook the MessageReceived Event into our Command Handler
             _client.MessageReceived += HandleCommand;
-            _client.MessageReceived += _user.UpdateXp;
-            _client.MessageReceived += _user.Thanks;
+            _client.MessageReceived += _userService.UpdateXp;
+            _client.MessageReceived += _userService.Thanks;
             //_client.MessageReceived += _work.OnMessageAdded;
             _client.MessageDeleted += MessageDeleted;
             _client.UserJoined += UserJoined;
@@ -125,14 +128,14 @@ namespace DiscordBot
             _client.UserLeft += UserLeft;
 
             // Discover all of the commands in this assembly and load them.
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
+            await _commandService.AddModulesAsync(Assembly.GetEntryAssembly());
 
             StringBuilder commandList = new StringBuilder();
-            foreach (var c in _commands.Commands.Where(x => x.Module.Name == "UserModule"))
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule"))
             {
                 commandList.Append($"**{c.Name}** : {c.Summary}\n");
             }
-            foreach (var c in _commands.Commands.Where(x => x.Module.Name == "role"))
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role"))
             {
                 commandList.Append($"**role {c.Name}** : {c.Summary}\n");
             }
@@ -164,16 +167,16 @@ namespace DiscordBot
                 .AddField("Deleted message", content);
             Embed embed = builder.Build();
 
-            await _logging.LogAction(
+            await _loggingService.LogAction(
                 $"User {message.Value.Author.Username}#{message.Value.Author.DiscriminatorValue} has " +
                 $"deleted the message\n{content}\n from channel #{channel.Name}", true, false);
-            await _logging.LogAction(" ", false, true, embed);
+            await _loggingService.LogAction(" ", false, true, embed);
         }
 
         private async Task UserJoined(SocketGuildUser user)
         {
             ulong general = SettingsHandler.LoadValueUlong("generalChannel/id", JsonFile.Settings);
-            Embed em = _user.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+            Embed em = _userService.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
 
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
             if (socketTextChannel != null)
@@ -181,10 +184,10 @@ namespace DiscordBot
                 await socketTextChannel.SendMessageAsync(string.Empty, false, em);
             }
 
-            await _logging.LogAction(
+            await _loggingService.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
-            _database.AddNewUser(user);
+            _databaseService.AddNewUser(user);
             
             string globalRules = Settings.GetRule(0).content;
             IDMChannel dm = await user.GetOrCreateDMChannelAsync();
@@ -201,27 +204,27 @@ namespace DiscordBot
         {
             if (oldUser.Nickname != user.Nickname)
             {
-                await _logging.LogAction(
+                await _loggingService.LogAction(
                     $"User {oldUser.Nickname ?? oldUser.Username}#{oldUser.DiscriminatorValue} changed his " +
                     $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
-                _database.UpdateUserName(user.Id, user.Nickname);
+                _databaseService.UpdateUserName(user.Id, user.Nickname);
             }
             if (oldUser.AvatarId != user.AvatarId)
             {
                 var avatar = user.GetAvatarUrl();
-                _database.UpdateUserAvatar(user.Id, avatar);
+                _databaseService.UpdateUserAvatar(user.Id, avatar);
             }
         }
 
         private async Task UserLeft(SocketGuildUser user)
         {
             DateTime joinDate;
-            DateTime.TryParse(_database.GetUserJoinDate(user.Id), out joinDate);
+            DateTime.TryParse(_databaseService.GetUserJoinDate(user.Id), out joinDate);
             TimeSpan timeStayed = DateTime.Now - joinDate;
-            await _logging.LogAction(
+            await _loggingService.LogAction(
                 $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +
                 $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
-            _database.DeleteUser(user.Id);
+            _databaseService.DeleteUser(user.Id);
         }
 
         public async Task HandleCommand(SocketMessage messageParam)
@@ -241,7 +244,7 @@ namespace DiscordBot
             var context = new CommandContext(_client, message);
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)
-            var result = await _commands.ExecuteAsync(context, argPos, _services);
+            var result = await _commandService.ExecuteAsync(context, argPos, _services);
             if (!result.IsSuccess)
             {
                 IUserMessage m = await context.Channel.SendMessageAsync(result.ErrorReason);

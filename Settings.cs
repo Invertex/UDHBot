@@ -54,6 +54,11 @@ namespace DiscordBot
             return SettingsHandler.LoadValueUlong("botCommandsChannel/id", JsonFile.Settings);
         }
 
+        public static ulong GetAnimeChannel()
+        {
+            return SettingsHandler.LoadValueUlong("animeChannel/id", JsonFile.Settings);
+        }
+        
         public static string GetServerRootPath()
         {
             return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings);

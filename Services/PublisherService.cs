@@ -21,20 +21,20 @@ namespace DiscordBot
     public class PublisherService
     {
         private readonly DiscordSocketClient _client;
-        private readonly DatabaseService _database;
+        private readonly DatabaseService _databaseService;
 
         private Dictionary<uint, string> _verificationCodes;
 
-        public PublisherService(DiscordSocketClient client, DatabaseService database)
+        public PublisherService(DiscordSocketClient client, DatabaseService databaseService)
         {
             _client = client;
-            _database = database;
+            _databaseService = databaseService;
             _verificationCodes = new Dictionary<uint, string>();
         }
 
         public async Task PostAd(uint id)
         {
-            (uint, ulong) ad = _database.GetPublisherAd(id);
+            (uint, ulong) ad = _databaseService.GetPublisherAd(id);
             await PublisherAdvertising(ad.Item1, ad.Item2);
         }
         
@@ -195,7 +195,7 @@ namespace DiscordBot
             var u = user as SocketGuildUser;
             IRole publisher = u.Guild.GetRole(SettingsHandler.LoadValueUlong("publisherRoleID", JsonFile.Settings));
             await u.AddRoleAsync(publisher);
-            _database.AddPublisherPackage(user.Username, user.DiscriminatorValue.ToString(), user.Id.ToString(), packageId);
+            _databaseService.AddPublisherPackage(user.Username, user.DiscriminatorValue.ToString(), user.Id.ToString(), packageId);
 
             return "Your package has been verified and added to the daily advertisement list.";
         }

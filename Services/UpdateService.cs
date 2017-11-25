@@ -16,18 +16,21 @@ namespace DiscordBot
 
     public class UpdateService
     {
-        private readonly LoggingService _logging;
-        private readonly PublisherService _publisher;
-        private readonly DatabaseService _database;
+        private readonly LoggingService _loggingService;
+        private readonly PublisherService _publisherService;
+        private readonly DatabaseService _databaseService;
+        private readonly AnimeService _animeService;
         private readonly CancellationToken _token;
         private BotData _botData;
         private Random _random;
+        private AnimeData _animeData;
 
-        public UpdateService(LoggingService logging, PublisherService publisher, DatabaseService database)
+        public UpdateService(LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService, AnimeService animeService)
         {
-            _logging = logging;
-            _publisher = publisher;
-            _database = database;
+            _loggingService = loggingService;
+            _publisherService = publisherService;
+            _databaseService = databaseService;
+            _animeService = animeService;
             _token = new CancellationToken();
             _random = new Random();
 
@@ -40,6 +43,7 @@ namespace DiscordBot
             SaveDataToFile();
             CheckDailyPublisher();
             UpdateUserRanks();
+            UpdateAnime();
         }
 
         private void ReadDataFromFile()
@@ -51,6 +55,14 @@ namespace DiscordBot
             }
             else
                 _botData = new BotData();
+            
+            if (File.Exists($"{Settings.GetServerRootPath()}/animedata.json"))
+            {
+                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/animedata.json");
+                _animeData = JsonConvert.DeserializeObject<AnimeData>(json);
+            }
+            else
+                _animeData = new AnimeData();
         }
 
         /*
@@ -74,17 +86,17 @@ namespace DiscordBot
             {
                 if (_botData.LastPublisherCheck < DateTime.Now - TimeSpan.FromDays(1d) || force)
                 {
-                    uint count = _database.GetPublisherAdCount();
+                    uint count = _databaseService.GetPublisherAdCount();
                     ulong id;
                     uint rand;
                     do
                     {
                         rand = (uint)_random.Next((int) count);
-                        id = _database.GetPublisherAd(rand).userId;
+                        id = _databaseService.GetPublisherAd(rand).userId;
                     } while (id == _botData.LastPublisherId);
 
-                    await _publisher.PostAd(rand);
-                    await _logging.LogAction("Posted new daily publisher ad.", true, false);
+                    await _publisherService.PostAd(rand);
+                    await _loggingService.LogAction("Posted new daily publisher ad.", true, false);
                     _botData.LastPublisherCheck = DateTime.Now;
                     _botData.LastPublisherId = (ulong) id;
                 }
@@ -99,7 +111,27 @@ namespace DiscordBot
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
             {
-                _database.UpdateUserRanks();
+                _databaseService.UpdateUserRanks();
+                await Task.Delay(TimeSpan.FromMinutes(1d), _token);
+            }
+        }
+
+        private async Task UpdateAnime()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30d), _token);
+            while (true)
+            {
+                if (_animeData.LastWeeklyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(7d))
+                {
+                    _animeService.PublishWeeklyAnime();
+                }
+
+                await Task.Delay(TimeSpan.FromMinutes(5d), _token);
+                
+                if (_animeData.LastDailyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(1d))
+                {
+                    _animeService.PublishDailyAnime();
+                }
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
         }
