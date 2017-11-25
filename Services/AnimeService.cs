@@ -15,7 +15,7 @@ namespace DiscordBot
         public DateTime LastWeeklyAnimeAiringList;
         public Dictionary<int, List<ulong>> Subscribers;
     }
-    
+
     public class AnimeService
     {
         private DiscordSocketClient _client;
@@ -24,17 +24,17 @@ namespace DiscordBot
         {
             _client = client;
         }
-        
+
         public async void PublishDailyAnime()
         {
             Console.WriteLine("Publish daily anime");
-           
+
             var channel = _client.GetChannel(Settings.GetAnimeChannel()) as ISocketMessageChannel;
 
             var airingAnimes = await GetAiringAnimes(1);
 
             string reply = "Yee-oh ! This is 2B with your Daily Anime Schedule !\n Here's what will be airing in the next 24h !\n";
-            
+
             foreach (var anime in airingAnimes.data.Page.airingSchedules)
             {
                 string malUrl = $"https://myanimelist.net/anime/{anime.media.idMal}";
@@ -45,9 +45,9 @@ namespace DiscordBot
                 daysString += timeUntilAiring.Minutes > 0 ? timeUntilAiring.Minutes + "min" : "";
 
                 string episodeCount = anime.episode + (anime.media.episodes != null ? "/" + anime.media.episodes : "");
-                
+
                 reply += $"**{anime.media.title.romaji}** ({secondTitle}) - *Next airing episode* : **{episodeCount}** " +
-                         $"in *{daysString}* "+ // at *{DateTime.Now + timeUntilAiring}*(UTC+1) " +
+                         $"in *{daysString}* " + // at *{DateTime.Now + timeUntilAiring}*(UTC+1) " +
                          $"<{malUrl}>\n";
             }
 
@@ -62,7 +62,7 @@ namespace DiscordBot
         public async void PublishWeeklyAnime()
         {
             Console.WriteLine("Publish weekly anime");
-           
+
             var channel = _client.GetChannel(Settings.GetAnimeChannel()) as ISocketMessageChannel;
 
             string reply = "こんにちは! This is 2B with your Weekly Anime Schedule !\n Here's what will be airing in the next 7 days !\n";
@@ -95,11 +95,49 @@ namespace DiscordBot
                 await channel.SendMessageAsync(message);
             }
         }
-        
+
+        public async Task<AnilistResponse> SearchAnime(string title)
+        {
+            var json = @"{
+              Page(page: 1, perPage: 50) {
+                media(search:" + "\"" + title + "\"" + @")
+                       {
+                          id,
+                          idMal,
+                          title{romaji},
+                          description,
+                          coverImage{
+                            medium,        
+                          },
+                          startDate {
+                            year
+                            month
+                            day
+                          },
+                          endDate {
+                            year
+                            month
+                            day
+                          },
+                          genres,
+                          title{
+                            romaji,
+                            native,
+                            english
+                          }
+                        }
+                      }
+                    }";
+
+            var response = await AnilistRequest(json, "");
+
+            return response;
+        }
+
         public async Task<AnilistResponse> GetAiringAnimes(int days, int page = 1)
         {
             int timeUntilAiring = 60 * 60 * 24 * days;
-            
+
             var json = @"{
                 Page(page: " + page + @", perPage: 50) {
                   airingSchedules(notYetAired: true, airingAt_greater: 604800, sort: TIME_DESC) {

@@ -13,17 +13,18 @@ namespace DiscordBot
 {
     public class UserModule : ModuleBase
     {
-        private readonly LoggingService _logging;
-        private readonly DatabaseService _database;
-        private readonly UserService _user;
-        private readonly PublisherService _publisher;
+        private readonly LoggingService _loggingService;
+        private readonly DatabaseService _databaseService;
+        private readonly UserService _userService;
+        private readonly PublisherService _publisherService;
 
-        public UserModule(LoggingService logging, DatabaseService database, UserService user, PublisherService publisher)
+        public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
+            PublisherService publisherService)
         {
-            _logging = logging;
-            _database = database;
-            _user = user;
-            _publisher = publisher;
+            _loggingService = loggingService;
+            _databaseService = databaseService;
+            _userService = userService;
+            _publisherService = publisherService;
         }
 
         [Command("help"), Summary("Display available commands (this). Syntax : !help")]
@@ -111,6 +112,7 @@ namespace DiscordBot
             {
                 sb.Append($"{user.Mention} ");
             }
+
             sb.Append($"around a bit with a large {slaps[random.Next() % 3]}");
 
             await Context.Channel.SendMessageAsync(sb.ToString());
@@ -121,7 +123,7 @@ namespace DiscordBot
         [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
         async Task DisplayProfile()
         {
-            IUserMessage profile = await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(Context.Message.Author));
+            IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
 
             await Task.Delay(10000);
             await Context.Message.DeleteAsync();
@@ -132,7 +134,7 @@ namespace DiscordBot
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
         async Task DisplayProfile(IUser user)
         {
-            IUserMessage profile = await Context.Channel.SendFileAsync(await _user.GenerateProfileCard(user));
+            IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
 
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
@@ -236,6 +238,7 @@ namespace DiscordBot
                     await message.ModifyAsync(m => m.Content = newMessage);
                     return;
                 }
+
                 string build_stddout = response["build_stdout"];
                 string stdout = response["stdout"];
                 string stderr = response["stderr"];
@@ -243,7 +246,7 @@ namespace DiscordBot
                 string result = response["build_result"];
 
                 string fullMessage;
-                
+
                 if (result == "failure")
                 {
                     fullMessage = message.Content + "The code resulted in a failure.\n"
@@ -260,10 +263,10 @@ namespace DiscordBot
                                                   + (stdout.Length > 0 ? $"```cs\n{stdout}```" : "") +
                                                   $"```cs\n{stderr}\n";
                 }
-                
+
                 httpResponse = await client.PostAsync("https://hastebin.com/documents", new StringContent(fullMessage.Truncate(10000)));
                 response = JsonConvert.DeserializeObject<Dictionary<string, string>>(await httpResponse.Content.ReadAsStringAsync());
-                
+
                 newMessage = ($"\nFull result : https://hastebin.com/{response["key"]}\n" + fullMessage).Truncate(1990) + "```";
                 await message.ModifyAsync(m => m.Content = newMessage);
             }
@@ -285,7 +288,7 @@ namespace DiscordBot
         [Alias("subtitles", "sub", "subs")]
         async Task Subtitles(string text)
         {
-            var msg = await _user.SubtitleImage(Context.Message, text);
+            var msg = await _userService.SubtitleImage(Context.Message, text);
             if (msg.Length < 6)
                 await ReplyAsync("Sorry, there was an error processing your image.");
             else
@@ -327,7 +330,7 @@ namespace DiscordBot
                 return;
             }
 
-            (bool, string) verif = await _publisher.VerifyPackage(packageId);
+            (bool, string) verif = await _publisherService.VerifyPackage(packageId);
             await ReplyAsync(verif.Item2);
         }
 
@@ -341,7 +344,7 @@ namespace DiscordBot
                 return;
             }
 
-            string verif = await _publisher.ValidatePackageWithCode(Context.Message.Author, packageId, code);
+            string verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
             await ReplyAsync(verif);
         }
 
@@ -370,6 +373,7 @@ namespace DiscordBot
                     await ReplyAsync("This role is not assigneable");
                     return;
                 }
+
                 var u = Context.User as IGuildUser;
 
                 await u.AddRoleAsync(role);
@@ -434,6 +438,90 @@ namespace DiscordBot
                                  "--------------------------------------------------------------------------------------------\n" +
                                  "!role add/remove Streamer - If you stream on twitch/youtube or other discord integrated platforms content about tutorials and gaming. \n" +
                                  "```");
+            }
+        }
+
+        [Group("anime")]
+        public class AnimeModule : ModuleBase
+        {
+            private readonly AnimeService _animeService;
+
+            public AnimeModule(AnimeService animeService)
+            {
+                _animeService = animeService;
+            }
+
+            [Command("search"), Summary("Returns an anime. Syntax : !anime search animeTitle")]
+            async Task SearchAnime(string title)
+            {
+                /*{
+                  "content": "Here's your search result @blabla",
+                  "embed": {
+                    "title": "Anime search result",
+                    
+                    "url": "https://discordapp.com",
+                    "color": 14574459,
+                    "thumbnail": {
+                      "url": "https://cdn.anilist.co/img/dir/anime/reg/20800-Bdc1fJOBED6C.jpg"
+                    },
+                    "image": {
+                      "url": "https://cdn.anilist.co/img/dir/anime/reg/20800-Bdc1fJOBED6C.jpg"
+                    },
+                
+                    "fields": [
+                      {
+                        "name" : "Titles",
+                        "value" : "Yuuki Yuuna wa Yuusha De Aru, 結城友奈は勇者である"
+                      },
+                      {
+                        "name": "Description",
+                        "value": "The story takes place in the era of the gods, year 300. Yuuna Yuuki lives an ordinary life as a second year middle school student, but she's also a member of the \"Hero Club,\" where club activities involve dealing with a mysterious being called \"Vertex.\""
+                      },
+                      {
+                        "name": "Genres",
+                        "value" : "Mahou Shoujo, Action, Drama"
+                      },
+                      {
+                        "name": "MAL Link",
+                        "value" : "https://myanimelist.net/anime/25519"
+                      },
+                      {
+                        "name": "Start Date",
+                        "value": "17/10/2014",
+                        "inline": true
+                      },
+                      {
+                        "name": "End Date",
+                        "value": "26/12/2014",
+                        "inline": true
+                      }
+                    ]
+                  }
+                }*/
+
+                var animes = await _animeService.SearchAnime(title);
+                var anime = animes.data.Page.media.FirstOrDefault();
+                if (anime == null)
+                {
+                    await ReplyAsync("I'm sorry, I couldn't find an anime with this name.");
+                    return;
+                }
+
+                var builder = new EmbedBuilder()
+                    .WithTitle("Anime search result")
+                    .WithUrl("https://myanimelist.net/anime/" + anime.idMal)
+                    .WithColor(new Color(0xDE637B))
+                    .WithThumbnailUrl($"{anime.coverImage.medium}")
+                    .WithImageUrl($"{anime.coverImage.medium}")
+                    .AddField("Titles", $"{anime.title.romaji}, {anime.title.native}")
+                    .AddField("Description", $"{anime.description}")
+                    .AddField("Genres", $"{string.Join(",", anime.genres)}")
+                    .AddField("MAL Link", "https://myanimelist.net/anime/" + anime.idMal)
+                    .AddInlineField("Start Date", $"{anime.startDate.day}/{anime.startDate.month}/{anime.startDate.year}")
+                    .AddInlineField("End Date", $"{anime.endDate.day}/{anime.endDate.month}/{anime.endDate.year}");
+                var embed = builder.Build();
+                await Context.Channel.SendMessageAsync($"Here's your search result {Context.Message.Author.Mention}", false, embed)
+                    .ConfigureAwait(false);
             }
         }
     }

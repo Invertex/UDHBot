@@ -21,9 +21,9 @@ namespace DiscordBot
 {
     public class UserService
     {
-        private readonly DatabaseService _database;
-        private readonly LoggingService _logging;
-
+        private readonly DatabaseService _databaseService;
+        private readonly LoggingService _loggingService;
+        
         private Dictionary<ulong, DateTime> _xpCooldown;
         private Dictionary<ulong, DateTime> _thanksCooldown;
         private Random rand;
@@ -47,11 +47,11 @@ namespace DiscordBot
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
-        public UserService(DatabaseService database, LoggingService logging)
+        public UserService(DatabaseService databaseService, LoggingService loggingService)
         {
             rand = new Random();
-            _database = database;
-            _logging = logging;
+            _databaseService = databaseService;
+            _loggingService = loggingService;
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _thanksCooldown = new Dictionary<ulong, DateTime>();
 
@@ -125,7 +125,7 @@ namespace DiscordBot
                     return;
             }
 
-            int karma = _database.GetUserKarma(id);
+            int karma = _databaseService.GetUserKarma(id);
             if (messageParam.Author.Game != null)
                 if (Regex.Match(messageParam.Author.Game.Value.ToString(), "(Unity.+)").Length > 0)
                     bonusXp += baseXp / 4;
@@ -136,7 +136,7 @@ namespace DiscordBot
             _xpCooldown.Add(id, DateTime.Now.Add(new TimeSpan(0, 0, 0, waitTime)));
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
-            _database.AddUserXp(id, (int) Math.Round(baseXp + bonusXp));
+            _databaseService.AddUserXp(id, (int) Math.Round(baseXp + bonusXp));
 
             await LevelUp(messageParam, id);
 
@@ -145,15 +145,15 @@ namespace DiscordBot
 
         public async Task LevelUp(SocketMessage messageParam, ulong userId)
         {
-            int level = (int) _database.GetUserLevel(userId);
-            uint xp = _database.GetUserXp(userId);
+            int level = (int) _databaseService.GetUserLevel(userId);
+            uint xp = _databaseService.GetUserXp(userId);
 
             double xpLow = GetXpLow(level);
             double xpHigh = GetXpHigh(level);
 
             if (xp < xpHigh)
                 return;
-            _database.AddUserLevel(userId, 1);
+            _databaseService.AddUserLevel(userId, 1);
 
             RestUserMessage message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
             //TODO: investigate why this is not running async
@@ -210,10 +210,10 @@ namespace DiscordBot
                                                    @"/images/default.png");
                 }
             }
-            uint xp = _database.GetUserXp(userId);
-            uint rank = _database.GetUserRank(userId);
-            int karma = _database.GetUserKarma(userId);
-            uint level = _database.GetUserLevel(userId);
+            uint xp = _databaseService.GetUserXp(userId);
+            uint rank = _databaseService.GetUserRank(userId);
+            int karma = _databaseService.GetUserKarma(userId);
+            uint level = _databaseService.GetUserLevel(userId);
             double xpLow = GetXpLow((int) level);
             double xpHigh = GetXpHigh((int) level);
 
@@ -314,7 +314,7 @@ namespace DiscordBot
                 }
 
                 DateTime joinDate;
-                DateTime.TryParse(_database.GetUserJoinDate(userId), out joinDate);
+                DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out joinDate);
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
 
                 if (j > DateTime.Now)
@@ -341,7 +341,7 @@ namespace DiscordBot
                         mentionedSelf = true;
                         continue;
                     }
-                    _database.AddUserKarma(user.Id, 1);
+                    _databaseService.AddUserKarma(user.Id, 1);
                     sb.Append(user.Username + " ");
                 }
                 sb.Append("**");
@@ -358,7 +358,7 @@ namespace DiscordBot
                 _thanksCooldown.Add(userId, DateTime.Now.Add(new TimeSpan(0, 0, 0, _thanksCooldownTime)));
 
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
-                await _logging.LogAction(sb + " in channel " + messageParam.Channel.Name);
+                await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
         }
 

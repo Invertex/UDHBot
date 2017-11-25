@@ -19,6 +19,7 @@ namespace ConsoleApplication
     public class Page
     {
         public List<AiringSchedules> airingSchedules { get; set; }
+        public List<Media> media { get; set; }
     }
     
     public class AiringSchedules
@@ -33,17 +34,31 @@ namespace ConsoleApplication
     {
         public int? id { get; set; }
         public int? idMal { get; set; }
-        public int? startDate { get; set; }
-        public int? endDate { get; set; }
+        public Date startDate { get; set; }
+        public Date endDate { get; set; }
         public int? episodes { get; set; }
         public int? duration { get; set; }
         public bool isAdult { get; set; }
         public int? averageScore { get; set; }
-        public string genre { get; set; }
+        public List<string> genres { get; set; }
         public MediaTitle title { get; set; }
-        
+        public string description { get; set; }
+        public MediaCoverImage coverImage { get; set; }
     }
 
+    public class Date
+    {
+        public int? year { get; set; }
+        public int? month { get; set; }
+        public int? day { get; set; }
+    }
+
+    public class MediaCoverImage
+    {
+        public string large { get; set; }
+        public string medium { get; set; }
+    }
+    
     public class MediaTitle
     {
         public string romaji { get; set; }
