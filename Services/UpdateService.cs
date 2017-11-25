@@ -127,6 +127,7 @@ namespace DiscordBot
                 if (_animeData.LastWeeklyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(7d))
                 {
                     _animeService.PublishWeeklyAnime();
+                    _animeData.LastWeeklyAnimeAiringList = DateTime.Now;
                 }
 
                 await Task.Delay(TimeSpan.FromMinutes(5d), _token);
@@ -134,6 +135,7 @@ namespace DiscordBot
                 if (_animeData.LastDailyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(1d))
                 {
                     _animeService.PublishDailyAnime();
+                    _animeData.LastDailyAnimeAiringList = DateTime.Now;
                 }
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
