@@ -19,10 +19,12 @@ namespace DiscordBot
     public class AnimeService
     {
         private DiscordSocketClient _client;
+        private LoggingService _loggingService;
 
-        public AnimeService(DiscordSocketClient client)
+        public AnimeService(DiscordSocketClient client, LoggingService loggingService)
         {
             _client = client;
+            _loggingService = loggingService;
         }
 
         public async void PublishDailyAnime()
@@ -100,6 +102,7 @@ namespace DiscordBot
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                await _loggingService.LogAction(e.ToString());
                 //throw;
             }
         }
