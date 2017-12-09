@@ -131,6 +131,10 @@ namespace DiscordBot
                     bonusXp += baseXp / 4;
 
             bonusXp += baseXp * (1f + karma / 100f);
+
+            //Reduce XP for members with no role
+            if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
+                baseXp *= .1f;
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
 
             _xpCooldown.Add(id, DateTime.Now.Add(new TimeSpan(0, 0, 0, waitTime)));

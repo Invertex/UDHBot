@@ -147,6 +147,14 @@ namespace DiscordBot
             await _logging.LogAction($"{Context.User.Username} has banned {user.Username}");
         }
 
+        [Command("debug"), Summary("Debug")]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        async Task Debug(IUser user)
+        {
+            var guildUser = (IGuildUser) user;
+            await ReplyAsync(guildUser.RoleIds.Count.ToString());
+        }
+
         [Command("rules"), Summary("Display rules of the current channel.")]
         [RequireUserPermission(GuildPermission.KickMembers)]
         async Task Rules(int seconds = 60)
