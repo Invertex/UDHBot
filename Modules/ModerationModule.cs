@@ -47,14 +47,15 @@ namespace DiscordBot
         {
             var u = user as IGuildUser;
 
+            await Context.Message.DeleteAsync();
+            
             await u.AddRoleAsync(Settings.GetMutedRole(Context.Guild));
             IUserMessage reply = await ReplyAsync($"User {user} has been muted for {arg} seconds. Reason : {message}");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds. Reason : {message}");
             IDMChannel dm = await user.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync($"You have been muted from UDH for {arg} seconds for the following reason : {message}. " +
                                       $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
-
-            await Context.Message.DeleteAsync();
+            
 
             await Task.Delay((int) arg * 1000);
             await reply.DeleteAsync();
