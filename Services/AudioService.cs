@@ -40,7 +40,7 @@ namespace DiscordBot
                     await Task.Delay(1000);
                     await SendAsync(_audioClient, Settings.GetServerRootPath() + @"/music/oddloop.mp3");
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                 }
             }

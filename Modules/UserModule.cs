@@ -53,7 +53,7 @@ namespace DiscordBot
         async Task Rules(IMessageChannel channel)
         {
             Rule rule = Settings.GetRule(channel.Id);
-            IUserMessage m;
+            //IUserMessage m; //Unused, plan to be used in future?
             IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
             if (rule == null)
                 await dm.SendMessageAsync(
@@ -458,7 +458,7 @@ namespace DiscordBot
                   "content": "Here's your search result @blabla",
                   "embed": {
                     "title": "Anime search result",
-                    
+
                     "url": "https://discordapp.com",
                     "color": 14574459,
                     "thumbnail": {
@@ -467,7 +467,7 @@ namespace DiscordBot
                     "image": {
                       "url": "https://cdn.anilist.co/img/dir/anime/reg/20800-Bdc1fJOBED6C.jpg"
                     },
-                
+
                     "fields": [
                       {
                         "name" : "Titles",
