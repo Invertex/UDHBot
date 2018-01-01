@@ -116,11 +116,12 @@ namespace DiscordBot
         }
 
         public async Task InstallCommands()
-        {          
+        {
             // Hook the MessageReceived Event into our Command Handler
             _client.MessageReceived += HandleCommand;
             _client.MessageReceived += _userService.UpdateXp;
             _client.MessageReceived += _userService.Thanks;
+            _client.MessageReceived += _userService.CodeCheck;
             //_client.MessageReceived += _work.OnMessageAdded;
             _client.MessageDeleted += MessageDeleted;
             _client.UserJoined += UserJoined;
@@ -146,7 +147,7 @@ namespace DiscordBot
         {
             if (message.Value.Author.IsBot || channel.Id == Settings.GetBotAnnouncementChannel())
                 return;
-                
+
                 var content = message.Value.Content;
                 if (content.Length > 800)
 					content = content.Substring(0, 800);
@@ -188,7 +189,7 @@ namespace DiscordBot
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
             _databaseService.AddNewUser(user);
-            
+
             string globalRules = Settings.GetRule(0).content;
             IDMChannel dm = await user.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync(
@@ -242,7 +243,7 @@ namespace DiscordBot
                 return;
             // Create a Command Context
             var context = new CommandContext(_client, message);
-            // Execute the command. (result does not indicate a return value, 
+            // Execute the command. (result does not indicate a return value,
             // rather an object stating if the command executed successfully)
             var result = await _commandService.ExecuteAsync(context, argPos, _services);
             if (!result.IsSuccess)

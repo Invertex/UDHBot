@@ -9,12 +9,14 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using DiscordBot.Extensions;
 using ImageSharp;
 using ImageSharp.Drawing;
 using ImageSharp.Drawing.Brushes;
 using ImageSharp.Formats;
 using SixLabors.Fonts;
 using SixLabors.Primitives;
+
 using Image = ImageSharp.Image;
 
 namespace DiscordBot
@@ -23,9 +25,11 @@ namespace DiscordBot
     {
         private readonly DatabaseService _databaseService;
         private readonly LoggingService _loggingService;
-        
+
         private Dictionary<ulong, DateTime> _xpCooldown;
         private Dictionary<ulong, DateTime> _thanksCooldown;
+        private Dictionary<ulong, DateTime> _thanksReminderCooldown;
+        private Dictionary<ulong, DateTime> _codeReminderCooldown;
         private Random rand;
 
         private FontCollection _fontCollection;
@@ -38,12 +42,15 @@ namespace DiscordBot
         private string _thanksRegex;
 
         private readonly int _thanksCooldownTime;
+        private readonly int _thanksReminderCooldownTime;
         private readonly int _thanksMinJoinTime;
 
         private readonly int _xpMinPerMessage;
         private readonly int _xpMaxPerMessage;
         private readonly int _xpMinCooldown;
         private readonly int _xpMaxCooldown;
+
+        private readonly int _codeReminderCooldownTime;
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
@@ -54,6 +61,8 @@ namespace DiscordBot
             _loggingService = loggingService;
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _thanksCooldown = new Dictionary<ulong, DateTime>();
+            _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
+            _codeReminderCooldown = new Dictionary<ulong, DateTime>();
 
             /*
             Init font for the profile card
@@ -79,15 +88,15 @@ namespace DiscordBot
             _subtitlesWhiteFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/OpenSansEmoji.ttf")
                 .CreateFont(75);
-            
+
             /*
             Init XP
             */
-
             _xpMinPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
             _xpMaxPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
             _xpMinCooldown = SettingsHandler.LoadValueInt("xpMinCooldown", JsonFile.UserSettings);
             _xpMaxCooldown = SettingsHandler.LoadValueInt("xpMaxCooldown", JsonFile.UserSettings);
+
             /*
             Init thanks
             */
@@ -104,7 +113,13 @@ namespace DiscordBot
             sbThanks.Append(")");
             _thanksRegex = sbThanks.ToString();
             _thanksCooldownTime = SettingsHandler.LoadValueInt("thanksCooldown", JsonFile.UserSettings);
+            _thanksReminderCooldownTime = SettingsHandler.LoadValueInt("thanksReminderCooldown", JsonFile.UserSettings);
             _thanksMinJoinTime = SettingsHandler.LoadValueInt("thanksMinJoinTime", JsonFile.UserSettings);
+
+            /*
+             Init Code analysis
+            */
+            _codeReminderCooldownTime = SettingsHandler.LoadValueInt("codeReminderCooldownTime", JsonFile.UserSettings);
         }
 
         public async Task UpdateXp(SocketMessage messageParam)
@@ -112,20 +127,15 @@ namespace DiscordBot
             if (messageParam.Author.IsBot)
                 return;
 
-            ulong id = messageParam.Author.Id;
+            ulong userId = messageParam.Author.Id;
             int waitTime = rand.Next(_xpMinCooldown, _xpMaxCooldown);
             float baseXp = rand.Next(_xpMinPerMessage, _xpMaxPerMessage);
             float bonusXp = 0;
 
-            if (_xpCooldown.ContainsKey(id))
-            {
-                if (DateTime.Now > _xpCooldown[id])
-                    _xpCooldown.Remove(id);
-                else
-                    return;
-            }
+            if(_xpCooldown.HasUser(userId))
+                return;
 
-            int karma = _databaseService.GetUserKarma(id);
+            int karma = _databaseService.GetUserKarma(userId);
             if (messageParam.Author.Game != null)
                 if (Regex.Match(messageParam.Author.Game.Value.ToString(), "(Unity.+)").Length > 0)
                     bonusXp += baseXp / 4;
@@ -136,13 +146,12 @@ namespace DiscordBot
             if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
                 baseXp *= .1f;
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
-
-            _xpCooldown.Add(id, DateTime.Now.Add(new TimeSpan(0, 0, 0, waitTime)));
+            _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
-            _databaseService.AddUserXp(id, (int) Math.Round(baseXp + bonusXp));
+            _databaseService.AddUserXp(userId, (int) Math.Round(baseXp + bonusXp));
 
-            await LevelUp(messageParam, id);
+            await LevelUp(messageParam, userId);
 
             //TODO: add xp gain on website
         }
@@ -157,6 +166,7 @@ namespace DiscordBot
 
             if (xp < xpHigh)
                 return;
+
             _databaseService.AddUserLevel(userId, 1);
 
             RestUserMessage message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
@@ -168,7 +178,6 @@ namespace DiscordBot
         private double GetXpLow(int level)
         {
             return 70d - 139.5d * (level + 1d) + 69.5 * Math.Pow(level + 1d, 2d);
-            ;
         }
 
         private double GetXpHigh(int level)
@@ -300,21 +309,17 @@ namespace DiscordBot
 
 
             IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
+            ulong userId = messageParam.Author.Id;
+
             if (mentions.Count > 0)
             {
-                ulong userId = messageParam.Author.Id;
-
-                if (_thanksCooldown.ContainsKey(userId))
+                if (_thanksCooldown.HasUser(userId))
                 {
-                    if (_thanksCooldown[userId] > DateTime.Now)
-                    {
-                        await messageParam.Channel.SendMessageAsync(
-                            $"{messageParam.Author.Mention} you must wait " +
-                            $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
-                            "seconds before giving another karma point");
-                        return;
-                    }
-                    _thanksCooldown.Remove(userId);
+                    await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} you must wait " +
+                        $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
+                        "seconds before giving another karma point");
+                    return;
                 }
 
                 DateTime joinDate;
@@ -359,10 +364,39 @@ namespace DiscordBot
                 ) //Don't give karma cooldown if user only mentionned himself or the bot or both
                     return;
 
-                _thanksCooldown.Add(userId, DateTime.Now.Add(new TimeSpan(0, 0, 0, _thanksCooldownTime)));
+                _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
 
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
+            }
+            else if (!_thanksReminderCooldown.HasUser(userId))
+            {
+                // TODO: Probably want to prevent this check in General Chat channel due to amount of times thanks will likely be used in a casual manner. Cooldown will prevent spamming at least though.
+                _thanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
+                await messageParam.Channel.SendMessageAsync(
+                    $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help.");
+            }
+        }
+
+        public async Task CodeCheck(SocketMessage messageParam)
+        {
+            if (messageParam.Author.IsBot)
+                return;
+
+            ulong userId = messageParam.Author.Id;
+            string content = messageParam.Content;
+            //Simple check to cover most large code posting cases without being an issue for most non-code messages
+            // TODO: Perhaps work out a more advanced Regex based check at a later time
+            if (!_codeReminderCooldown.HasUser(userId) && content.Contains("{") && content.Contains("}") && !content.Contains("```"))
+            {
+                _codeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+
+                StringBuilder sb = new StringBuilder();
+                sb.Append($"{messageParam.Author.Mention} are you trying to post code? If so, please place 3 backticks ``` at the beginning and end of your code, like so:");
+                sb.AppendLine("```cs");
+                sb.AppendLine("\\\\Write your Code here.");
+                sb.AppendLine("```");
+                await messageParam.Channel.SendMessageAsync(sb.ToString());
             }
         }
 

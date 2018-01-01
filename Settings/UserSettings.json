@@ -4,15 +4,20 @@
         "thanks",
         "thank",
         "thx",
+        "thnx",
         "thanx",
         "thankyou"
     ],
     "thanksCooldown": 60, //In seconds
+    "thanksReminderCooldown": 1200,
     "thanksMinJoinTime": 600,
 
     /*Xp parameters*/
     "xpMinPerMessage": 10,
     "xpMaxPerMessage": 30,
     "xpMinCooldown": 60,
-    "xpMaxCooldown": 180
+    "xpMaxCooldown": 180,
+
+    /*Code parameters*/
+    "codeReminderCooldown": 1200 //In seconds
 }
