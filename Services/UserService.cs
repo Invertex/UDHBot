@@ -298,6 +298,11 @@ namespace DiscordBot
             return embed;
         }
 
+        /// <summary>
+        /// Signature for MessageDeleted Event
+        /// </summary>
+        public async Task Thanks(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam, ISocketMessageChannel socketMessageChannel) => await Thanks(messageParam);
+
         public async Task Thanks(SocketMessage messageParam)
         {
             if (messageParam.Author.IsBot)
@@ -392,10 +397,10 @@ namespace DiscordBot
                 _codeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
 
                 StringBuilder sb = new StringBuilder();
-                sb.Append($"{messageParam.Author.Mention} are you trying to post code? If so, please place 3 backticks ``` at the beginning and end of your code, like so:");
-                sb.AppendLine("```cs");
-                sb.AppendLine("\\\\Write your Code here.");
-                sb.AppendLine("```");
+                sb.AppendLine($"{messageParam.Author.Mention} are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
+                sb.AppendLine(@"\`\`\`cs");
+                sb.AppendLine(@"\\Write your code here.");
+                sb.AppendLine(@"\`\`\`");
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
             }
         }
