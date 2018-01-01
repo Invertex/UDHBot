@@ -380,8 +380,9 @@ namespace DiscordBot
             {
                 // TODO: Probably want to prevent this check in General Chat channel due to amount of times thanks will likely be used in a casual manner. Cooldown will prevent spamming at least though.
                 _thanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
-                await messageParam.Channel.SendMessageAsync(
+                var message = await messageParam.Channel.SendMessageAsync(
                     $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help.");
+                Task.Delay(TimeSpan.FromSeconds(200d)).ContinueWith(t => message.DeleteAsync());
             }
         }
 
