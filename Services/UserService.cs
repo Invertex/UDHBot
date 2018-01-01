@@ -356,7 +356,7 @@ namespace DiscordBot
                         continue;
                     }
                     _databaseService.AddUserKarma(user.Id, 1);
-                    sb.Append(user.Username + " ");
+                    sb.Append(user.Username + " , ");
                 }
                 sb.Append("**");
                 if (mentionedSelf)
