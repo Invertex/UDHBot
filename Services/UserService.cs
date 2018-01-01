@@ -358,6 +358,8 @@ namespace DiscordBot
                     _databaseService.AddUserKarma(user.Id, 1);
                     sb.Append(user.Username + " , ");
                 }
+
+                sb.Length -= 2; //Removes last instance of appended comma without convoluted tracking
                 sb.Append("**");
                 if (mentionedSelf)
                     await messageParam.Channel.SendMessageAsync(
