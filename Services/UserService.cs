@@ -378,7 +378,6 @@ namespace DiscordBot
             }
             else if (messageParam.Channel.Name != "general-chat" && !_thanksReminderCooldown.HasUser(userId))
             {
-                // TODO: Probably want to prevent this check in General Chat channel due to amount of times thanks will likely be used in a casual manner. Cooldown will prevent spamming at least though.
                 _thanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 var message = await messageParam.Channel.SendMessageAsync(
                     $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help.");
@@ -404,7 +403,9 @@ namespace DiscordBot
                 sb.AppendLine(@"\`\`\`cs");
                 sb.AppendLine(@"\\Write your code here.");
                 sb.AppendLine(@"\`\`\`");
-                await messageParam.Channel.SendMessageAsync(sb.ToString());
+
+                var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
+                Task.Delay(TimeSpan.FromMinutes(10d)).ContinueWith(t => message.DeleteAsync());
             }
         }
 
