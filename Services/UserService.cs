@@ -119,7 +119,7 @@ namespace DiscordBot
             /*
              Init Code analysis
             */
-            _codeReminderCooldownTime = SettingsHandler.LoadValueInt("codeReminderCooldownTime", JsonFile.UserSettings);
+            _codeReminderCooldownTime = SettingsHandler.LoadValueInt("codeReminderCooldown", JsonFile.UserSettings);
         }
 
         public async Task UpdateXp(SocketMessage messageParam)
