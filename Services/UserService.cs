@@ -60,6 +60,7 @@ namespace DiscordBot
             _databaseService = databaseService;
             _loggingService = loggingService;
             _xpCooldown = new Dictionary<ulong, DateTime>();
+            _thanksCooldown = new Dictionary<ulong, DateTime>();
             _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
             _codeReminderCooldown = new Dictionary<ulong, DateTime>();
 
@@ -362,6 +363,8 @@ namespace DiscordBot
                 if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2)
                 ) //Don't give karma cooldown if user only mentionned himself or the bot or both
                     return;
+
+                _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
 
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
