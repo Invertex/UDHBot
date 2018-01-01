@@ -2,14 +2,14 @@
     /*Thanks parameters*/
     "thanks": [
         "thanks",
-        "thank",
+        "thank ",
         "thx",
         "thnx",
         "thanx",
         "thankyou"
     ],
     "thanksCooldown": 60, //In seconds
-    "thanksReminderCooldown": 1200,
+    "thanksReminderCooldown": 86400, //24 hours in seconds
     "thanksMinJoinTime": 600,
 
     /*Xp parameters*/
@@ -19,5 +19,5 @@
     "xpMaxCooldown": 180,
 
     /*Code parameters*/
-    "codeReminderCooldown": 1200 //In seconds
+    "codeReminderCooldown": 86400
 }

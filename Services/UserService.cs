@@ -356,7 +356,7 @@ namespace DiscordBot
                         continue;
                     }
                     _databaseService.AddUserKarma(user.Id, 1);
-                    sb.Append(user.Username + " ");
+                    sb.Append(user.Username + " , ");
                 }
                 sb.Append("**");
                 if (mentionedSelf)
@@ -374,7 +374,7 @@ namespace DiscordBot
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
-            else if (!_thanksReminderCooldown.HasUser(userId))
+            else if (messageParam.Channel.Name != "general-chat" && !_thanksReminderCooldown.HasUser(userId))
             {
                 // TODO: Probably want to prevent this check in General Chat channel due to amount of times thanks will likely be used in a casual manner. Cooldown will prevent spamming at least though.
                 _thanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
