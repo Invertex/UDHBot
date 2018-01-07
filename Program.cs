@@ -123,6 +123,7 @@ namespace DiscordBot
             _client.MessageReceived += _userService.Thanks;
             _client.MessageUpdated += _userService.Thanks;
             _client.MessageReceived += _userService.CodeCheck;
+            //_client.MessageReceived += _userService.UselessAskingCheck; //to do declared at method
 
             //_client.MessageReceived += _work.OnMessageAdded;
             _client.MessageDeleted += MessageDeleted;

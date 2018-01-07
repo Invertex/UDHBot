@@ -372,16 +372,18 @@ namespace DiscordBot
                     return;
 
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
+                //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
+                _thanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
 
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
-            else if (messageParam.Channel.Name != "general-chat" && !_thanksReminderCooldown.HasUser(userId))
+            else if (messageParam.Channel.Name != "general-chat" && !_thanksReminderCooldown.HasUser(userId) && !_thanksCooldown.HasUser(userId))
             {
                 _thanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 var message = await messageParam.Channel.SendMessageAsync(
                     $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help.");
-                Task.Delay(TimeSpan.FromSeconds(200d)).ContinueWith(t => message.DeleteAsync());
+                Task.Delay(TimeSpan.FromSeconds(120d)).ContinueWith(t => message.DeleteAsync());
             }
         }
 
@@ -401,12 +403,21 @@ namespace DiscordBot
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine($"{messageParam.Author.Mention} are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
                 sb.AppendLine(@"\`\`\`cs");
-                sb.AppendLine(@"\\Write your code here.");
+                sb.AppendLine(@"\\\\Write your code here.");
                 sb.AppendLine(@"\`\`\`");
 
                 var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
                 Task.Delay(TimeSpan.FromMinutes(10d)).ContinueWith(t => message.DeleteAsync());
             }
+        }
+        // TODO: Response to people asking if anyone is around to help.
+        public async Task UselessAskingCheck(SocketMessage messageParam)
+        {
+            if (messageParam.Author.IsBot)
+                return;
+
+            ulong userId = messageParam.Author.Id;
+            string content = messageParam.Content;
         }
 
         public async Task<string> SubtitleImage(IMessage message, string text)
