@@ -105,11 +105,9 @@ namespace DiscordBot
             sbThanks.Append("((?i)");
             for (int i = 0; i < thx.Length; i++)
             {
-                if (i < thx.Length - 1)
-                    sbThanks.Append(thx[i] + "|");
-                else //Remove pipe if it's the last element
-                    sbThanks.Append(thx[i]);
+                sbThanks.Append(thx[i] + "|");
             }
+            sbThanks.Length -= 1; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
             sbThanks.Append(")");
             _thanksRegex = sbThanks.ToString();
             _thanksCooldownTime = SettingsHandler.LoadValueInt("thanksCooldown", JsonFile.UserSettings);
