@@ -364,7 +364,8 @@ namespace DiscordBot
                         $"{messageParam.Author.Mention} you can't give karma to yourself.");
                 if (mentionedBot)
                     await messageParam.Channel.SendMessageAsync(
-                        $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:");
+                        $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:{Environment.NewLine}" +
+                        "If you'd like to know what Karma is about, type !karma");
                 if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2)
                 ) //Don't give karma cooldown if user only mentionned himself or the bot or both
                     return;
