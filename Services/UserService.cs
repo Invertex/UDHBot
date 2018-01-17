@@ -392,21 +392,39 @@ namespace DiscordBot
                 return;
 
             ulong userId = messageParam.Author.Id;
-            string content = messageParam.Content;
+
             //Simple check to cover most large code posting cases without being an issue for most non-code messages
             // TODO: Perhaps work out a more advanced Regex based check at a later time
-            if (!_codeReminderCooldown.HasUser(userId) && content.Contains("{") && content.Contains("}") && !content.Contains("```"))
+            if (!_codeReminderCooldown.HasUser(userId))
             {
-                _codeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                string content = messageParam.Content;
+                //Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
+                bool foundCodeTags = Regex.Match(content, "`[^\"]*`").Success;
 
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine($"{messageParam.Author.Mention} are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
-                sb.AppendLine(@"\`\`\`cs");
-                sb.AppendLine(@"\\\\Write your code here.");
-                sb.AppendLine(@"\`\`\`");
+                if (!foundCodeTags && content.Contains("{") && content.Contains("}"))
+                {
+                    _codeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
 
-                var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
-                Task.Delay(TimeSpan.FromMinutes(10d)).ContinueWith(t => message.DeleteAsync());
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine($"{messageParam.Author.Mention} are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
+                    sb.AppendLine(@"\`\`\`cs");
+                    sb.AppendLine(@"\\\\Write your code here.");
+                    sb.AppendLine(@"\`\`\`");
+
+                    var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
+                    Task.Delay(TimeSpan.FromMinutes(10d)).ContinueWith(t => message.DeleteAsync());
+                }
+                else if (foundCodeTags && content.Contains("```") && !content.Contains("```cs"))
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine($"{messageParam.Author.Mention} Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
+                    sb.AppendLine(@"\`\`\`cs");
+
+                    var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
+                    Task.Delay(TimeSpan.FromMinutes(8d)).ContinueWith(t => message.DeleteAsync());
+
+                    _codeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                }
             }
         }
         // TODO: Response to people asking if anyone is around to help.
