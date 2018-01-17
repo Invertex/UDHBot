@@ -399,7 +399,7 @@ namespace DiscordBot
             {
                 string content = messageParam.Content;
                 //Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
-                bool foundCodeTags = Regex.Match(content, "`[^\"]*`").Success;
+                bool foundCodeTags = Regex.Match(content, ".*?`[^`].*?`").Success;
 
                 if (!foundCodeTags && content.Contains("{") && content.Contains("}"))
                 {
