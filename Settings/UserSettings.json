@@ -6,7 +6,8 @@
         "thx",
         "thnx",
         "thanx",
-        "thankyou"
+        "thankyou",
+        "cheers"
     ],
     "thanksCooldown": 60, //In seconds
     "thanksReminderCooldown": 86400, //24 hours in seconds
@@ -19,5 +20,11 @@
     "xpMaxCooldown": 180,
 
     /*Code parameters*/
-    "codeReminderCooldown": 86400
+    "codeReminderCooldown": 86400,
+
+    "issomeonethere": [
+        "is anyone around?",
+        "can someone help?",
+        "can someone help me?"
+    ]
 }
