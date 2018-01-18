@@ -100,7 +100,7 @@ namespace DiscordBot
             await Context.Message.DeleteAsync();
         }
 
-        [Command("karma"), Summary("Display description of what Karma is for. Syntax : !globalrules")]
+        [Command("karma"), Summary("Display description of what Karma is for. Syntax : !karma")]
         async Task KarmaDescription(int seconds = 60)
         {
             await ReplyAsync($"{Context.User.Username}, " +
