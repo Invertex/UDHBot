@@ -400,8 +400,9 @@ namespace DiscordBot
                 string content = messageParam.Content;
                 //Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
                 bool foundCodeTags = Regex.Match(content, ".*?`[^`].*?`", RegexOptions.Singleline).Success;
+                bool foundCurlyFries = (content.Contains("{") && content.Contains("}"));
 
-                if (!foundCodeTags && content.Contains("{") && content.Contains("}"))
+                if (!foundCodeTags && foundCurlyFries)
                 {
                     _codeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
 
@@ -414,7 +415,7 @@ namespace DiscordBot
                     var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
                     Task.Delay(TimeSpan.FromMinutes(10d)).ContinueWith(t => message.DeleteAsync());
                 }
-                else if (foundCodeTags && content.Contains("```") && !content.Contains("```cs"))
+                else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.Contains("```cs"))
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.AppendLine($"{messageParam.Author.Mention} Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
