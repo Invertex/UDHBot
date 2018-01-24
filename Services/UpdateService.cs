@@ -44,7 +44,7 @@ namespace DiscordBot
         {
             ReadDataFromFile();
             SaveDataToFile();
-            CheckDailyPublisher();
+            //CheckDailyPublisher();
             UpdateUserRanks();
             UpdateAnime();
         }
