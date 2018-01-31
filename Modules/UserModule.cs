@@ -103,7 +103,7 @@ namespace DiscordBot
         [Command("karma"), Summary("Display description of what Karma is for. Syntax : !karma")]
         async Task KarmaDescription(int seconds = 60)
         {
-            await ReplyAsync($"{Context.User.Username}, " +
+            await Context.Channel.SendMessageAsync($"{Context.User.Username}, " +
                 $"Karma is tracked on your !profile, helping indicate how much you've helped others.{Environment.NewLine}" +
                 $"You also earn slightly more EXP from things the higher your Karma level is. Karma may be used for more features in the future.");
 
