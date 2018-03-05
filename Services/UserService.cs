@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -312,6 +313,7 @@ namespace DiscordBot
 
 
             IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
+            mentions = mentions.Distinct().ToList();
             ulong userId = messageParam.Author.Id;
 
             if (mentions.Count > 0)
