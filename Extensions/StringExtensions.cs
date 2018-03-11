@@ -30,5 +30,15 @@ namespace DiscordBot.Extensions
 
             return ret;
         }
+
+        /// <summary>
+        /// Adds a backslash behind each special character used by Discord to make a message appear plain-text.
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public static string EscapeDiscordMarkup(this string content)
+        {
+            return System.Text.RegularExpressions.Regex.Replace(content, @"([\\~\\_\`\*\`])", "\\$1");
+        }
     }
 }
