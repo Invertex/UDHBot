@@ -58,7 +58,6 @@ namespace DiscordBot
         public readonly string _codeReminderFormattingExample;
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
-        //TODO: Add special starting escaping sequence that will automatically escape all preceding markdown characters without having to use a codeblock.
 
         public UserService(DatabaseService databaseService, LoggingService loggingService)
         {
@@ -438,7 +437,9 @@ namespace DiscordBot
                 }
             }
         }
+
         // TODO: Response to people asking if anyone is around to help.
+        /*
         public async Task UselessAskingCheck(SocketMessage messageParam)
         {
             if (messageParam.Author.IsBot)
@@ -446,7 +447,21 @@ namespace DiscordBot
 
             ulong userId = messageParam.Author.Id;
             string content = messageParam.Content;
-        }
+        }*/
+
+        //TODO: If Discord ever enables a hook that allows modifying a message during creation of it, then this could be put to use...
+        // Disabled for now.
+        /*
+        public async Task EscapeMessage(SocketMessage messageParam)
+        {
+            if (messageParam.Author.IsBot)
+                return;
+
+            ulong userId = messageParam.Author.Id;
+            string content = messageParam.Content;
+            //Escape all \, ~, _, ` and * character's so they don't trigger any Discord formatting.
+            content = content.EscapeDiscordMarkup();
+        }*/
 
         public async Task<string> SubtitleImage(IMessage message, string text)
         {
