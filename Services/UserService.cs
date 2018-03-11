@@ -34,7 +34,6 @@ namespace DiscordBot
         private Dictionary<ulong, DateTime> _codeReminderCooldown;
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get { return _codeReminderCooldown; } }
 
-
         private Random rand;
 
         private FontCollection _fontCollection;

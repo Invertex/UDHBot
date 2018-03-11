@@ -10,8 +10,15 @@ namespace DiscordBot
 {
     public class BotData
     {
-        public DateTime LastPublisherCheck;
-        public List<ulong> LastPublisherId;
+        public DateTime LastPublisherCheck { get; set; }
+        public List<ulong> LastPublisherId { get; set; }
+    }
+
+    public class UserData
+    {
+        public Dictionary<ulong, DateTime> ThanksReminderCooldown { get; set; }
+        public Dictionary<ulong, DateTime> CodeReminderCooldown { get; set; }
+        
     }
 
     //TODO: Download all avatars to cache them
