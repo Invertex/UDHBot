@@ -111,6 +111,40 @@ namespace DiscordBot
             await Context.Message.DeleteAsync();
         }
 
+        [Command("disablecodetips"), Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
+        async Task DisableCodeHelp()
+        {
+            ulong userID = Context.User.Id;
+            string replyMessage = "You've already told me to stop reminding you, don't worry, I won't forget!";
+
+            if (!_userService.CodeReminderCooldown.IsPermanent(userID))
+            {
+                replyMessage = "I will no longer remind you about using proper code formatting.";
+                _userService.CodeReminderCooldown.SetPermanent(Context.User.Id, true);
+            }
+
+            await Context.Channel.SendMessageAsync($"{Context.User.Username}, " + replyMessage);
+            await Task.Delay(TimeSpan.FromSeconds(20));
+            await Context.Message.DeleteAsync();
+        }
+
+        [Command("disablethanksreminder"), Summary("Prevents being reminded to mention the person you are thanking. Syntax : !disablethanksreminder")]
+        async Task DisableThanksReminder()
+        {
+            ulong userID = Context.User.Id;
+            string replyMessage = "You've already told me to stop reminding you, don't worry, I won't forget!";
+
+            if (!_userService.ThanksReminderCooldown.IsPermanent(userID))
+            {
+                replyMessage = "I will no longer remind you to mentiond the person you're thanking... (◕︿◕✿)";
+                _userService.ThanksReminderCooldown.SetPermanent(Context.User.Id, true);
+            }
+
+            await Context.Channel.SendMessageAsync($"{Context.User.Username}, " + replyMessage);
+            await Task.Delay(TimeSpan.FromSeconds(20));
+            await Context.Message.DeleteAsync();
+        }
+
         [Command("slap"), Summary("Slap the specified user(s). Syntax : !slap @user1 [@user2 @user3...]")]
         async Task SlapUser(params IUser[] users)
         {

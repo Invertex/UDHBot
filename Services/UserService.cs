@@ -29,7 +29,11 @@ namespace DiscordBot
         private Dictionary<ulong, DateTime> _xpCooldown;
         private Dictionary<ulong, DateTime> _thanksCooldown;
         private Dictionary<ulong, DateTime> _thanksReminderCooldown;
+        public Dictionary<ulong, DateTime> ThanksReminderCooldown { get { return _thanksReminderCooldown; } }
         private Dictionary<ulong, DateTime> _codeReminderCooldown;
+        public Dictionary<ulong, DateTime> CodeReminderCooldown { get { return _codeReminderCooldown; } }
+
+
         private Random rand;
 
         private FontCollection _fontCollection;
@@ -51,6 +55,7 @@ namespace DiscordBot
         private readonly int _xpMaxCooldown;
 
         private readonly int _codeReminderCooldownTime;
+        public readonly string _codeReminderFormattingExample;
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
         //TODO: Add special starting escaping sequence that will automatically escape all preceding markdown characters without having to use a codeblock.
@@ -119,6 +124,11 @@ namespace DiscordBot
              Init Code analysis
             */
             _codeReminderCooldownTime = SettingsHandler.LoadValueInt("codeReminderCooldown", JsonFile.UserSettings);
+            _codeReminderFormattingExample = (
+                @"\`\`\`cs" + Environment.NewLine +
+                "Write your code on new line here." + Environment.NewLine +
+                @"\`\`\`" + Environment.NewLine + Environment.NewLine +
+                "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
         }
 
         public async Task UpdateXp(SocketMessage messageParam)
@@ -373,16 +383,17 @@ namespace DiscordBot
 
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
                 //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
-                _thanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
+                ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
 
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
-            else if (messageParam.Channel.Name != "general-chat" && !_thanksReminderCooldown.HasUser(userId) && !_thanksCooldown.HasUser(userId))
+            else if (messageParam.Channel.Name != "general-chat" && !ThanksReminderCooldown.IsPermanent(userId) && !ThanksReminderCooldown.HasUser(userId) && !_thanksCooldown.HasUser(userId))
             {
-                _thanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
+                ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 var message = await messageParam.Channel.SendMessageAsync(
-                    $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help.");
+                    $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." + Environment.NewLine +
+                    "If you want me to stop reminding you about this, please type \"disablethanksreminder\".");
                 Task.Delay(TimeSpan.FromSeconds(120d)).ContinueWith(t => message.DeleteAsync());
             }
         }
@@ -396,7 +407,7 @@ namespace DiscordBot
 
             //Simple check to cover most large code posting cases without being an issue for most non-code messages
             // TODO: Perhaps work out a more advanced Regex based check at a later time
-            if (!_codeReminderCooldown.HasUser(userId))
+            if (!CodeReminderCooldown.HasUser(userId))
             {
                 string content = messageParam.Content;
                 //Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
@@ -405,13 +416,11 @@ namespace DiscordBot
 
                 if (!foundCodeTags && foundCurlyFries)
                 {
-                    _codeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                    CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
 
                     StringBuilder sb = new StringBuilder();
                     sb.AppendLine($"{messageParam.Author.Mention} are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
-                    sb.AppendLine(@"\`\`\`cs");
-                    sb.AppendLine(@"\\\\Write your code here.");
-                    sb.AppendLine(@"\`\`\`");
+                    sb.AppendLine(_codeReminderFormattingExample);
 
                     var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
                     Task.Delay(TimeSpan.FromMinutes(10d)).ContinueWith(t => message.DeleteAsync());
@@ -420,12 +429,12 @@ namespace DiscordBot
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.AppendLine($"{messageParam.Author.Mention} Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
-                    sb.AppendLine(@"\`\`\`cs");
+                    sb.AppendLine(_codeReminderFormattingExample);
 
                     var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
                     Task.Delay(TimeSpan.FromMinutes(8d)).ContinueWith(t => message.DeleteAsync());
 
-                    _codeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                    CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
                 }
             }
         }
