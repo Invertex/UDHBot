@@ -53,6 +53,7 @@ namespace DiscordBot
         private readonly int _codeReminderCooldownTime;
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
+        //TODO: Add special starting escaping sequence that will automatically escape all preceding markdown characters without having to use a codeblock.
 
         public UserService(DatabaseService databaseService, LoggingService loggingService)
         {
