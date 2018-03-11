@@ -103,7 +103,7 @@ namespace DiscordBot
         [Command("karma"), Summary("Display description of what Karma is for. Syntax : !karma")]
         async Task KarmaDescription(int seconds = 60)
         {
-            await Context.Channel.SendMessageAsync($"{Context.User.Username}, " +
+            await ReplyAsync($"{Context.User.Username}, " +
                 $"Karma is tracked on your !profile, helping indicate how much you've helped others.{Environment.NewLine}" +
                 $"You also earn slightly more EXP from things the higher your Karma level is. Karma may be used for more features in the future.");
 
@@ -112,7 +112,7 @@ namespace DiscordBot
         }
 
         [Command("disablecodetips"), Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
-        async Task DisableCodeHelp()
+        async Task DisableCodeTips()
         {
             ulong userID = Context.User.Id;
             string replyMessage = "You've already told me to stop reminding you, don't worry, I won't forget!";
@@ -123,7 +123,7 @@ namespace DiscordBot
                 _userService.CodeReminderCooldown.SetPermanent(Context.User.Id, true);
             }
 
-            await Context.Channel.SendMessageAsync($"{Context.User.Username}, " + replyMessage);
+            await ReplyAsync($"{Context.User.Username}, " + replyMessage);
             await Task.Delay(TimeSpan.FromSeconds(20));
             await Context.Message.DeleteAsync();
         }
@@ -140,7 +140,7 @@ namespace DiscordBot
                 _userService.ThanksReminderCooldown.SetPermanent(Context.User.Id, true);
             }
 
-            await Context.Channel.SendMessageAsync($"{Context.User.Username}, " + replyMessage);
+            await ReplyAsync($"{Context.User.Username}, " + replyMessage);
             await Task.Delay(TimeSpan.FromSeconds(20));
             await Context.Message.DeleteAsync();
         }
