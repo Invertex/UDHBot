@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Discord;
+using Discord.Rest;
 
 namespace DiscordBot.Extensions
 {
@@ -113,6 +116,23 @@ namespace DiscordBot.Extensions
             return cooldowns[userId].Subtract(DateTime.Now).Seconds;
         }
 
+        #endregion
+
+        #region Message Related
+        public static Task DeleteAfterSeconds(this IUserMessage message, double seconds)
+        {
+            return Task.Delay(TimeSpan.FromSeconds(seconds)).ContinueWith(t => message.DeleteAsync());
+        }
+        public static Task DeleteAfterSeconds(this Task<RestUserMessage> task, double seconds, bool awaitDeletion = false)
+        {
+            Task deletion = task.Result.DeleteAfterSeconds(seconds);
+            return (awaitDeletion) ? deletion : task;
+        }
+        public static Task DeleteAfterSeconds(this Task<IUserMessage> task, double seconds, bool awaitDeletion = false)
+        {
+            Task deletion = task.Result.DeleteAfterSeconds(seconds);
+            return (awaitDeletion) ? deletion : task;
+        }
         #endregion
     }
 }

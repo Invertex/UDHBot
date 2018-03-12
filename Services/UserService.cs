@@ -130,7 +130,7 @@ namespace DiscordBot
                 "Write your code on new line here." + Environment.NewLine +
                 @"\`\`\`" + Environment.NewLine + Environment.NewLine +
                 "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
-            
+
             LoadData();
             UpdateLoop();
         }
@@ -140,13 +140,13 @@ namespace DiscordBot
             await Task.Delay(10000);
             SaveData();
         }
-        
+
         public void LoadData()
         {
             var data = _updateService.GetUserData();
             _thanksReminderCooldown = data.ThanksReminderCooldown;
             _codeReminderCooldown = data.CodeReminderCooldown;
-            
+
             if (_thanksReminderCooldown == null)
                 _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
             if (_codeReminderCooldown == null)
@@ -162,7 +162,7 @@ namespace DiscordBot
             };
             _updateService.SetUserData(data);
         }
-        
+
         public async Task UpdateXp(SocketMessage messageParam)
         {
             if (messageParam.Author.IsBot)
@@ -357,15 +357,16 @@ namespace DiscordBot
             IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
             mentions = mentions.Distinct().ToList();
             ulong userId = messageParam.Author.Id;
+            double defaultDelTime = 120d;
 
             if (mentions.Count > 0)
             {
                 if (_thanksCooldown.HasUser(userId))
                 {
-                    await messageParam.Channel.SendMessageAsync(
+                    messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must wait " +
                         $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
-                        "seconds before giving another karma point");
+                        "seconds before giving another karma point").DeleteAfterSeconds(defaultDelTime);
                     return;
                 }
 
@@ -375,8 +376,8 @@ namespace DiscordBot
 
                 if (j > DateTime.Now)
                 {
-                    await messageParam.Channel.SendMessageAsync(
-                        $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.");
+                    messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.").DeleteAfterSeconds(140d);
                     return;
                 }
 
@@ -403,31 +404,32 @@ namespace DiscordBot
 
                 sb.Length -= 2; //Removes last instance of appended comma without convoluted tracking
                 sb.Append("**");
+
                 if (mentionedSelf)
                     await messageParam.Channel.SendMessageAsync(
-                        $"{messageParam.Author.Mention} you can't give karma to yourself.");
+                        $"{messageParam.Author.Mention} you can't give karma to yourself.").DeleteAfterSeconds(defaultDelTime);
+
                 if (mentionedBot)
                     await messageParam.Channel.SendMessageAsync(
                         $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:{Environment.NewLine}" +
-                        "If you'd like to know what Karma is about, type !karma");
-                if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2)
-                ) //Don't give karma cooldown if user only mentionned himself or the bot or both
+                        "If you'd like to know what Karma is about, type !karma").DeleteAfterSeconds(defaultDelTime);
+
+                //Don't give karma cooldown if user only mentionned himself or the bot or both
+                if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2))
                     return;
 
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
                 //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
-
-                await messageParam.Channel.SendMessageAsync(sb.ToString());
+                await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterSeconds(defaultDelTime);
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
             else if (messageParam.Channel.Name != "general-chat" && !ThanksReminderCooldown.IsPermanent(userId) && !ThanksReminderCooldown.HasUser(userId) && !_thanksCooldown.HasUser(userId))
             {
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
-                var message = await messageParam.Channel.SendMessageAsync(
+                await messageParam.Channel.SendMessageAsync(
                     $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." + Environment.NewLine +
-                    "If you want me to stop reminding you about this, please type \"disablethanksreminder\".");
-                Task.Delay(TimeSpan.FromSeconds(120d)).ContinueWith(t => message.DeleteAsync());
+                    "If you want me to stop reminding you about this, please type \"disablethanksreminder\".").DeleteAfterSeconds(defaultDelTime);
             }
         }
 
