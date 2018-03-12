@@ -144,13 +144,8 @@ namespace DiscordBot
         public void LoadData()
         {
             var data = _updateService.GetUserData();
-            _thanksReminderCooldown = data.ThanksReminderCooldown;
-            _codeReminderCooldown = data.CodeReminderCooldown;
-
-            if (_thanksReminderCooldown == null)
-                _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
-            if (_codeReminderCooldown == null)
-                _codeReminderCooldown = new Dictionary<ulong, DateTime>();
+            _thanksReminderCooldown = data.ThanksReminderCooldown ?? new Dictionary<ulong, DateTime>();
+            _codeReminderCooldown = data.CodeReminderCooldown ?? new Dictionary<ulong, DateTime>();
         }
 
         public void SaveData()
