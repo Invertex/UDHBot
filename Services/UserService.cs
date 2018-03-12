@@ -363,7 +363,7 @@ namespace DiscordBot
             {
                 if (_thanksCooldown.HasUser(userId))
                 {
-                    messageParam.Channel.SendMessageAsync(
+                    await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must wait " +
                         $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
                         "seconds before giving another karma point").DeleteAfterSeconds(defaultDelTime);
@@ -376,7 +376,7 @@ namespace DiscordBot
 
                 if (j > DateTime.Now)
                 {
-                    messageParam.Channel.SendMessageAsync(
+                    await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.").DeleteAfterSeconds(140d);
                     return;
                 }
