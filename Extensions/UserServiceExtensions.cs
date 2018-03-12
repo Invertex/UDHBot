@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord;
 using Discord.Rest;
 
 namespace DiscordBot.Extensions
@@ -40,6 +38,7 @@ namespace DiscordBot.Extensions
         /// <param name="minutes"></param>
         /// <param name="hours"></param>
         /// <param name="days"></param>
+        /// <param name="ignoreExisting">Sets the cooldown time absolutely, instead of adding to existing.</param>
         public static void AddCooldown(this Dictionary<ulong, DateTime> cooldowns, ulong userId, int seconds = 0, int minutes = 0,
             int hours = 0, int days = 0, bool ignoreExisting = false)
         {
@@ -116,23 +115,6 @@ namespace DiscordBot.Extensions
             return cooldowns[userId].Subtract(DateTime.Now).Seconds;
         }
 
-        #endregion
-
-        #region Message Related
-        public static Task DeleteAfterSeconds(this IUserMessage message, double seconds)
-        {
-            return Task.Delay(TimeSpan.FromSeconds(seconds)).ContinueWith(t => message.DeleteAsync());
-        }
-        public static Task DeleteAfterSeconds(this Task<RestUserMessage> task, double seconds, bool awaitDeletion = false)
-        {
-            Task deletion = task.Result.DeleteAfterSeconds(seconds);
-            return (awaitDeletion) ? deletion : task;
-        }
-        public static Task DeleteAfterSeconds(this Task<IUserMessage> task, double seconds, bool awaitDeletion = false)
-        {
-            Task deletion = task.Result.DeleteAfterSeconds(seconds);
-            return (awaitDeletion) ? deletion : task;
-        }
         #endregion
     }
 }

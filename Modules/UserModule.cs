@@ -28,7 +28,7 @@ namespace DiscordBot
         }
 
         [Command("help"), Summary("Display available commands (this). Syntax : !help")]
-        async Task DisplayHelp()
+        private async Task DisplayHelp()
         {
             //TODO: Be possible in DM
             if (Context.Channel.Id != Settings.GetBotCommandsChannel())
@@ -42,32 +42,35 @@ namespace DiscordBot
         }
 
         [Command("rules"), Summary("Get the of the current channel by DM. Syntax : !rules")]
-        async Task Rules()
+        private async Task Rules()
         {
-            Rules(Context.Channel);
+            await Rules(Context.Channel);
             await Context.Message.DeleteAsync();
         }
 
         [Command("rules"), Summary("Get the rules of the mentionned channel by DM. !rules #channel")]
         [Alias("rule")]
-        async Task Rules(IMessageChannel channel)
+        private async Task Rules(IMessageChannel channel)
         {
             Rule rule = Settings.GetRule(channel.Id);
             //IUserMessage m; //Unused, plan to be used in future?
             IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
             if (rule == null)
+            {
                 await dm.SendMessageAsync(
                     "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)");
+            }
             else
+            {
                 await dm.SendMessageAsync(
                     $"{rule.header}{(rule.content.Length > 0 ? rule.content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
-
+            }
             Task deleteAsync = Context.Message?.DeleteAsync();
             if (deleteAsync != null) await deleteAsync;
         }
 
         [Command("globalrules"), Summary("Get the Global Rules by DM. Syntax : !globalrules")]
-        async Task GlobalRules(int seconds = 60)
+        private async Task GlobalRules(int seconds = 60)
         {
             string globalRules = Settings.GetRule(0).content;
             IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
@@ -76,13 +79,13 @@ namespace DiscordBot
         }
 
         [Command("channels"), Summary("Get description of the channels by DM. Syntax : !channels")]
-        async Task ChannelsDescription()
+        private async Task ChannelsDescription()
         {
             //Display rules of this channel for x seconds
             List<(ulong, string)> headers = Settings.GetChannelsHeader();
             StringBuilder sb = new StringBuilder();
             foreach (var h in headers)
-                sb.Append($"{(await Context.Guild.GetTextChannelAsync(h.Item1))?.Mention} - {h.Item2}\n");
+                sb.Append((await Context.Guild.GetTextChannelAsync(h.Item1))?.Mention).Append(" - ").Append(h.Item2).Append("\n");
             string text = sb.ToString();
 
             IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
@@ -101,7 +104,7 @@ namespace DiscordBot
         }
 
         [Command("karma"), Summary("Display description of what Karma is for. Syntax : !karma")]
-        async Task KarmaDescription(int seconds = 60)
+        private async Task KarmaDescription(int seconds = 60)
         {
             await ReplyAsync($"{Context.User.Username}, " +
                 $"Karma is tracked on your !profile, helping indicate how much you've helped others.{Environment.NewLine}" +
@@ -112,7 +115,7 @@ namespace DiscordBot
         }
 
         [Command("disablecodetips"), Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
-        async Task DisableCodeTips()
+        private async Task DisableCodeTips()
         {
             ulong userID = Context.User.Id;
             string replyMessage = "You've already told me to stop reminding you, don't worry, I won't forget!";
@@ -129,7 +132,7 @@ namespace DiscordBot
         }
 
         [Command("disablethanksreminder"), Summary("Prevents being reminded to mention the person you are thanking. Syntax : !disablethanksreminder")]
-        async Task DisableThanksReminder()
+        private async Task DisableThanksReminder()
         {
             ulong userID = Context.User.Id;
             string replyMessage = "You've already told me to stop reminding you, don't worry, I won't forget!";
@@ -146,19 +149,19 @@ namespace DiscordBot
         }
 
         [Command("slap"), Summary("Slap the specified user(s). Syntax : !slap @user1 [@user2 @user3...]")]
-        async Task SlapUser(params IUser[] users)
+        private async Task SlapUser(params IUser[] users)
         {
             StringBuilder sb = new StringBuilder();
             string[] slaps = {"trout", "duck", "truck"};
             var random = new Random();
 
-            sb.Append($"**{Context.User.Username}** Slaps ");
+            sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
             foreach (var user in users)
             {
-                sb.Append($"{user.Mention} ");
+                sb.Append(user.Mention).Append(" ");
             }
 
-            sb.Append($"around a bit with a large {slaps[random.Next() % 3]}");
+            sb.Append("around a bit with a large ").Append(slaps[random.Next() % 3]);
 
             await Context.Channel.SendMessageAsync(sb.ToString());
             await Task.Delay(1000);
@@ -166,7 +169,7 @@ namespace DiscordBot
         }
 
         [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
-        async Task DisplayProfile()
+        private async Task DisplayProfile()
         {
             IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
 
@@ -177,7 +180,7 @@ namespace DiscordBot
         }
 
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
-        async Task DisplayProfile(IUser user)
+        private async Task DisplayProfile(IUser user)
         {
             IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
 
@@ -188,7 +191,7 @@ namespace DiscordBot
         }
 
         [Command("quote"), Summary("Quote a message in current channel. Syntax : !quote messageid")]
-        async Task QuoteMessage(ulong id)
+        private async Task QuoteMessage(ulong id)
         {
             await Context.Message.DeleteAsync();
             IMessageChannel channel = Context.Channel;
@@ -205,7 +208,7 @@ namespace DiscordBot
                 .WithAuthor(author =>
                 {
                     author
-                        .WithName($"{message.Author.Username}")
+                        .WithName(message.Author.Username)
                         .WithIconUrl(message.Author.GetAvatarUrl());
                 })
                 .AddField("Original message", message.Content);
@@ -214,7 +217,7 @@ namespace DiscordBot
         }
 
         [Command("quote"), Summary("Quote a message. Syntax : !quote #channelname messageid")]
-        async Task QuoteMessage(IMessageChannel channel, ulong id)
+        private async Task QuoteMessage(IMessageChannel channel, ulong id)
         {
             var message = await channel.GetMessageAsync(id);
             var builder = new EmbedBuilder()
@@ -228,7 +231,7 @@ namespace DiscordBot
                 .WithAuthor(author =>
                 {
                     author
-                        .WithName($"{message.Author.Username}")
+                        .WithName(message.Author.Username)
                         .WithIconUrl(message.Author.GetAvatarUrl());
                 })
                 .AddField("Original message", message.Content);
@@ -241,7 +244,7 @@ namespace DiscordBot
         [Command("compile"),
          Summary("Try to compile a snippet of C# code. Be sure to escape your strings. Syntax : !compile \"Your code\"")]
         [Alias("code", "compute", "assert")]
-        async Task CompileCode(params string[] code)
+        private async Task CompileCode(params string[] code)
         {
             string codeComplete =
                 $"using System;\nusing System.Collections.Generic;\n\n\tpublic class Hello\n\t{{\n\t\tpublic static void Main()\n\t\t{{\n\t\t\t{String.Join(" ", code)}\n\t\t}}\n\t}}\n";
@@ -265,7 +268,7 @@ namespace DiscordBot
                 string id = response["id"];
                 string status;
                 DateTime startTime = DateTime.Now;
-                int maxTime = 30;
+                const int maxTime = 30;
 
                 do
                 {
@@ -319,7 +322,7 @@ namespace DiscordBot
 
         [Command("coinflip"), Summary("Flip a coin and see the result. Syntax : !coinflip")]
         [Alias("flipcoin")]
-        async Task CoinFlip()
+        private async Task CoinFlip()
         {
             Random rand = new Random();
             var coin = new[] {"Heads", "Tails"};
@@ -331,7 +334,7 @@ namespace DiscordBot
 
         [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
         [Alias("subtitles", "sub", "subs")]
-        async Task Subtitles(string text)
+        private async Task Subtitles(string text)
         {
             var msg = await _userService.SubtitleImage(Context.Message, text);
             if (msg.Length < 6)
@@ -343,7 +346,7 @@ namespace DiscordBot
 
         [Command("pinfo"), Summary("Information on how to get the publisher role. Syntax : !pinfo")]
         [Alias("publisherinfo")]
-        async Task PublisherInfo()
+        private async Task PublisherInfo()
         {
             if (Context.Channel.Id != Settings.GetBotCommandsChannel())
             {
@@ -366,7 +369,7 @@ namespace DiscordBot
 
         [Command("pkg"), Summary("Add your published package to the daily advertising. Syntax : !pkg packageId")]
         [Alias("package")]
-        async Task Package(uint packageId)
+        private async Task Package(uint packageId)
         {
             if (Context.Channel.Id != Settings.GetBotCommandsChannel())
             {
@@ -380,7 +383,7 @@ namespace DiscordBot
         }
 
         [Command("verify"), Summary("Verify a package with the code received by email. Syntax : !verify packageId code")]
-        async Task VerifyPackage(uint packageId, string code)
+        private async Task VerifyPackage(uint packageId, string code)
         {
             if (Context.Channel.Id != Settings.GetBotCommandsChannel())
             {
@@ -404,7 +407,7 @@ namespace DiscordBot
             }
 
             [Command("add"), Summary("Add a role to yourself. Syntax : !role add role")]
-            async Task AddRoleUser(IRole role)
+            private async Task AddRoleUser(IRole role)
             {
                 if (Context.Channel.Id != Settings.GetBotCommandsChannel())
                 {
@@ -428,7 +431,7 @@ namespace DiscordBot
 
             [Command("remove"), Summary("Remove a role from yourself. Syntax : !role remove role")]
             [Alias("delete")]
-            async Task RemoveRoleUser(IRole role)
+            private async Task RemoveRoleUser(IRole role)
             {
                 if (Context.Channel.Id != Settings.GetBotCommandsChannel())
                 {
@@ -451,7 +454,7 @@ namespace DiscordBot
             }
 
             [Command("list"), Summary("Display the list of roles. Syntax : !role list")]
-            async Task ListRole()
+            private async Task ListRole()
             {
                 if (Context.Channel.Id != Settings.GetBotCommandsChannel())
                 {
@@ -497,7 +500,7 @@ namespace DiscordBot
             }
 
             [Command("search"), Summary("Returns an anime. Syntax : !anime search animeTitle")]
-            async Task SearchAnime(string title)
+            private async Task SearchAnime(string title)
             {
                 /*{
                   "content": "Here's your search result @blabla",
@@ -556,11 +559,11 @@ namespace DiscordBot
                     .WithTitle("Anime search result")
                     .WithUrl("https://myanimelist.net/anime/" + anime.idMal)
                     .WithColor(new Color(0xDE637B))
-                    .WithThumbnailUrl($"{anime.coverImage.medium}")
-                    .WithImageUrl($"{anime.coverImage.medium}")
+                    .WithThumbnailUrl(anime.coverImage.medium)
+                    .WithImageUrl(anime.coverImage.medium)
                     .AddField("Titles", $"{anime.title.romaji}, {anime.title.native}")
-                    .AddField("Description", $"{anime.description}")
-                    .AddField("Genres", $"{string.Join(",", anime.genres)}")
+                    .AddField("Description", anime.description)
+                    .AddField("Genres", string.Join(",", anime.genres))
                     .AddField("MAL Link", "https://myanimelist.net/anime/" + anime.idMal)
                     .AddInlineField("Start Date", $"{anime.startDate.day}/{anime.startDate.month}/{anime.startDate.year}")
                     .AddInlineField("End Date", $"{anime.endDate.day}/{anime.endDate.month}/{anime.endDate.year}");

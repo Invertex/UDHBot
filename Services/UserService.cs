@@ -28,23 +28,23 @@ namespace DiscordBot
         private readonly LoggingService _loggingService;
         private readonly UpdateService _updateService;
 
-        private Dictionary<ulong, DateTime> _xpCooldown;
-        private Dictionary<ulong, DateTime> _thanksCooldown;
+        private readonly Dictionary<ulong, DateTime> _xpCooldown;
+        private readonly Dictionary<ulong, DateTime> _thanksCooldown;
         private Dictionary<ulong, DateTime> _thanksReminderCooldown;
         public Dictionary<ulong, DateTime> ThanksReminderCooldown { get { return _thanksReminderCooldown; } }
         private Dictionary<ulong, DateTime> _codeReminderCooldown;
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get { return _codeReminderCooldown; } }
 
-        private Random rand;
+        private readonly Random rand;
 
-        private FontCollection _fontCollection;
-        private Font _defaultFont;
-        private Font _nameFont;
-        private Font _levelFont;
-        private Font _levelFontSmall;
-        private Font _subtitlesBlackFont;
-        private Font _subtitlesWhiteFont;
-        private string _thanksRegex;
+        private readonly FontCollection _fontCollection;
+        private readonly Font _defaultFont;
+        private readonly Font _nameFont;
+        private readonly Font _levelFont;
+        private readonly Font _levelFontSmall;
+        private readonly Font _subtitlesBlackFont;
+        private readonly Font _subtitlesWhiteFont;
+        private readonly string _thanksRegex;
 
         private readonly int _thanksCooldownTime;
         private readonly int _thanksReminderCooldownTime;
@@ -77,23 +77,23 @@ namespace DiscordBot
             _fontCollection = new FontCollection();
             _defaultFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                         @"/fonts/OpenSans-Regular.ttf")
+                         "/fonts/OpenSans-Regular.ttf")
                 .CreateFont(16);
             _nameFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
                 .CreateFont(22);
             _levelFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
                 .CreateFont(59);
             _levelFontSmall = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/Consolas.ttf")
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
                 .CreateFont(45);
 
             _subtitlesBlackFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/OpenSansEmoji.ttf")
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/OpenSansEmoji.ttf")
                 .CreateFont(80);
             _subtitlesWhiteFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/fonts/OpenSansEmoji.ttf")
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/OpenSansEmoji.ttf")
                 .CreateFont(75);
 
             /*
@@ -112,9 +112,9 @@ namespace DiscordBot
             sbThanks.Append("((?i)");
             for (int i = 0; i < thx.Length; i++)
             {
-                sbThanks.Append(thx[i] + "|");
+                sbThanks.Append(thx[i]).Append("|");
             }
-            sbThanks.Length -= 1; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
+            sbThanks.Length--; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
             sbThanks.Append(")");
             _thanksRegex = sbThanks.ToString();
             _thanksCooldownTime = SettingsHandler.LoadValueInt("thanksCooldown", JsonFile.UserSettings);
@@ -178,10 +178,12 @@ namespace DiscordBot
 
             int karma = _databaseService.GetUserKarma(userId);
             if (messageParam.Author.Game != null)
+            {
                 if (Regex.Match(messageParam.Author.Game.Value.ToString(), "(Unity.+)").Length > 0)
                     bonusXp += baseXp / 4;
+            }
 
-            bonusXp += baseXp * (1f + karma / 100f);
+            bonusXp += baseXp * (1f + (karma / 100f));
 
             //Reduce XP for members with no role
             if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
@@ -212,32 +214,32 @@ namespace DiscordBot
 
             RestUserMessage message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
             //TODO: investigate why this is not running async
-            Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(t => message.DeleteAsync());
+            await Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(_ => message.DeleteAsync());
             //TODO: Add level up card
         }
 
         private double GetXpLow(int level)
         {
-            return 70d - 139.5d * (level + 1d) + 69.5 * Math.Pow(level + 1d, 2d);
+            return 70d - (139.5d * (level + 1d)) + (69.5 * Math.Pow(level + 1d, 2d));
         }
 
         private double GetXpHigh(int level)
         {
-            return 70d - 139.5d * (level + 2d) + 69.5 * Math.Pow(level + 2d, 2d);
+            return 70d - (139.5d * (level + 2d)) + (69.5 * Math.Pow(level + 2d, 2d));
         }
 
         public async Task<string> GenerateProfileCard(IUser user)
         {
             var backgroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                 @"/images/background.png";
+                                 "/images/background.png";
             var foregroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                 @"/images/foreground.png";
+                                 "/images/foreground.png";
             Image<Rgba32> profileCard = ImageSharp.Image.Load(backgroundPath);
             Image<Rgba32> profileFg = ImageSharp.Image.Load(foregroundPath);
             Image<Rgba32> avatar;
             Image<Rgba32> triangle = ImageSharp.Image.Load(
                 SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                @"/images/triangle.png");
+                "/images/triangle.png");
             Stream stream;
             string avatarUrl = user.GetAvatarUrl();
             ulong userId = user.Id;
@@ -245,7 +247,7 @@ namespace DiscordBot
             if (string.IsNullOrEmpty(avatarUrl))
             {
                 avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                               @"/images/default.png");
+                                               "/images/default.png");
             }
             else
             {
@@ -261,7 +263,7 @@ namespace DiscordBot
                 {
                     Console.WriteLine(e);
                     avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                                   @"/images/default.png");
+                                                   "/images/default.png");
                 }
             }
             uint xp = _databaseService.GetUserXp(userId);
@@ -283,12 +285,8 @@ namespace DiscordBot
             foreach (ulong id in u.RoleIds)
             {
                 IRole role = u.Guild.GetRole(id);
-                if (mainRole == null)
-                    mainRole = u.Guild.GetRole(id);
-                else if (role.Position > mainRole.Position)
-                {
-                    mainRole = role;
-                }
+                if (mainRole == null) { mainRole = u.Guild.GetRole(id); }
+                else if (role.Position > mainRole.Position) { mainRole = role; }
             }
             Color c = mainRole.Color;
 
@@ -318,9 +316,9 @@ namespace DiscordBot
             profileCard.Resize(400, 120);
 
             profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                             $@"/images/profiles/{user.Username}-profile.png");
+                             $"/images/profiles/{user.Username}-profile.png");
             return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                   $@"/images/profiles/{user.Username}-profile.png";
+                   $"/images/profiles/{user.Username}-profile.png";
         }
 
         public Embed WelcomeMessage(string icon, string name, ushort discriminator)
@@ -339,9 +337,7 @@ namespace DiscordBot
             return embed;
         }
 
-        /// <summary>
-        /// Signature for MessageDeleted Event
-        /// </summary>
+        // Signature for MessageDeleted Event
         public async Task Thanks(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam, ISocketMessageChannel socketMessageChannel) => await Thanks(messageParam);
 
         public async Task Thanks(SocketMessage messageParam)
@@ -353,11 +349,10 @@ namespace DiscordBot
             if (!match.Success)
                 return;
 
-
             IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
             mentions = mentions.Distinct().ToList();
             ulong userId = messageParam.Author.Id;
-            double defaultDelTime = 120d;
+            const double defaultDelTime = 120d;
 
             if (mentions.Count > 0)
             {
@@ -370,8 +365,7 @@ namespace DiscordBot
                     return;
                 }
 
-                DateTime joinDate;
-                DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out joinDate);
+                DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out DateTime joinDate);
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
 
                 if (j > DateTime.Now)
@@ -385,7 +379,7 @@ namespace DiscordBot
                 bool mentionedBot = false;
                 StringBuilder sb = new StringBuilder();
 
-                sb.Append($"**{messageParam.Author.Username}** gave karma to **");
+                sb.Append("**").Append(messageParam.Author.Username).Append("** gave karma to **");
                 foreach (SocketUser user in mentions)
                 {
                     if (user.IsBot)
@@ -399,20 +393,24 @@ namespace DiscordBot
                         continue;
                     }
                     _databaseService.AddUserKarma(user.Id, 1);
-                    sb.Append(user.Username + " , ");
+                    sb.Append(user.Username).Append(" , ");
                 }
 
                 sb.Length -= 2; //Removes last instance of appended comma without convoluted tracking
                 sb.Append("**");
 
                 if (mentionedSelf)
+                {
                     await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you can't give karma to yourself.").DeleteAfterSeconds(defaultDelTime);
+                }
 
                 if (mentionedBot)
+                {
                     await messageParam.Channel.SendMessageAsync(
                         $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:{Environment.NewLine}" +
                         "If you'd like to know what Karma is about, type !karma").DeleteAfterSeconds(defaultDelTime);
+                }
 
                 //Don't give karma cooldown if user only mentionned himself or the bot or both
                 if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2))
@@ -454,20 +452,20 @@ namespace DiscordBot
                     CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
 
                     StringBuilder sb = new StringBuilder();
-                    sb.AppendLine($"{messageParam.Author.Mention} are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
+                    sb.Append(messageParam.Author.Mention).AppendLine(" are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
                     sb.AppendLine(_codeReminderFormattingExample);
 
                     var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
-                    Task.Delay(TimeSpan.FromMinutes(10d)).ContinueWith(t => message.DeleteAsync());
+                    Task.Delay(TimeSpan.FromMinutes(10d)).ContinueWith(_ => message.DeleteAsync());
                 }
                 else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.Contains("```cs"))
                 {
                     StringBuilder sb = new StringBuilder();
-                    sb.AppendLine($"{messageParam.Author.Mention} Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
+                    sb.Append(messageParam.Author.Mention).AppendLine(" Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
                     sb.AppendLine(_codeReminderFormattingExample);
 
                     var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
-                    Task.Delay(TimeSpan.FromMinutes(8d)).ContinueWith(t => message.DeleteAsync());
+                    Task.Delay(TimeSpan.FromMinutes(8d)).ContinueWith(_ => message.DeleteAsync());
 
                     CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
                 }
@@ -566,7 +564,7 @@ namespace DiscordBot
             });
 
             string path = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                          $@"/images/subtitles/{message.Author}-{message.Id}.png";
+                          $"/images/subtitles/{message.Author}-{message.Id}.png";
             image.Save(path, new JpegEncoder {Quality = 95});
 
             return path;
