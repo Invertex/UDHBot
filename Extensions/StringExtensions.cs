@@ -11,7 +11,7 @@ namespace DiscordBot.Extensions
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
         }
 
-        public static List<string> MessageSplit(this string str, int maxLength)
+        public static List<string> MessageSplit(this string str, int maxLength = 1990)
         {
             List<string> list = str.Split('\n').ToList();
             List<string> ret = new List<string>();
@@ -19,8 +19,10 @@ namespace DiscordBot.Extensions
             string currentString = "";
             foreach (var s in list)
             {
-                if (currentString.Length + s.Length < 1990)
+                if (currentString.Length + s.Length < maxLength)
+                {
                     currentString += s + "\n";
+                }
                 else
                 {
                     ret.Add(currentString);
