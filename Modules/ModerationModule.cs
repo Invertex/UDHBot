@@ -39,7 +39,7 @@ namespace DiscordBot
             await reply.DeleteAsync();
             await UnmuteUser(user);
         }
-        
+
         [Command("mute"), Summary("Mute a user for a fixed duration")]
         [Alias("shutup", "stfu")]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -48,14 +48,14 @@ namespace DiscordBot
             var u = user as IGuildUser;
 
             await Context.Message.DeleteAsync();
-            
+
             await u.AddRoleAsync(Settings.GetMutedRole(Context.Guild));
             IUserMessage reply = await ReplyAsync($"User {user} has been muted for {arg} seconds. Reason : {message}");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds. Reason : {message}");
             IDMChannel dm = await user.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync($"You have been muted from UDH for {arg} seconds for the following reason : {message}. " +
                                       $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
-            
+
 
             await Task.Delay((int) arg * 1000);
             await reply.DeleteAsync();

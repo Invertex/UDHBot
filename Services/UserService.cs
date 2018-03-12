@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -25,6 +26,7 @@ namespace DiscordBot
     {
         private readonly DatabaseService _databaseService;
         private readonly LoggingService _loggingService;
+        private readonly UpdateService _updateService;
 
         private Dictionary<ulong, DateTime> _xpCooldown;
         private Dictionary<ulong, DateTime> _thanksCooldown;
@@ -32,7 +34,6 @@ namespace DiscordBot
         public Dictionary<ulong, DateTime> ThanksReminderCooldown { get { return _thanksReminderCooldown; } }
         private Dictionary<ulong, DateTime> _codeReminderCooldown;
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get { return _codeReminderCooldown; } }
-
 
         private Random rand;
 
@@ -59,11 +60,12 @@ namespace DiscordBot
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
-        public UserService(DatabaseService databaseService, LoggingService loggingService)
+        public UserService(DatabaseService databaseService, LoggingService loggingService, UpdateService updateService)
         {
             rand = new Random();
             _databaseService = databaseService;
             _loggingService = loggingService;
+            _updateService = updateService;
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _thanksCooldown = new Dictionary<ulong, DateTime>();
             _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
@@ -128,8 +130,39 @@ namespace DiscordBot
                 "Write your code on new line here." + Environment.NewLine +
                 @"\`\`\`" + Environment.NewLine + Environment.NewLine +
                 "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
+            
+            LoadData();
+            UpdateLoop();
         }
 
+        private async void UpdateLoop()
+        {
+            await Task.Delay(10000);
+            SaveData();
+        }
+        
+        public void LoadData()
+        {
+            var data = _updateService.GetUserData();
+            _thanksReminderCooldown = data.ThanksReminderCooldown;
+            _codeReminderCooldown = data.CodeReminderCooldown;
+            
+            if (_thanksReminderCooldown == null)
+                _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
+            if (_codeReminderCooldown == null)
+                _codeReminderCooldown = new Dictionary<ulong, DateTime>();
+        }
+
+        public void SaveData()
+        {
+            UserData data = new UserData
+            {
+                ThanksReminderCooldown = _thanksReminderCooldown,
+                CodeReminderCooldown = _codeReminderCooldown
+            };
+            _updateService.SetUserData(data);
+        }
+        
         public async Task UpdateXp(SocketMessage messageParam)
         {
             if (messageParam.Author.IsBot)
@@ -322,6 +355,7 @@ namespace DiscordBot
 
 
             IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
+            mentions = mentions.Distinct().ToList();
             ulong userId = messageParam.Author.Id;
 
             if (mentions.Count > 0)

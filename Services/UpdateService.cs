@@ -10,8 +10,20 @@ namespace DiscordBot
 {
     public class BotData
     {
-        public DateTime LastPublisherCheck;
-        public List<ulong> LastPublisherId;
+        public DateTime LastPublisherCheck { get; set; }
+        public List<ulong> LastPublisherId { get; set; }
+    }
+
+    public class UserData
+    {
+        public Dictionary<ulong, DateTime> ThanksReminderCooldown { get; set; }
+        public Dictionary<ulong, DateTime> CodeReminderCooldown { get; set; }
+
+        public UserData()
+        {
+            ThanksReminderCooldown = new Dictionary<ulong, DateTime>();
+            CodeReminderCooldown = new Dictionary<ulong, DateTime>();
+        }
     }
 
     //TODO: Download all avatars to cache them
@@ -26,9 +38,9 @@ namespace DiscordBot
         private BotData _botData;
         private Random _random;
         private AnimeData _animeData;
+        private UserData _userData;
 
-        public UpdateService(LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService,
-            AnimeService animeService)
+        public UpdateService(LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService, AnimeService animeService)
         {
             _loggingService = loggingService;
             _publisherService = publisherService;
@@ -44,7 +56,7 @@ namespace DiscordBot
         {
             ReadDataFromFile();
             SaveDataToFile();
-            CheckDailyPublisher();
+            //CheckDailyPublisher();
             UpdateUserRanks();
             UpdateAnime();
         }
@@ -66,11 +78,20 @@ namespace DiscordBot
             }
             else
                 _animeData = new AnimeData();
+            
+            if (File.Exists($"{Settings.GetServerRootPath()}/userdata.json"))
+            {
+                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/userdata.json");
+                _userData = JsonConvert.DeserializeObject<UserData>(json);
+            }
+            else
+                _userData = new UserData();
         }
 
         /*
         ** Save data to file every 20s
         */
+
         private async Task SaveDataToFile()
         {
             while (true)
@@ -80,6 +101,9 @@ namespace DiscordBot
 
                 json = JsonConvert.SerializeObject(_animeData);
                 File.WriteAllText($"{Settings.GetServerRootPath()}/animedata.json", json);
+                
+                json = JsonConvert.SerializeObject(_userData);
+                File.WriteAllText($"{Settings.GetServerRootPath()}/userdata.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
                 await Task.Delay(TimeSpan.FromSeconds(20d), _token);
             }
@@ -144,6 +168,17 @@ namespace DiscordBot
                 }
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
+        }
+
+        public UserData GetUserData()
+        {
+            
+            return _userData;
+        }
+        
+        public void SetUserData(UserData data)
+        {
+            _userData = data;
         }
     }
 }
