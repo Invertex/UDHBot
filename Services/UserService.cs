@@ -355,7 +355,7 @@ namespace DiscordBot
             {
                 if (_thanksCooldown.HasUser(userId))
                 {
-                    await messageParam.Channel.SendMessageAsync(
+                    messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must wait " +
                         $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
                         "seconds before giving another karma point").DeleteAfterSeconds(defaultDelTime);
@@ -367,7 +367,7 @@ namespace DiscordBot
 
                 if (j > DateTime.Now)
                 {
-                    await messageParam.Channel.SendMessageAsync(
+                    messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.").DeleteAfterSeconds(140d);
                     return;
                 }
@@ -398,13 +398,13 @@ namespace DiscordBot
 
                 if (mentionedSelf)
                 {
-                    await messageParam.Channel.SendMessageAsync(
+                    messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you can't give karma to yourself.").DeleteAfterSeconds(defaultDelTime);
                 }
 
                 if (mentionedBot)
                 {
-                    await messageParam.Channel.SendMessageAsync(
+                    messageParam.Channel.SendMessageAsync(
                         $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:{Environment.NewLine}" +
                         "If you'd like to know what Karma is about, type !karma").DeleteAfterSeconds(defaultDelTime);
                 }
@@ -416,13 +416,13 @@ namespace DiscordBot
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
                 //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
-                await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterSeconds(defaultDelTime);
+                messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterSeconds(defaultDelTime);
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
             else if (messageParam.Channel.Name != "general-chat" && !ThanksReminderCooldown.IsPermanent(userId) && !ThanksReminderCooldown.HasUser(userId) && !_thanksCooldown.HasUser(userId))
             {
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
-                await messageParam.Channel.SendMessageAsync(
+                messageParam.Channel.SendMessageAsync(
                     $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." + Environment.NewLine +
                     "If you want me to stop reminding you about this, please type \"disablethanksreminder\".").DeleteAfterSeconds(defaultDelTime);
             }
