@@ -136,7 +136,7 @@ namespace DiscordBot
 
             if (!_userService.ThanksReminderCooldown.IsPermanent(userID))
             {
-                replyMessage = "I will no longer remind you to mentiond the person you're thanking... (◕︿◕✿)";
+                replyMessage = "I will no longer remind you to mention the person you're thanking... (◕︿◕✿)";
                 _userService.ThanksReminderCooldown.SetPermanent(Context.User.Id, true);
             }
 
