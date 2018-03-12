@@ -207,9 +207,11 @@ namespace DiscordBot
 
             _databaseService.AddUserLevel(userId, 1);
 
-            RestUserMessage message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
+            var message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
             //TODO: investigate why this is not running async
-            await Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(_ => message.DeleteAsync());
+            //I believe it's because you didn't include async and await in the ContinueWith structure.
+            // instead should be `ContinueWith(async _ => await message.DeleteAsync())`
+            await Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(async _ => await message.DeleteAsync()).Unwrap();
             //TODO: Add level up card
         }
 

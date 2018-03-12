@@ -13,7 +13,7 @@ namespace DiscordBot.Extensions
 
         public static Task DeleteAfterSeconds<T>(this Task<T> task, double seconds, bool awaitDeletion = false) where T : IDeletable
         {
-            Task deletion = task.Result.DeleteAfterSeconds(seconds);
+            var deletion = new Task(async () => await (await task).DeleteAfterSeconds(seconds));
             return (awaitDeletion) ? deletion : task;
         }
     }
