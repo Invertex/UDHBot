@@ -124,7 +124,7 @@ namespace DiscordBot
             }
 
             sbThanks.Length--; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
-            sbThanks.Append(") ");
+            sbThanks.Append(")");
             _thanksRegex = sbThanks.ToString();
             _thanksCooldownTime = SettingsHandler.LoadValueInt("thanksCooldown", JsonFile.UserSettings);
             _thanksReminderCooldownTime = SettingsHandler.LoadValueInt("thanksReminderCooldown", JsonFile.UserSettings);
