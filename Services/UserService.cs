@@ -117,14 +117,14 @@ namespace DiscordBot
             */
             StringBuilder sbThanks = new StringBuilder();
             string[] thx = SettingsHandler.LoadValueStringArray("thanks", JsonFile.UserSettings);
-            sbThanks.Append("((?i)");
+            sbThanks.Append(" ((?i)");
             for (int i = 0; i < thx.Length; i++)
             {
                 sbThanks.Append(thx[i]).Append("|");
             }
 
             sbThanks.Length--; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
-            sbThanks.Append(")");
+            sbThanks.Append(") ");
             _thanksRegex = sbThanks.ToString();
             _thanksCooldownTime = SettingsHandler.LoadValueInt("thanksCooldown", JsonFile.UserSettings);
             _thanksReminderCooldownTime = SettingsHandler.LoadValueInt("thanksReminderCooldown", JsonFile.UserSettings);
@@ -216,11 +216,11 @@ namespace DiscordBot
 
             _databaseService.AddUserLevel(userId, 1);
 
-            var message = await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !");
+            await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(seconds: 60);
             //TODO: investigate why this is not running async
             //I believe it's because you didn't include async and await in the ContinueWith structure.
             // instead should be `ContinueWith(async _ => await message.DeleteAsync())`
-            await Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(async _ => await message.DeleteAsync()).Unwrap();
+            //await Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(async _ => await message.DeleteAsync()).Unwrap();
             //TODO: Add level up card
         }
 
@@ -368,7 +368,7 @@ namespace DiscordBot
             IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
             mentions = mentions.Distinct().ToList();
             ulong userId = messageParam.Author.Id;
-            const double defaultDelTime = 120d;
+            const int defaultDelTime = 120;
 
             if (mentions.Count > 0)
             {
@@ -377,7 +377,7 @@ namespace DiscordBot
                     await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must wait " +
                         $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
-                        "seconds before giving another karma point").DeleteAfterSeconds(defaultDelTime);
+                        "seconds before giving another karma point").DeleteAfterTime(seconds: defaultDelTime);
                     return;
                 }
 
@@ -387,8 +387,7 @@ namespace DiscordBot
                 if (j > DateTime.Now)
                 {
                     await messageParam.Channel.SendMessageAsync(
-                            $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.")
-                        .DeleteAfterSeconds(140d);
+                            $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.").DeleteAfterTime(seconds: 140);
                     return;
                 }
 
@@ -421,14 +420,14 @@ namespace DiscordBot
                 if (mentionedSelf)
                 {
                     await messageParam.Channel.SendMessageAsync(
-                        $"{messageParam.Author.Mention} you can't give karma to yourself.").DeleteAfterSeconds(defaultDelTime);
+                        $"{messageParam.Author.Mention} you can't give karma to yourself.").DeleteAfterTime(seconds: defaultDelTime);
                 }
 
                 if (mentionedBot)
                 {
                     await messageParam.Channel.SendMessageAsync(
                         $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:{Environment.NewLine}" +
-                        "If you'd like to know what Karma is about, type !karma").DeleteAfterSeconds(defaultDelTime);
+                        "If you'd like to know what Karma is about, type !karma").DeleteAfterTime(seconds: defaultDelTime);
                 }
 
                 //Don't give karma cooldown if user only mentionned himself or the bot or both
@@ -438,7 +437,7 @@ namespace DiscordBot
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
                 //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
-                await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterSeconds(defaultDelTime);
+                await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(seconds: defaultDelTime);
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
             else if (messageParam.Channel.Name != "general-chat" && !ThanksReminderCooldown.IsPermanent(userId) &&
@@ -448,8 +447,8 @@ namespace DiscordBot
                 await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." +
                         Environment.NewLine +
-                        "If you want me to stop reminding you about this, please type \"disablethanksreminder\".")
-                    .DeleteAfterSeconds(defaultDelTime);
+                        "If you want me to stop reminding you about this, please type \"!disablethanksreminder\".")
+                    .DeleteAfterTime(seconds: defaultDelTime);
             }
         }
 
@@ -479,7 +478,7 @@ namespace DiscordBot
                             " are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
                     sb.AppendLine(_codeReminderFormattingExample);
 
-                    await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTimeSpan(TimeSpan.FromMinutes(10d));
+                    await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 10);
                 }
                 else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.Contains("```cs"))
                 {
@@ -489,8 +488,8 @@ namespace DiscordBot
                             " Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
                     sb.AppendLine(_codeReminderFormattingExample);
 
-                    await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTimeSpan(TimeSpan.FromMinutes(8d));
-                    
+                    await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 8);
+
                     CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
                 }
             }
