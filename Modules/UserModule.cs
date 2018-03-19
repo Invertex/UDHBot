@@ -127,7 +127,6 @@ namespace DiscordBot
             }
 
             await ReplyAsync($"{Context.User.Username}, " + replyMessage).DeleteAfterSeconds(20d);
-            return;
         }
 
         [Command("disablethanksreminder"), Summary("Prevents being reminded to mention the person you are thanking. Syntax : !disablethanksreminder")]
@@ -143,7 +142,6 @@ namespace DiscordBot
             }
 
             await ReplyAsync($"{Context.User.Username}, " + replyMessage).DeleteAfterSeconds(20d);
-            return;
         }
 
         [Command("slap"), Summary("Slap the specified user(s). Syntax : !slap @user1 [@user2 @user3...]")]

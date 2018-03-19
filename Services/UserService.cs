@@ -17,7 +17,6 @@ using ImageSharp.Drawing.Brushes;
 using ImageSharp.Formats;
 using SixLabors.Fonts;
 using SixLabors.Primitives;
-
 using Image = ImageSharp.Image;
 
 namespace DiscordBot
@@ -31,9 +30,18 @@ namespace DiscordBot
         private readonly Dictionary<ulong, DateTime> _xpCooldown;
         private readonly Dictionary<ulong, DateTime> _thanksCooldown;
         private Dictionary<ulong, DateTime> _thanksReminderCooldown;
-        public Dictionary<ulong, DateTime> ThanksReminderCooldown { get { return _thanksReminderCooldown; } }
+
+        public Dictionary<ulong, DateTime> ThanksReminderCooldown
+        {
+            get { return _thanksReminderCooldown; }
+        }
+
         private Dictionary<ulong, DateTime> _codeReminderCooldown;
-        public Dictionary<ulong, DateTime> CodeReminderCooldown { get { return _codeReminderCooldown; } }
+
+        public Dictionary<ulong, DateTime> CodeReminderCooldown
+        {
+            get { return _codeReminderCooldown; }
+        }
 
         private readonly Random rand;
 
@@ -114,6 +122,7 @@ namespace DiscordBot
             {
                 sbThanks.Append(thx[i]).Append("|");
             }
+
             sbThanks.Length--; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
             sbThanks.Append(")");
             _thanksRegex = sbThanks.ToString();
@@ -168,7 +177,7 @@ namespace DiscordBot
             float baseXp = rand.Next(_xpMinPerMessage, _xpMaxPerMessage);
             float bonusXp = 0;
 
-            if(_xpCooldown.HasUser(userId))
+            if (_xpCooldown.HasUser(userId))
                 return;
 
             int karma = _databaseService.GetUserKarma(userId);
@@ -254,6 +263,7 @@ namespace DiscordBot
                     {
                         stream = await http.GetStreamAsync(new Uri(avatarUrl));
                     }
+
                     avatar = ImageSharp.Image.Load(stream);
                 }
                 catch (Exception e)
@@ -263,6 +273,7 @@ namespace DiscordBot
                                                    "/images/default.png");
                 }
             }
+
             uint xp = _databaseService.GetUserXp(userId);
             uint rank = _databaseService.GetUserRank(userId);
             int karma = _databaseService.GetUserKarma(userId);
@@ -282,9 +293,16 @@ namespace DiscordBot
             foreach (ulong id in u.RoleIds)
             {
                 IRole role = u.Guild.GetRole(id);
-                if (mainRole == null) { mainRole = u.Guild.GetRole(id); }
-                else if (role.Position > mainRole.Position) { mainRole = role; }
+                if (mainRole == null)
+                {
+                    mainRole = u.Guild.GetRole(id);
+                }
+                else if (role.Position > mainRole.Position)
+                {
+                    mainRole = role;
+                }
             }
+
             Color c = mainRole.Color;
 
             var brush = new RecolorBrush<Rgba32>(Rgba32.White,
@@ -335,7 +353,8 @@ namespace DiscordBot
         }
 
         // Signature for MessageDeleted Event
-        public async Task Thanks(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam, ISocketMessageChannel socketMessageChannel) => await Thanks(messageParam);
+        public async Task Thanks(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam,
+            ISocketMessageChannel socketMessageChannel) => await Thanks(messageParam);
 
         public async Task Thanks(SocketMessage messageParam)
         {
@@ -368,7 +387,8 @@ namespace DiscordBot
                 if (j > DateTime.Now)
                 {
                     await messageParam.Channel.SendMessageAsync(
-                        $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.").DeleteAfterSeconds(140d);
+                            $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.")
+                        .DeleteAfterSeconds(140d);
                     return;
                 }
 
@@ -384,11 +404,13 @@ namespace DiscordBot
                         mentionedBot = true;
                         continue;
                     }
+
                     if (user.Id == userId)
                     {
                         mentionedSelf = true;
                         continue;
                     }
+
                     _databaseService.AddUserKarma(user.Id, 1);
                     sb.Append(user.Username).Append(" , ");
                 }
@@ -419,12 +441,15 @@ namespace DiscordBot
                 await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterSeconds(defaultDelTime);
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
-            else if (messageParam.Channel.Name != "general-chat" && !ThanksReminderCooldown.IsPermanent(userId) && !ThanksReminderCooldown.HasUser(userId) && !_thanksCooldown.HasUser(userId))
+            else if (messageParam.Channel.Name != "general-chat" && !ThanksReminderCooldown.IsPermanent(userId) &&
+                     !ThanksReminderCooldown.HasUser(userId) && !_thanksCooldown.HasUser(userId))
             {
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 await messageParam.Channel.SendMessageAsync(
-                    $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." + Environment.NewLine +
-                    "If you want me to stop reminding you about this, please type \"disablethanksreminder\".").DeleteAfterSeconds(defaultDelTime);
+                        $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." +
+                        Environment.NewLine +
+                        "If you want me to stop reminding you about this, please type \"disablethanksreminder\".")
+                    .DeleteAfterSeconds(defaultDelTime);
             }
         }
 
@@ -449,21 +474,23 @@ namespace DiscordBot
                     CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
 
                     StringBuilder sb = new StringBuilder();
-                    sb.Append(messageParam.Author.Mention).AppendLine(" are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
+                    sb.Append(messageParam.Author.Mention)
+                        .AppendLine(
+                            " are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
                     sb.AppendLine(_codeReminderFormattingExample);
 
-                    var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
-                    Task.Delay(TimeSpan.FromMinutes(10d)).ContinueWith(_ => message.DeleteAsync());
+                    await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTimeSpan(TimeSpan.FromMinutes(10d));
                 }
                 else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.Contains("```cs"))
                 {
                     StringBuilder sb = new StringBuilder();
-                    sb.Append(messageParam.Author.Mention).AppendLine(" Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
+                    sb.Append(messageParam.Author.Mention)
+                        .AppendLine(
+                            " Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
                     sb.AppendLine(_codeReminderFormattingExample);
 
-                    var message = await messageParam.Channel.SendMessageAsync(sb.ToString());
-                    Task.Delay(TimeSpan.FromMinutes(8d)).ContinueWith(_ => message.DeleteAsync());
-
+                    await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTimeSpan(TimeSpan.FromMinutes(8d));
+                    
                     CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
                 }
             }
