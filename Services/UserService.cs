@@ -117,14 +117,14 @@ namespace DiscordBot
             */
             StringBuilder sbThanks = new StringBuilder();
             string[] thx = SettingsHandler.LoadValueStringArray("thanks", JsonFile.UserSettings);
-            sbThanks.Append(" ((?i)");
+            sbThanks.Append(@"(?i)\b(");
             for (int i = 0; i < thx.Length; i++)
             {
                 sbThanks.Append(thx[i]).Append("|");
             }
 
             sbThanks.Length--; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
-            sbThanks.Append(") ");
+            sbThanks.Append(@")\b");
             _thanksRegex = sbThanks.ToString();
             _thanksCooldownTime = SettingsHandler.LoadValueInt("thanksCooldown", JsonFile.UserSettings);
             _thanksReminderCooldownTime = SettingsHandler.LoadValueInt("thanksReminderCooldown", JsonFile.UserSettings);
