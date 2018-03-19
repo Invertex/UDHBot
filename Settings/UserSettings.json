@@ -2,11 +2,13 @@
     /*Thanks parameters*/
     "thanks": [
         "thanks",
-        "thank ",
+        "thank",
+        "ty",
         "thx",
         "thnx",
         "thanx",
         "thankyou",
+        "thank you",
         "cheers"
     ],
     "thanksCooldown": 60, //In seconds
