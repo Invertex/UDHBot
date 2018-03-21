@@ -495,6 +495,24 @@ namespace DiscordBot
             }
         }
 
+
+        public async Task ScoldForAtEveryoneUsage(SocketMessage messageParam)
+        {
+            if (messageParam.Author.IsBot || ((IGuildUser)messageParam.Author).GuildPermissions.MentionEveryone)
+                return;
+
+            ulong userId = messageParam.Author.Id;
+            string content = messageParam.Content;
+
+            if (content.Contains("@everyone") || content.Contains("@here"))
+            {
+                await messageParam.Channel.SendMessageAsync(
+                        $"That is very rude of you to try and alert **everyone** on the server {messageParam.Author.Mention}!{Environment.NewLine}" +
+                        "Thankfully, you do not have permission to do so. If you are asking a question, people will help you when they have time.")
+                        .DeleteAfterTime(minutes: 5);
+            }
+        }
+
         // TODO: Response to people asking if anyone is around to help.
         /*
         public async Task UselessAskingCheck(SocketMessage messageParam)
