@@ -1,5 +1,6 @@
 ﻿using System.Xml.Linq;
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.ComTypes;
@@ -49,6 +50,7 @@ namespace DiscordBot
                     }
                 }
             }
+
             return (0, 0);
         }
 
@@ -177,6 +179,43 @@ namespace DiscordBot
             UpdateAttributeFromUser(id, "avatarUrl", avatar);
         }
 
+        public List<(ulong userId, int level)> GetTopLevel()
+        {
+            List<(ulong userId, int level)> users = new List<(ulong userId, int level)>();
+
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand("SELECT userid, level FROM `users` ORDER BY exp DESC LIMIT 10", connection);
+                connection.Open();
+                var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
+                }
+            }
+
+
+            return users;
+        }
+
+        public List<(ulong userId, int karma)> GetTopKarma()
+        {
+            List<(ulong userId, int karma)> users = new List<(ulong userId, int karma)>();
+
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand("SELECT userid, karma FROM `users` ORDER BY karma DESC LIMIT 10", connection);
+                connection.Open();
+                var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
+                }
+            }
+
+            return users;
+        }
+
         public async void AddNewUser(SocketGuildUser user)
         {
             try
@@ -192,7 +231,8 @@ namespace DiscordBot
                     command.Parameters.AddWithValue("@Status", user.Status);
                     connection.Open();
                     command.ExecuteNonQuery();
-                    await _logging.LogAction($"User {user.Username}#{user.DiscriminatorValue} succesfully added to the databse.", true,
+                    await _logging.LogAction($"User {user.Username}#{user.DiscriminatorValue} succesfully added to the databse.",
+                        true,
                         false);
                 }
             }
@@ -235,11 +275,12 @@ namespace DiscordBot
             }
             catch (Exception e)
             {
-                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}", true,
+                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}",
+                    true,
                     false);
             }
         }
-        
+
         private async void UpdateAttributeFromUser(ulong id, string attribute, uint value)
         {
             try
@@ -254,7 +295,8 @@ namespace DiscordBot
             }
             catch (Exception e)
             {
-                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}", true,
+                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}",
+                    true,
                     false);
             }
         }
@@ -274,7 +316,8 @@ namespace DiscordBot
             }
             catch (Exception e)
             {
-                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}", true,
+                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}",
+                    true,
                     false);
             }
         }

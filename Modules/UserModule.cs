@@ -28,6 +28,7 @@ namespace DiscordBot
         }
 
         [Command("help"), Summary("Display available commands (this). Syntax : !help")]
+        [Alias("command", "commands")]
         private async Task DisplayHelp()
         {
             //TODO: Be possible in DM
@@ -112,6 +113,34 @@ namespace DiscordBot
 
             await Task.Delay(TimeSpan.FromSeconds(seconds));
             await Context.Message.DeleteAsync();
+        }
+        
+        [Command("top"), Summary("Display top 10 users by level. Syntax : !top")]
+        [Alias("toplevel", "ranking")]
+        private async Task TopLevel()
+        {
+            var users = _databaseService.GetTopLevel();
+            
+            StringBuilder sb = new StringBuilder();
+            sb.Append("Here's the top 10 of users by level :");
+            for (int i = 0; i < users.Count; i++)
+                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ *Level* **{users[i].level}**");
+            
+            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes:3);
+        }
+        
+        [Command("topkarma"), Summary("Display top 10 users by karma. Syntax : !topkarma")]
+        [Alias("karmarank", "rankingkarma")]
+        private async Task TopKarma()
+        {
+            var users = _databaseService.GetTopKarma();
+            
+            StringBuilder sb = new StringBuilder();
+            sb.Append("Here's the top 10 of users by karma :");
+            for (int i = 0; i < users.Count; i++)
+                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].karma}** *Karma*");
+            
+            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes:3);
         }
 
         [Command("disablecodetips"), Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
