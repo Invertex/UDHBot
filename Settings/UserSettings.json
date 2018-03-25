@@ -7,7 +7,7 @@
         "thnx",
         "thanx",
         "thankyou",
-        "thank\\s+you",
+        "thank you",
         "cheers"
     ],
     "thanksCooldown": 60, //In seconds

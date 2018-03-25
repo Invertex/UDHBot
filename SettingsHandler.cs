@@ -17,6 +17,7 @@ namespace DiscordBot
         PayWork,
         UserSettings
     }
+
     class SettingsHandler
     {
         public static Dictionary<string, string[]> SettingLine = new Dictionary<string, string[]>();
@@ -46,7 +47,7 @@ namespace DiscordBot
                     data = v;
                     index++;
                 }
-                else if(value.GetType() == typeof(JArray))
+                else if (value.GetType() == typeof(JArray))
                 {
                     keys.Add(value.ToString());
                     break;
@@ -55,51 +56,64 @@ namespace DiscordBot
 
             return keys.ToArray();
         }
+
         public static string[] LoadValueStringArray(string path, JsonFile file)
         {
             return StringToArray(LoadValue(path, file)[0]);
         }
+
         public static char LoadValueChar(string path, JsonFile file)
         {
             return char.Parse(LoadValue(path, file)[0]);
         }
+
         public static string LoadValueString(string path, JsonFile file)
         {
             return LoadValue(path, file)[0];
         }
+
         public static int LoadValueInt(string path, JsonFile file)
         {
             return int.Parse(LoadValue(path, file)[0]);
         }
+
         public static ulong LoadValueUlong(string path, JsonFile file)
         {
             return ulong.Parse(LoadValue(path, file)[0]);
         }
+
         public static float LoadValueFloat(string path, JsonFile file)
         {
             return float.Parse(LoadValue(path, file)[0]);
         }
+
         public static bool LoadValueBool(string path, JsonFile file)
         {
             return LoadValue(path, file)[0] != "0";
         }
+
         public static string[] StringToArray(string value)
         {
             List<string> values = new List<string>();
-            string[] split = value.Split(new string[] { "\"," }, StringSplitOptions.RemoveEmptyEntries);
+            string[] split = value.Split(new string[] {"\","}, StringSplitOptions.RemoveEmptyEntries);
             for (int i = 0; i < split.Length; i++)
             {
                 string newS = split[i];
-                
+
                 newS = newS.Replace("\"", "").Replace(",", "");
-                newS = Regex.Replace(newS, @"\s", "");
+                //newS = Regex.Replace(newS, @"\s", "");
+                newS = Regex.Replace(newS, @"\r", "");
+                newS = Regex.Replace(newS, @"\n", "");
                 newS = Regex.Replace(newS, @"\t", "");
+                newS.Trim();
                 if (string.IsNullOrWhiteSpace(newS)) continue;
-                values.Add(i == 0 ? newS.Substring(1, newS.Length - 1) : i == split.Length - 1 ? newS.Substring(0, newS.Length - 1) : newS);
+                values.Add(i == 0 ? newS.Substring(1, newS.Length - 1).Trim() : i == split.Length - 1 ? newS.Substring(0, newS.Length - 1).Trim() : newS.Trim());
             }
+
             //Console.WriteLine("Length of: " + values.Count);
             return values.ToArray();
         }
+
         private static void AddKeyIfNotPresentToSettings(string key, string[] value)
         {
             if (SettingLine.ContainsKey(key)) return;
