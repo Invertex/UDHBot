@@ -91,9 +91,9 @@ namespace DiscordBot
             {
                 string newS = split[i];
                 
-                newS = newS.Replace("\"", "").Replace(",", "");
+                /*newS = newS.Replace("\"", "").Replace(",", "");
                 newS = Regex.Replace(newS, @"\s", "");
-                newS = Regex.Replace(newS, @"\t", "");
+                newS = Regex.Replace(newS, @"\t", "");*/
                 if (string.IsNullOrWhiteSpace(newS)) continue;
                 values.Add(i == 0 ? newS.Substring(1, newS.Length - 1) : i == split.Length - 1 ? newS.Substring(0, newS.Length - 1) : newS);
             }
