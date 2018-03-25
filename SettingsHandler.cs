@@ -47,9 +47,13 @@ namespace DiscordBot
                     data = v;
                     index++;
                 }
-                else if (value.GetType() == typeof(JArray))
+                else if (value is JArray)
                 {
-                    keys.Add(value.ToString());
+                    foreach (JValue val in (value as JArray))
+                    {
+                        keys.Add(val.ToString());
+                    }
+
                     break;
                 }
             }
@@ -59,7 +63,7 @@ namespace DiscordBot
 
         public static string[] LoadValueStringArray(string path, JsonFile file)
         {
-            return StringToArray(LoadValue(path, file)[0]);
+            return LoadValue(path, file);
         }
 
         public static char LoadValueChar(string path, JsonFile file)
@@ -92,7 +96,7 @@ namespace DiscordBot
             return LoadValue(path, file)[0] != "0";
         }
 
-        public static string[] StringToArray(string value)
+       /* public static string[] StringToArray(string value)
         {
             List<string> values = new List<string>();
             string[] split = value.Split(new string[] {"\","}, StringSplitOptions.RemoveEmptyEntries);
@@ -112,7 +116,7 @@ namespace DiscordBot
 
             //Console.WriteLine("Length of: " + values.Count);
             return values.ToArray();
-        }
+        }*/
 
         private static void AddKeyIfNotPresentToSettings(string key, string[] value)
         {
