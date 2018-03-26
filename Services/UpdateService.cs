@@ -16,11 +16,13 @@ namespace DiscordBot
 
     public class UserData
     {
+        public Dictionary<ulong, DateTime> MutedUsers { get; set; }
         public Dictionary<ulong, DateTime> ThanksReminderCooldown { get; set; }
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get; set; }
 
         public UserData()
         {
+            MutedUsers = new Dictionary<ulong, DateTime>();
             ThanksReminderCooldown = new Dictionary<ulong, DateTime>();
             CodeReminderCooldown = new Dictionary<ulong, DateTime>();
         }
@@ -33,6 +35,7 @@ namespace DiscordBot
         private readonly LoggingService _loggingService;
         private readonly PublisherService _publisherService;
         private readonly DatabaseService _databaseService;
+        public readonly UserService _userService;
         private readonly AnimeService _animeService;
         private readonly CancellationToken _token;
         private BotData _botData;
@@ -40,11 +43,12 @@ namespace DiscordBot
         private AnimeData _animeData;
         private UserData _userData;
 
-        public UpdateService(LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService, AnimeService animeService)
+        public UpdateService(LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService, UserService userService, AnimeService animeService)
         {
             _loggingService = loggingService;
             _publisherService = publisherService;
             _databaseService = databaseService;
+            _userService = userService;
             _animeService = animeService;
             _token = new CancellationToken();
             _random = new Random();
@@ -78,7 +82,7 @@ namespace DiscordBot
             }
             else
                 _animeData = new AnimeData();
-            
+
             if (File.Exists($"{Settings.GetServerRootPath()}/userdata.json"))
             {
                 string json = File.ReadAllText($"{Settings.GetServerRootPath()}/userdata.json");
@@ -101,7 +105,7 @@ namespace DiscordBot
 
                 json = JsonConvert.SerializeObject(_animeData);
                 File.WriteAllText($"{Settings.GetServerRootPath()}/animedata.json", json);
-                
+
                 json = JsonConvert.SerializeObject(_userData);
                 File.WriteAllText($"{Settings.GetServerRootPath()}/userdata.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
@@ -130,7 +134,7 @@ namespace DiscordBot
                     _botData.LastPublisherCheck = DateTime.Now;
                     _botData.LastPublisherId.Add(id);
                 }
-                
+
                 if (_botData.LastPublisherId.Count > 10)
                     _botData.LastPublisherId.RemoveAt(0);
 
@@ -160,7 +164,7 @@ namespace DiscordBot
                     _animeService.PublishDailyAnime();
                     _animeData.LastDailyAnimeAiringList = DateTime.Now;
                 }
-                
+
                 if (_animeData.LastWeeklyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(7d))
                 {
                     _animeService.PublishWeeklyAnime();
@@ -172,10 +176,10 @@ namespace DiscordBot
 
         public UserData GetUserData()
         {
-            
+
             return _userData;
         }
-        
+
         public void SetUserData(UserData data)
         {
             _userData = data;

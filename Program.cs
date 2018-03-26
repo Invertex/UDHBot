@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using DiscordBot.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot
@@ -52,7 +53,7 @@ namespace DiscordBot
             });
             _loggingService = new LoggingService(_client);
             _databaseService = new DatabaseService(_loggingService);
-            _updateService = new UpdateService(_loggingService, _publisherService, _databaseService, _animeService);
+            _updateService = new UpdateService(_loggingService, _publisherService, _databaseService, _userService, _animeService);
             _userService = new UserService(_databaseService, _loggingService, _updateService);
             _workService = new WorkService();
             _publisherService = new PublisherService(_client, _databaseService);
@@ -181,18 +182,30 @@ namespace DiscordBot
         private async Task UserJoined(SocketGuildUser user)
         {
             ulong general = SettingsHandler.LoadValueUlong("generalChannel/id", JsonFile.Settings);
-            Embed em = _userService.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
-
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
-            if (socketTextChannel != null)
+
+            _databaseService.AddNewUser(user);
+
+            //Check for existing mute
+            if (_userService._mutedUsers.HasUser(user.Id))
             {
-                await socketTextChannel.SendMessageAsync(string.Empty, false, em);
+                await _loggingService.LogAction(
+                $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                await socketTextChannel.SendMessageAsync($"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
+                _userService._mutedUsers.AddCooldown(user.Id, hours: 72);
+                return;
             }
+
 
             await _loggingService.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
-            _databaseService.AddNewUser(user);
+            Embed em = _userService.WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+
+            if (socketTextChannel != null)
+            {
+                await socketTextChannel.SendMessageAsync(string.Empty, false, em);
+            }
 
             string globalRules = Settings.GetRule(0).content;
             IDMChannel dm = await user.GetOrCreateDMChannelAsync();
