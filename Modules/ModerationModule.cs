@@ -71,7 +71,7 @@ namespace DiscordBot
 
             //TODO: fix doesn't work when called from mute
             //await Context.Message?.DeleteAsync();
-
+            _update._userService._mutedUsers.Remove(user.Id);
             await u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
             IUserMessage reply = await ReplyAsync("User " + user + " has been unmuted.");
             await Task.Delay(TimeSpan.FromSeconds(10d));
