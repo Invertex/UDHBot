@@ -16,6 +16,8 @@ namespace DiscordBot
         private readonly PublisherService _publisher;
         private readonly UpdateService _update;
 
+        private Dictionary<ulong, DateTime> MutedUsers { get { return _update._userService._mutedUsers; } }
+
         public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update)
         {
             _logging = logging;
@@ -35,8 +37,12 @@ namespace DiscordBot
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
 
             await Context.Message.DeleteAsync();
-            _update._userService._mutedUsers.AddCooldown(u.Id, seconds: (int)arg);
+            MutedUsers.AddCooldown(u.Id, seconds: (int)arg);
             await Task.Delay((int) arg * 1000);
+            if(MutedUsers.HasUser(u.Id))
+            {
+                await Task.Delay(MutedUsers.Seconds(u.Id) * 1000);
+            }
             await reply.DeleteAsync();
             await UnmuteUser(user);
         }
@@ -57,7 +63,7 @@ namespace DiscordBot
             await dm.SendMessageAsync($"You have been muted from UDH for {arg} seconds for the following reason : {message}. " +
                                       $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
 
-            _update._userService._mutedUsers.AddCooldown(u.Id, seconds: (int)arg);
+            MutedUsers.AddCooldown(u.Id, seconds: (int)arg);
             await Task.Delay((int) arg * 1000);
             await reply.DeleteAsync();
             await UnmuteUser(user);
@@ -71,7 +77,7 @@ namespace DiscordBot
 
             //TODO: fix doesn't work when called from mute
             //await Context.Message?.DeleteAsync();
-            _update._userService._mutedUsers.Remove(user.Id);
+            MutedUsers.Remove(user.Id);
             await u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
             IUserMessage reply = await ReplyAsync("User " + user + " has been unmuted.");
             await Task.Delay(TimeSpan.FromSeconds(10d));
