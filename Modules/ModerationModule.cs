@@ -37,12 +37,9 @@ namespace DiscordBot
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
 
             await Context.Message.DeleteAsync();
-            MutedUsers.AddCooldown(u.Id, seconds: (int)arg);
+            MutedUsers.AddCooldown(u.Id, seconds: (int)arg,  ignoreExisting: true);
             await Task.Delay((int) arg * 1000);
-            if(MutedUsers.HasUser(u.Id))
-            {
-                await Task.Delay(MutedUsers.Seconds(u.Id) * 1000);
-            }
+
             await reply.DeleteAsync();
             await UnmuteUser(user);
         }
@@ -63,7 +60,7 @@ namespace DiscordBot
             await dm.SendMessageAsync($"You have been muted from UDH for {arg} seconds for the following reason : {message}. " +
                                       $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
 
-            MutedUsers.AddCooldown(u.Id, seconds: (int)arg);
+            MutedUsers.AddCooldown(u.Id, seconds: (int)arg, ignoreExisting: true);
             await Task.Delay((int) arg * 1000);
             await reply.DeleteAsync();
             await UnmuteUser(user);

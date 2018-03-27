@@ -189,6 +189,7 @@ namespace DiscordBot
             //Check for existing mute
             if (_userService._mutedUsers.HasUser(user.Id))
             {
+                await user.AddRoleAsync(Settings.GetMutedRole(user.Guild));
                 await _loggingService.LogAction(
                 $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
                 await socketTextChannel.SendMessageAsync($"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
