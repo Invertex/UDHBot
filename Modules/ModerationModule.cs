@@ -30,13 +30,17 @@ namespace DiscordBot
         [RequireUserPermission(GuildPermission.KickMembers)]
         async Task MuteUser(IUser user, uint arg)
         {
-            var u = user as IGuildUser;
+            await Context.Message.DeleteAsync();
 
-            await u.AddRoleAsync(Settings.GetMutedRole(Context.Guild));
+            var u = user as IGuildUser;
+            IRole muteRole = Settings.GetMutedRole(Context.Guild);
+            if (u.RoleIds.Contains(muteRole.Id)){ return; }
+            await u.AddRoleAsync(muteRole);
+
             IUserMessage reply = await ReplyAsync("User " + user + " has been muted for " + arg + " seconds.");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
 
-            await Context.Message.DeleteAsync();
+
             MutedUsers.AddCooldown(u.Id, seconds: (int)arg,  ignoreExisting: true);
             await Task.Delay((int) arg * 1000);
 
@@ -49,11 +53,13 @@ namespace DiscordBot
         [RequireUserPermission(GuildPermission.KickMembers)]
         async Task MuteUser(IUser user, uint arg, string message)
         {
-            var u = user as IGuildUser;
-
             await Context.Message.DeleteAsync();
 
-            await u.AddRoleAsync(Settings.GetMutedRole(Context.Guild));
+            var u = user as IGuildUser;
+            IRole muteRole = Settings.GetMutedRole(Context.Guild);
+            if (u.RoleIds.Contains(muteRole.Id)) { return; }
+            await u.AddRoleAsync(muteRole);
+
             IUserMessage reply = await ReplyAsync($"User {user} has been muted for {arg} seconds. Reason : {message}");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds. Reason : {message}");
             IDMChannel dm = await user.GetOrCreateDMChannelAsync();
