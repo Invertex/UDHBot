@@ -81,14 +81,14 @@ namespace DiscordBot
             _databaseService.AddUserUdc(user.Id, -amount);
             _slotMachineCashPool += amount/2;
 
-            if (random <= 55) //Lose
+            if (random <= 60) //Lose
             {
                 return (Settings.GetServerRootPath() + "/casino/lose.png",
                     $"{user.Mention} You're in a daze staring at the blinking machine rolling away at near the speed of light. Sadly, it stops without any matching icons. You feel your luck is near and that you should try again.");
             }
             else if (random <= 70) //Apple, 2x
             {
-                if (Slot(70))
+                if (Slot(65))
                 {
                     _databaseService.AddUserUdc(user.Id, amount * 2);
                     return (Settings.GetServerRootPath() + "/casino/apple.png",
@@ -100,7 +100,7 @@ namespace DiscordBot
             }
             else if (random <= 85) //Banana, 5x
             {
-                if (Slot(40))
+                if (Slot(35))
                 {
                     _databaseService.AddUserUdc(user.Id, amount * 5);
                     return (Settings.GetServerRootPath() + "/casino/banana.png",
@@ -112,7 +112,7 @@ namespace DiscordBot
             }
             else if (random <= 95) //Donut, 15x
             {
-                if (Slot(20))
+                if (Slot(15))
                 {
                     _databaseService.AddUserUdc(user.Id, amount * 15);
                     return (Settings.GetServerRootPath() + "/casino/donut.png",
@@ -124,7 +124,7 @@ namespace DiscordBot
             }
             else //Jackpot
             {
-                if (Slot(5))
+                if (Slot(4))
                 {
                     _databaseService.AddUserUdc(user.Id, _slotMachineCashPool);
                     int won = _slotMachineCashPool;
