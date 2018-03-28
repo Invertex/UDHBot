@@ -49,5 +49,18 @@ namespace DiscordBot
 
             await ReplyAsync($"{user.Mention} you have **{_casinoService.GetUserUdc(user.Id)}**UDC");
         }
+        
+        [Command("jackpot"), Summary("Get the slot machine jackpot. Syntax : !jackpot")]
+        private async Task Jackpot()
+        {
+            if (Context.Channel.Id != Settings.GetCasinoChannel())
+            {
+                await Task.Delay(1000);
+                await Context.Message.DeleteAsync();
+                return;
+            }
+
+            await ReplyAsync(_casinoService.SlotCashPool());
+        }
     }
 }
