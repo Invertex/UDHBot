@@ -150,14 +150,14 @@ namespace DiscordBot
             SaveData();
         }
 
-        public void LoadData()
+        private void LoadData()
         {
             var data = _updateService.GetUserData();
             _thanksReminderCooldown = data.ThanksReminderCooldown ?? new Dictionary<ulong, DateTime>();
             _codeReminderCooldown = data.CodeReminderCooldown ?? new Dictionary<ulong, DateTime>();
         }
 
-        public void SaveData()
+        private void SaveData()
         {
             UserData data = new UserData
             {
@@ -197,6 +197,7 @@ namespace DiscordBot
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
             _databaseService.AddUserXp(userId, (int) Math.Round(baseXp + bonusXp));
+            _databaseService.AddUserUdc(userId, (int)Math.Round((baseXp+bonusXp) * .15f));
 
             await LevelUp(messageParam, userId);
 
@@ -215,6 +216,7 @@ namespace DiscordBot
                 return;
 
             _databaseService.AddUserLevel(userId, 1);
+            _databaseService.AddUserUdc(userId, 1200);
 
             await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(seconds: 60);
             //TODO: investigate why this is not running async
@@ -411,6 +413,7 @@ namespace DiscordBot
                     }
 
                     _databaseService.AddUserKarma(user.Id, 1);
+                    _databaseService.AddUserUdc(user.Id, 350);
                     sb.Append(user.Username).Append(" , ");
                 }
 

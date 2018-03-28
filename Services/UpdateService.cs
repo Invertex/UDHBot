@@ -26,6 +26,12 @@ namespace DiscordBot
         }
     }
 
+    public class CasinoData
+    {
+        public int SlotMachineCashPool { get; set; }
+        public int LotteryCashPool { get; set; }
+    }
+
     //TODO: Download all avatars to cache them
 
     public class UpdateService
@@ -39,8 +45,10 @@ namespace DiscordBot
         private Random _random;
         private AnimeData _animeData;
         private UserData _userData;
+        private CasinoData _casinoData;
 
-        public UpdateService(LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService, AnimeService animeService)
+        public UpdateService(LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService,
+            AnimeService animeService)
         {
             _loggingService = loggingService;
             _publisherService = publisherService;
@@ -78,7 +86,7 @@ namespace DiscordBot
             }
             else
                 _animeData = new AnimeData();
-            
+
             if (File.Exists($"{Settings.GetServerRootPath()}/userdata.json"))
             {
                 string json = File.ReadAllText($"{Settings.GetServerRootPath()}/userdata.json");
@@ -86,6 +94,14 @@ namespace DiscordBot
             }
             else
                 _userData = new UserData();
+
+            if (File.Exists($"{Settings.GetServerRootPath()}/casinodata.json"))
+            {
+                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/casinodata.json");
+                _casinoData = JsonConvert.DeserializeObject<CasinoData>(json);
+            }
+            else
+                _casinoData = new CasinoData();
         }
 
         /*
@@ -101,9 +117,12 @@ namespace DiscordBot
 
                 json = JsonConvert.SerializeObject(_animeData);
                 File.WriteAllText($"{Settings.GetServerRootPath()}/animedata.json", json);
-                
+
                 json = JsonConvert.SerializeObject(_userData);
                 File.WriteAllText($"{Settings.GetServerRootPath()}/userdata.json", json);
+
+                json = JsonConvert.SerializeObject(_casinoData);
+                File.WriteAllText($"{Settings.GetServerRootPath()}/casinodata.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
                 await Task.Delay(TimeSpan.FromSeconds(20d), _token);
             }
@@ -130,7 +149,7 @@ namespace DiscordBot
                     _botData.LastPublisherCheck = DateTime.Now;
                     _botData.LastPublisherId.Add(id);
                 }
-                
+
                 if (_botData.LastPublisherId.Count > 10)
                     _botData.LastPublisherId.RemoveAt(0);
 
@@ -160,25 +179,35 @@ namespace DiscordBot
                     _animeService.PublishDailyAnime();
                     _animeData.LastDailyAnimeAiringList = DateTime.Now;
                 }
-                
+
                 if (_animeData.LastWeeklyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(7d))
                 {
                     _animeService.PublishWeeklyAnime();
                     _animeData.LastWeeklyAnimeAiringList = DateTime.Now;
                 }
+
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
         }
 
         public UserData GetUserData()
         {
-            
             return _userData;
         }
-        
+
         public void SetUserData(UserData data)
         {
             _userData = data;
+        }
+        
+        public CasinoData GetCasinoData()
+        {
+            return _casinoData;
+        }
+
+        public void SetCasinoData(CasinoData data)
+        {
+            _casinoData = data;
         }
     }
 }

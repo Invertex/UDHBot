@@ -179,6 +179,20 @@ namespace DiscordBot
             UpdateAttributeFromUser(id, "avatarUrl", avatar);
         }
 
+        public void AddUserUdc(ulong id, int udc)
+        {
+            int oldUdc;
+            string reader = GetAttributeFromUser(id, "udc");
+
+            oldUdc = Convert.ToInt32(reader);
+            UpdateAttributeFromUser(id, "udc", oldUdc + udc);
+        }
+
+        public int GetUserUdc(ulong id)
+        {
+            return Convert.ToInt32(GetAttributeFromUser(id, "udc"));
+        }
+
         public List<(ulong userId, int level)> GetTopLevel()
         {
             List<(ulong userId, int level)> users = new List<(ulong userId, int level)>();
