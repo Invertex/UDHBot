@@ -230,6 +230,24 @@ namespace DiscordBot
             return users;
         }
 
+        public List<(ulong userId, int udc)> GetTopUdc()
+        {
+            List<(ulong userId, int udc)> users = new List<(ulong userId, int udc)>();
+
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand("SELECT userid, udc FROM `users` ORDER BY udc DESC LIMIT 10", connection);
+                connection.Open();
+                var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
+                }
+            }
+
+            return users;
+        }
+        
         public async void AddNewUser(SocketGuildUser user)
         {
             try

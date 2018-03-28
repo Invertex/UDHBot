@@ -142,6 +142,20 @@ namespace DiscordBot
             
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes:3);
         }
+        
+        [Command("topudc"), Summary("Display top 10 users by UDC. Syntax : !topudc")]
+        [Alias("udcrank")]
+        private async Task TopUdc()
+        {
+            var users = _databaseService.GetTopUdc();
+            
+            StringBuilder sb = new StringBuilder();
+            sb.Append("Here's the top 10 of users by UDC :");
+            for (int i = 0; i < users.Count; i++)
+                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].udc}***UDC*");
+            
+            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes:3);
+        }
 
         [Command("disablecodetips"), Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
         private async Task DisableCodeTips()
