@@ -146,8 +146,11 @@ namespace DiscordBot
 
         private async void UpdateLoop()
         {
-            await Task.Delay(10000);
-            SaveData();
+            while (true)
+            {
+                await Task.Delay(10000);
+                SaveData();
+            }
         }
 
         private void LoadData()
@@ -197,7 +200,7 @@ namespace DiscordBot
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
             _databaseService.AddUserXp(userId, (int) Math.Round(baseXp + bonusXp));
-            _databaseService.AddUserUdc(userId, (int)Math.Round((baseXp+bonusXp) * .15f));
+            _databaseService.AddUserUdc(userId, (int) Math.Round((baseXp + bonusXp) * .15f));
 
             await LevelUp(messageParam, userId);
 
@@ -389,7 +392,8 @@ namespace DiscordBot
                 if (j > DateTime.Now)
                 {
                     await messageParam.Channel.SendMessageAsync(
-                            $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.").DeleteAfterTime(seconds: 140);
+                            $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.")
+                        .DeleteAfterTime(seconds: 140);
                     return;
                 }
 
@@ -501,7 +505,7 @@ namespace DiscordBot
 
         public async Task ScoldForAtEveryoneUsage(SocketMessage messageParam)
         {
-            if (messageParam.Author.IsBot || ((IGuildUser)messageParam.Author).GuildPermissions.MentionEveryone)
+            if (messageParam.Author.IsBot || ((IGuildUser) messageParam.Author).GuildPermissions.MentionEveryone)
                 return;
 
             ulong userId = messageParam.Author.Id;
@@ -512,7 +516,7 @@ namespace DiscordBot
                 await messageParam.Channel.SendMessageAsync(
                         $"That is very rude of you to try and alert **everyone** on the server {messageParam.Author.Mention}!{Environment.NewLine}" +
                         "Thankfully, you do not have permission to do so. If you are asking a question, people will help you when they have time.")
-                        .DeleteAfterTime(minutes: 5);
+                    .DeleteAfterTime(minutes: 5);
             }
         }
 
