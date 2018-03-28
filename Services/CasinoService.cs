@@ -79,7 +79,7 @@ namespace DiscordBot
             int random = _random.Next(0, 100);
 
             _databaseService.AddUserUdc(user.Id, -amount);
-            _slotMachineCashPool += amount;
+            _slotMachineCashPool += amount/2;
 
             if (random <= 55) //Lose
             {
@@ -124,7 +124,7 @@ namespace DiscordBot
             }
             else //Jackpot
             {
-                if (Slot(7))
+                if (Slot(5))
                 {
                     _databaseService.AddUserUdc(user.Id, _slotMachineCashPool);
                     int won = _slotMachineCashPool;
