@@ -152,7 +152,7 @@ namespace DiscordBot
             StringBuilder sb = new StringBuilder();
             sb.Append("Here's the top 10 of users by UDC :");
             for (int i = 0; i < users.Count; i++)
-                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].udc}***UDC*");
+                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].udc}** *UDC*");
             
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes:3);
         }
