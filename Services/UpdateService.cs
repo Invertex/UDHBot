@@ -101,30 +101,34 @@ namespace DiscordBot
                 string json = File.ReadAllText($"{Settings.GetServerRootPath()}/userdata.json");
                 _userData = JsonConvert.DeserializeObject<UserData>(json);
 
-                /*Task.Run(
+                Task.Run(
                     async () =>
                     {
-                        while (_client.ConnectionState != ConnectionState.Connected)
+                        
+                        while (_client.ConnectionState != ConnectionState.Connected || _client.LoginState != LoginState.LoggedIn)
                             await Task.Delay(100);
+                        await Task.Delay(1000);
                         //Check if there are users still muted
                         foreach (var userID in _userData.MutedUsers)
                         {
-                            if (_userData.MutedUsers.HasUser(userID.Key))
+                            if (_userData.MutedUsers.HasUser(userID.Key, false))
                             {
-                              SocketGuildUser user = _client.GetUser(userID.Key) as SocketGuildUser;
-                                Discord.IRole mutedRole = Settings.GetMutedRole(user.Guild);
+                                SocketGuild guild = _client.Guilds.First();
+                                IGuildUser user = guild.GetUser(userID.Key) as IGuildUser;
+
+                                IRole mutedRole = Settings.GetMutedRole(user.Guild);
                                 //Make sure they have the muted role
-                                if (!user.Roles.Any(x => x.Id == mutedRole.Id))
+                                if (!user.RoleIds.Contains(mutedRole.Id))
                                 {
                                     user.AddRoleAsync(mutedRole);
                                 }
 
-                                if (_userData.MutedUsers[userID.Key].Date < DateTime.Now)
+                                /*if (_userData.MutedUsers[userID.Key].Date < DateTime.Now)
                                 {
                                     await user.RemoveRoleAsync(mutedRole);
                                     _userData.MutedUsers.Remove(userID.Key);
                                     return;
-                                }
+                                }*/
                                 
                                 //Setup delay to remove role when time is up.
                                 Task.Run(async () =>
@@ -135,7 +139,7 @@ namespace DiscordBot
                                 });
                             }
                         }
-                    });*/
+                    });
             }
             else
             {
