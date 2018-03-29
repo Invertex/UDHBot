@@ -53,7 +53,8 @@ namespace DiscordBot
         private UserData _userData;
         private CasinoData _casinoData;
 
-        public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService, UserService userService, AnimeService animeService)
+        public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService,
+            DatabaseService databaseService, UserService userService, AnimeService animeService)
         {
             _client = client;
             _loggingService = loggingService;
@@ -111,13 +112,14 @@ namespace DiscordBot
                         {
                             user.AddRoleAsync(mutedRole);
                         }
+
                         //Setup delay to remove role when time is up.
-                        Task.Run(async () => {
+                        Task.Run(async () =>
+                        {
                             await Task.Delay(_userData.MutedUsers.Seconds(userID.Key) * 1000);
                             await user.RemoveRoleAsync(mutedRole);
-                            });
+                        });
                     }
-
                 }
             }
             else
@@ -229,7 +231,7 @@ namespace DiscordBot
         {
             _userData = data;
         }
-        
+
         public CasinoData GetCasinoData()
         {
             return _casinoData;
