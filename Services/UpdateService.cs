@@ -30,6 +30,12 @@ namespace DiscordBot
         }
     }
 
+    public class CasinoData
+    {
+        public int SlotMachineCashPool { get; set; }
+        public int LotteryCashPool { get; set; }
+    }
+
     //TODO: Download all avatars to cache them
 
     public class UpdateService
@@ -45,6 +51,7 @@ namespace DiscordBot
         private Random _random;
         private AnimeData _animeData;
         private UserData _userData;
+        private CasinoData _casinoData;
 
         public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService, UserService userService, AnimeService animeService)
         {
@@ -117,6 +124,14 @@ namespace DiscordBot
             {
                 _userData = new UserData();
             }
+
+            if (File.Exists($"{Settings.GetServerRootPath()}/casinodata.json"))
+            {
+                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/casinodata.json");
+                _casinoData = JsonConvert.DeserializeObject<CasinoData>(json);
+            }
+            else
+                _casinoData = new CasinoData();
         }
 
         /*
@@ -135,6 +150,9 @@ namespace DiscordBot
 
                 json = JsonConvert.SerializeObject(_userData);
                 File.WriteAllText($"{Settings.GetServerRootPath()}/userdata.json", json);
+
+                json = JsonConvert.SerializeObject(_casinoData);
+                File.WriteAllText($"{Settings.GetServerRootPath()}/casinodata.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
                 await Task.Delay(TimeSpan.FromSeconds(20d), _token);
             }
@@ -197,19 +215,29 @@ namespace DiscordBot
                     _animeService.PublishWeeklyAnime();
                     _animeData.LastWeeklyAnimeAiringList = DateTime.Now;
                 }
+
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
         }
 
         public UserData GetUserData()
         {
-
             return _userData;
         }
 
         public void SetUserData(UserData data)
         {
             _userData = data;
+        }
+        
+        public CasinoData GetCasinoData()
+        {
+            return _casinoData;
+        }
+
+        public void SetCasinoData(CasinoData data)
+        {
+            _casinoData = data;
         }
     }
 }

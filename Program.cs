@@ -27,6 +27,7 @@ namespace DiscordBot
         private UpdateService _updateService;
         private AudioService _audioService;
         private AnimeService _animeService;
+        private CasinoService _casinoService;
 
         private string _token = "";
 
@@ -59,6 +60,7 @@ namespace DiscordBot
             _publisherService = new PublisherService(_client, _databaseService);
             _animeService = new AnimeService(_client, _loggingService);
             _audioService = new AudioService(_loggingService, _client);
+            _casinoService = new CasinoService(_loggingService, _updateService, _databaseService);
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_loggingService);
             _serviceCollection.AddSingleton(_databaseService);
@@ -69,6 +71,7 @@ namespace DiscordBot
             _serviceCollection.AddSingleton(_updateService);
             _serviceCollection.AddSingleton(_audioService);
             _serviceCollection.AddSingleton(_animeService);
+            _serviceCollection.AddSingleton(_casinoService);
             _services = _serviceCollection.BuildServiceProvider();
 
 

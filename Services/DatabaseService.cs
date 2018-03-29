@@ -179,6 +179,20 @@ namespace DiscordBot
             UpdateAttributeFromUser(id, "avatarUrl", avatar);
         }
 
+        public void AddUserUdc(ulong id, int udc)
+        {
+            int oldUdc;
+            string reader = GetAttributeFromUser(id, "udc");
+
+            oldUdc = Convert.ToInt32(reader);
+            UpdateAttributeFromUser(id, "udc", oldUdc + udc);
+        }
+
+        public int GetUserUdc(ulong id)
+        {
+            return Convert.ToInt32(GetAttributeFromUser(id, "udc"));
+        }
+
         public List<(ulong userId, int level)> GetTopLevel()
         {
             List<(ulong userId, int level)> users = new List<(ulong userId, int level)>();
@@ -216,6 +230,24 @@ namespace DiscordBot
             return users;
         }
 
+        public List<(ulong userId, int udc)> GetTopUdc()
+        {
+            List<(ulong userId, int udc)> users = new List<(ulong userId, int udc)>();
+
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand("SELECT userid, udc FROM `users` ORDER BY udc DESC LIMIT 10", connection);
+                connection.Open();
+                var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
+                }
+            }
+
+            return users;
+        }
+        
         public async void AddNewUser(SocketGuildUser user)
         {
             try
