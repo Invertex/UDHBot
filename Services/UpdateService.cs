@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Linq;
+using Discord;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
 
@@ -100,27 +101,33 @@ namespace DiscordBot
                 string json = File.ReadAllText($"{Settings.GetServerRootPath()}/userdata.json");
                 _userData = JsonConvert.DeserializeObject<UserData>(json);
 
-                //Check if there are users still muted
-                foreach (var userID in _userData.MutedUsers)
-                {
-                    if (_userData.MutedUsers.HasUser(userID.Key))
+                Task.Run(
+                    async () =>
                     {
-                        Discord.IGuildUser user = _client.GetUser(userID.Key) as Discord.IGuildUser;
-                        Discord.IRole mutedRole = Settings.GetMutedRole(user.Guild);
-                        //Make sure they have the muted role
-                        if (!user.RoleIds.Contains(mutedRole.Id))
+                        while (_client.ConnectionState != ConnectionState.Connected)
+                            await Task.Delay(100);
+                        //Check if there are users still muted
+                        foreach (var userID in _userData.MutedUsers)
                         {
-                            user.AddRoleAsync(mutedRole);
-                        }
+                            if (_userData.MutedUsers.HasUser(userID.Key))
+                            {
+                                Discord.IGuildUser user = _client.GetUser(userID.Key) as Discord.IGuildUser;
+                                Discord.IRole mutedRole = Settings.GetMutedRole(user.Guild);
+                                //Make sure they have the muted role
+                                if (!user.RoleIds.Contains(mutedRole.Id))
+                                {
+                                    user.AddRoleAsync(mutedRole);
+                                }
 
-                        //Setup delay to remove role when time is up.
-                        Task.Run(async () =>
-                        {
-                            await Task.Delay(_userData.MutedUsers.Seconds(userID.Key) * 1000);
-                            await user.RemoveRoleAsync(mutedRole);
-                        });
-                    }
-                }
+                                //Setup delay to remove role when time is up.
+                                Task.Run(async () =>
+                                {
+                                    await Task.Delay(_userData.MutedUsers.Seconds(userID.Key) * 1000);
+                                    await user.RemoveRoleAsync(mutedRole);
+                                });
+                            }
+                        }
+                    });
             }
             else
             {
