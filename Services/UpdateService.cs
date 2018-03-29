@@ -101,7 +101,7 @@ namespace DiscordBot
                 string json = File.ReadAllText($"{Settings.GetServerRootPath()}/userdata.json");
                 _userData = JsonConvert.DeserializeObject<UserData>(json);
 
-                Task.Run(
+                /*Task.Run(
                     async () =>
                     {
                         while (_client.ConnectionState != ConnectionState.Connected)
@@ -111,23 +111,31 @@ namespace DiscordBot
                         {
                             if (_userData.MutedUsers.HasUser(userID.Key))
                             {
-                                Discord.IGuildUser user = _client.GetUser(userID.Key) as Discord.IGuildUser;
+                              SocketGuildUser user = _client.GetUser(userID.Key) as SocketGuildUser;
                                 Discord.IRole mutedRole = Settings.GetMutedRole(user.Guild);
                                 //Make sure they have the muted role
-                                if (!user.RoleIds.Contains(mutedRole.Id))
+                                if (!user.Roles.Any(x => x.Id == mutedRole.Id))
                                 {
                                     user.AddRoleAsync(mutedRole);
                                 }
 
+                                if (_userData.MutedUsers[userID.Key].Date < DateTime.Now)
+                                {
+                                    await user.RemoveRoleAsync(mutedRole);
+                                    _userData.MutedUsers.Remove(userID.Key);
+                                    return;
+                                }
+                                
                                 //Setup delay to remove role when time is up.
                                 Task.Run(async () =>
                                 {
                                     await Task.Delay(_userData.MutedUsers.Seconds(userID.Key) * 1000);
                                     await user.RemoveRoleAsync(mutedRole);
+                                    _userData.MutedUsers.Remove(userID.Key);
                                 });
                             }
                         }
-                    });
+                    });*/
             }
             else
             {
