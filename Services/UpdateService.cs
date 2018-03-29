@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Linq;
+using Discord.WebSocket;
+using DiscordBot.Extensions;
 
 namespace DiscordBot
 {
@@ -16,11 +18,13 @@ namespace DiscordBot
 
     public class UserData
     {
+        public Dictionary<ulong, DateTime> MutedUsers { get; set; }
         public Dictionary<ulong, DateTime> ThanksReminderCooldown { get; set; }
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get; set; }
 
         public UserData()
         {
+            MutedUsers = new Dictionary<ulong, DateTime>();
             ThanksReminderCooldown = new Dictionary<ulong, DateTime>();
             CodeReminderCooldown = new Dictionary<ulong, DateTime>();
         }
@@ -36,9 +40,11 @@ namespace DiscordBot
 
     public class UpdateService
     {
+        DiscordSocketClient _client;
         private readonly LoggingService _loggingService;
         private readonly PublisherService _publisherService;
         private readonly DatabaseService _databaseService;
+        public readonly UserService _userService;
         private readonly AnimeService _animeService;
         private readonly CancellationToken _token;
         private BotData _botData;
@@ -47,12 +53,13 @@ namespace DiscordBot
         private UserData _userData;
         private CasinoData _casinoData;
 
-        public UpdateService(LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService,
-            AnimeService animeService)
+        public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService, UserService userService, AnimeService animeService)
         {
+            _client = client;
             _loggingService = loggingService;
             _publisherService = publisherService;
             _databaseService = databaseService;
+            _userService = userService;
             _animeService = animeService;
             _token = new CancellationToken();
             _random = new Random();
@@ -91,9 +98,32 @@ namespace DiscordBot
             {
                 string json = File.ReadAllText($"{Settings.GetServerRootPath()}/userdata.json");
                 _userData = JsonConvert.DeserializeObject<UserData>(json);
+
+                //Check if there are users still muted
+                foreach (var userID in _userData.MutedUsers)
+                {
+                    if (_userData.MutedUsers.HasUser(userID.Key))
+                    {
+                        Discord.IGuildUser user = _client.GetUser(userID.Key) as Discord.IGuildUser;
+                        Discord.IRole mutedRole = Settings.GetMutedRole(user.Guild);
+                        //Make sure they have the muted role
+                        if (!user.RoleIds.Contains(mutedRole.Id))
+                        {
+                            user.AddRoleAsync(mutedRole);
+                        }
+                        //Setup delay to remove role when time is up.
+                        Task.Run(async () => {
+                            await Task.Delay(_userData.MutedUsers.Seconds(userID.Key) * 1000);
+                            await user.RemoveRoleAsync(mutedRole);
+                            });
+                    }
+
+                }
             }
             else
+            {
                 _userData = new UserData();
+            }
 
             if (File.Exists($"{Settings.GetServerRootPath()}/casinodata.json"))
             {

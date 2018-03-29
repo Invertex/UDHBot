@@ -27,6 +27,8 @@ namespace DiscordBot
         private readonly LoggingService _loggingService;
         private readonly UpdateService _updateService;
 
+        public Dictionary<ulong, DateTime> _mutedUsers;
+
         private readonly Dictionary<ulong, DateTime> _xpCooldown;
         private readonly Dictionary<ulong, DateTime> _thanksCooldown;
         private Dictionary<ulong, DateTime> _thanksReminderCooldown;
@@ -74,6 +76,7 @@ namespace DiscordBot
             _databaseService = databaseService;
             _loggingService = loggingService;
             _updateService = updateService;
+            _mutedUsers = new Dictionary<ulong, DateTime>();
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _thanksCooldown = new Dictionary<ulong, DateTime>();
             _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
@@ -156,6 +159,7 @@ namespace DiscordBot
         private void LoadData()
         {
             var data = _updateService.GetUserData();
+            _mutedUsers = data.MutedUsers ?? new Dictionary<ulong, DateTime>();
             _thanksReminderCooldown = data.ThanksReminderCooldown ?? new Dictionary<ulong, DateTime>();
             _codeReminderCooldown = data.CodeReminderCooldown ?? new Dictionary<ulong, DateTime>();
         }
@@ -164,6 +168,7 @@ namespace DiscordBot
         {
             UserData data = new UserData
             {
+                MutedUsers = _mutedUsers,
                 ThanksReminderCooldown = _thanksReminderCooldown,
                 CodeReminderCooldown = _codeReminderCooldown
             };
