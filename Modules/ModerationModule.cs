@@ -15,14 +15,16 @@ namespace DiscordBot
         private readonly LoggingService _logging;
         private readonly PublisherService _publisher;
         private readonly UpdateService _update;
+        private readonly UserService _user;
+        
+        private Dictionary<ulong, DateTime> MutedUsers => _user._mutedUsers;
 
-        private Dictionary<ulong, DateTime> MutedUsers { get { return _update._userService._mutedUsers; } }
-
-        public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update)
+        public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update, UserService user)
         {
             _logging = logging;
             _publisher = publisher;
             _update = update;
+            _user = user;
         }
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
