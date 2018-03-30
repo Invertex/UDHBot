@@ -449,7 +449,7 @@ namespace DiscordBot
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
                 //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
-                await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(seconds: defaultDelTime);
+                await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }
             else if (messageParam.Channel.Name != "general-chat" && !ThanksReminderCooldown.IsPermanent(userId) &&

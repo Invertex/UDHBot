@@ -13,16 +13,17 @@ namespace DiscordBot.Extensions
         /// <param name="cooldowns"></param>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public static bool HasUser(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
+        public static bool HasUser(this Dictionary<ulong, DateTime> cooldowns, ulong userId, bool removeCooldown = true)
         {
             if (cooldowns.ContainsKey(userId))
             {
-                if (cooldowns[userId] > DateTime.Now)
+                if (cooldowns[userId] > DateTime.Now || !removeCooldown)
                 {
                     return true;
                 }
 
-                cooldowns.Remove(userId);
+                if (removeCooldown)
+                    cooldowns.Remove(userId);
             }
 
             return false;

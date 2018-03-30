@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Linq;
+using Discord;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
 
@@ -53,7 +54,8 @@ namespace DiscordBot
         private UserData _userData;
         private CasinoData _casinoData;
 
-        public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService, DatabaseService databaseService, UserService userService, AnimeService animeService)
+        public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService,
+            DatabaseService databaseService, UserService userService, AnimeService animeService)
         {
             _client = client;
             _loggingService = loggingService;
@@ -99,26 +101,45 @@ namespace DiscordBot
                 string json = File.ReadAllText($"{Settings.GetServerRootPath()}/userdata.json");
                 _userData = JsonConvert.DeserializeObject<UserData>(json);
 
-                //Check if there are users still muted
-                foreach (var userID in _userData.MutedUsers)
-                {
-                    if (_userData.MutedUsers.HasUser(userID.Key))
+                Task.Run(
+                    async () =>
                     {
-                        Discord.IGuildUser user = _client.GetUser(userID.Key) as Discord.IGuildUser;
-                        Discord.IRole mutedRole = Settings.GetMutedRole(user.Guild);
-                        //Make sure they have the muted role
-                        if (!user.RoleIds.Contains(mutedRole.Id))
+                        
+                        while (_client.ConnectionState != ConnectionState.Connected || _client.LoginState != LoginState.LoggedIn)
+                            await Task.Delay(100);
+                        await Task.Delay(1000);
+                        //Check if there are users still muted
+                        foreach (var userID in _userData.MutedUsers)
                         {
-                            user.AddRoleAsync(mutedRole);
-                        }
-                        //Setup delay to remove role when time is up.
-                        Task.Run(async () => {
-                            await Task.Delay(_userData.MutedUsers.Seconds(userID.Key) * 1000);
-                            await user.RemoveRoleAsync(mutedRole);
-                            });
-                    }
+                            if (_userData.MutedUsers.HasUser(userID.Key, false))
+                            {
+                                SocketGuild guild = _client.Guilds.First();
+                                IGuildUser user = guild.GetUser(userID.Key) as IGuildUser;
 
-                }
+                                IRole mutedRole = Settings.GetMutedRole(user.Guild);
+                                //Make sure they have the muted role
+                                if (!user.RoleIds.Contains(mutedRole.Id))
+                                {
+                                    user.AddRoleAsync(mutedRole);
+                                }
+
+                                /*if (_userData.MutedUsers[userID.Key].Date < DateTime.Now)
+                                {
+                                    await user.RemoveRoleAsync(mutedRole);
+                                    _userData.MutedUsers.Remove(userID.Key);
+                                    return;
+                                }*/
+                                
+                                //Setup delay to remove role when time is up.
+                                Task.Run(async () =>
+                                {
+                                    await Task.Delay(_userData.MutedUsers.Seconds(userID.Key) * 1000);
+                                    await user.RemoveRoleAsync(mutedRole);
+                                    _userData.MutedUsers.Remove(userID.Key);
+                                });
+                            }
+                        }
+                    });
             }
             else
             {
@@ -229,7 +250,7 @@ namespace DiscordBot
         {
             _userData = data;
         }
-        
+
         public CasinoData GetCasinoData()
         {
             return _casinoData;
