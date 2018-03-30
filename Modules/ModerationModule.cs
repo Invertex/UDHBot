@@ -16,7 +16,7 @@ namespace DiscordBot
         private readonly PublisherService _publisher;
         private readonly UpdateService _update;
         private readonly UserService _user;
-        
+
         private Dictionary<ulong, DateTime> MutedUsers => _user._mutedUsers;
 
         public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update, UserService user)
@@ -42,10 +42,8 @@ namespace DiscordBot
             IUserMessage reply = await ReplyAsync("User " + user + " has been muted for " + arg + " seconds.");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
 
-
             MutedUsers.AddCooldown(u.Id, seconds: (int)arg,  ignoreExisting: true);
-            await Task.Delay((int) arg * 1000);
-
+            await MutedUsers.AwaitCooldown(u.Id);
             await reply.DeleteAsync();
             await UnmuteUser(user);
         }
@@ -69,7 +67,7 @@ namespace DiscordBot
                                       $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
 
             MutedUsers.AddCooldown(u.Id, seconds: (int)arg, ignoreExisting: true);
-            await Task.Delay((int) arg * 1000);
+            await MutedUsers.AwaitCooldown(u.Id);
             await reply.DeleteAsync();
             await UnmuteUser(user);
         }
@@ -80,8 +78,9 @@ namespace DiscordBot
         {
             var u = user as IGuildUser;
 
-            //TODO: fix doesn't work when called from mute
-            //await Context.Message?.DeleteAsync();
+            if (Context != null && Context.Message != null)
+                await Context.Message.DeleteAsync();
+
             MutedUsers.Remove(user.Id);
             await u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
             IUserMessage reply = await ReplyAsync("User " + user + " has been unmuted.");

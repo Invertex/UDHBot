@@ -114,47 +114,47 @@ namespace DiscordBot
             await Task.Delay(TimeSpan.FromSeconds(seconds));
             await Context.Message.DeleteAsync();
         }
-        
+
         [Command("top"), Summary("Display top 10 users by level. Syntax : !top")]
         [Alias("toplevel", "ranking")]
         private async Task TopLevel()
         {
             var users = _databaseService.GetTopLevel();
-            
+
             StringBuilder sb = new StringBuilder();
             sb.Append("Here's the top 10 of users by level :");
             for (int i = 0; i < users.Count; i++)
                 sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ *Level* **{users[i].level}**");
-            
-            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes:3);
+
+            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
-        
+
         [Command("topkarma"), Summary("Display top 10 users by karma. Syntax : !topkarma")]
         [Alias("karmarank", "rankingkarma")]
         private async Task TopKarma()
         {
             var users = _databaseService.GetTopKarma();
-            
+
             StringBuilder sb = new StringBuilder();
             sb.Append("Here's the top 10 of users by karma :");
             for (int i = 0; i < users.Count; i++)
                 sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].karma}** *Karma*");
-            
-            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes:3);
+
+            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
-        
+
         [Command("topudc"), Summary("Display top 10 users by UDC. Syntax : !topudc")]
         [Alias("udcrank")]
         private async Task TopUdc()
         {
             var users = _databaseService.GetTopUdc();
-            
+
             StringBuilder sb = new StringBuilder();
             sb.Append("Here's the top 10 of users by UDC :");
             for (int i = 0; i < users.Count; i++)
                 sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].udc}** *UDC*");
-            
-            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes:3);
+
+            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
 
         [Command("disablecodetips"), Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
@@ -191,7 +191,7 @@ namespace DiscordBot
         private async Task SlapUser(params IUser[] users)
         {
             StringBuilder sb = new StringBuilder();
-            string[] slaps = {"trout", "duck", "truck"};
+            string[] slaps = { "trout", "duck", "truck" };
             var random = new Random();
 
             sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
@@ -364,7 +364,7 @@ namespace DiscordBot
         private async Task CoinFlip()
         {
             Random rand = new Random();
-            var coin = new[] {"Heads", "Tails"};
+            var coin = new[] { "Heads", "Tails" };
 
             await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}** !");
             await Task.Delay(1000);
@@ -395,7 +395,7 @@ namespace DiscordBot
             }
 
             Random rand = new Random();
-            var coin = new[] {"Heads", "Tails"};
+            var coin = new[] { "Heads", "Tails" };
 
             await ReplyAsync($"\n" +
                              "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +

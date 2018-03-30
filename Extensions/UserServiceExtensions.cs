@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DiscordBot.Extensions
 {
@@ -13,17 +14,18 @@ namespace DiscordBot.Extensions
         /// <param name="cooldowns"></param>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public static bool HasUser(this Dictionary<ulong, DateTime> cooldowns, ulong userId, bool removeCooldown = true)
+        public static bool HasUser(this Dictionary<ulong, DateTime> cooldowns, ulong userId, bool evenIfCooldownNowOver = false)
         {
             if (cooldowns.ContainsKey(userId))
             {
-                if (cooldowns[userId] > DateTime.Now || !removeCooldown)
+                if (cooldowns[userId] > DateTime.Now)
                 {
                     return true;
                 }
+                cooldowns.Remove(userId);
 
-                if (removeCooldown)
-                    cooldowns.Remove(userId);
+                if (evenIfCooldownNowOver)
+                    return true;
             }
 
             return false;
@@ -75,46 +77,57 @@ namespace DiscordBot.Extensions
             return cooldowns.Days(userId) > 5000;
         }
 
-        public static int Days(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
+        public static double Days(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
         {
-            if (!cooldowns.HasUser(userId))
-            {
-                return 0;
-            }
-
-            return cooldowns[userId].Subtract(DateTime.Now).Days;
+            return (cooldowns.HasUser(userId)) ? cooldowns[userId].Subtract(DateTime.Now).TotalDays : 0;
         }
 
-        public static int Hours(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
+        public static double Hours(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
         {
-            if (!cooldowns.HasUser(userId))
-            {
-                return 0;
-            }
-
-            return cooldowns[userId].Subtract(DateTime.Now).Hours;
+            return (cooldowns.HasUser(userId)) ? cooldowns[userId].Subtract(DateTime.Now).TotalHours : 0;
         }
 
-        public static int Minutes(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
+        public static double Minutes(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
         {
-            if (!cooldowns.HasUser(userId))
-            {
-                return 0;
-            }
-
-            return cooldowns[userId].Subtract(DateTime.Now).Minutes;
+            return (cooldowns.HasUser(userId)) ? cooldowns[userId].Subtract(DateTime.Now).TotalMinutes : 0;
         }
 
-        public static int Seconds(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
+        public static double Seconds(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
         {
-            if (!cooldowns.HasUser(userId))
-            {
-                return 0;
-            }
+            return (cooldowns.HasUser(userId)) ? cooldowns[userId].Subtract(DateTime.Now).TotalSeconds : 0;
+        }
+        public static double Milliseconds(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
+        {
+            return (cooldowns.HasUser(userId)) ? cooldowns[userId].Subtract(DateTime.Now).TotalMilliseconds : 0;
+        }
 
-            return cooldowns[userId].Subtract(DateTime.Now).Seconds;
+        /// <summary>
+        /// Returns when the cooldown list no-longer contains the user.
+        /// </summary>
+        /// <param name="cooldowns"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public static async Task AwaitCooldown(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
+        {
+            while (cooldowns.HasUser(userId))
+            {
+                await Task.Delay(cooldowns.Milliseconds(userId).ToInt() + 100);
+            }
         }
 
         #endregion
+
+
+        /// <summary>
+        /// Safely converts a double to an int without running into exceptions. Number will be reduced to limits of int value.
+        /// </summary>
+        /// <param name="val"></param>
+        /// <returns></returns>
+        public static int ToInt(this double val)
+        {
+            if (val > int.MaxValue) { return int.MaxValue; }
+            if (val < int.MinValue) { return int.MinValue; }
+            return (int)val;
+        }
     }
 }
