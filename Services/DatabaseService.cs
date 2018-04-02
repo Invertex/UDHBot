@@ -258,7 +258,7 @@ namespace DiscordBot
                         $"INSERT INTO users SET username=@Username, userid='{user.Id}', discriminator='{user.DiscriminatorValue}'," +
                         $"avatar='{user.AvatarId}', " +
                         $"avatarURL='{user.GetAvatarUrl()}'," +
-                        $"bot='{(user.IsBot ? 1 : 0)}', status=@Status, joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'", connection);
+                        $"bot='{(user.IsBot ? 1 : 0)}', status=@Status, joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}', udc=0", connection);
                     command.Parameters.AddWithValue("@Username", user.Username);
                     command.Parameters.AddWithValue("@Status", user.Status);
                     connection.Open();
@@ -299,6 +299,7 @@ namespace DiscordBot
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
+                    
                     var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
@@ -311,6 +312,27 @@ namespace DiscordBot
                     true,
                     false);
             }
+        }
+
+        public async Task<bool> UserExists(ulong id)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(_connection))
+                {
+                    var command = new MySqlCommand($"SELECT * FROM users where userid='{id}'", connection);
+                    connection.Open();
+                    return (command.ExecuteScalar() != null);
+                }
+            }
+            catch (Exception e)
+            {
+                await _logging.LogAction($"Error when trying to retrieve user {id} : {e}",
+                    true,
+                    false);
+            }
+
+            return false;
         }
 
         private async void UpdateAttributeFromUser(ulong id, string attribute, uint value)

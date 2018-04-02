@@ -16,15 +16,18 @@ namespace DiscordBot
         private readonly PublisherService _publisher;
         private readonly UpdateService _update;
         private readonly UserService _user;
+        private readonly DatabaseService _database;
 
         private Dictionary<ulong, DateTime> MutedUsers => _user._mutedUsers;
 
-        public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update, UserService user)
+        public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update, UserService user,
+            DatabaseService database)
         {
             _logging = logging;
             _publisher = publisher;
             _update = update;
             _user = user;
+            _database = database;
         }
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
@@ -36,13 +39,18 @@ namespace DiscordBot
 
             var u = user as IGuildUser;
             IRole muteRole = Settings.GetMutedRole(Context.Guild);
-            if (u.RoleIds.Contains(muteRole.Id)){ return; }
+            if (u.RoleIds.Contains(muteRole.Id))
+            {
+                return;
+            }
+
             await u.AddRoleAsync(muteRole);
 
             IUserMessage reply = await ReplyAsync("User " + user + " has been muted for " + arg + " seconds.");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
 
-            MutedUsers.AddCooldown(u.Id, seconds: (int)arg,  ignoreExisting: true);
+            MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
+            
             await MutedUsers.AwaitCooldown(u.Id);
             await reply.DeleteAsync();
             await UnmuteUser(user);
@@ -57,7 +65,11 @@ namespace DiscordBot
 
             var u = user as IGuildUser;
             IRole muteRole = Settings.GetMutedRole(Context.Guild);
-            if (u.RoleIds.Contains(muteRole.Id)) { return; }
+            if (u.RoleIds.Contains(muteRole.Id))
+            {
+                return;
+            }
+
             await u.AddRoleAsync(muteRole);
 
             IUserMessage reply = await ReplyAsync($"User {user} has been muted for {arg} seconds. Reason : {message}");
@@ -66,8 +78,9 @@ namespace DiscordBot
             await dm.SendMessageAsync($"You have been muted from UDH for {arg} seconds for the following reason : {message}. " +
                                       $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
 
-            MutedUsers.AddCooldown(u.Id, seconds: (int)arg, ignoreExisting: true);
+            MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
             await MutedUsers.AwaitCooldown(u.Id);
+
             await reply.DeleteAsync();
             await UnmuteUser(user);
         }
@@ -264,6 +277,13 @@ namespace DiscordBot
         {
             await _update.CheckDailyPublisher(true);
             await ReplyAsync("New ad posted.");
+        }
+
+        [Command("dbsync"), Summary("Force add user to database")]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        async Task DbSync(IUser user)
+        {
+            _database.AddNewUser((SocketGuildUser) user);
         }
     }
 }
