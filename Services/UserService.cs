@@ -203,6 +203,9 @@ namespace DiscordBot
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
+            
+            if (!await _databaseService.UserExists(userId))
+                _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
 
             _databaseService.AddUserXp(userId, (int) Math.Round(baseXp + bonusXp));
             _databaseService.AddUserUdc(userId, (int) Math.Round((baseXp + bonusXp) * .15f));
