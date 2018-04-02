@@ -111,7 +111,7 @@ namespace DiscordBot
             Init XP
             */
             _xpMinPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
-            _xpMaxPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
+            _xpMaxPerMessage = SettingsHandler.LoadValueInt("xpMaxPerMessage", JsonFile.UserSettings);
             _xpMinCooldown = SettingsHandler.LoadValueInt("xpMinCooldown", JsonFile.UserSettings);
             _xpMaxCooldown = SettingsHandler.LoadValueInt("xpMaxCooldown", JsonFile.UserSettings);
 
