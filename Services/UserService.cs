@@ -214,6 +214,16 @@ namespace DiscordBot
             //Reduce XP for members with no role
             if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
                 baseXp *= .1f;
+            
+            //Lower xp for difference between level and karma
+            uint level = _databaseService.GetUserLevel(userId);
+            float reduceXp = 1f;
+            if (karma < level)
+            {
+                reduceXp = 1 - Math.Min(.9f, (level - karma) * .05f);
+            }
+                
+            int xpGain = (int) Math.Round((baseXp + bonusXp)*reduceXp);
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
@@ -221,8 +231,8 @@ namespace DiscordBot
             if (!await _databaseService.UserExists(userId))
                 _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
 
-            _databaseService.AddUserXp(userId, (int) Math.Round(baseXp + bonusXp));
-            _databaseService.AddUserUdc(userId, (int) Math.Round((baseXp + bonusXp) * .15f));
+            _databaseService.AddUserXp(userId, xpGain);
+            _databaseService.AddUserUdc(userId, (int)Math.Round(xpGain * .15f));
 
             await LevelUp(messageParam, userId);
 
