@@ -30,6 +30,7 @@ namespace DiscordBot
         public Dictionary<ulong, DateTime> _mutedUsers;
 
         private readonly Dictionary<ulong, DateTime> _xpCooldown;
+        private readonly HashSet<ulong> _canEditThanks; //Doesn't need to be saved
         private readonly Dictionary<ulong, DateTime> _thanksCooldown;
         private Dictionary<ulong, DateTime> _thanksReminderCooldown;
 
@@ -78,6 +79,7 @@ namespace DiscordBot
             _updateService = updateService;
             _mutedUsers = new Dictionary<ulong, DateTime>();
             _xpCooldown = new Dictionary<ulong, DateTime>();
+            _canEditThanks = new HashSet<ulong>(32);
             _thanksCooldown = new Dictionary<ulong, DateTime>();
             _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
             _codeReminderCooldown = new Dictionary<ulong, DateTime>();
@@ -203,7 +205,7 @@ namespace DiscordBot
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
-            
+
             if (!await _databaseService.UserExists(userId))
                 _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
 
@@ -365,9 +367,15 @@ namespace DiscordBot
             return embed;
         }
 
-        // Signature for MessageDeleted Event
-        public async Task Thanks(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam,
-            ISocketMessageChannel socketMessageChannel) => await Thanks(messageParam);
+        // Message Edited Thanks
+        public async Task ThanksEdited(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam, ISocketMessageChannel socketMessageChannel)
+        {
+            if(_canEditThanks.Contains(messageParam.Id))
+            {
+                await Thanks(messageParam);
+            }
+        }
+
 
         public async Task Thanks(SocketMessage messageParam)
         {
@@ -445,7 +453,9 @@ namespace DiscordBot
                         "If you'd like to know what Karma is about, type !karma").DeleteAfterTime(seconds: defaultDelTime);
                 }
 
-                //Don't give karma cooldown if user only mentionned himself or the bot or both
+                _canEditThanks.Remove(messageParam.Id);
+
+                //Don't give karma cooldown if user only mentioned himself or the bot or both
                 if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2))
                     return;
 
@@ -464,6 +474,10 @@ namespace DiscordBot
                         Environment.NewLine +
                         "If you want me to stop reminding you about this, please type \"!disablethanksreminder\".")
                     .DeleteAfterTime(seconds: defaultDelTime);
+            }
+            if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
+            {
+                _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
             }
         }
 
