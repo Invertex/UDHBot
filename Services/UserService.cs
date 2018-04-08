@@ -234,6 +234,8 @@ namespace DiscordBot
             _databaseService.AddUserXp(userId, xpGain);
             _databaseService.AddUserUdc(userId, (int)Math.Round(xpGain * .15f));
 
+            await _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
+            
             await LevelUp(messageParam, userId);
 
             //TODO: add xp gain on website

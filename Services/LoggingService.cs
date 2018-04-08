@@ -30,5 +30,11 @@ namespace DiscordBot
                     $"[{DateTime.Now:d/M/yy HH:mm:ss}] {action} {Environment.NewLine}");
             }
         }
+
+        public async Task LogXp(string channel, string user, float baseXp, float bonusXp, float xpReduce, int totalXp)
+        {
+            File.AppendAllText(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + @"/logXP.txt",
+                $"[{DateTime.Now:d/M/yy HH:mm:ss}] - {user} gained {totalXp}xp (base: {baseXp}, bonus : {bonusXp}, reduce : {xpReduce}) in channel {channel} {Environment.NewLine}");
+        }
     }
 }
