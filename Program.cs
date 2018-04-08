@@ -125,7 +125,7 @@ namespace DiscordBot
             _client.MessageReceived += HandleCommand;
             _client.MessageReceived += _userService.UpdateXp;
             _client.MessageReceived += _userService.Thanks;
-            _client.MessageUpdated += _userService.Thanks;
+            _client.MessageUpdated += _userService.ThanksEdited;
             _client.MessageReceived += _userService.CodeCheck;
             _client.MessageReceived += _userService.ScoldForAtEveryoneUsage;
             //_client.MessageReceived += _userService.UselessAskingCheck; //to do declared at method
