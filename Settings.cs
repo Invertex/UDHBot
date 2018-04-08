@@ -63,7 +63,12 @@ namespace DiscordBot
         {
             return SettingsHandler.LoadValueUlong("casinoChannel/id", JsonFile.Settings);
         }
-        
+
+        public static ulong GetMusicCommandsChannel()
+        {
+            return SettingsHandler.LoadValueUlong("musicCommandsChannel/id", JsonFile.Settings);
+        }
+
         public static string GetServerRootPath()
         {
             return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings);

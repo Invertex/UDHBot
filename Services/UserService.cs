@@ -69,6 +69,8 @@ namespace DiscordBot
         private readonly int _codeReminderCooldownTime;
         public readonly string _codeReminderFormattingExample;
 
+        private readonly List<ulong> _noXpChannels;
+
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
         public UserService(DatabaseService databaseService, LoggingService loggingService, UpdateService updateService)
@@ -83,6 +85,13 @@ namespace DiscordBot
             _thanksCooldown = new Dictionary<ulong, DateTime>();
             _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
             _codeReminderCooldown = new Dictionary<ulong, DateTime>();
+
+            _noXpChannels = new List<ulong>
+            {
+                Settings.GetBotCommandsChannel(),
+                Settings.GetCasinoChannel(),
+                Settings.GetMusicCommandsChannel()
+            };
 
             /*
             Init font for the profile card
@@ -180,6 +189,9 @@ namespace DiscordBot
         public async Task UpdateXp(SocketMessage messageParam)
         {
             if (messageParam.Author.IsBot)
+                return;
+
+            if (_noXpChannels.Contains(messageParam.Channel.Id))
                 return;
 
             ulong userId = messageParam.Author.Id;
