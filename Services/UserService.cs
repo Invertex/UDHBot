@@ -213,7 +213,7 @@ namespace DiscordBot
 
             //Reduce XP for members with no role
             if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
-                baseXp *= .1f;
+                baseXp *= .9f;
             
             //Lower xp for difference between level and karma
             uint level = _databaseService.GetUserLevel(userId);
