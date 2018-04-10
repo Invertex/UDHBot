@@ -69,6 +69,8 @@ namespace DiscordBot
         private readonly int _codeReminderCooldownTime;
         public readonly string _codeReminderFormattingExample;
 
+        private readonly List<ulong> _noXpChannels;
+
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
         public UserService(DatabaseService databaseService, LoggingService loggingService, UpdateService updateService)
@@ -83,6 +85,13 @@ namespace DiscordBot
             _thanksCooldown = new Dictionary<ulong, DateTime>();
             _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
             _codeReminderCooldown = new Dictionary<ulong, DateTime>();
+
+            _noXpChannels = new List<ulong>
+            {
+                Settings.GetBotCommandsChannel(),
+                Settings.GetCasinoChannel(),
+                Settings.GetMusicCommandsChannel()
+            };
 
             /*
             Init font for the profile card
@@ -182,6 +191,9 @@ namespace DiscordBot
             if (messageParam.Author.IsBot)
                 return;
 
+            if (_noXpChannels.Contains(messageParam.Channel.Id))
+                return;
+
             ulong userId = messageParam.Author.Id;
             int waitTime = rand.Next(_xpMinCooldown, _xpMaxCooldown);
             float baseXp = rand.Next(_xpMinPerMessage, _xpMaxPerMessage);
@@ -201,7 +213,17 @@ namespace DiscordBot
 
             //Reduce XP for members with no role
             if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
-                baseXp *= .1f;
+                baseXp *= .9f;
+            
+            //Lower xp for difference between level and karma
+            uint level = _databaseService.GetUserLevel(userId);
+            float reduceXp = 1f;
+            if (karma < level)
+            {
+                reduceXp = 1 - Math.Min(.9f, (level - karma) * .05f);
+            }
+                
+            int xpGain = (int) Math.Round((baseXp + bonusXp)*reduceXp);
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
@@ -209,9 +231,11 @@ namespace DiscordBot
             if (!await _databaseService.UserExists(userId))
                 _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
 
-            _databaseService.AddUserXp(userId, (int) Math.Round(baseXp + bonusXp));
-            _databaseService.AddUserUdc(userId, (int) Math.Round((baseXp + bonusXp) * .15f));
+            _databaseService.AddUserXp(userId, xpGain);
+            _databaseService.AddUserUdc(userId, (int)Math.Round(xpGain * .15f));
 
+            await _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
+            
             await LevelUp(messageParam, userId);
 
             //TODO: add xp gain on website

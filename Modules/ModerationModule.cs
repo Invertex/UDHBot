@@ -50,10 +50,10 @@ namespace DiscordBot
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
 
             MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
-            
+
             await MutedUsers.AwaitCooldown(u.Id);
             await reply.DeleteAsync();
-            await UnmuteUser(user);
+            await UnmuteUser(user, true);
         }
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
@@ -82,16 +82,16 @@ namespace DiscordBot
             await MutedUsers.AwaitCooldown(u.Id);
 
             await reply.DeleteAsync();
-            await UnmuteUser(user);
+            await UnmuteUser(user, true);
         }
 
         [Command("unmute"), Summary("Unmute a muted user")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        async Task UnmuteUser(IUser user)
+        async Task UnmuteUser(IUser user, bool fromMute = false)
         {
             var u = user as IGuildUser;
 
-            if (Context != null && Context.Message != null)
+            if (!fromMute && Context != null && Context.Message != null)
                 await Context.Message.DeleteAsync();
 
             MutedUsers.Remove(user.Id);
