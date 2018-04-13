@@ -81,8 +81,8 @@ namespace DiscordBot
             MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
             await MutedUsers.AwaitCooldown(u.Id);
 
-            await reply.DeleteAsync();
             await UnmuteUser(user, true);
+            await reply.DeleteAsync();
         }
 
         [Command("unmute"), Summary("Unmute a muted user")]
