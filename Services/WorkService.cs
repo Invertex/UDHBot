@@ -129,7 +129,7 @@ namespace DiscordBot
 
         private async Task MessageRemove(Work work)
         {
-            await work.Channel.DeleteMessagesAsync(new IMessage[] {work.Message});
+            //await work.Channel.DeleteMessagesAsync(new IMessage[] {work.Message});
         }
 
         private async Task DuplicateUserMsg(ISocketMessageChannel channel, IUser user, DateTimeOffset timestamp, string content,

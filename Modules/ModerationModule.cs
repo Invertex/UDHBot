@@ -143,7 +143,7 @@ namespace DiscordBot
         {
             ITextChannel channel = Context.Channel as ITextChannel;
 
-            var messages = await channel.GetMessagesAsync(count + 1).Flatten();
+            var messages = await channel.GetMessagesAsync(count + 1).FlattenAsync();
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");

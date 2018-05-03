@@ -203,9 +203,9 @@ namespace DiscordBot
                 return;
 
             int karma = _databaseService.GetUserKarma(userId);
-            if (messageParam.Author.Game != null)
+            if (messageParam.Author.Activity != null)
             {
-                if (Regex.Match(messageParam.Author.Game.Value.ToString(), "(Unity.+)").Length > 0)
+                if (Regex.Match(messageParam.Author.Activity.Name, "(Unity.+)").Length > 0)
                     bonusXp += baseXp / 4;
             }
 
