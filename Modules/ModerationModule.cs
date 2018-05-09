@@ -81,8 +81,8 @@ namespace DiscordBot
             MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
             await MutedUsers.AwaitCooldown(u.Id);
 
-            await reply.DeleteAsync();
             await UnmuteUser(user, true);
+            await reply.DeleteAsync();
         }
 
         [Command("unmute"), Summary("Unmute a muted user")]
@@ -143,7 +143,7 @@ namespace DiscordBot
         {
             ITextChannel channel = Context.Channel as ITextChannel;
 
-            var messages = await channel.GetMessagesAsync(count + 1).Flatten();
+            var messages = await channel.GetMessagesAsync(count + 1).FlattenAsync();
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");

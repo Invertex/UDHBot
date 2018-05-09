@@ -206,9 +206,9 @@ namespace DiscordBot
                 return;
 
             int karma = _databaseService.GetUserKarma(userId);
-            if (messageParam.Author.Game != null)
+            if (messageParam.Author.Activity != null)
             {
-                if (Regex.Match(messageParam.Author.Game.Value.ToString(), "(Unity.+)").Length > 0)
+                if (Regex.Match(messageParam.Author.Activity.Name, "(Unity.+)").Length > 0)
                     bonusXp += baseXp / 4;
             }
 
@@ -536,7 +536,7 @@ namespace DiscordBot
 
                     await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 10);
                 }
-                else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.Contains("```cs"))
+                else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.ToLower().Contains("```cs"))
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.Append(messageParam.Author.Mention)

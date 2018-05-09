@@ -66,6 +66,7 @@ namespace DiscordBot
                 await dm.SendMessageAsync(
                     $"{rule.header}{(rule.content.Length > 0 ? rule.content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
             }
+
             Task deleteAsync = Context.Message?.DeleteAsync();
             if (deleteAsync != null) await deleteAsync;
         }
@@ -108,8 +109,8 @@ namespace DiscordBot
         private async Task KarmaDescription(int seconds = 60)
         {
             await ReplyAsync($"{Context.User.Username}, " +
-                $"Karma is tracked on your !profile, helping indicate how much you've helped others.{Environment.NewLine}" +
-                $"You also earn slightly more EXP from things the higher your Karma level is. Karma may be used for more features in the future.");
+                             $"Karma is tracked on your !profile, helping indicate how much you've helped others.{Environment.NewLine}" +
+                             $"You also earn slightly more EXP from things the higher your Karma level is. Karma may be used for more features in the future.");
 
             await Task.Delay(TimeSpan.FromSeconds(seconds));
             await Context.Message.DeleteAsync();
@@ -124,7 +125,8 @@ namespace DiscordBot
             StringBuilder sb = new StringBuilder();
             sb.Append("Here's the top 10 of users by level :");
             for (int i = 0; i < users.Count; i++)
-                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ *Level* **{users[i].level}**");
+                sb.Append(
+                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ *Level* **{users[i].level}**");
 
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
@@ -138,7 +140,8 @@ namespace DiscordBot
             StringBuilder sb = new StringBuilder();
             sb.Append("Here's the top 10 of users by karma :");
             for (int i = 0; i < users.Count; i++)
-                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].karma}** *Karma*");
+                sb.Append(
+                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].karma}** *Karma*");
 
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
@@ -182,7 +185,8 @@ namespace DiscordBot
             await ReplyAsync($"{Context.User.Username}, " + replyMessage).DeleteAfterTime(seconds: 20);
         }
 
-        [Command("disablethanksreminder"), Summary("Prevents being reminded to mention the person you are thanking. Syntax : !disablethanksreminder")]
+        [Command("disablethanksreminder"),
+         Summary("Prevents being reminded to mention the person you are thanking. Syntax : !disablethanksreminder")]
         private async Task DisableThanksReminder()
         {
             ulong userID = Context.User.Id;
@@ -201,7 +205,7 @@ namespace DiscordBot
         private async Task SlapUser(params IUser[] users)
         {
             StringBuilder sb = new StringBuilder();
-            string[] slaps = { "trout", "duck", "truck" };
+            string[] slaps = {"trout", "duck", "truck"};
             var random = new Random();
 
             sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
@@ -260,7 +264,7 @@ namespace DiscordBot
                         .WithName(message.Author.Username)
                         .WithIconUrl(message.Author.GetAvatarUrl());
                 })
-                .AddField("Original message", message.Content);
+                .AddField("Original message", message.Content.Truncate(1020));
             var embed = builder.Build();
             await ReplyAsync("", false, embed);
         }
@@ -283,7 +287,7 @@ namespace DiscordBot
                         .WithName(message.Author.Username)
                         .WithIconUrl(message.Author.GetAvatarUrl());
                 })
-                .AddField("Original message", message.Content);
+                .AddField("Original message", message.Content.Truncate(1020));
             var embed = builder.Build();
             await ReplyAsync("", false, embed);
             await Task.Delay(1000);
@@ -374,7 +378,7 @@ namespace DiscordBot
         private async Task CoinFlip()
         {
             Random rand = new Random();
-            var coin = new[] { "Heads", "Tails" };
+            var coin = new[] {"Heads", "Tails"};
 
             await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}** !");
             await Task.Delay(1000);
@@ -405,7 +409,7 @@ namespace DiscordBot
             }
 
             Random rand = new Random();
-            var coin = new[] { "Heads", "Tails" };
+            var coin = new[] {"Heads", "Tails"};
 
             await ReplyAsync($"\n" +
                              "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
@@ -611,11 +615,11 @@ namespace DiscordBot
                     .WithThumbnailUrl(anime.coverImage.medium)
                     .WithImageUrl(anime.coverImage.medium)
                     .AddField("Titles", $"{anime.title.romaji}, {anime.title.native}")
-                    .AddField("Description", anime.description)
+                    .AddField("Description", anime.description.Truncate(1020))
                     .AddField("Genres", string.Join(",", anime.genres))
                     .AddField("MAL Link", "https://myanimelist.net/anime/" + anime.idMal)
-                    .AddInlineField("Start Date", $"{anime.startDate.day}/{anime.startDate.month}/{anime.startDate.year}")
-                    .AddInlineField("End Date", $"{anime.endDate.day}/{anime.endDate.month}/{anime.endDate.year}");
+                    .AddField("Start Date", $"{anime.startDate.day}/{anime.startDate.month}/{anime.startDate.year}")
+                    .AddField("End Date", $"{anime.endDate.day}/{anime.endDate.month}/{anime.endDate.year}");
                 var embed = builder.Build();
                 await Context.Channel.SendMessageAsync($"Here's your search result {Context.Message.Author.Mention}", false, embed)
                     .ConfigureAwait(false);

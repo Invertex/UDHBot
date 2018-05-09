@@ -10,9 +10,20 @@ namespace DiscordBot
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
     public class RequireAdminAttribute : PreconditionAttribute
     {
-        public override Task<PreconditionResult> CheckPermissions(ICommandContext context, CommandInfo command, IServiceProvider services)
+       /* public override Task<PreconditionResult> CheckPermissions(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
                     SocketGuildUser user = context.Message.Author as SocketGuildUser;
+            
+            if (user.Roles.Any(x => x.Id == 228015486120624130))
+            {
+                return Task.FromResult(PreconditionResult.FromSuccess());
+            }
+            return Task.FromResult(PreconditionResult.FromError(user + " attempted to use admin only command!"));
+        }*/
+
+        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        {
+            SocketGuildUser user = context.Message.Author as SocketGuildUser;
             
             if (user.Roles.Any(x => x.Id == 228015486120624130))
             {

@@ -137,7 +137,7 @@ namespace DiscordBot
             _client.UserLeft += UserLeft;
 
             // Discover all of the commands in this assembly and load them.
-            await _commandService.AddModulesAsync(Assembly.GetEntryAssembly());
+            await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
             StringBuilder commandList = new StringBuilder();
             foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule"))
