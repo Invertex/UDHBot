@@ -533,7 +533,7 @@ namespace DiscordBot
 
                     await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 10);
                 }
-                else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.Contains("```cs"))
+                else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.ToLower().Contains("```cs"))
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.Append(messageParam.Author.Mention)
