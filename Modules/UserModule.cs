@@ -160,8 +160,17 @@ namespace DiscordBot
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
 
-        [Command("disablecodetips"),
-         Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
+        [Command("codetip"), Summary("Show code formatting example. Syntax : !codetip userToPing(optional)")]
+        private async Task CodeTip(IUser user)
+        {
+            var message = (user != null) ? user.Mention + ", " : "";
+            message += "When posting code, format it like this to display it properly:" + Environment.NewLine;
+            message += _userService._codeFormattingExample;
+            await Context.Message.DeleteAsync();
+            ReplyAsync(message).DeleteAfterSeconds(240);
+        }
+
+        [Command("disablecodetips"), Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
         private async Task DisableCodeTips()
         {
             ulong userID = Context.User.Id;

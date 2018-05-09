@@ -67,6 +67,7 @@ namespace DiscordBot
         private readonly int _xpMaxCooldown;
 
         private readonly int _codeReminderCooldownTime;
+        public readonly string _codeFormattingExample;
         public readonly string _codeReminderFormattingExample;
 
         private readonly List<ulong> _noXpChannels;
@@ -148,10 +149,12 @@ namespace DiscordBot
              Init Code analysis
             */
             _codeReminderCooldownTime = SettingsHandler.LoadValueInt("codeReminderCooldown", JsonFile.UserSettings);
+            _codeFormattingExample = (
+               @"\`\`\`cs" + Environment.NewLine +
+               "Write your code on new line here." + Environment.NewLine +
+               @"\`\`\`" + Environment.NewLine);
             _codeReminderFormattingExample = (
-                @"\`\`\`cs" + Environment.NewLine +
-                "Write your code on new line here." + Environment.NewLine +
-                @"\`\`\`" + Environment.NewLine + Environment.NewLine +
+                _codeFormattingExample + Environment.NewLine +
                 "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
 
             LoadData();
@@ -214,7 +217,7 @@ namespace DiscordBot
             //Reduce XP for members with no role
             if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
                 baseXp *= .9f;
-            
+
             //Lower xp for difference between level and karma
             uint level = _databaseService.GetUserLevel(userId);
             float reduceXp = 1f;
@@ -222,7 +225,7 @@ namespace DiscordBot
             {
                 reduceXp = 1 - Math.Min(.9f, (level - karma) * .05f);
             }
-                
+
             int xpGain = (int) Math.Round((baseXp + bonusXp)*reduceXp);
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
@@ -235,7 +238,7 @@ namespace DiscordBot
             _databaseService.AddUserUdc(userId, (int)Math.Round(xpGain * .15f));
 
             await _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
-            
+
             await LevelUp(messageParam, userId);
 
             //TODO: add xp gain on website
