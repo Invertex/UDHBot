@@ -161,7 +161,8 @@ namespace DiscordBot
         }
 
         [Command("codetip"), Summary("Show code formatting example. Syntax : !codetip userToPing(optional)")]
-        private async Task CodeTip(IUser user)
+        [Alias("codetips")]
+        private async Task CodeTip(IUser user = null)
         {
             var message = (user != null) ? user.Mention + ", " : "";
             message += "When posting code, format it like this to display it properly:" + Environment.NewLine;
