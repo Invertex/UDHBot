@@ -4,9 +4,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
 
 namespace DiscordBot
@@ -206,7 +208,7 @@ namespace DiscordBot
         private async Task SlapUser(params IUser[] users)
         {
             StringBuilder sb = new StringBuilder();
-            string[] slaps = {"trout", "duck", "truck"};
+            string[] slaps = { "trout", "duck", "truck" };
             var random = new Random();
 
             sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
@@ -379,7 +381,7 @@ namespace DiscordBot
         private async Task CoinFlip()
         {
             Random rand = new Random();
-            var coin = new[] {"Heads", "Tails"};
+            var coin = new[] { "Heads", "Tails" };
 
             await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}** !");
             await Task.Delay(1000);
@@ -410,7 +412,7 @@ namespace DiscordBot
             }
 
             Random rand = new Random();
-            var coin = new[] {"Heads", "Tails"};
+            var coin = new[] { "Heads", "Tails" };
 
             await ReplyAsync($"\n" +
                              "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
@@ -448,6 +450,60 @@ namespace DiscordBot
 
             string verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
             await ReplyAsync(verif);
+        }
+
+        [Command("search"), Summary("Searches on DuckDuckGo for web results. Syntax : !search \"query\" resNum site")]
+        [Alias("s", "ddg")]
+        private async Task SearchResults(string query, uint resNum = 3, string site = "")
+        {
+            // Cleaning inputs from user (maybe we can ban certain domains or keywords)
+            resNum = resNum <= 5 ? resNum : 5;
+            string searchQuery = "https://duckduckgo.com/html/?q=" + query.Replace(' ', '+');
+
+            if (!site.Equals(""))
+            {
+                searchQuery += "+site:" + site;
+            }
+
+            HtmlDocument doc = new HtmlWeb().Load(searchQuery);
+            int counter = 1;
+            List<string> results = new List<string>();
+
+            // XPath for DuckDuckGo as of 10/05/2018, if results stop showing up, check this first!
+            foreach (HtmlNode row in doc.DocumentNode.SelectNodes("/html/body/div[1]/div[3]/div/div/div[*]/div/h2/a"))
+            {
+                // Check if we are within the allowed number of results and if the result is valid (i.e. no evil ads)
+                if (counter <= resNum && IsValidResult(row))
+                {
+                    string title = HttpUtility.UrlDecode(row.InnerText);
+                    string url = HttpUtility.UrlDecode(row.Attributes["href"].Value.Replace("/l/?kh=-1&amp;uddg=", ""));
+                    string msg = "";
+
+                    // Added line for pretty output
+                    if (counter > 1)
+                    {
+                        msg += "──────────────────────────────────────────\n";
+                    }
+
+                    msg += counter + ". **" + title + "**\nRead More: " + url;
+                    results.Add(msg);
+                    counter++;
+                }
+            }
+
+            // Send each result as separate message for embedding
+            foreach (string msg in results)
+            {
+                await ReplyAsync(msg);
+            }
+
+        }
+
+        // Utility function for avoiding evil ads from DuckDuckGo
+        private bool IsValidResult(HtmlNode node)
+        {
+            return !node.Attributes["href"].Value.Contains("duckduckgo.com") &&
+                   !node.Attributes["href"].Value.Contains("duck.co");
         }
 
         [Group("role")]
