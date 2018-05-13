@@ -41,7 +41,10 @@ namespace DiscordBot
                 return;
             }
 
-            await ReplyAsync(Settings.GetCommandList());
+            var commands = Settings.GetCommandList();
+
+            foreach (var message in commands.MessageSplit())
+                await ReplyAsync(message);
         }
 
         [Command("rules"), Summary("Get the of the current channel by DM. Syntax : !rules")]
@@ -170,10 +173,11 @@ namespace DiscordBot
             message += "When posting code, format it like this to display it properly:" + Environment.NewLine;
             message += _userService._codeFormattingExample;
             await Context.Message.DeleteAsync();
-            ReplyAsync(message).DeleteAfterSeconds(240);
+            await ReplyAsync(message).DeleteAfterSeconds(240);
         }
 
-        [Command("disablecodetips"), Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
+        [Command("disablecodetips"),
+         Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
         private async Task DisableCodeTips()
         {
             ulong userID = Context.User.Id;
@@ -496,16 +500,17 @@ namespace DiscordBot
             {
                 await ReplyAsync(msg);
             }
+            
+            // Utility function for avoiding evil ads from DuckDuckGo
+            bool IsValidResult(HtmlNode node)
+            {
+                return !node.Attributes["href"].Value.Contains("duckduckgo.com") &&
+                       !node.Attributes["href"].Value.Contains("duck.co");
+            }
 
         }
 
-        // Utility function for avoiding evil ads from DuckDuckGo
-        private bool IsValidResult(HtmlNode node)
-        {
-            return !node.Attributes["href"].Value.Contains("duckduckgo.com") &&
-                   !node.Attributes["href"].Value.Contains("duck.co");
-        }
-
+      
         [Group("role")]
         public class RoleModule : ModuleBase
         {

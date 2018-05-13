@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace DiscordBot.Extensions
@@ -29,6 +30,9 @@ namespace DiscordBot.Extensions
                     currentString = s + "\n";
                 }
             }
+            
+            if (!String.IsNullOrEmpty(currentString))
+                ret.Add(currentString);
 
             return ret;
         }
