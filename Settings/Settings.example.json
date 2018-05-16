@@ -134,6 +134,18 @@
     "dec": "Collaboration Channel",
     "id": "264335890791339425"
   },
+  "animeChannel": {
+    "dec": "Anime Channel",
+    "id": "300660661464334336"
+  },
+  "casinoChannel": {
+    "dec": "Casino Channel",
+    "id": "428675701596749824"
+  },
+  "musicCommandsChannel": {
+    "dec": "Music Commands Channel",
+    "id": "432242383606906891"
+  },
   /* Role Ids */
   "mutedRoleID": "221120789544435714",
   "streamingRoleID": "233830762883842048",
