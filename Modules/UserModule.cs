@@ -19,6 +19,7 @@ namespace DiscordBot
         private readonly DatabaseService _databaseService;
         private readonly UserService _userService;
         private readonly PublisherService _publisherService;
+        private string[][] _unityPages;
 
         public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
             PublisherService publisherService)
@@ -500,7 +501,7 @@ namespace DiscordBot
             {
                 await ReplyAsync(msg);
             }
-            
+
             // Utility function for avoiding evil ads from DuckDuckGo
             bool IsValidResult(HtmlNode node)
             {
@@ -510,7 +511,116 @@ namespace DiscordBot
 
         }
 
-      
+        [Command("docs"), Summary("Searches on Unity3D manual results. Syntax : !docs \"query\"")]
+        [Alias("doc", "manual")]
+        private async Task SearchDocs(string query)
+        {
+            // Download Unity3D Documentation Database (lol)
+            string input = new HtmlWeb().Load("https://docs.unity3d.com/Manual/docdata/index.js").DocumentNode.OuterHtml;
+            if (_unityPages == null)
+            {
+                _unityPages = ConvertJsToArray(input);
+            }
+
+            // Calculate the closest match to the input query
+            double minimumScore = double.MaxValue;
+            string[] mostSimilarPage = null;
+            foreach (string[] p in _unityPages)
+            {
+                double curScore = CalculateScore(p[1], query);
+                if (curScore < minimumScore)
+                {
+                    minimumScore = curScore;
+                    mostSimilarPage = p;
+                }
+            }
+
+            // If a page has been found (should be), return the message, else return information
+            if (mostSimilarPage != null)
+            {
+                await ReplyAsync("**" + mostSimilarPage[1] + "**\nRead More: https://docs.unity3d.com/Manual/" + mostSimilarPage[0] + ".html");
+            }
+            else
+            {
+                await ReplyAsync("No Results Found.");
+            }
+        }
+
+        private string[][] ConvertJsToArray(string input)
+        {
+            List<string[]> list = new List<string[]>();
+            string pagesInput = input.Split("info = [")[0].Split("pages=")[1];
+            pagesInput = pagesInput.Substring(2, pagesInput.Length - 4);
+
+            foreach (string s in pagesInput.Split("],["))
+            {
+                string[] ps = s.Split(",");
+                list.Add(new string[] { ps[0].Replace("\"", ""), ps[1].Replace("\"", "") });
+                Console.WriteLine(ps[0].Replace("\"", "") + "," + ps[1].Replace("\"", ""));
+            }
+
+            return list.ToArray();
+        }
+
+        private double CalculateScore(string s1, string s2)
+        {
+            double curScore = 0;
+            int i = 0;
+
+            foreach (string q in s1.Split(" "))
+            {
+                foreach (string x in s2.Split(" "))
+                {
+                    i++;
+                    if (x.Equals(q))
+                    {
+                        curScore -= 50;
+                    }
+                    else
+                    {
+                        curScore += CalculateLevenshteinDistance(x, q);
+                    }
+                }
+            }
+
+            curScore /= i;
+            return curScore;
+        }
+
+        private int CalculateLevenshteinDistance(string source1, string source2) //O(n*m)
+        {
+            var source1Length = source1.Length;
+            var source2Length = source2.Length;
+
+            var matrix = new int[source1Length + 1, source2Length + 1];
+
+            // First calculation, if one entry is empty return full length
+            if (source1Length == 0)
+                return source2Length;
+
+            if (source2Length == 0)
+                return source1Length;
+
+            // Initialization of matrix with row size source1Length and columns size source2Length
+            for (var i = 0; i <= source1Length; matrix[i, 0] = i++) { }
+            for (var j = 0; j <= source2Length; matrix[0, j] = j++) { }
+
+            // Calculate rows and collumns distances
+            for (var i = 1; i <= source1Length; i++)
+            {
+                for (var j = 1; j <= source2Length; j++)
+                {
+                    var cost = (source2[j - 1] == source1[i - 1]) ? 0 : 1;
+
+                    matrix[i, j] = Math.Min(
+                        Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
+                        matrix[i - 1, j - 1] + cost);
+                }
+            }
+            // return result
+            return matrix[source1Length, source2Length];
+        }
+
         [Group("role")]
         public class RoleModule : ModuleBase
         {
