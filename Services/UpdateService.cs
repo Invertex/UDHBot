@@ -48,7 +48,6 @@ namespace DiscordBot
         private readonly LoggingService _loggingService;
         private readonly PublisherService _publisherService;
         private readonly DatabaseService _databaseService;
-        public readonly UserService _userService;
         private readonly AnimeService _animeService;
         private readonly CancellationToken _token;
         private BotData _botData;
@@ -61,13 +60,12 @@ namespace DiscordBot
         private string[][] _apiDatabase;
 
         public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService,
-            DatabaseService databaseService, UserService userService, AnimeService animeService)
+            DatabaseService databaseService, AnimeService animeService)
         {
             _client = client;
             _loggingService = loggingService;
             _publisherService = publisherService;
             _databaseService = databaseService;
-            _userService = userService;
             _animeService = animeService;
             _token = new CancellationToken();
             _random = new Random();

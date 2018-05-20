@@ -53,11 +53,12 @@ namespace DiscordBot
             });
             _loggingService = new LoggingService(_client);
             _databaseService = new DatabaseService(_loggingService);
+            _publisherService = new PublisherService(_client, _databaseService);
+            _animeService = new AnimeService(_client, _loggingService);
             _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _userService, _animeService);
             _userService = new UserService(_databaseService, _loggingService, _updateService);
             _workService = new WorkService();
-            _publisherService = new PublisherService(_client, _databaseService);
-            _animeService = new AnimeService(_client, _loggingService);
+            
             _audioService = new AudioService(_loggingService, _client);
             _casinoService = new CasinoService(_loggingService, _updateService, _databaseService);
             _serviceCollection = new ServiceCollection();
