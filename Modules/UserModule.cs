@@ -19,15 +19,16 @@ namespace DiscordBot
         private readonly DatabaseService _databaseService;
         private readonly UserService _userService;
         private readonly PublisherService _publisherService;
-        private string[][] _unityPages;
+        private readonly UpdateService _updateService;
 
         public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
-            PublisherService publisherService)
+            PublisherService publisherService, UpdateService updateService)
         {
             _loggingService = loggingService;
             _databaseService = databaseService;
             _userService = userService;
             _publisherService = publisherService;
+            _updateService = updateService;
         }
 
         [Command("help"), Summary("Display available commands (this). Syntax : !help")]
@@ -213,7 +214,7 @@ namespace DiscordBot
         private async Task SlapUser(params IUser[] users)
         {
             StringBuilder sb = new StringBuilder();
-            string[] slaps = { "trout", "duck", "truck" };
+            string[] slaps = {"trout", "duck", "truck"};
             var random = new Random();
 
             sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
@@ -386,7 +387,7 @@ namespace DiscordBot
         private async Task CoinFlip()
         {
             Random rand = new Random();
-            var coin = new[] { "Heads", "Tails" };
+            var coin = new[] {"Heads", "Tails"};
 
             await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}** !");
             await Task.Delay(1000);
@@ -417,7 +418,7 @@ namespace DiscordBot
             }
 
             Random rand = new Random();
-            var coin = new[] { "Heads", "Tails" };
+            var coin = new[] {"Heads", "Tails"};
 
             await ReplyAsync($"\n" +
                              "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
@@ -508,24 +509,19 @@ namespace DiscordBot
                 return !node.Attributes["href"].Value.Contains("duckduckgo.com") &&
                        !node.Attributes["href"].Value.Contains("duck.co");
             }
-
         }
 
-        [Command("docs"), Summary("Searches on Unity3D manual results. Syntax : !docs \"query\"")]
-        [Alias("doc", "manual")]
-        private async Task SearchDocs(string query)
+        [Command("manual"), Summary("Searches on Unity3D manual results. Syntax : !manual \"query\"")]
+        private async Task SearchManual(params string[] queries)
         {
             // Download Unity3D Documentation Database (lol)
-            string input = new HtmlWeb().Load("https://docs.unity3d.com/Manual/docdata/index.js").DocumentNode.OuterHtml;
-            if (_unityPages == null)
-            {
-                _unityPages = ConvertJsToArray(input);
-            }
 
             // Calculate the closest match to the input query
             double minimumScore = double.MaxValue;
             string[] mostSimilarPage = null;
-            foreach (string[] p in _unityPages)
+            string[][] pages = await _updateService.GetManualDatabase();
+            string query = String.Join(" ", queries);
+            foreach (string[] p in pages)
             {
                 double curScore = CalculateScore(p[1], query);
                 if (curScore < minimumScore)
@@ -537,31 +533,39 @@ namespace DiscordBot
 
             // If a page has been found (should be), return the message, else return information
             if (mostSimilarPage != null)
-            {
-                await ReplyAsync("**" + mostSimilarPage[1] + "**\nRead More: https://docs.unity3d.com/Manual/" + mostSimilarPage[0] + ".html");
-            }
+                await ReplyAsync($"** {mostSimilarPage[1]} **\nRead More: https://docs.unity3d.com/Manual/{mostSimilarPage[0]}.html");
             else
-            {
                 await ReplyAsync("No Results Found.");
-            }
         }
-
-        private string[][] ConvertJsToArray(string input)
+        
+        [Command("doc"), Summary("Searches on Unity3D API results. Syntax : !api \"query\"")]
+        [Alias("ref", "reference", "api", "docs")]
+        private async Task SearchApi(params string[] queries)
         {
-            List<string[]> list = new List<string[]>();
-            string pagesInput = input.Split("info = [")[0].Split("pages=")[1];
-            pagesInput = pagesInput.Substring(2, pagesInput.Length - 4);
+            // Download Unity3D Documentation Database (lol)
 
-            foreach (string s in pagesInput.Split("],["))
+            // Calculate the closest match to the input query
+            double minimumScore = double.MaxValue;
+            string[] mostSimilarPage = null;
+            string[][] pages = await _updateService.GetApiDatabase();
+            string query = String.Join(" ", queries);
+            foreach (string[] p in pages)
             {
-                string[] ps = s.Split(",");
-                list.Add(new string[] { ps[0].Replace("\"", ""), ps[1].Replace("\"", "") });
-                Console.WriteLine(ps[0].Replace("\"", "") + "," + ps[1].Replace("\"", ""));
+                double curScore = CalculateScore(p[1], query);
+                if (curScore < minimumScore)
+                {
+                    minimumScore = curScore;
+                    mostSimilarPage = p;
+                }
             }
 
-            return list.ToArray();
+            // If a page has been found (should be), return the message, else return information
+            if (mostSimilarPage != null)
+                await ReplyAsync($"** {mostSimilarPage[1]} **\nRead More: https://docs.unity3d.com/ScriptReference/{mostSimilarPage[0]}.html");
+            else
+                await ReplyAsync("No Results Found.");
         }
-
+        
         private double CalculateScore(string s1, string s2)
         {
             double curScore = 0;
@@ -573,13 +577,9 @@ namespace DiscordBot
                 {
                     i++;
                     if (x.Equals(q))
-                    {
                         curScore -= 50;
-                    }
                     else
-                    {
-                        curScore += CalculateLevenshteinDistance(x, q);
-                    }
+                        curScore += x.CalculateLevenshteinDistance(q);
                 }
             }
 
@@ -587,39 +587,6 @@ namespace DiscordBot
             return curScore;
         }
 
-        private int CalculateLevenshteinDistance(string source1, string source2) //O(n*m)
-        {
-            var source1Length = source1.Length;
-            var source2Length = source2.Length;
-
-            var matrix = new int[source1Length + 1, source2Length + 1];
-
-            // First calculation, if one entry is empty return full length
-            if (source1Length == 0)
-                return source2Length;
-
-            if (source2Length == 0)
-                return source1Length;
-
-            // Initialization of matrix with row size source1Length and columns size source2Length
-            for (var i = 0; i <= source1Length; matrix[i, 0] = i++) { }
-            for (var j = 0; j <= source2Length; matrix[0, j] = j++) { }
-
-            // Calculate rows and collumns distances
-            for (var i = 1; i <= source1Length; i++)
-            {
-                for (var j = 1; j <= source2Length; j++)
-                {
-                    var cost = (source2[j - 1] == source1[i - 1]) ? 0 : 1;
-
-                    matrix[i, j] = Math.Min(
-                        Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
-                        matrix[i - 1, j - 1] + cost);
-                }
-            }
-            // return result
-            return matrix[source1Length, source2Length];
-        }
 
         [Group("role")]
         public class RoleModule : ModuleBase
