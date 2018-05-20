@@ -55,7 +55,7 @@ namespace DiscordBot
             _databaseService = new DatabaseService(_loggingService);
             _publisherService = new PublisherService(_client, _databaseService);
             _animeService = new AnimeService(_client, _loggingService);
-            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _userService, _animeService);
+            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService);
             _userService = new UserService(_databaseService, _loggingService, _updateService);
             _workService = new WorkService();
             
