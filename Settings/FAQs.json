@@ -1,0 +1,12 @@
+[
+	{
+		"question": "Lolling?",
+		"answer": "Lolling not allowed",
+		"keywords": [ "lol", "lolling" ]
+	},
+	{
+		"question": "Chewing?",
+		"answer": "Chewing not allowed",
+		"keywords": [ "chew", "chewing" ]
+	}
+]

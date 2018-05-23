@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using System.Linq;
 using Discord;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
-using Google.Protobuf.WellKnownTypes;
 using HtmlAgilityPack;
+using Newtonsoft.Json;
 
 namespace DiscordBot
 {
@@ -40,6 +39,12 @@ namespace DiscordBot
         public int LotteryCashPool { get; set; }
     }
 
+    public class FaqData
+    {
+        public string Question { get; set; }
+        public string Answer { get; set; }
+        public string[] Keywords { get; set; }
+    }
     //TODO: Download all avatars to cache them
 
     public class UpdateService
@@ -51,6 +56,7 @@ namespace DiscordBot
         private readonly AnimeService _animeService;
         private readonly CancellationToken _token;
         private BotData _botData;
+        private List<FaqData> _faqData;
         private Random _random;
         private AnimeData _animeData;
         private UserData _userData;
@@ -155,7 +161,18 @@ namespace DiscordBot
             }
             else
                 _casinoData = new CasinoData();
+
+            if (File.Exists($"{Settings.GetServerRootPath()}/FAQs.json"))
+            {
+                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/FAQs.json");
+                _faqData = JsonConvert.DeserializeObject<List<FaqData>>(json);
+            }
+            else
+            {
+                _faqData = new List<FaqData>();
+            }
         }
+
 
         /*
         ** Save data to file every 20s
@@ -193,7 +210,7 @@ namespace DiscordBot
                     uint rand;
                     do
                     {
-                        rand = (uint) _random.Next((int) count);
+                        rand = (uint)_random.Next((int)count);
                         id = _databaseService.GetPublisherAd(rand).userId;
                     } while (_botData.LastPublisherId.Contains(id));
 
@@ -257,6 +274,11 @@ namespace DiscordBot
             return _apiDatabase;
         }
 
+        public List<FaqData> GetFaqData()
+        {
+            return _faqData;
+        }
+
         private async Task LoadDocDatabase()
         {
             if (File.Exists($"{Settings.GetServerRootPath()}/unitymanual.json") &&
@@ -309,7 +331,7 @@ namespace DiscordBot
                 foreach (string s in pagesInput.Split("],["))
                 {
                     string[] ps = s.Split(",");
-                    list.Add(new string[] {ps[0].Replace("\"", ""), ps[1].Replace("\"", "")});
+                    list.Add(new string[] { ps[0].Replace("\"", ""), ps[1].Replace("\"", "") });
                     //Console.WriteLine(ps[0].Replace("\"", "") + "," + ps[1].Replace("\"", ""));
                 }
 
