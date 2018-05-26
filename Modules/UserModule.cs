@@ -214,7 +214,7 @@ namespace DiscordBot
         private async Task SlapUser(params IUser[] users)
         {
             StringBuilder sb = new StringBuilder();
-            string[] slaps = {"trout", "duck", "truck"};
+            string[] slaps = { "trout", "duck", "truck" };
             var random = new Random();
 
             sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
@@ -387,7 +387,7 @@ namespace DiscordBot
         private async Task CoinFlip()
         {
             Random rand = new Random();
-            var coin = new[] {"Heads", "Tails"};
+            var coin = new[] { "Heads", "Tails" };
 
             await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}** !");
             await Task.Delay(1000);
@@ -418,7 +418,7 @@ namespace DiscordBot
             }
 
             Random rand = new Random();
-            var coin = new[] {"Heads", "Tails"};
+            var coin = new[] { "Heads", "Tails" };
 
             await ReplyAsync($"\n" +
                              "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
@@ -537,7 +537,7 @@ namespace DiscordBot
             else
                 await ReplyAsync("No Results Found.");
         }
-        
+
         [Command("doc"), Summary("Searches on Unity3D API results. Syntax : !api \"query\"")]
         [Alias("ref", "reference", "api", "docs")]
         private async Task SearchApi(params string[] queries)
@@ -565,7 +565,7 @@ namespace DiscordBot
             else
                 await ReplyAsync("No Results Found.");
         }
-        
+
         private double CalculateScore(string s1, string s2)
         {
             double curScore = 0;
@@ -587,6 +587,98 @@ namespace DiscordBot
             return curScore;
         }
 
+        [Command("faq"), Summary("Searches UDH FAQs. Syntax : !faq \"query\"")]
+        private async Task SearchFAQs(params string[] queries)
+        {
+            List<FaqData> faqDataList = _updateService.GetFaqData();
+
+            // Check if query is faq ID (e.g. "!faq 1")
+            if (queries.Length == 1 && ParseNumber(queries[0]) > 0)
+            {
+                int id = ParseNumber(queries[0]) - 1;
+                if (id < faqDataList.Count)
+                {
+                    await ReplyAsync(FormatFaq(id + 1, faqDataList[id]));
+                }
+                else
+                {
+                    await ReplyAsync("Invalid FAQ ID selected.");
+                }
+            }
+            // Check if query contains "list" command (i.e. "!faq list")
+            else if (queries.Length > 0 && !(queries.Length == 1 && queries[0].Equals("list")))
+            {
+                // Calculate the closest match to the input query
+                double minimumScore = double.MaxValue;
+                FaqData mostSimilarFaq = null;
+                string query = String.Join(" ", queries);
+                int index = 1;
+                int mostSimilarIndex = 0;
+
+                // Go through each FAQ in the list and check the most similar
+                foreach (FaqData faq in faqDataList)
+                {
+                    foreach (string keyword in faq.Keywords)
+                    {
+                        double curScore = CalculateScore(keyword, query);
+                        if (curScore < minimumScore)
+                        {
+                            minimumScore = curScore;
+                            mostSimilarFaq = faq;
+                            mostSimilarIndex = index;
+                        }
+                    }
+                    index++;
+                }
+
+                // If an FAQ has been found (should be), return the FAQ, else return information msg
+                if (mostSimilarFaq != null)
+                    await ReplyAsync(FormatFaq(mostSimilarIndex, mostSimilarFaq));
+                else
+                    await ReplyAsync("No FAQs Found.");
+            }
+            else
+            {
+                // List all the FAQs available
+                ListFAQs(faqDataList);
+            }
+        }
+
+        private async void ListFAQs(List<FaqData> faqs)
+        {
+            StringBuilder sb = new StringBuilder(faqs.Count);
+            int index = 1;
+            foreach (FaqData faq in faqs)
+            {
+                sb.Append(FormatFaq(index, faq) + "\n");
+                string keywords = "[";
+                for (int i = 0; i < faq.Keywords.Length; i++)
+                {
+                    keywords += faq.Keywords[i] + (i < faq.Keywords.Length - 1 ? ", " : "]\n\n");
+                }
+                index++;
+                sb.Append(keywords);
+            }
+            await ReplyAsync(sb.ToString());
+        }
+
+        private string FormatFaq(int id, FaqData faq)
+        {
+            return id + ". **" + faq.Question + "** - " + faq.Answer;
+        }
+
+        private int ParseNumber(string s)
+        {
+            int id;
+            if (int.TryParse(s, out id))
+            {
+                return id;
+            }
+            else
+            {
+                return -1;
+            }
+        }
 
         [Group("role")]
         public class RoleModule : ModuleBase
