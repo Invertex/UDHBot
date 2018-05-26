@@ -599,7 +599,7 @@ namespace DiscordBot
                 int id = ParseNumber(queries[0]) - 1;
                 if (id < faqDataList.Count)
                 {
-                    await ReplyAsync(FormatFaq(id + 1, faqDataList[id]));
+                    await ReplyAsync(embed: GetFaqEmbed(id + 1, faqDataList[id]));
                 }
                 else
                 {
@@ -635,7 +635,7 @@ namespace DiscordBot
 
                 // If an FAQ has been found (should be), return the FAQ, else return information msg
                 if (mostSimilarFaq != null)
-                    await ReplyAsync(FormatFaq(mostSimilarIndex, mostSimilarFaq));
+                    await ReplyAsync(embed: GetFaqEmbed(mostSimilarIndex, mostSimilarFaq));
                 else
                     await ReplyAsync("No FAQs Found.");
             }
@@ -663,12 +663,21 @@ namespace DiscordBot
                 sb.Append(keywords);
             }
 
-            await ReplyAsync(sb.ToString());
+            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
+        }
+
+        private Embed GetFaqEmbed(int id, FaqData faq)
+        {
+            var builder = new EmbedBuilder()
+                .WithTitle($"{faq.Question}")
+                .WithDescription($"{faq.Answer}")
+                .WithColor(new Color(0x33CC00));
+            return builder.Build();
         }
 
         private string FormatFaq(int id, FaqData faq)
         {
-            return id + ". **" + faq.Question + "** - " + faq.Answer;
+            return $"{id}. **{faq.Question}** - {faq.Answer}";
         }
 
         private int ParseNumber(string s)
