@@ -214,7 +214,7 @@ namespace DiscordBot
         private async Task SlapUser(params IUser[] users)
         {
             StringBuilder sb = new StringBuilder();
-            string[] slaps = { "trout", "duck", "truck" };
+            string[] slaps = {"trout", "duck", "truck"};
             var random = new Random();
 
             sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
@@ -387,7 +387,7 @@ namespace DiscordBot
         private async Task CoinFlip()
         {
             Random rand = new Random();
-            var coin = new[] { "Heads", "Tails" };
+            var coin = new[] {"Heads", "Tails"};
 
             await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}** !");
             await Task.Delay(1000);
@@ -418,7 +418,7 @@ namespace DiscordBot
             }
 
             Random rand = new Random();
-            var coin = new[] { "Heads", "Tails" };
+            var coin = new[] {"Heads", "Tails"};
 
             await ReplyAsync($"\n" +
                              "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
@@ -561,7 +561,8 @@ namespace DiscordBot
 
             // If a page has been found (should be), return the message, else return information
             if (mostSimilarPage != null)
-                await ReplyAsync($"** {mostSimilarPage[1]} **\nRead More: https://docs.unity3d.com/ScriptReference/{mostSimilarPage[0]}.html");
+                await ReplyAsync(
+                    $"** {mostSimilarPage[1]} **\nRead More: https://docs.unity3d.com/ScriptReference/{mostSimilarPage[0]}.html");
             else
                 await ReplyAsync("No Results Found.");
         }
@@ -588,7 +589,7 @@ namespace DiscordBot
         }
 
         [Command("faq"), Summary("Searches UDH FAQs. Syntax : !faq \"query\"")]
-        private async Task SearchFAQs(params string[] queries)
+        private async Task SearchFaqs(params string[] queries)
         {
             List<FaqData> faqDataList = _updateService.GetFaqData();
 
@@ -628,6 +629,7 @@ namespace DiscordBot
                             mostSimilarIndex = index;
                         }
                     }
+
                     index++;
                 }
 
@@ -640,11 +642,11 @@ namespace DiscordBot
             else
             {
                 // List all the FAQs available
-                ListFAQs(faqDataList);
+                ListFaqs(faqDataList);
             }
         }
 
-        private async void ListFAQs(List<FaqData> faqs)
+        private async void ListFaqs(List<FaqData> faqs)
         {
             StringBuilder sb = new StringBuilder(faqs.Count);
             int index = 1;
@@ -656,9 +658,11 @@ namespace DiscordBot
                 {
                     keywords += faq.Keywords[i] + (i < faq.Keywords.Length - 1 ? ", " : "]\n\n");
                 }
+
                 index++;
                 sb.Append(keywords);
             }
+
             await ReplyAsync(sb.ToString());
         }
 
