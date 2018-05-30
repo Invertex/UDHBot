@@ -4,9 +4,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
 
 namespace DiscordBot
@@ -17,14 +19,16 @@ namespace DiscordBot
         private readonly DatabaseService _databaseService;
         private readonly UserService _userService;
         private readonly PublisherService _publisherService;
+        private readonly UpdateService _updateService;
 
         public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
-            PublisherService publisherService)
+            PublisherService publisherService, UpdateService updateService)
         {
             _loggingService = loggingService;
             _databaseService = databaseService;
             _userService = userService;
             _publisherService = publisherService;
+            _updateService = updateService;
         }
 
         [Command("help"), Summary("Display available commands (this). Syntax : !help")]
@@ -39,7 +43,10 @@ namespace DiscordBot
                 return;
             }
 
-            await ReplyAsync(Settings.GetCommandList());
+            var commands = Settings.GetCommandList();
+
+            foreach (var message in commands.MessageSplit())
+                await ReplyAsync(message);
         }
 
         [Command("rules"), Summary("Get the of the current channel by DM. Syntax : !rules")]
@@ -168,10 +175,11 @@ namespace DiscordBot
             message += "When posting code, format it like this to display it properly:" + Environment.NewLine;
             message += _userService._codeFormattingExample;
             await Context.Message.DeleteAsync();
-            ReplyAsync(message).DeleteAfterSeconds(240);
+            await ReplyAsync(message).DeleteAfterSeconds(240);
         }
 
-        [Command("disablecodetips"), Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
+        [Command("disablecodetips"),
+         Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
         private async Task DisableCodeTips()
         {
             ulong userID = Context.User.Id;
@@ -448,6 +456,241 @@ namespace DiscordBot
 
             string verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
             await ReplyAsync(verif);
+        }
+
+        [Command("search"), Summary("Searches on DuckDuckGo for web results. Syntax : !search \"query\" resNum site")]
+        [Alias("s", "ddg")]
+        private async Task SearchResults(string query, uint resNum = 3, string site = "")
+        {
+            // Cleaning inputs from user (maybe we can ban certain domains or keywords)
+            resNum = resNum <= 5 ? resNum : 5;
+            string searchQuery = "https://duckduckgo.com/html/?q=" + query.Replace(' ', '+');
+
+            if (!site.Equals(""))
+            {
+                searchQuery += "+site:" + site;
+            }
+
+            HtmlDocument doc = new HtmlWeb().Load(searchQuery);
+            int counter = 1;
+            List<string> results = new List<string>();
+
+            // XPath for DuckDuckGo as of 10/05/2018, if results stop showing up, check this first!
+            foreach (HtmlNode row in doc.DocumentNode.SelectNodes("/html/body/div[1]/div[3]/div/div/div[*]/div/h2/a"))
+            {
+                // Check if we are within the allowed number of results and if the result is valid (i.e. no evil ads)
+                if (counter <= resNum && IsValidResult(row))
+                {
+                    string title = HttpUtility.UrlDecode(row.InnerText);
+                    string url = HttpUtility.UrlDecode(row.Attributes["href"].Value.Replace("/l/?kh=-1&amp;uddg=", ""));
+                    string msg = "";
+
+                    // Added line for pretty output
+                    if (counter > 1)
+                    {
+                        msg += "──────────────────────────────────────────\n";
+                    }
+
+                    msg += counter + ". **" + title + "**\nRead More: " + url;
+                    results.Add(msg);
+                    counter++;
+                }
+            }
+
+            // Send each result as separate message for embedding
+            foreach (string msg in results)
+            {
+                await ReplyAsync(msg);
+            }
+
+            // Utility function for avoiding evil ads from DuckDuckGo
+            bool IsValidResult(HtmlNode node)
+            {
+                return !node.Attributes["href"].Value.Contains("duckduckgo.com") &&
+                       !node.Attributes["href"].Value.Contains("duck.co");
+            }
+        }
+
+        [Command("manual"), Summary("Searches on Unity3D manual results. Syntax : !manual \"query\"")]
+        private async Task SearchManual(params string[] queries)
+        {
+            // Download Unity3D Documentation Database (lol)
+
+            // Calculate the closest match to the input query
+            double minimumScore = double.MaxValue;
+            string[] mostSimilarPage = null;
+            string[][] pages = await _updateService.GetManualDatabase();
+            string query = String.Join(" ", queries);
+            foreach (string[] p in pages)
+            {
+                double curScore = CalculateScore(p[1], query);
+                if (curScore < minimumScore)
+                {
+                    minimumScore = curScore;
+                    mostSimilarPage = p;
+                }
+            }
+
+            // If a page has been found (should be), return the message, else return information
+            if (mostSimilarPage != null)
+                await ReplyAsync($"** {mostSimilarPage[1]} **\nRead More: https://docs.unity3d.com/Manual/{mostSimilarPage[0]}.html");
+            else
+                await ReplyAsync("No Results Found.");
+        }
+
+        [Command("doc"), Summary("Searches on Unity3D API results. Syntax : !api \"query\"")]
+        [Alias("ref", "reference", "api", "docs")]
+        private async Task SearchApi(params string[] queries)
+        {
+            // Download Unity3D Documentation Database (lol)
+
+            // Calculate the closest match to the input query
+            double minimumScore = double.MaxValue;
+            string[] mostSimilarPage = null;
+            string[][] pages = await _updateService.GetApiDatabase();
+            string query = String.Join(" ", queries);
+            foreach (string[] p in pages)
+            {
+                double curScore = CalculateScore(p[1], query);
+                if (curScore < minimumScore)
+                {
+                    minimumScore = curScore;
+                    mostSimilarPage = p;
+                }
+            }
+
+            // If a page has been found (should be), return the message, else return information
+            if (mostSimilarPage != null)
+                await ReplyAsync(
+                    $"** {mostSimilarPage[1]} **\nRead More: https://docs.unity3d.com/ScriptReference/{mostSimilarPage[0]}.html");
+            else
+                await ReplyAsync("No Results Found.");
+        }
+
+        private double CalculateScore(string s1, string s2)
+        {
+            double curScore = 0;
+            int i = 0;
+
+            foreach (string q in s1.Split(" "))
+            {
+                foreach (string x in s2.Split(" "))
+                {
+                    i++;
+                    if (x.Equals(q))
+                        curScore -= 50;
+                    else
+                        curScore += x.CalculateLevenshteinDistance(q);
+                }
+            }
+
+            curScore /= i;
+            return curScore;
+        }
+
+        [Command("faq"), Summary("Searches UDH FAQs. Syntax : !faq \"query\"")]
+        private async Task SearchFaqs(params string[] queries)
+        {
+            List<FaqData> faqDataList = _updateService.GetFaqData();
+
+            // Check if query is faq ID (e.g. "!faq 1")
+            if (queries.Length == 1 && ParseNumber(queries[0]) > 0)
+            {
+                int id = ParseNumber(queries[0]) - 1;
+                if (id < faqDataList.Count)
+                {
+                    await ReplyAsync(embed: GetFaqEmbed(id + 1, faqDataList[id]));
+                }
+                else
+                {
+                    await ReplyAsync("Invalid FAQ ID selected.");
+                }
+            }
+            // Check if query contains "list" command (i.e. "!faq list")
+            else if (queries.Length > 0 && !(queries.Length == 1 && queries[0].Equals("list")))
+            {
+                // Calculate the closest match to the input query
+                double minimumScore = double.MaxValue;
+                FaqData mostSimilarFaq = null;
+                string query = String.Join(" ", queries);
+                int index = 1;
+                int mostSimilarIndex = 0;
+
+                // Go through each FAQ in the list and check the most similar
+                foreach (FaqData faq in faqDataList)
+                {
+                    foreach (string keyword in faq.Keywords)
+                    {
+                        double curScore = CalculateScore(keyword, query);
+                        if (curScore < minimumScore)
+                        {
+                            minimumScore = curScore;
+                            mostSimilarFaq = faq;
+                            mostSimilarIndex = index;
+                        }
+                    }
+
+                    index++;
+                }
+
+                // If an FAQ has been found (should be), return the FAQ, else return information msg
+                if (mostSimilarFaq != null)
+                    await ReplyAsync(embed: GetFaqEmbed(mostSimilarIndex, mostSimilarFaq));
+                else
+                    await ReplyAsync("No FAQs Found.");
+            }
+            else
+            {
+                // List all the FAQs available
+                ListFaqs(faqDataList);
+            }
+        }
+
+        private async void ListFaqs(List<FaqData> faqs)
+        {
+            StringBuilder sb = new StringBuilder(faqs.Count);
+            int index = 1;
+            foreach (FaqData faq in faqs)
+            {
+                sb.Append(FormatFaq(index, faq) + "\n");
+                string keywords = "[";
+                for (int i = 0; i < faq.Keywords.Length; i++)
+                {
+                    keywords += faq.Keywords[i] + (i < faq.Keywords.Length - 1 ? ", " : "]\n\n");
+                }
+
+                index++;
+                sb.Append(keywords);
+            }
+
+            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
+        }
+
+        private Embed GetFaqEmbed(int id, FaqData faq)
+        {
+            var builder = new EmbedBuilder()
+                .WithTitle($"{faq.Question}")
+                .WithDescription($"{faq.Answer}")
+                .WithColor(new Color(0x33CC00));
+            return builder.Build();
+        }
+
+        private string FormatFaq(int id, FaqData faq)
+        {
+            return $"{id}. **{faq.Question}** - {faq.Answer}";
+        }
+
+        private int ParseNumber(string s)
+        {
+            int id;
+            if (int.TryParse(s, out id))
+            {
+                return id;
+            }
+            else
+            {
+                return -1;
+            }
         }
 
         [Group("role")]

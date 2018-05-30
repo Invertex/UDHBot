@@ -151,7 +151,7 @@ namespace DiscordBot
 
             var json = @"{
                 Page(page: " + page + @", perPage: 50) {
-                  airingSchedules(notYetAired: true, airingAt_greater: 604800, sort: TIME_DESC) {
+                  airingSchedules(notYetAired: true, airingAt_greater: 604800, sort: TIME) {
                     id
                     timeUntilAiring
                     episode
@@ -163,6 +163,16 @@ namespace DiscordBot
                       }
                       episodes
                       idMal
+                        startDate {
+                                  year
+                                  month
+                                  day
+                       }
+                       endDate {
+                                  year
+                                  month
+                                  day
+                       }
                       genres
                     }
                   }
@@ -193,7 +203,12 @@ namespace DiscordBot
             {
                 var request = await client.PostAsync(uri, content);
                 response = await request.Content.ReadAsStringAsync();
-                anilistResponse = JsonConvert.DeserializeObject<AnilistResponse>(response);
+                anilistResponse = JsonConvert.DeserializeObject<AnilistResponse>(response,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    });
             }
 
             return anilistResponse;

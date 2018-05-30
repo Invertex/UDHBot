@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -54,11 +53,12 @@ namespace DiscordBot
             });
             _loggingService = new LoggingService(_client);
             _databaseService = new DatabaseService(_loggingService);
-            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _userService, _animeService);
-            _userService = new UserService(_databaseService, _loggingService, _updateService);
-            _workService = new WorkService();
             _publisherService = new PublisherService(_client, _databaseService);
             _animeService = new AnimeService(_client, _loggingService);
+            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService);
+            _userService = new UserService(_databaseService, _loggingService, _updateService);
+            _workService = new WorkService();
+            
             _audioService = new AudioService(_loggingService, _client);
             _casinoService = new CasinoService(_loggingService, _updateService, _databaseService);
             _serviceCollection = new ServiceCollection();
@@ -156,9 +156,9 @@ namespace DiscordBot
             if (message.Value.Author.IsBot || channel.Id == Settings.GetBotAnnouncementChannel())
                 return;
 
-                var content = message.Value.Content;
-                if (content.Length > 800)
-					content = content.Substring(0, 800);
+            var content = message.Value.Content;
+            if (content.Length > 800)
+                content = content.Substring(0, 800);
 
             EmbedBuilder builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
@@ -244,8 +244,8 @@ namespace DiscordBot
             DateTime.TryParse(_databaseService.GetUserJoinDate(user.Id), out joinDate);
             TimeSpan timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
-                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +
-                $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double)timeStayed.Days).ToString() + " days" : " ")}" +
+                $" {Math.Floor((double)timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
             _databaseService.DeleteUser(user.Id);
         }
 

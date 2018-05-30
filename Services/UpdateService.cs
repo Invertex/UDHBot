@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using System.Linq;
 using Discord;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
+using HtmlAgilityPack;
+using Newtonsoft.Json;
 
 namespace DiscordBot
 {
@@ -15,6 +16,7 @@ namespace DiscordBot
     {
         public DateTime LastPublisherCheck { get; set; }
         public List<ulong> LastPublisherId { get; set; }
+        public DateTime LastUnityDocDatabaseUpdate { get; set; }
     }
 
     public class UserData
@@ -37,6 +39,12 @@ namespace DiscordBot
         public int LotteryCashPool { get; set; }
     }
 
+    public class FaqData
+    {
+        public string Question { get; set; }
+        public string Answer { get; set; }
+        public string[] Keywords { get; set; }
+    }
     //TODO: Download all avatars to cache them
 
     public class UpdateService
@@ -45,23 +53,25 @@ namespace DiscordBot
         private readonly LoggingService _loggingService;
         private readonly PublisherService _publisherService;
         private readonly DatabaseService _databaseService;
-        public readonly UserService _userService;
         private readonly AnimeService _animeService;
         private readonly CancellationToken _token;
         private BotData _botData;
+        private List<FaqData> _faqData;
         private Random _random;
         private AnimeData _animeData;
         private UserData _userData;
         private CasinoData _casinoData;
 
+        private string[][] _manualDatabase;
+        private string[][] _apiDatabase;
+
         public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService,
-            DatabaseService databaseService, UserService userService, AnimeService animeService)
+            DatabaseService databaseService, AnimeService animeService)
         {
             _client = client;
             _loggingService = loggingService;
             _publisherService = publisherService;
             _databaseService = databaseService;
-            _userService = userService;
             _animeService = animeService;
             _token = new CancellationToken();
             _random = new Random();
@@ -76,6 +86,7 @@ namespace DiscordBot
             //CheckDailyPublisher();
             UpdateUserRanks();
             UpdateAnime();
+            UpdateDocDatabase();
         }
 
         private void ReadDataFromFile()
@@ -114,14 +125,18 @@ namespace DiscordBot
                             {
                                 SocketGuild guild = _client.Guilds.First();
                                 SocketGuildUser sgu = guild.GetUser(userID.Key);
-                                if(sgu == null) { continue; }
+                                if (sgu == null)
+                                {
+                                    continue;
+                                }
+
                                 IGuildUser user = sgu as IGuildUser;
 
                                 IRole mutedRole = Settings.GetMutedRole(user.Guild);
                                 //Make sure they have the muted role
                                 if (!user.RoleIds.Contains(mutedRole.Id))
                                 {
-                                    user.AddRoleAsync(mutedRole);
+                                    await user.AddRoleAsync(mutedRole);
                                 }
 
                                 //Setup delay to remove role when time is up.
@@ -146,13 +161,24 @@ namespace DiscordBot
             }
             else
                 _casinoData = new CasinoData();
+
+            if (File.Exists($"{Settings.GetServerRootPath()}/FAQs.json"))
+            {
+                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/FAQs.json");
+                _faqData = JsonConvert.DeserializeObject<List<FaqData>>(json);
+            }
+            else
+            {
+                _faqData = new List<FaqData>();
+            }
         }
+
 
         /*
         ** Save data to file every 20s
         */
 
-        private async Task SaveDataToFile()
+        private async void SaveDataToFile()
         {
             while (true)
             {
@@ -184,7 +210,7 @@ namespace DiscordBot
                     uint rand;
                     do
                     {
-                        rand = (uint) _random.Next((int) count);
+                        rand = (uint)_random.Next((int)count);
                         id = _databaseService.GetPublisherAd(rand).userId;
                     } while (_botData.LastPublisherId.Contains(id));
 
@@ -203,7 +229,7 @@ namespace DiscordBot
             }
         }
 
-        private async Task UpdateUserRanks()
+        private async void UpdateUserRanks()
         {
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
@@ -213,7 +239,7 @@ namespace DiscordBot
             }
         }
 
-        private async Task UpdateAnime()
+        private async void UpdateAnime()
         {
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
@@ -231,6 +257,96 @@ namespace DiscordBot
                 }
 
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
+            }
+        }
+
+        public async Task<string[][]> GetManualDatabase()
+        {
+            if (_manualDatabase == null)
+                await LoadDocDatabase();
+            return _manualDatabase;
+        }
+
+        public async Task<string[][]> GetApiDatabase()
+        {
+            if (_apiDatabase == null)
+                await LoadDocDatabase();
+            return _apiDatabase;
+        }
+
+        public List<FaqData> GetFaqData()
+        {
+            return _faqData;
+        }
+
+        private async Task LoadDocDatabase()
+        {
+            if (File.Exists($"{Settings.GetServerRootPath()}/unitymanual.json") &&
+                File.Exists($"{Settings.GetServerRootPath()}/unityapi.json"))
+            {
+                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/unitymanual.json");
+                _manualDatabase = JsonConvert.DeserializeObject<string[][]>(json);
+                json = File.ReadAllText($"{Settings.GetServerRootPath()}/unityapi.json");
+                _apiDatabase = JsonConvert.DeserializeObject<string[][]>(json);
+            }
+            else
+                await DownloadDocDatabase();
+        }
+
+        private async Task DownloadDocDatabase()
+        {
+            HtmlWeb htmlWeb = new HtmlWeb();
+            htmlWeb.CaptureRedirect = true;
+
+            HtmlDocument manual = await htmlWeb.LoadFromWebAsync("https://docs.unity3d.com/Manual/docdata/index.js");
+            string manualInput = manual.DocumentNode.OuterHtml;
+
+            HtmlDocument api = await htmlWeb.LoadFromWebAsync("https://docs.unity3d.com/ScriptReference/docdata/index.js");
+            string apiInput = api.DocumentNode.OuterHtml;
+
+
+            _manualDatabase = ConvertJsToArray(manualInput, true);
+            _apiDatabase = ConvertJsToArray(apiInput, false);
+
+            File.WriteAllText($"{Settings.GetServerRootPath()}/unitymanual.json", JsonConvert.SerializeObject(_manualDatabase));
+            File.WriteAllText($"{Settings.GetServerRootPath()}/unityapi.json", JsonConvert.SerializeObject(_apiDatabase));
+
+            string[][] ConvertJsToArray(string data, bool isManual)
+            {
+                List<string[]> list = new List<string[]>();
+                string pagesInput;
+                if (isManual)
+                {
+                    pagesInput = data.Split("info = [")[0].Split("pages=")[1];
+                    pagesInput = pagesInput.Substring(2, pagesInput.Length - 4);
+                }
+                else
+                {
+                    pagesInput = data.Split("info =")[0];
+                    pagesInput = pagesInput.Substring(63, pagesInput.Length - 65);
+                }
+
+
+
+                foreach (string s in pagesInput.Split("],["))
+                {
+                    string[] ps = s.Split(",");
+                    list.Add(new string[] { ps[0].Replace("\"", ""), ps[1].Replace("\"", "") });
+                    //Console.WriteLine(ps[0].Replace("\"", "") + "," + ps[1].Replace("\"", ""));
+                }
+
+                return list.ToArray();
+            }
+        }
+
+        private async void UpdateDocDatabase()
+        {
+            while (true)
+            {
+                if (_botData.LastUnityDocDatabaseUpdate < DateTime.Now - TimeSpan.FromDays(1d))
+                    await DownloadDocDatabase();
+
+                await Task.Delay(TimeSpan.FromHours(1));
             }
         }
 
