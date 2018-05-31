@@ -74,9 +74,22 @@ namespace DiscordBot
 
             IUserMessage reply = await ReplyAsync($"User {user} has been muted for {arg} seconds. Reason : {message}");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds. Reason : {message}");
-            IDMChannel dm = await user.GetOrCreateDMChannelAsync();
-            await dm.SendMessageAsync($"You have been muted from UDH for {arg} seconds for the following reason : {message}. " +
-                                      $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
+            IDMChannel dm = await user.GetOrCreateDMChannelAsync(new RequestOptions { });
+
+            try
+            {
+                await dm.SendMessageAsync($"You have been muted from UDH for **{arg}** seconds for the following reason : **{message}**. " +
+                                          $"This is not appealable and any tentative to avoid it will result in your permanent ban.", false,
+                    null, new RequestOptions {RetryMode = RetryMode.RetryRatelimit, Timeout = 6000});
+            }
+            catch (Discord.Net.HttpException)
+            {
+                await ReplyAsync($"Sorry {user.Mention}, seems I couldn't DM you because you blocked me !\n" +
+                                 $"I'll have to send your mute reason in public :wink:\n" +
+                                 $"You have been muted from UDH for **{arg}** seconds for the following reason : **{message}**. " +
+                                 $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
+                await _logging.LogAction($"User {user.Username} has DM blocked and the mute reason couldn't be sent.", true, false);
+            }
 
             MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
             await MutedUsers.AwaitCooldown(u.Id);
