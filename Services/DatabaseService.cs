@@ -1,14 +1,10 @@
-﻿using System.Xml.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using MySql.Data.MySqlClient;
 
-namespace DiscordBot
+namespace DiscordBot.Services
 {
     public class DatabaseService
     {

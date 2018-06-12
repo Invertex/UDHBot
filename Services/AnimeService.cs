@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using ConsoleApplication;
 using Discord.WebSocket;
+using DiscordBot.Data;
 using DiscordBot.Extensions;
 using Newtonsoft.Json;
 
-namespace DiscordBot
+namespace DiscordBot.Services
 {
     public class AnimeData
     {
