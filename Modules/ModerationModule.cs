@@ -95,7 +95,7 @@ namespace DiscordBot
             await MutedUsers.AwaitCooldown(u.Id);
 
             await UnmuteUser(user, true);
-            await reply.DeleteAsync();
+            reply?.DeleteAsync();
         }
 
         [Command("unmute"), Summary("Unmute a muted user")]
@@ -110,8 +110,8 @@ namespace DiscordBot
             MutedUsers.Remove(user.Id);
             await u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
             IUserMessage reply = await ReplyAsync("User " + user + " has been unmuted.");
-            await Task.Delay(TimeSpan.FromSeconds(10d));
-            await reply.DeleteAsync();
+           // await Task.Delay(TimeSpan.FromSeconds(10d));
+            reply?.DeleteAfterSeconds(10d);
         }
 
         [Command("addrole"), Summary("Add a role to a user")]
