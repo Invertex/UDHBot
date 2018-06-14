@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Discord;
-using Discord.Net.Rest;
 using Discord.WebSocket;
-using ImageSharp;
+using DiscordBot.Data;
 using MailKit.Net.Smtp;
 using MimeKit;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
-namespace DiscordBot
+namespace DiscordBot.Services
 {
     public class PublisherService
     {

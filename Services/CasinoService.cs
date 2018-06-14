@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Discord;
 
-namespace DiscordBot
+namespace DiscordBot.Services
 {
     public class CasinoService
     {

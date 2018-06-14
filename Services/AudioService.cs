@@ -6,7 +6,7 @@ using Discord;
 using Discord.Audio;
 using Discord.WebSocket;
 
-namespace DiscordBot
+namespace DiscordBot.Services
 {
     public class AudioService
     {

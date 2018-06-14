@@ -1,8 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using DiscordBot.Services;
 
-namespace DiscordBot
+namespace DiscordBot.Modules
 {
     public class CasinoModule : ModuleBase
     {

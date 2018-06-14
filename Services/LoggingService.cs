@@ -2,10 +2,9 @@
 using System.IO;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 
-namespace DiscordBot
+namespace DiscordBot.Services
 {
     public class LoggingService
     {

@@ -10,7 +10,7 @@ using DiscordBot.Extensions;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 
-namespace DiscordBot
+namespace DiscordBot.Services
 {
     public class BotData
     {

@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 
-namespace ConsoleApplication
+namespace DiscordBot.Data
 {
     public class AnilistResponse
     {
