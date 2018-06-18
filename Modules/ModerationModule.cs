@@ -105,7 +105,7 @@ namespace DiscordBot.Modules
         {
             var u = user as IGuildUser;
 
-            if (u == Context.Message.Author)
+            if (!fromMute && u == Context.Message.Author)
             {
                 await ReplyAsync("You can't unmute yourself.").DeleteAfterSeconds(30);
                 return;
