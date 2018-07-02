@@ -330,14 +330,14 @@ namespace DiscordBot.Services
                     }
                 }
 
-                /*uint xp = _databaseService.GetUserXp(userId);
+                uint xp = _databaseService.GetUserXp(userId);
                 uint rank = _databaseService.GetUserRank(userId);
                 int karma = _databaseService.GetUserKarma(userId);
-                uint level = _databaseService.GetUserLevel(userId);*/
-                uint xp = 0;
+                uint level = _databaseService.GetUserLevel(userId);
+                /*uint xp = 0;
                 uint rank = 26;
                 int karma = 300;
-                uint level = 126;
+                uint level = 126;*/
                 double xpLow = GetXpLow((int) level);
                 double xpHigh = GetXpHigh((int) level);
                 xp = (uint)(xpLow + ((xpHigh - xpLow) / 2));
