@@ -46,11 +46,15 @@ namespace DiscordBot.Services
         private readonly Random rand;
 
         private readonly FontCollection _fontCollection;
-        private readonly Font _defaultFont;
+        //private readonly Font _defaultFont;
         private readonly Font _nameFont;
-        private readonly Font _levelFont;
+        private readonly Font _xpFont;
+        private readonly Font _ranksFont;
+        private readonly Font _levelTextFont;
+        private readonly Font _levelNumberFont;
+        /*private readonly Font _levelFont;
         private readonly Font _levelFontSmall;
-        private readonly Font _subtitlesBlackFont;
+        private readonly Font _subtitlesBlackFont;*/
         private readonly Font _subtitlesWhiteFont;
         private readonly string _thanksRegex;
 
@@ -95,23 +99,35 @@ namespace DiscordBot.Services
             Init font for the profile card
             */
             _fontCollection = new FontCollection();
-            _defaultFont = _fontCollection
+            /*_defaultFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                          "/fonts/OpenSans-Regular.ttf")
-                .CreateFont(16);
+                .CreateFont(16);*/
             _nameFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
+                .CreateFont(24);
+            _xpFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
+                .CreateFont(12);
+            _ranksFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
+                .CreateFont(16);
+            _levelTextFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/ConsolasBold.ttf")
                 .CreateFont(22);
-            _levelFont = _fontCollection
+            _levelNumberFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/ConsolasBold.ttf")
+                .CreateFont(30);
+            /*_levelFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
-                .CreateFont(59);
-            _levelFontSmall = _fontCollection
+                .CreateFont(59);*/
+            /*_levelFontSmall = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
-                .CreateFont(45);
+                .CreateFont(45);*/
 
-            _subtitlesBlackFont = _fontCollection
+            /*_subtitlesBlackFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/OpenSansEmoji.ttf")
-                .CreateFont(80);
+                .CreateFont(80);*/
             _subtitlesWhiteFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/OpenSansEmoji.ttf")
                 .CreateFont(75);
@@ -275,102 +291,195 @@ namespace DiscordBot.Services
 
         public async Task<string> GenerateProfileCard(IUser user)
         {
-            var backgroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                 "/images/background.png";
-            var foregroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                 "/images/foreground.png";
-            Image<Rgba32> profileCard = ImageSharp.Image.Load(backgroundPath);
-            Image<Rgba32> profileFg = ImageSharp.Image.Load(foregroundPath);
-            Image<Rgba32> avatar;
-            Image<Rgba32> triangle = ImageSharp.Image.Load(
-                SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                "/images/triangle.png");
-            Stream stream;
-            string avatarUrl = user.GetAvatarUrl();
-            ulong userId = user.Id;
+            try
+            {
+                var backgroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                                     "/images/background.png";
+                var foregroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                                     "/images/foreground.png";
+                Image<Rgba32> profileCard = ImageSharp.Image.Load(backgroundPath);
+                Image<Rgba32> profileFg = ImageSharp.Image.Load(foregroundPath);
+                Image<Rgba32> avatar;
+                Stream stream;
+                string avatarUrl = user.GetAvatarUrl();
+                ulong userId = user.Id;
 
-            if (string.IsNullOrEmpty(avatarUrl))
-            {
-                avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                               "/images/default.png");
-            }
-            else
-            {
-                try
+                if (string.IsNullOrEmpty(avatarUrl))
                 {
-                    using (var http = new HttpClient())
+                    avatar = ImageSharp.Image.Load(
+                        SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                        "/images/default.png");
+                }
+                else
+                {
+                    try
                     {
-                        stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                        using (var http = new HttpClient())
+                        {
+                            stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                        }
+
+                        avatar = ImageSharp.Image.Load(stream);
                     }
-
-                    avatar = ImageSharp.Image.Load(stream);
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        avatar = ImageSharp.Image.Load(
+                            SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                            "/images/default.png");
+                    }
                 }
-                catch (Exception e)
+                
+                var xpWidth = 275;
+                var xpHeight = 17;
+                var xpX = 131;
+                var xpY = 42;
+
+                uint xp = _databaseService.GetUserXp(userId);
+                uint rank = _databaseService.GetUserRank(userId);
+                int karma = _databaseService.GetUserKarma(userId);
+                uint level = _databaseService.GetUserLevel(userId);
+                int karmaRank = _databaseService.GetUserKarmaLevel(userId);
+                /*uint xp = 0;
+                uint rank = 26;
+                int karma = 300;
+                int karmaRank = 6;
+                uint level = 126;*/
+                double xpLow = GetXpLow((int) level);
+                double xpHigh = GetXpHigh((int) level);
+                xp = (uint)(xpLow + ((xpHigh - xpLow) / 2));
+                
+                Console.WriteLine("XP Low: " + xpLow + ", XP High: " + xpHigh);
+    
+                float endX = xpX + (float) ((xp - xpLow) / (xpHigh - xpLow) * xpWidth);
+    
+                profileCard.DrawImage(profileFg, 100f, new Size(profileFg.Width, profileFg.Height), Point.Empty);
+    
+                var u = user as IGuildUser;
+                IRole mainRole = null;
+                foreach (ulong id in u.RoleIds)
                 {
-                    Console.WriteLine(e);
-                    avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                                   "/images/default.png");
+                    IRole role = u.Guild.GetRole(id);
+                    if (mainRole == null)
+                    {
+                        mainRole = u.Guild.GetRole(id);
+                    }
+                    else if (role.Position > mainRole.Position)
+                    {
+                        mainRole = role;
+                    }
                 }
+    
+                Color c = mainRole.Color;
+    
+                var brush = new RecolorBrush<Rgba32>(Rgba32.White,
+                    new Rgba32(c.R, c.G, c.B), .25f);
+
+                // role
+                profileCard.Fill(brush,
+                    new RectangleF(11, 11, 113, 113));
+
+                // avatar
+                profileCard.DrawImage(avatar, 100f, new Size(111, 111), new Point(12, 12));
+                
+                // name
+                profileCard.DrawText(user.Username + '#' + user.Discriminator, _nameFont, Rgba32.FromHex("#676767"),
+                    new Point(131, 11));
+
+                // xp - back
+                // top
+                var rgba = Rgba32.FromHex("#c5c5c7");
+                profileCard.Fill(rgba,
+                    new RectangleF(xpX, xpY, xpWidth, 1));
+                // bottom
+                profileCard.Fill(rgba,
+                    new RectangleF(xpX, xpY + xpHeight - 1, xpWidth, 1));
+                // left
+                profileCard.Fill(rgba,
+                    new RectangleF(xpX, xpY, 1, xpHeight));
+                // right
+                profileCard.Fill(rgba,
+                    new RectangleF(xpX + xpWidth - 1, xpY, 1, xpHeight));
+                
+                // xp - front
+                profileCard.Fill(rgba,
+                    new RectangleF(xpX + 2, xpY + 2, endX, xpHeight - 4));
+                
+                // xp - number
+                rgba = Rgba32.FromHex("#676767");
+                /*profileCard.DrawText(xp + "/" + xpHigh, _xpFont, rgba,
+                    new Point(xpX + (xpWidth / 2), xpY - 2), new TextGraphicsOptions()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        ApplyKerning = true
+                    });*/
+                int percentage = (int)Math.Round((double)(100 * xp) / xpHigh);
+                profileCard.DrawText(xp + "/" + xpHigh + " (" + percentage + "%)", _xpFont, rgba, new Point(xpX + (xpWidth / 2), xpY - 2), new TextGraphicsOptions()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        ApplyKerning = true
+                    }
+                );
+                
+                // server rank
+                profileCard.DrawText("Level Rank", _ranksFont, rgba,
+                    new Point(235, 60));
+
+                // server rank value
+                profileCard.DrawText("#" + rank, _ranksFont, rgba,
+                    new Point(391, 60), new TextGraphicsOptions()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Right
+                    });
+                
+                // karma rank
+                profileCard.DrawText("Karma Points", _ranksFont, rgba,
+                    new Point(235, 80));
+                
+                // karma points value
+                profileCard.DrawText(karma.ToString(), _ranksFont, rgba,
+                    new Point(391, 80), new TextGraphicsOptions()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Right
+                    });
+                
+                // karma rank
+                profileCard.DrawText("Karma Rank", _ranksFont, rgba,
+                    new Point(235, 100));
+                
+                // karma points value
+                profileCard.DrawText("#" + karmaRank, _ranksFont, rgba,
+                    new Point(391, 100), new TextGraphicsOptions()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Right
+                    });
+                
+                // level text
+                var font = new Font(_levelTextFont.Family, _levelTextFont.Size, FontStyle.Bold);
+                profileCard.DrawText("LEVEL", font, rgba,
+                    new Point(176, 56), new TextGraphicsOptions()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    });
+                
+                // actual level
+                font = new Font(_levelNumberFont.Family, _levelNumberFont.Size, FontStyle.Bold);
+                profileCard.DrawText(level.ToString(), font, rgba,
+                    new Point(176, 78), new TextGraphicsOptions()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    });
+                
+                /*profileCard.Resize(400, 120);*/
+                
+                profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                                 $"/images/profiles/{user.Username}-profile.png");
             }
-
-            uint xp = _databaseService.GetUserXp(userId);
-            uint rank = _databaseService.GetUserRank(userId);
-            int karma = _databaseService.GetUserKarma(userId);
-            uint level = _databaseService.GetUserLevel(userId);
-            double xpLow = GetXpLow((int) level);
-            double xpHigh = GetXpHigh((int) level);
-
-            const float startX = 104;
-            const float startY = 39;
-            const float height = 16;
-            float endX = (float) ((xp - xpLow) / (xpHigh - xpLow) * 232f);
-
-            profileCard.DrawImage(profileFg, 100f, new Size(profileFg.Width, profileFg.Height), Point.Empty);
-
-            var u = user as IGuildUser;
-            IRole mainRole = null;
-            foreach (ulong id in u.RoleIds)
+            catch (Exception e)
             {
-                IRole role = u.Guild.GetRole(id);
-                if (mainRole == null)
-                {
-                    mainRole = u.Guild.GetRole(id);
-                }
-                else if (role.Position > mainRole.Position)
-                {
-                    mainRole = role;
-                }
+                Console.WriteLine(e.Message);
             }
 
-            Color c = mainRole.Color;
-
-            var brush = new RecolorBrush<Rgba32>(Rgba32.White,
-                new Rgba32(c.R, c.G, c.B), .25f);
-
-            triangle.Fill(brush);
-
-            profileCard.DrawImage(triangle, 100f, new Size(triangle.Width, triangle.Height), new Point(346, 17));
-
-            profileCard.Fill(Rgba32.FromHex("#3f3f3f"),
-                new RectangleF(startX, startY, 232, height)); //XP bar background
-            profileCard.Fill(Rgba32.FromHex("#00f0ff"),
-                new RectangleF(startX + 1, startY + 1, endX, height - 2)); //XP bar
-            profileCard.DrawImage(avatar, 100f, new Size(80, 80), new Point(16, 28));
-            profileCard.DrawText(user.Username, _nameFont, Rgba32.FromHex("#3C3C3C"),
-                new PointF(144, 8));
-            profileCard.DrawText(level.ToString(), level < 100 ? _levelFont : _levelFontSmall, Rgba32.FromHex("#3C3C3C"),
-                new PointF(98, 35));
-            profileCard.DrawText("Server Rank        #" + rank, _defaultFont, Rgba32.FromHex("#3C3C3C"),
-                new PointF(167, 60));
-            profileCard.DrawText("Karma Points:    " + karma, _defaultFont, Rgba32.FromHex("#3C3C3C"),
-                new PointF(167, 77));
-            profileCard.DrawText("Total XP:              " + xp, _defaultFont, Rgba32.FromHex("#3C3C3C"),
-                new PointF(167, 94));
-
-            profileCard.Resize(400, 120);
-
-            profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                             $"/images/profiles/{user.Username}-profile.png");
             return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                    $"/images/profiles/{user.Username}-profile.png";
         }
