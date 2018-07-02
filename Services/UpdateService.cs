@@ -53,7 +53,7 @@ namespace DiscordBot.Services
         private readonly LoggingService _loggingService;
         private readonly PublisherService _publisherService;
         private readonly DatabaseService _databaseService;
-        private readonly AnimeService _animeService;
+        //private readonly AnimeService _animeService;
         private readonly CancellationToken _token;
         private BotData _botData;
         private List<FaqData> _faqData;
@@ -66,13 +66,13 @@ namespace DiscordBot.Services
         private string[][] _apiDatabase;
 
         public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService,
-            DatabaseService databaseService, AnimeService animeService)
+            DatabaseService databaseService/*, AnimeService animeService*/)
         {
             _client = client;
             _loggingService = loggingService;
             _publisherService = publisherService;
             _databaseService = databaseService;
-            _animeService = animeService;
+            //_animeService = animeService;
             _token = new CancellationToken();
             _random = new Random();
 
@@ -85,7 +85,7 @@ namespace DiscordBot.Services
             SaveDataToFile();
             //CheckDailyPublisher();
             UpdateUserRanks();
-            UpdateAnime();
+            //UpdateAnime();
             UpdateDocDatabase();
         }
 
@@ -99,13 +99,13 @@ namespace DiscordBot.Services
             else
                 _botData = new BotData();
 
-            if (File.Exists($"{Settings.GetServerRootPath()}/animedata.json"))
-            {
-                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/animedata.json");
-                _animeData = JsonConvert.DeserializeObject<AnimeData>(json);
-            }
-            else
-                _animeData = new AnimeData();
+//            if (File.Exists($"{Settings.GetServerRootPath()}/animedata.json"))
+//            {
+//                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/animedata.json");
+//                _animeData = JsonConvert.DeserializeObject<AnimeData>(json);
+//            }
+//            else
+//                _animeData = new AnimeData();
 
             if (File.Exists($"{Settings.GetServerRootPath()}/userdata.json"))
             {
@@ -239,26 +239,26 @@ namespace DiscordBot.Services
             }
         }
 
-        private async void UpdateAnime()
-        {
-            await Task.Delay(TimeSpan.FromSeconds(30d), _token);
-            while (true)
-            {
-                if (_animeData.LastDailyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(1d))
-                {
-                    _animeService.PublishDailyAnime();
-                    _animeData.LastDailyAnimeAiringList = DateTime.Now;
-                }
-
-                if (_animeData.LastWeeklyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(7d))
-                {
-                    _animeService.PublishWeeklyAnime();
-                    _animeData.LastWeeklyAnimeAiringList = DateTime.Now;
-                }
-
-                await Task.Delay(TimeSpan.FromMinutes(1d), _token);
-            }
-        }
+//        private async void UpdateAnime()
+//        {
+//            await Task.Delay(TimeSpan.FromSeconds(30d), _token);
+//            while (true)
+//            {
+//                if (_animeData.LastDailyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(1d))
+//                {
+//                    //_animeService.PublishDailyAnime();
+//                    _animeData.LastDailyAnimeAiringList = DateTime.Now;
+//                }
+//
+//                if (_animeData.LastWeeklyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(7d))
+//                {
+//                    //_animeService.PublishWeeklyAnime();
+//                    _animeData.LastWeeklyAnimeAiringList = DateTime.Now;
+//                }
+//
+//                await Task.Delay(TimeSpan.FromMinutes(1d), _token);
+//            }
+//        }
 
         public async Task<string[][]> GetManualDatabase()
         {
