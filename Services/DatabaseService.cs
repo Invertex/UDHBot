@@ -189,35 +189,25 @@ namespace DiscordBot.Services
             return Convert.ToInt32(GetAttributeFromUser(id, "udc"));
         }
 
-        public int GetUserKarmaLevel(ulong id)
+        public uint GetUserKarmaRank(ulong id)
         {
             int karma;
-            string reader = GetKarmaRank(id);
-
-            karma = Convert.ToInt32(reader) + 1;
-
-            return karma;
-        }
-
-        public string GetKarmaRank(ulong id)
-        {
-            List<(ulong userId, int karma)> users = new List<(ulong userId, int karma)>();
 
             using (var connection = new MySqlConnection(_connection))
             {
-                var command = new MySqlCommand($"SELECT COUNT(*) as rank FROM users WHERE karma > (SELECT karma FROM users WHERE id={id})", connection);
+                var command = new MySqlCommand(
+                    $"SELECT COUNT(1)+1 as rank FROM `users` WHERE karma > (SELECT karma FROM users WHERE userid='{id}')", connection);
                 connection.Open();
                 MySqlDataReader reader;
                 using (reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        return reader["rank"].ToString();
+                        return (uint) reader["rank"];
                     }
                 }
             }
-
-            return null;
+            return 0;
         }
 
         public List<(ulong userId, int level)> GetTopLevel()
@@ -274,7 +264,7 @@ namespace DiscordBot.Services
 
             return users;
         }
-        
+
         public async void AddNewUser(SocketGuildUser user)
         {
             try
@@ -326,7 +316,6 @@ namespace DiscordBot.Services
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    
                     var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
                     connection.Open();

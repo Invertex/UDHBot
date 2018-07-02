@@ -46,12 +46,15 @@ namespace DiscordBot.Services
         private readonly Random rand;
 
         private readonly FontCollection _fontCollection;
+
         //private readonly Font _defaultFont;
         private readonly Font _nameFont;
         private readonly Font _xpFont;
         private readonly Font _ranksFont;
         private readonly Font _levelTextFont;
+
         private readonly Font _levelNumberFont;
+
         /*private readonly Font _levelFont;
         private readonly Font _levelFontSmall;
         private readonly Font _subtitlesBlackFont;*/
@@ -105,7 +108,7 @@ namespace DiscordBot.Services
                 .CreateFont(16);*/
             _nameFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
-                .CreateFont(24);
+                .CreateFont(22);
             _xpFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
                 .CreateFont(12);
@@ -163,9 +166,9 @@ namespace DiscordBot.Services
             */
             _codeReminderCooldownTime = SettingsHandler.LoadValueInt("codeReminderCooldown", JsonFile.UserSettings);
             _codeFormattingExample = (
-               @"\`\`\`cs" + Environment.NewLine +
-               "Write your code on new line here." + Environment.NewLine +
-               @"\`\`\`" + Environment.NewLine);
+                @"\`\`\`cs" + Environment.NewLine +
+                "Write your code on new line here." + Environment.NewLine +
+                @"\`\`\`" + Environment.NewLine);
             _codeReminderFormattingExample = (
                 _codeFormattingExample + Environment.NewLine +
                 "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
@@ -239,16 +242,16 @@ namespace DiscordBot.Services
                 reduceXp = 1 - Math.Min(.9f, (level - karma) * .05f);
             }
 
-            int xpGain = (int) Math.Round((baseXp + bonusXp)*reduceXp);
+            int xpGain = (int) Math.Round((baseXp + bonusXp) * reduceXp);
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
             if (!await _databaseService.UserExists(userId))
-                _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
+                _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
 
             _databaseService.AddUserXp(userId, xpGain);
-            _databaseService.AddUserUdc(userId, (int)Math.Round(xpGain * .15f));
+            _databaseService.AddUserUdc(userId, (int) Math.Round(xpGain * .15f));
 
             await _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
@@ -329,17 +332,17 @@ namespace DiscordBot.Services
                             "/images/default.png");
                     }
                 }
-                
-                var xpWidth = 275;
+
+                var xpWidth = 235;
                 var xpHeight = 17;
-                var xpX = 131;
+                var xpX = 140;
                 var xpY = 42;
 
-                uint xp = _databaseService.GetUserXp(userId);
+                uint currentXp = _databaseService.GetUserXp(userId);
                 uint rank = _databaseService.GetUserRank(userId);
                 int karma = _databaseService.GetUserKarma(userId);
                 uint level = _databaseService.GetUserLevel(userId);
-                int karmaRank = _databaseService.GetUserKarmaLevel(userId);
+                uint karmaRank = _databaseService.GetUserKarmaRank(userId);
                 /*uint xp = 0;
                 uint rank = 26;
                 int karma = 300;
@@ -347,14 +350,22 @@ namespace DiscordBot.Services
                 uint level = 126;*/
                 double xpLow = GetXpLow((int) level);
                 double xpHigh = GetXpHigh((int) level);
-                xp = (uint)(xpLow + ((xpHigh - xpLow) / 2));
-                
-                Console.WriteLine("XP Low: " + xpLow + ", XP High: " + xpHigh);
-    
-                float endX = xpX + (float) ((xp - xpLow) / (xpHigh - xpLow) * xpWidth);
-    
+
+                float endX = (float) ((currentXp - xpLow) / (xpHigh - xpLow) * xpWidth);
+
+                //float endX = (uint)(xpLow + ((xpHigh - xpLow) / 2));
+
+                uint xpShown = (uint) (currentXp - xpLow);
+                uint maxXpShown = (uint) (xpHigh - xpLow);
+
+                int percentage = (int) Math.Round(100d * xpShown / maxXpShown);
+
+                //Console.WriteLine("XP Low: " + xpLow + ", XP High: " + xpHigh);
+
+                //float endX = xpX + (float) ((xp - xpLow) / (xpHigh - xpLow) * xpWidth);
+
                 profileCard.DrawImage(profileFg, 100f, new Size(profileFg.Width, profileFg.Height), Point.Empty);
-    
+
                 var u = user as IGuildUser;
                 IRole mainRole = null;
                 foreach (ulong id in u.RoleIds)
@@ -369,42 +380,36 @@ namespace DiscordBot.Services
                         mainRole = role;
                     }
                 }
-    
+
                 Color c = mainRole.Color;
-    
+
                 var brush = new RecolorBrush<Rgba32>(Rgba32.White,
                     new Rgba32(c.R, c.G, c.B), .25f);
 
                 // role
-                profileCard.Fill(brush,
-                    new RectangleF(11, 11, 113, 113));
+                profileCard.Fill(brush, new RectangleF(25, 15, 106, 106));
 
                 // avatar
-                profileCard.DrawImage(avatar, 100f, new Size(111, 111), new Point(12, 12));
-                
+                profileCard.DrawImage(avatar, 100f, new Size(102, 102), new Point(27, 17));
+
                 // name
-                profileCard.DrawText(user.Username + '#' + user.Discriminator, _nameFont, Rgba32.FromHex("#676767"),
-                    new Point(131, 11));
+                profileCard.DrawText($"{user.Username}{'#'}{user.Discriminator}", _nameFont, Rgba32.FromHex("#676767"),
+                    new Point(145, 9));
 
                 // xp - back
                 // top
                 var rgba = Rgba32.FromHex("#c5c5c7");
-                profileCard.Fill(rgba,
-                    new RectangleF(xpX, xpY, xpWidth, 1));
+                profileCard.Fill(rgba, new RectangleF(xpX, xpY, xpWidth, 1));
                 // bottom
-                profileCard.Fill(rgba,
-                    new RectangleF(xpX, xpY + xpHeight - 1, xpWidth, 1));
+                profileCard.Fill(rgba, new RectangleF(xpX, xpY + xpHeight - 1, xpWidth, 1));
                 // left
-                profileCard.Fill(rgba,
-                    new RectangleF(xpX, xpY, 1, xpHeight));
+                profileCard.Fill(rgba, new RectangleF(xpX, xpY, 1, xpHeight));
                 // right
-                profileCard.Fill(rgba,
-                    new RectangleF(xpX + xpWidth - 1, xpY, 1, xpHeight));
-                
+                profileCard.Fill(rgba, new RectangleF(xpX + xpWidth - 1, xpY, 1, xpHeight));
+
                 // xp - front
-                profileCard.Fill(rgba,
-                    new RectangleF(xpX + 2, xpY + 2, endX, xpHeight - 4));
-                
+                profileCard.Fill(rgba, new RectangleF(xpX + 2, xpY + 2, endX, xpHeight - 4));
+
                 // xp - number
                 rgba = Rgba32.FromHex("#676767");
                 /*profileCard.DrawText(xp + "/" + xpHigh, _xpFont, rgba,
@@ -413,65 +418,52 @@ namespace DiscordBot.Services
                         HorizontalAlignment = HorizontalAlignment.Center,
                         ApplyKerning = true
                     });*/
-                int percentage = (int)Math.Round((double)(100 * xp) / xpHigh);
-                profileCard.DrawText(xp + "/" + xpHigh + " (" + percentage + "%)", _xpFont, rgba, new Point(xpX + (xpWidth / 2), xpY - 2), new TextGraphicsOptions()
+
+                profileCard.DrawText($"{xpShown:# ##0} / {maxXpShown:# ##0} ({percentage}%)", _xpFont, rgba, new Point(xpX + (xpWidth / 2), xpY - 2),
+                    new TextGraphicsOptions()
                     {
                         HorizontalAlignment = HorizontalAlignment.Center,
                         ApplyKerning = true
                     }
                 );
-                
+
                 // server rank
-                profileCard.DrawText("Level Rank", _ranksFont, rgba,
-                    new Point(235, 60));
+                profileCard.DrawText("Level Rank", _ranksFont, rgba, new Point(220, 60));
 
                 // server rank value
                 profileCard.DrawText("#" + rank, _ranksFont, rgba,
-                    new Point(391, 60), new TextGraphicsOptions()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Right
-                    });
-                
+                    new Point(370, 60), new TextGraphicsOptions {HorizontalAlignment = HorizontalAlignment.Right});
+
+                // karma points
+                profileCard.DrawText("Karma Points", _ranksFont, rgba, new Point(220, 80));
+
                 // karma rank
-                profileCard.DrawText("Karma Points", _ranksFont, rgba,
-                    new Point(235, 80));
-                
+                profileCard.DrawText("Karma Rank", _ranksFont, rgba, new Point(220, 100));
+
                 // karma points value
                 profileCard.DrawText(karma.ToString(), _ranksFont, rgba,
-                    new Point(391, 80), new TextGraphicsOptions()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Right
-                    });
-                
-                // karma rank
-                profileCard.DrawText("Karma Rank", _ranksFont, rgba,
-                    new Point(235, 100));
-                
+                    new Point(370, 80), new TextGraphicsOptions()
+                        {HorizontalAlignment = HorizontalAlignment.Right});
+
                 // karma points value
                 profileCard.DrawText("#" + karmaRank, _ranksFont, rgba,
-                    new Point(391, 100), new TextGraphicsOptions()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Right
-                    });
-                
+                    new Point(370, 100), new TextGraphicsOptions()
+                        {HorizontalAlignment = HorizontalAlignment.Right});
+
                 // level text
                 var font = new Font(_levelTextFont.Family, _levelTextFont.Size, FontStyle.Bold);
                 profileCard.DrawText("LEVEL", font, rgba,
                     new Point(176, 56), new TextGraphicsOptions()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Center
-                    });
-                
+                        {HorizontalAlignment = HorizontalAlignment.Center});
+
                 // actual level
                 font = new Font(_levelNumberFont.Family, _levelNumberFont.Size, FontStyle.Bold);
                 profileCard.DrawText(level.ToString(), font, rgba,
                     new Point(176, 78), new TextGraphicsOptions()
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Center
-                    });
-                
+                        {HorizontalAlignment = HorizontalAlignment.Center});
+
                 /*profileCard.Resize(400, 120);*/
-                
+
                 profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                                  $"/images/profiles/{user.Username}-profile.png");
             }
@@ -501,9 +493,10 @@ namespace DiscordBot.Services
         }
 
         // Message Edited Thanks
-        public async Task ThanksEdited(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam, ISocketMessageChannel socketMessageChannel)
+        public async Task ThanksEdited(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam,
+            ISocketMessageChannel socketMessageChannel)
         {
-            if(_canEditThanks.Contains(messageParam.Id))
+            if (_canEditThanks.Contains(messageParam.Id))
             {
                 await Thanks(messageParam);
             }
@@ -608,6 +601,7 @@ namespace DiscordBot.Services
                         "If you want me to stop reminding you about this, please type \"!disablethanksreminder\".")
                     .DeleteAfterTime(seconds: defaultDelTime);
             }
+
             if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
             {
                 _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
