@@ -203,7 +203,7 @@ namespace DiscordBot.Services
                 {
                     while (reader.Read())
                     {
-                        return (uint) reader["rank"];
+                        return (uint) System.Convert.ToInt32(reader["rank"]);
                     }
                 }
             }
