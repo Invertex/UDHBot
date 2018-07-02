@@ -189,6 +189,37 @@ namespace DiscordBot.Services
             return Convert.ToInt32(GetAttributeFromUser(id, "udc"));
         }
 
+        public int GetUserKarmaLevel(ulong id)
+        {
+            int karma;
+            string reader = GetKarmaRank(id);
+
+            karma = Convert.ToInt32(reader) + 1;
+
+            return karma;
+        }
+
+        public string GetKarmaRank(ulong id)
+        {
+            List<(ulong userId, int karma)> users = new List<(ulong userId, int karma)>();
+
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand($"SELECT COUNT(*) as rank FROM users WHERE karma > (SELECT karma FROM users WHERE id={id})", connection);
+                connection.Open();
+                MySqlDataReader reader;
+                using (reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        return reader["rank"].ToString();
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public List<(ulong userId, int level)> GetTopLevel()
         {
             List<(ulong userId, int level)> users = new List<(ulong userId, int level)>();

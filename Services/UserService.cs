@@ -108,7 +108,7 @@ namespace DiscordBot.Services
                 .CreateFont(24);
             _xpFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
-                .CreateFont(11);
+                .CreateFont(12);
             _ranksFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
                 .CreateFont(16);
@@ -329,14 +329,21 @@ namespace DiscordBot.Services
                             "/images/default.png");
                     }
                 }
+                
+                var xpWidth = 275;
+                var xpHeight = 17;
+                var xpX = 131;
+                var xpY = 42;
 
                 uint xp = _databaseService.GetUserXp(userId);
                 uint rank = _databaseService.GetUserRank(userId);
                 int karma = _databaseService.GetUserKarma(userId);
                 uint level = _databaseService.GetUserLevel(userId);
+                int karmaRank = _databaseService.GetUserKarmaLevel(userId);
                 /*uint xp = 0;
                 uint rank = 26;
                 int karma = 300;
+                int karmaRank = 6;
                 uint level = 126;*/
                 double xpLow = GetXpLow((int) level);
                 double xpHigh = GetXpHigh((int) level);
@@ -344,7 +351,7 @@ namespace DiscordBot.Services
                 
                 Console.WriteLine("XP Low: " + xpLow + ", XP High: " + xpHigh);
     
-                float endX = (float) ((xp - xpLow) / (xpHigh - xpLow) * 271);
+                float endX = xpX + (float) ((xp - xpLow) / (xpHigh - xpLow) * xpWidth);
     
                 profileCard.DrawImage(profileFg, 100f, new Size(profileFg.Width, profileFg.Height), Point.Empty);
     
@@ -379,10 +386,6 @@ namespace DiscordBot.Services
                 profileCard.DrawText(user.Username + '#' + user.Discriminator, _nameFont, Rgba32.FromHex("#676767"),
                     new Point(131, 11));
 
-                var xpWidth = 275;
-                var xpHeight = 15;
-                var xpX = 131;
-                var xpY = 44;
                 // xp - back
                 // top
                 var rgba = Rgba32.FromHex("#c5c5c7");
@@ -404,31 +407,49 @@ namespace DiscordBot.Services
                 
                 // xp - number
                 rgba = Rgba32.FromHex("#676767");
-                profileCard.DrawText(xp + "/" + xpHigh, _xpFont, rgba,
+                /*profileCard.DrawText(xp + "/" + xpHigh, _xpFont, rgba,
                     new Point(xpX + (xpWidth / 2), xpY - 2), new TextGraphicsOptions()
                     {
                         HorizontalAlignment = HorizontalAlignment.Center,
                         ApplyKerning = true
-                    });
+                    });*/
+                int percentage = (int)Math.Round((double)(100 * xp) / xpHigh);
+                profileCard.DrawText(xp + "/" + xpHigh + " (" + percentage + "%)", _xpFont, rgba, new Point(xpX + (xpWidth / 2), xpY - 2), new TextGraphicsOptions()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        ApplyKerning = true
+                    }
+                );
                 
                 // server rank
-                profileCard.DrawText("Server Rank", _ranksFont, rgba,
-                    new Point(235, 63));
+                profileCard.DrawText("Level Rank", _ranksFont, rgba,
+                    new Point(235, 60));
 
                 // server rank value
                 profileCard.DrawText("#" + rank, _ranksFont, rgba,
-                    new Point(391, 63), new TextGraphicsOptions()
+                    new Point(391, 60), new TextGraphicsOptions()
                     {
                         HorizontalAlignment = HorizontalAlignment.Right
                     });
                 
                 // karma rank
                 profileCard.DrawText("Karma Points", _ranksFont, rgba,
-                    new Point(235, 91));
+                    new Point(235, 80));
                 
                 // karma points value
                 profileCard.DrawText(karma.ToString(), _ranksFont, rgba,
-                    new Point(391, 91), new TextGraphicsOptions()
+                    new Point(391, 80), new TextGraphicsOptions()
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Right
+                    });
+                
+                // karma rank
+                profileCard.DrawText("Karma Rank", _ranksFont, rgba,
+                    new Point(235, 100));
+                
+                // karma points value
+                profileCard.DrawText("#" + karmaRank, _ranksFont, rgba,
+                    new Point(391, 100), new TextGraphicsOptions()
                     {
                         HorizontalAlignment = HorizontalAlignment.Right
                     });
