@@ -7,8 +7,9 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
+using DiscordBot.Services;
 
-namespace DiscordBot
+namespace DiscordBot.Modules
 {
     public class ModerationModule : ModuleBase
     {
@@ -39,7 +40,7 @@ namespace DiscordBot
 
             var u = user as IGuildUser;
             IRole muteRole = Settings.GetMutedRole(Context.Guild);
-            if (u.RoleIds.Contains(muteRole.Id))
+            if (u != null && u.RoleIds.Contains(muteRole.Id))
             {
                 return;
             }
@@ -65,7 +66,7 @@ namespace DiscordBot
 
             var u = user as IGuildUser;
             IRole muteRole = Settings.GetMutedRole(Context.Guild);
-            if (u.RoleIds.Contains(muteRole.Id))
+            if (u != null && u.RoleIds.Contains(muteRole.Id))
             {
                 return;
             }
@@ -103,6 +104,12 @@ namespace DiscordBot
         async Task UnmuteUser(IUser user, bool fromMute = false)
         {
             var u = user as IGuildUser;
+
+            if (!fromMute && u == Context.Message.Author)
+            {
+                await ReplyAsync("You can't unmute yourself.").DeleteAfterSeconds(30);
+                return;
+            }
 
             if (!fromMute && Context != null && Context.Message != null)
                 await Context.Message.DeleteAsync();

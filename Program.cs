@@ -7,6 +7,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
+using DiscordBot.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot

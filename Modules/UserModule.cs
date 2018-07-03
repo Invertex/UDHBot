@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -8,10 +9,11 @@ using System.Web;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
+using DiscordBot.Services;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 
-namespace DiscordBot
+namespace DiscordBot.Modules
 {
     public class UserModule : ModuleBase
     {
@@ -48,6 +50,8 @@ namespace DiscordBot
             foreach (var message in commands.MessageSplit())
                 await ReplyAsync(message);
         }
+
+        #region Rules
 
         [Command("rules"), Summary("Get the of the current channel by DM. Syntax : !rules")]
         private async Task Rules()
@@ -112,6 +116,10 @@ namespace DiscordBot
             await Context.Message.DeleteAsync();
         }
 
+        #endregion
+
+        #region XP & Karma
+
         [Command("karma"), Summary("Display description of what Karma is for. Syntax : !karma")]
         private async Task KarmaDescription(int seconds = 60)
         {
@@ -167,6 +175,32 @@ namespace DiscordBot
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
 
+        [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
+        private async Task DisplayProfile()
+        {
+            IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
+
+            await Task.Delay(10000);
+            await Context.Message.DeleteAsync();
+            await Task.Delay(TimeSpan.FromMinutes(1d));
+            await profile.DeleteAsync();
+        }
+
+        [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
+        private async Task DisplayProfile(IUser user)
+        {
+            IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
+
+            await Task.Delay(1000);
+            await Context.Message.DeleteAsync();
+            await Task.Delay(TimeSpan.FromMinutes(1d));
+            await profile.DeleteAsync();
+        }
+
+        #endregion
+
+        #region Codetips
+
         [Command("codetip"), Summary("Show code formatting example. Syntax : !codetip userToPing(optional)")]
         [Alias("codetips")]
         private async Task CodeTip(IUser user = null)
@@ -194,6 +228,9 @@ namespace DiscordBot
             await ReplyAsync($"{Context.User.Username}, " + replyMessage).DeleteAfterTime(seconds: 20);
         }
 
+        #endregion
+
+
         [Command("disablethanksreminder"),
          Summary("Prevents being reminded to mention the person you are thanking. Syntax : !disablethanksreminder")]
         private async Task DisableThanksReminder()
@@ -210,77 +247,13 @@ namespace DiscordBot
             await ReplyAsync($"{Context.User.Username}, " + replyMessage).DeleteAfterTime(seconds: 20);
         }
 
-        [Command("slap"), Summary("Slap the specified user(s). Syntax : !slap @user1 [@user2 @user3...]")]
-        private async Task SlapUser(params IUser[] users)
+
+        [Command("quote"), Summary("Quote a message. Syntax : !quote messageid (#channelname)")]
+        private async Task QuoteMessage(ulong id, IMessageChannel channel = null)
         {
-            StringBuilder sb = new StringBuilder();
-            string[] slaps = {"trout", "duck", "truck"};
-            var random = new Random();
+            // If channel is null use Context.Channel, else use the provided channel
+            channel = channel ?? Context.Channel;
 
-            sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
-            foreach (var user in users)
-            {
-                sb.Append(user.Mention).Append(" ");
-            }
-
-            sb.Append("around a bit with a large ").Append(slaps[random.Next() % 3]);
-
-            await Context.Channel.SendMessageAsync(sb.ToString());
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
-        }
-
-        [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
-        private async Task DisplayProfile()
-        {
-            IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
-
-            await Task.Delay(10000);
-            await Context.Message.DeleteAsync();
-            await Task.Delay(TimeSpan.FromMinutes(1d));
-            await profile.DeleteAsync();
-        }
-
-        [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
-        private async Task DisplayProfile(IUser user)
-        {
-            IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
-
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
-            await Task.Delay(TimeSpan.FromMinutes(1d));
-            await profile.DeleteAsync();
-        }
-
-        [Command("quote"), Summary("Quote a message in current channel. Syntax : !quote messageid")]
-        private async Task QuoteMessage(ulong id)
-        {
-            await Context.Message.DeleteAsync();
-            IMessageChannel channel = Context.Channel;
-            var message = await channel.GetMessageAsync(id);
-            Console.WriteLine($"message {message.Author.Username}  {message.Channel.Name}");
-            var builder = new EmbedBuilder()
-                .WithColor(new Color(200, 128, 128))
-                .WithTimestamp(message.Timestamp)
-                .WithFooter(footer =>
-                {
-                    footer
-                        .WithText($"In channel {message.Channel.Name}");
-                })
-                .WithAuthor(author =>
-                {
-                    author
-                        .WithName(message.Author.Username)
-                        .WithIconUrl(message.Author.GetAvatarUrl());
-                })
-                .AddField("Original message", message.Content.Truncate(1020));
-            var embed = builder.Build();
-            await ReplyAsync("", false, embed);
-        }
-
-        [Command("quote"), Summary("Quote a message. Syntax : !quote #channelname messageid")]
-        private async Task QuoteMessage(IMessageChannel channel, ulong id)
-        {
             var message = await channel.GetMessageAsync(id);
             var builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
@@ -382,6 +355,29 @@ namespace DiscordBot
             }
         }
 
+        #region Fun
+
+        [Command("slap"), Summary("Slap the specified user(s). Syntax : !slap @user1 [@user2 @user3...]")]
+        private async Task SlapUser(params IUser[] users)
+        {
+            StringBuilder sb = new StringBuilder();
+            string[] slaps = {"trout", "duck", "truck"};
+            var random = new Random();
+
+            sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
+            foreach (var user in users)
+            {
+                sb.Append(user.Mention).Append(" ");
+            }
+
+            sb.Append("around a bit with a large ").Append(slaps[random.Next() % 3]);
+
+            await Context.Channel.SendMessageAsync(sb.ToString());
+            await Task.Delay(1000);
+            await Context.Message.DeleteAsync();
+        }
+
+
         [Command("coinflip"), Summary("Flip a coin and see the result. Syntax : !coinflip")]
         [Alias("flipcoin")]
         private async Task CoinFlip()
@@ -405,6 +401,10 @@ namespace DiscordBot
                 await Context.Channel.SendFileAsync(msg, $"From {Context.Message.Author.Mention}");
             await Context.Message.DeleteAsync();
         }
+
+        #endregion
+
+        #region Publisher
 
         [Command("pinfo"), Summary("Information on how to get the publisher role. Syntax : !pinfo")]
         [Alias("publisherinfo")]
@@ -457,6 +457,10 @@ namespace DiscordBot
             string verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
             await ReplyAsync(verif);
         }
+
+        #endregion
+
+        #region Search
 
         [Command("search"), Summary("Searches on DuckDuckGo for web results. Syntax : !search \"query\" resNum site")]
         [Alias("s", "ddg")]
@@ -691,6 +695,111 @@ namespace DiscordBot
             {
                 return -1;
             }
+        }
+
+        #endregion
+
+        #region Birthday
+
+        [Command("birthday"), Summary("Display next member birthday. Syntax : !birthday")]
+        [Alias("bday")]
+        private async Task Birthday()
+        {
+            // URL to cell C15/"Next birthday" cell from Corn's google sheet
+            string nextBirthday =
+                "https://docs.google.com/spreadsheets/d/10iGiKcrBl1fjoBNTzdtjEVYEgOfTveRXdI5cybRTnj4/gviz/tq?tqx=out:html&range=C15:C15";
+            HtmlDocument doc = new HtmlWeb().Load(nextBirthday);
+
+            // XPath to the table row
+            HtmlNode row = doc.DocumentNode.SelectSingleNode("/html/body/table/tr[2]/td");
+            string tableText = row.InnerText;
+            string message = $"**{tableText}**";
+
+            await ReplyAsync(message).DeleteAfterTime(minutes: 3);
+            await Context.Message.DeleteAfterTime(minutes: 3);
+        }
+
+        [Command("birthday"), Summary("Display birthday of mentioned user. Syntax : !birthday @user")]
+        [Alias("bday")]
+        private async Task Birthday(IUser user)
+        {
+            string searchName = user.Username;
+            // URL to columns B to D of Corn's google sheet
+            string birthdayTable =
+                "https://docs.google.com/spreadsheets/d/10iGiKcrBl1fjoBNTzdtjEVYEgOfTveRXdI5cybRTnj4/gviz/tq?tqx=out:html&gid=318080247&range=B:D";
+            HtmlDocument doc = new HtmlWeb().Load(birthdayTable);
+            DateTime birthdate = default(DateTime);
+
+            // XPath to each table row
+            foreach (HtmlNode row in doc.DocumentNode.SelectNodes("/html/body/table/tr"))
+            {
+                // XPath to the name column (C)
+                HtmlNode nameNode = row.SelectSingleNode("td[2]");
+                string name = nameNode.InnerText;
+                if (name.ToLower().Contains(searchName.ToLower()))
+                {
+                    // XPath to the date column (B)
+                    HtmlNode dateNode = row.SelectSingleNode("td[1]");
+                    // XPath to the year column (D)
+                    HtmlNode yearNode = row.SelectSingleNode("td[3]");
+
+                    CultureInfo provider = CultureInfo.InvariantCulture;
+                    string wrongFormat = "M/d/yyyy";
+                    string rightFormat = "dd-MMMM-yyyy";
+
+                    string dateString = dateNode.InnerText;
+                    if (!yearNode.InnerText.Contains("&nbsp;"))
+                    {
+                        dateString = dateString + "/" + yearNode.InnerText;
+                    }
+
+                    dateString = dateString.Trim();
+
+                    try
+                    {
+                        // Converting the birthdate from the wrong format to the right format WITH year
+                        birthdate = DateTime.ParseExact(dateString, wrongFormat, provider);
+                    }
+                    catch (FormatException)
+                    {
+                        // Converting the birthdate from the wrong format to the right format WITHOUT year
+                        birthdate = DateTime.ParseExact(dateString, "M/d", provider);
+                    }
+
+                    break;
+                }
+            }
+
+            if (birthdate == default(DateTime))
+            {
+                await ReplyAsync(
+                        $"Sorry, I couldn't find **{searchName}**'s birthday date. He can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform ! :stuck_out_tongue_winking_eye: ")
+                    .DeleteAfterSeconds(30);
+            }
+            else
+            {
+                string message =
+                    $"**{searchName}**'s birthdate: __**{birthdate.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}**__ " +
+                    $"({(int) ((DateTime.Now - birthdate).TotalDays / 365)}yo)";
+
+                await ReplyAsync(message).DeleteAfterTime(minutes: 3);
+            }
+
+            await Context.Message.DeleteAfterTime(minutes: 3);
+        }
+
+        #endregion
+
+
+        [Command("ping"), Summary("Display bot ping. Syntax : !ping")]
+        [Alias("pong")]
+        private async Task Ping()
+        {
+            var message = await ReplyAsync($"Pong :blush:");
+            var time = message.Timestamp.Subtract(Context.Message.Timestamp);
+            await message.ModifyAsync(m => m.Content = $"Pong :blush: (**{time.TotalMilliseconds}** *ms*)");
+            await message.DeleteAfterTime(minutes: 3);
+            await Context.Message.DeleteAfterTime(minutes: 3);
         }
 
         [Group("role")]

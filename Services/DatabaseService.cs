@@ -1,14 +1,10 @@
-﻿using System.Xml.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using MySql.Data.MySqlClient;
 
-namespace DiscordBot
+namespace DiscordBot.Services
 {
     public class DatabaseService
     {
@@ -193,6 +189,27 @@ namespace DiscordBot
             return Convert.ToInt32(GetAttributeFromUser(id, "udc"));
         }
 
+        public uint GetUserKarmaRank(ulong id)
+        {
+            int karma;
+
+            using (var connection = new MySqlConnection(_connection))
+            {
+                var command = new MySqlCommand(
+                    $"SELECT COUNT(1)+1 as rank FROM `users` WHERE karma > (SELECT karma FROM users WHERE userid='{id}')", connection);
+                connection.Open();
+                MySqlDataReader reader;
+                using (reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        return (uint) System.Convert.ToInt32(reader["rank"]);
+                    }
+                }
+            }
+            return 0;
+        }
+
         public List<(ulong userId, int level)> GetTopLevel()
         {
             List<(ulong userId, int level)> users = new List<(ulong userId, int level)>();
@@ -247,7 +264,7 @@ namespace DiscordBot
 
             return users;
         }
-        
+
         public async void AddNewUser(SocketGuildUser user)
         {
             try
@@ -299,7 +316,6 @@ namespace DiscordBot
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    
                     var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
