@@ -127,17 +127,18 @@ namespace DiscordBot.Modules
         async Task AddRole(IRole role, IUser user)
         {
             var contextUser = Context.User as SocketGuildUser;
+            await Context.Message.DeleteAsync();
 
             if (Settings.IsRoleUserAssignable(role) || (Settings.IsRoleModerationAssignable(role) && Settings.IsUserModSquad(contextUser)))
             {
                 var u = user as IGuildUser;
                 await u.AddRoleAsync(role);
-                await ReplyAsync("Role " + role + " has been added to " + user);
+                await ReplyAsync("Role " + role + " has been added to " + user).DeleteAfterTime(minutes: 5);
                 await _logging.LogAction($"{contextUser.Username} has added role {role} to {u.Username}");
                 return;
             }
 
-            await ReplyAsync("Bot cannot add this role. Administrator must do it manually.");
+            await ReplyAsync($"Bot cannot add {role.Name} role. Administrator must do it manually.").DeleteAfterSeconds(25);
         }
 
         [Command("removerole"), Summary("Remove a role from a user")]
@@ -146,18 +147,19 @@ namespace DiscordBot.Modules
         async Task RemoveRole(IRole role, IUser user)
         {
             var contextUser = Context.User as SocketGuildUser;
+            await Context.Message.DeleteAsync();
 
             if (Settings.IsRoleUserAssignable(role) || (Settings.IsRoleModerationAssignable(role) && Settings.IsUserModSquad(contextUser)))
             {
                 var u = user as IGuildUser;
 
                 await u.RemoveRoleAsync(role);
-                await ReplyAsync("Role " + role + " has been removed from " + user);
+                await ReplyAsync("Role " + role + " has been removed from " + user).DeleteAfterTime(minutes: 5);
                 await _logging.LogAction($"{contextUser.Username} has removed role {role} from {u.Username}");
                 return;
             }
 
-            await ReplyAsync("Bot cannot remove this role. Administrator must do it manually.");
+            await ReplyAsync($"Bot cannot remove {role.Name} role. Administrator must do it manually.").DeleteAfterSeconds(25);
         }
 
         [Command("clear"), Summary("Remove last x messages")]
