@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.IO;
 using System.Linq;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Newtonsoft.Json;
-using SixLabors.Fonts;
 
 namespace DiscordBot
 {
@@ -19,19 +17,33 @@ namespace DiscordBot
 
     public static class Settings
     {
-        public static List<string> _assignableRoles;
+        public static List<string> _userAssignableRoles;
+        public static List<string> _moderationRoles;
+        public static List<string> _modSquadRoles;
 
         private static string _commandList;
 
-
         static Settings()
         {
-            _assignableRoles = SettingsHandler.LoadValueStringArray("allRoles/roles", JsonFile.Settings).ToList();
+            _userAssignableRoles = SettingsHandler.LoadValueStringArray("rolesUser/roles", JsonFile.Settings).ToList();
+            _moderationRoles = SettingsHandler.LoadValueStringArray("rolesModeration/roles", JsonFile.Settings).ToList();
+            _modSquadRoles = SettingsHandler.LoadValueStringArray("roleModSquadPermission/roles", JsonFile.Settings).ToList();
         }
 
-        public static bool IsRoleAssignable(IRole role)
+        public static bool IsRoleUserAssignable(IRole role)
         {
-            return _assignableRoles.Contains(role.Name, StringComparer.CurrentCultureIgnoreCase);
+            return _userAssignableRoles.Contains(role.Name, StringComparer.CurrentCultureIgnoreCase);
+        }
+
+        public static bool IsRoleModerationAssignable(IRole role)
+        {
+            return _moderationRoles.Contains(role.Name, StringComparer.CurrentCultureIgnoreCase);
+        }
+
+        public static bool IsUserModSquad(SocketGuildUser user)
+        {
+            if(user.Roles == null || user.Roles.Count == 0){ return false; }
+            return user.Roles.Any(x => _modSquadRoles.Contains(x.Name));
         }
 
         public static IRole GetMutedRole(IGuild guild)
