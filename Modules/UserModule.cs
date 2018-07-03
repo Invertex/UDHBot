@@ -795,13 +795,13 @@ namespace DiscordBot.Modules
         [Command("ftoc"), Summary("Converts a temperature in fahrenheit to celsius. Syntax : !ftoc temperature")]
         private async Task FahrenheitToCelsius(float f)
         {
-            await ReplyAsync($"{Context.User.Mention} {f}°F is {(f - 32) * 0.555555f}°C.");
+            await ReplyAsync($"{Context.User.Mention} {f}°F is {Math.Round((f - 32) * 0.555555f, 2)}°C.");
         }
-        
+
         [Command("ctof"), Summary("Converts a temperature in celsius to fahrenheit. Syntax : !ftoc temperature")]
         private async Task CelsiusToFahrenheit(float c)
         {
-            await ReplyAsync($"{Context.User.Mention}  {c}°C is {c*1.8f+32}");
+            await ReplyAsync($"{Context.User.Mention}  {c}°C is {Math.Round(c * 1.8f + 32, 2)}°F");
         }
 
         #endregion
