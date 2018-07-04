@@ -178,7 +178,8 @@ namespace DiscordBot.Modules
         [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
         private async Task DisplayProfile()
         {
-            IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
+            IUserMessage profile =
+                await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
 
             await Task.Delay(10000);
             await Context.Message.DeleteAsync();
