@@ -178,7 +178,8 @@ namespace DiscordBot.Modules
         [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
         private async Task DisplayProfile()
         {
-            IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
+            IUserMessage profile =
+                await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
 
             await Task.Delay(10000);
             await Context.Message.DeleteAsync();
@@ -786,6 +787,22 @@ namespace DiscordBot.Modules
             }
 
             await Context.Message.DeleteAfterTime(minutes: 3);
+        }
+
+        #endregion
+
+        #region temperatures
+
+        [Command("ftoc"), Summary("Converts a temperature in fahrenheit to celsius. Syntax : !ftoc temperature")]
+        private async Task FahrenheitToCelsius(float f)
+        {
+            await ReplyAsync($"{Context.User.Mention} {f}°F is {Math.Round((f - 32) * 0.555555f, 2)}°C.");
+        }
+
+        [Command("ctof"), Summary("Converts a temperature in celsius to fahrenheit. Syntax : !ftoc temperature")]
+        private async Task CelsiusToFahrenheit(float c)
+        {
+            await ReplyAsync($"{Context.User.Mention}  {c}°C is {Math.Round(c * 1.8f + 32, 2)}°F");
         }
 
         #endregion

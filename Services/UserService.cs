@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -8,7 +9,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Domain;
 using DiscordBot.Extensions;
+using ImageMagick;
 using ImageSharp;
 using ImageSharp.Drawing;
 using ImageSharp.Drawing.Brushes;
@@ -46,11 +49,18 @@ namespace DiscordBot.Services
         private readonly Random rand;
 
         private readonly FontCollection _fontCollection;
-        private readonly Font _defaultFont;
+
+        //private readonly Font _defaultFont;
         private readonly Font _nameFont;
-        private readonly Font _levelFont;
+        private readonly Font _xpFont;
+        private readonly Font _ranksFont;
+        private readonly Font _levelTextFont;
+
+        private readonly Font _levelNumberFont;
+
+        /*private readonly Font _levelFont;
         private readonly Font _levelFontSmall;
-        private readonly Font _subtitlesBlackFont;
+        private readonly Font _subtitlesBlackFont;*/
         private readonly Font _subtitlesWhiteFont;
         private readonly string _thanksRegex;
 
@@ -95,23 +105,35 @@ namespace DiscordBot.Services
             Init font for the profile card
             */
             _fontCollection = new FontCollection();
-            _defaultFont = _fontCollection
+            /*_defaultFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                          "/fonts/OpenSans-Regular.ttf")
-                .CreateFont(16);
+                .CreateFont(16);*/
             _nameFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
                 .CreateFont(22);
-            _levelFont = _fontCollection
+            _xpFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
-                .CreateFont(59);
-            _levelFontSmall = _fontCollection
+                .CreateFont(12);
+            _ranksFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
-                .CreateFont(45);
+                .CreateFont(16);
+            _levelTextFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/ConsolasBold.ttf")
+                .CreateFont(22);
+            _levelNumberFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/ConsolasBold.ttf")
+                .CreateFont(30);
+            /*_levelFont = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
+                .CreateFont(59);*/
+            /*_levelFontSmall = _fontCollection
+                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
+                .CreateFont(45);*/
 
-            _subtitlesBlackFont = _fontCollection
+            /*_subtitlesBlackFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/OpenSansEmoji.ttf")
-                .CreateFont(80);
+                .CreateFont(80);*/
             _subtitlesWhiteFont = _fontCollection
                 .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/OpenSansEmoji.ttf")
                 .CreateFont(75);
@@ -147,9 +169,9 @@ namespace DiscordBot.Services
             */
             _codeReminderCooldownTime = SettingsHandler.LoadValueInt("codeReminderCooldown", JsonFile.UserSettings);
             _codeFormattingExample = (
-               @"\`\`\`cs" + Environment.NewLine +
-               "Write your code on new line here." + Environment.NewLine +
-               @"\`\`\`" + Environment.NewLine);
+                @"\`\`\`cs" + Environment.NewLine +
+                "Write your code on new line here." + Environment.NewLine +
+                @"\`\`\`" + Environment.NewLine);
             _codeReminderFormattingExample = (
                 _codeFormattingExample + Environment.NewLine +
                 "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
@@ -223,16 +245,16 @@ namespace DiscordBot.Services
                 reduceXp = 1 - Math.Min(.9f, (level - karma) * .05f);
             }
 
-            int xpGain = (int) Math.Round((baseXp + bonusXp)*reduceXp);
+            int xpGain = (int) Math.Round((baseXp + bonusXp) * reduceXp);
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
             if (!await _databaseService.UserExists(userId))
-                _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
+                _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
 
             _databaseService.AddUserXp(userId, xpGain);
-            _databaseService.AddUserUdc(userId, (int)Math.Round(xpGain * .15f));
+            _databaseService.AddUserUdc(userId, (int) Math.Round(xpGain * .15f));
 
             await _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
@@ -241,6 +263,12 @@ namespace DiscordBot.Services
             //TODO: add xp gain on website
         }
 
+        /// <summary>
+        /// Show level up emssage
+        /// </summary>
+        /// <param name="messageParam"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
         public async Task LevelUp(SocketMessage messageParam, ulong userId)
         {
             int level = (int) _databaseService.GetUserLevel(userId);
@@ -273,59 +301,39 @@ namespace DiscordBot.Services
             return 70d - (139.5d * (level + 2d)) + (69.5 * Math.Pow(level + 2d, 2d));
         }
 
+        /// <summary>
+        /// Generate the profile card for a given user and returns the generated image path
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         public async Task<string> GenerateProfileCard(IUser user)
         {
+            //Settings
             var backgroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                                  "/images/background.png";
             var foregroundPath = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                                  "/images/foreground.png";
-            Image<Rgba32> profileCard = ImageSharp.Image.Load(backgroundPath);
-            Image<Rgba32> profileFg = ImageSharp.Image.Load(foregroundPath);
-            Image<Rgba32> avatar;
-            Image<Rgba32> triangle = ImageSharp.Image.Load(
-                SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                "/images/triangle.png");
-            Stream stream;
-            string avatarUrl = user.GetAvatarUrl();
+
+            int avatarSize = 128;
+            int foregroundStartX = 30;
+            int foregroundStartY = 20;
+
+            int avatarStartX = 6;
+            int avatarStartY = 20;
+
             ulong userId = user.Id;
-
-            if (string.IsNullOrEmpty(avatarUrl))
-            {
-                avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                               "/images/default.png");
-            }
-            else
-            {
-                try
-                {
-                    using (var http = new HttpClient())
-                    {
-                        stream = await http.GetStreamAsync(new Uri(avatarUrl));
-                    }
-
-                    avatar = ImageSharp.Image.Load(stream);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    avatar = ImageSharp.Image.Load(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                                   "/images/default.png");
-                }
-            }
-
-            uint xp = _databaseService.GetUserXp(userId);
-            uint rank = _databaseService.GetUserRank(userId);
+            uint xpTotal = _databaseService.GetUserXp(userId);
+            uint xpRank = _databaseService.GetUserRank(userId);
             int karma = _databaseService.GetUserKarma(userId);
             uint level = _databaseService.GetUserLevel(userId);
+            uint karmaRank = _databaseService.GetUserKarmaRank(userId);
             double xpLow = GetXpLow((int) level);
             double xpHigh = GetXpHigh((int) level);
 
-            const float startX = 104;
-            const float startY = 39;
-            const float height = 16;
-            float endX = (float) ((xp - xpLow) / (xpHigh - xpLow) * 232f);
+            uint xpShown = (uint) (xpTotal - xpLow);
+            uint maxXpShown = (uint) (xpHigh - xpLow);
 
-            profileCard.DrawImage(profileFg, 100f, new Size(profileFg.Width, profileFg.Height), Point.Empty);
+            float percentage = (float) xpShown / maxXpShown;
 
             var u = user as IGuildUser;
             IRole mainRole = null;
@@ -342,38 +350,219 @@ namespace DiscordBot.Services
                 }
             }
 
-            Color c = mainRole.Color;
+            using (MagickImageCollection profileCard = new MagickImageCollection())
+            {
+                MagickImage background = new MagickImage(backgroundPath);
+                MagickImage foreground = new MagickImage(foregroundPath);
+                MagickImage avatar;
 
-            var brush = new RecolorBrush<Rgba32>(Rgba32.White,
-                new Rgba32(c.R, c.G, c.B), .25f);
+                string avatarUrl = user.GetAvatarUrl();
+                if (string.IsNullOrEmpty(avatarUrl))
+                {
+                    avatar = new MagickImage(
+                        SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                        "/images/default.png");
+                }
+                else
+                {
+                    try
+                    {
+                        Stream stream;
 
-            triangle.Fill(brush);
+                        using (var http = new HttpClient())
+                        {
+                            stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                        }
 
-            profileCard.DrawImage(triangle, 100f, new Size(triangle.Width, triangle.Height), new Point(346, 17));
+                        avatar = new MagickImage(stream);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        avatar = new MagickImage(
+                            SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                            "/images/default.png");
+                    }
+                }
 
-            profileCard.Fill(Rgba32.FromHex("#3f3f3f"),
-                new RectangleF(startX, startY, 232, height)); //XP bar background
-            profileCard.Fill(Rgba32.FromHex("#00f0ff"),
-                new RectangleF(startX + 1, startY + 1, endX, height - 2)); //XP bar
-            profileCard.DrawImage(avatar, 100f, new Size(80, 80), new Point(16, 28));
-            profileCard.DrawText(user.Username, _nameFont, Rgba32.FromHex("#3C3C3C"),
-                new PointF(144, 8));
-            profileCard.DrawText(level.ToString(), level < 100 ? _levelFont : _levelFontSmall, Rgba32.FromHex("#3C3C3C"),
-                new PointF(98, 35));
-            profileCard.DrawText("Server Rank        #" + rank, _defaultFont, Rgba32.FromHex("#3C3C3C"),
-                new PointF(167, 60));
-            profileCard.DrawText("Karma Points:    " + karma, _defaultFont, Rgba32.FromHex("#3C3C3C"),
-                new PointF(167, 77));
-            profileCard.DrawText("Total XP:              " + xp, _defaultFont, Rgba32.FromHex("#3C3C3C"),
-                new PointF(167, 94));
+                avatar.Resize(avatarSize, avatarSize);
+                profileCard.Add(background);
 
-            profileCard.Resize(400, 120);
+                background.Composite(foreground, foregroundStartX, foregroundStartY, CompositeOperator.Over);
 
-            profileCard.Save(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                             $"/images/profiles/{user.Username}-profile.png");
+                using (MagickImage textLayer = new MagickImage(new MagickColor(MagickColor.FromRgba(0, 0, 0, 0)), background.Width,
+                    background.Height))
+                {
+                    GetAvatarContourDrawables().Draw(textLayer);
+                    GetUsernameDrawables().Draw(textLayer);
+                    GetXpBarDrawables(percentage).Draw(textLayer);
+                    GetXpBarInfoDrawables().Draw(textLayer);
+                    GetLevelDrawables(level).Draw(textLayer);
+                    GetTotalXpDrawables(xpTotal).Draw(textLayer);
+                    GetXpRankDrawables(xpRank).Draw(textLayer);
+                    GetKarmaPointsDrawables(karma).Draw(textLayer);
+                    GetKarmaRankDrawables(karmaRank).Draw(textLayer);
+
+                    background.Composite(textLayer, 0, 0, CompositeOperator.Over);
+
+                    //Composite avatar on top 
+                    background.Composite(avatar, foregroundStartX + avatarStartX, foregroundStartY + avatarStartY,
+                        CompositeOperator.Over);
+
+                    using (IMagickImage result = profileCard.Mosaic())
+                    {
+                        result.Write(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                                     $"/images/profiles/{user.Username}-profile.png");
+                    }
+                }
+            }
+
+            Drawables GetAvatarContourDrawables()
+            {
+                double avatarContourStartX = foregroundStartX + avatarStartX;
+                double avatarContourStartY = foregroundStartY + avatarStartY;
+                RectangleD avatarContour = new RectangleD(avatarContourStartX - 2, avatarContourStartY - 2,
+                    avatarContourStartX + avatarSize + 1, avatarContourStartY + avatarSize + 1);
+                MagickColor avatarContourColor = MagickColors.IndianRed;
+
+                return new Drawables()
+                    .StrokeColor(new MagickColor(mainRole.Color.R, mainRole.Color.G, mainRole.Color.B))
+                    .FillColor(new MagickColor(mainRole.Color.R, mainRole.Color.G, mainRole.Color.B))
+                    .Rectangle(avatarContour.UpperLeftX, avatarContour.UpperLeftY, avatarContour.LowerRightX, avatarContour.LowerRightY);
+            }
+
+            Drawables GetXpBarDrawables(float perc)
+            {
+                //XP Bar
+                double xpBarWidth = 360;
+                double xpBarHeight = 18;
+                double xpBarStartX = 150;
+                double xpBarStartY = 42;
+
+                RectangleD xpBarOutsideRectangle = new RectangleD(foregroundStartX + xpBarStartX, foregroundStartY + xpBarStartY,
+                    foregroundStartX + xpBarStartX + xpBarWidth, foregroundStartY + xpBarStartY + xpBarHeight);
+
+                RectangleD xpBarInsideRectangle =
+                    new RectangleD(xpBarOutsideRectangle.UpperLeftX + 2, xpBarOutsideRectangle.UpperLeftY + 2,
+                        foregroundStartX + xpBarStartX + (xpBarWidth * perc) - 2, xpBarOutsideRectangle.LowerRightY - 2);
+
+                return new Drawables()
+                    //XP Bar Outside
+                    .StrokeColor(MagickColors.LightSlateGray)
+                    .StrokeWidth(.4)
+                    .FillColor(MagickColors.WhiteSmoke)
+                    .Rectangle(xpBarOutsideRectangle.UpperLeftX, xpBarOutsideRectangle.UpperLeftY, xpBarOutsideRectangle.LowerRightX,
+                        xpBarOutsideRectangle.LowerRightY)
+
+                    //XP Bar Inside
+                    .StrokeColor(MagickColors.Transparent)
+                    .FillColor(MagickColors.LightGray)
+                    .Rectangle(xpBarInsideRectangle.UpperLeftX, xpBarInsideRectangle.UpperLeftY, xpBarInsideRectangle.LowerRightX,
+                        xpBarInsideRectangle.LowerRightY);
+            }
+
+            Drawables GetXpBarInfoDrawables()
+            {
+                MagickColor xpBarInfoColor = MagickColors.Black;
+                PointD xpBarPosition = new PointD(foregroundStartX + 315, foregroundStartY + 57);
+
+                return new Drawables()
+                    //XP Bar Info
+                    .StrokeColor(MagickColors.Transparent)
+                    .FillColor(xpBarInfoColor)
+                    .Font("Consolas")
+                    .FontPointSize(17)
+                    .TextAlignment(TextAlignment.Center)
+                    .Text(xpBarPosition.X, xpBarPosition.Y, $"{xpShown:#,##0} / {maxXpShown:N0} ({(percentage * 100):0}%)");
+            }
+
+            Drawables GetUsernameDrawables()
+            {
+                MagickColor usernameStrokeColor = MagickColors.BlueViolet;
+                MagickColor usernameFillColor = MagickColors.DeepSkyBlue;
+                PointD usernamePosition = new PointD(foregroundStartX + 150, foregroundStartY + 38);
+
+                return new Drawables()
+                    .FontPointSize(34)
+                    .Font("Consolas")
+                    .StrokeColor(usernameStrokeColor)
+                    .StrokeWidth(.4)
+                    .StrokeAntialias(true)
+                    .FillColor(usernameFillColor)
+                    .TextAlignment(TextAlignment.Left)
+                    .Text(usernamePosition.X, usernamePosition.Y, $"{u.Nickname ?? u.Username}");
+            }
+
+            Drawables GetLevelDrawables(uint lvl)
+            {
+                MagickColor levelColor = MagickColors.IndianRed;
+                //PointD levelTitlePosition = new PointD(_foregroundStartX + 170, _foregroundStartY + 90);
+                PointD levelPosition = new PointD(foregroundStartX + 220, foregroundStartY + 140);
+
+                return new Drawables()
+                    .StrokeColor(levelColor)
+                    .FillColor(levelColor)
+                    .FontPointSize(40)
+                    .TextAlignment(TextAlignment.Center)
+                    .Text(levelPosition.X, levelPosition.Y, lvl.ToString());
+            }
+
+            Drawables GetTotalXpDrawables(uint totalXp)
+            {
+                MagickColor xpColor = MagickColors.Black;
+                PointD xpPosition = new PointD(foregroundStartX + 535, foregroundStartY + 83);
+
+                return new Drawables()
+                    .FillColor(xpColor)
+                    .Font("Consolas")
+                    .FontPointSize(17)
+                    .TextAlignment(TextAlignment.Right)
+                    .Text(xpPosition.X, xpPosition.Y, totalXp.ToString("N0", new CultureInfo("en-US")));
+            }
+
+            Drawables GetXpRankDrawables(uint rank)
+            {
+                MagickColor xpColor = MagickColors.Black;
+                PointD xpPosition = new PointD(foregroundStartX + 535, foregroundStartY + 108);
+
+                return new Drawables()
+                    .FillColor(xpColor)
+                    .Font("Consolas")
+                    .FontPointSize(17)
+                    .TextAlignment(TextAlignment.Right)
+                    .Text(xpPosition.X, xpPosition.Y, $"#{rank}");
+            }
+
+            Drawables GetKarmaPointsDrawables(int karmaPoints)
+            {
+                MagickColor xpColor = MagickColors.Black;
+                PointD xpPosition = new PointD(foregroundStartX + 535, foregroundStartY + 130);
+
+                return new Drawables()
+                    .FillColor(xpColor)
+                    .Font("Consolas")
+                    .FontPointSize(17)
+                    .TextAlignment(TextAlignment.Right)
+                    .Text(xpPosition.X, xpPosition.Y, $"{karmaPoints}");
+            }
+
+            Drawables GetKarmaRankDrawables(uint rank)
+            {
+                MagickColor xpColor = MagickColors.Black;
+                PointD xpPosition = new PointD(foregroundStartX + 535, foregroundStartY + 153);
+
+                return new Drawables()
+                    .FillColor(xpColor)
+                    .Font("Consolas")
+                    .FontPointSize(17)
+                    .TextAlignment(TextAlignment.Right)
+                    .Text(xpPosition.X, xpPosition.Y, $"#{rank}");
+            }
+
             return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                    $"/images/profiles/{user.Username}-profile.png";
         }
+
 
         public Embed WelcomeMessage(string icon, string name, ushort discriminator)
         {
@@ -392,9 +581,10 @@ namespace DiscordBot.Services
         }
 
         // Message Edited Thanks
-        public async Task ThanksEdited(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam, ISocketMessageChannel socketMessageChannel)
+        public async Task ThanksEdited(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam,
+            ISocketMessageChannel socketMessageChannel)
         {
-            if(_canEditThanks.Contains(messageParam.Id))
+            if (_canEditThanks.Contains(messageParam.Id))
             {
                 await Thanks(messageParam);
             }
@@ -499,6 +689,7 @@ namespace DiscordBot.Services
                         "If you want me to stop reminding you about this, please type \"!disablethanksreminder\".")
                     .DeleteAfterTime(seconds: defaultDelTime);
             }
+
             if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
             {
                 _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);

@@ -151,6 +151,10 @@
   "streamingRoleID": "233830762883842048",
   "streamerRoleID": "233814950710214659",
   "publisherRoleID": "206830803575898112",
+  "staffRoleId": "460573273134989313",
   /*Publisher Stuff*/
-  "assetStoreFrontPage": "https://www.assetstore.unity3d.com/en/"
+  "assetStoreFrontPage": "https://www.assetstore.unity3d.com/en/",
+  /*Complaints Channels Stuff*/
+  "complaintCategoryName": "Complaints",
+  "complaintChannelPrefix": "Complaint"
 }
