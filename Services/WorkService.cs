@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Settings.Deserialized;
 
 namespace DiscordBot.Services
 {
@@ -33,13 +34,16 @@ namespace DiscordBot.Services
 
         private static readonly List<Work> allWork = new List<Work>();
 
-        public WorkService()
-        {
-            _daysToBeLockedOut = SettingsHandler.LoadValueInt("daysToBeLockedOut", JsonFile.PayWork);
-            _daysToRemoveMessage = SettingsHandler.LoadValueInt("daysToRemoveMessage", JsonFile.PayWork);
-            _lookingForWorkChannel = SettingsHandler.LoadValueUlong("looking-for-work", JsonFile.PayWork);
-            _hiringChannel = SettingsHandler.LoadValueUlong("hiring", JsonFile.PayWork);
-            _collaborationChannel = SettingsHandler.LoadValueUlong("collaboration", JsonFile.PayWork);
+        private readonly PayWork _payWork;
+
+        public WorkService(PayWork payWork) {
+            _payWork = payWork;
+            
+            _daysToBeLockedOut = _payWork.DaysToBeLockedOut;
+            _daysToRemoveMessage = _payWork.DaysToRemoveMessage;
+            _lookingForWorkChannel = _payWork.LookingForWork.ChannelId;
+            _hiringChannel = _payWork.Hiring.ChannelId;
+            _collaborationChannel = _payWork.Collaboration.ChannelId;
         }
 
         public async void TimerUpdate()
@@ -76,7 +80,7 @@ namespace DiscordBot.Services
                 }
                 flag = true;
                 work = new Work(messageParam.Author as IGuildUser, messageParam.Timestamp.DateTime, messageParam, messageParam.Channel,
-                    SettingsHandler.LoadValueUlong("looking-for-work:mute", JsonFile.PayWork));
+                    _payWork.LookingForWork.MutedId);
                 await UserRemoveAccess(work);
                 await MessageRemove(work);
                 await DuplicateUserMsg(work.Channel, work.User, messageParam.Timestamp, messageParam.Content, work.User.Username,
@@ -90,7 +94,7 @@ namespace DiscordBot.Services
                 }
                 flag = true;
                 work = new Work(messageParam.Author as IGuildUser, messageParam.Timestamp.DateTime, messageParam, messageParam.Channel,
-                    SettingsHandler.LoadValueUlong("hiring:mute", JsonFile.PayWork));
+                    _payWork.Hiring.MutedId);
                 await UserRemoveAccess(work);
                 await MessageRemove(work);
                 await DuplicateUserMsg(work.Channel, work.User, messageParam.Timestamp, messageParam.Content, work.User.Username,
@@ -104,7 +108,7 @@ namespace DiscordBot.Services
                 }
                 flag = true;
                 work = new Work(messageParam.Author as IGuildUser, messageParam.Timestamp.DateTime, messageParam, messageParam.Channel,
-                    SettingsHandler.LoadValueUlong("collaboration:mute", JsonFile.PayWork));
+                    _payWork.Collaboration.MutedId);
                 await UserRemoveAccess(work);
                 await MessageRemove(work);
                 await DuplicateUserMsg(work.Channel, work.User, messageParam.Timestamp, messageParam.Content, work.User.Username,

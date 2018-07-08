@@ -14,10 +14,13 @@ namespace DiscordBot.Services
         private DiscordSocketClient _client;
         private IAudioClient _audioClient;
 
-        public AudioService(LoggingService logging, DiscordSocketClient client)
+        private readonly Settings.Deserialized.Settings _settings;
+
+        public AudioService(LoggingService logging, DiscordSocketClient client, Settings.Deserialized.Settings settings)
         {
             _logging = logging;
             _client = client;
+            _settings = settings;
         }
 
         private async Task ConnectAudioClient()
@@ -36,9 +39,9 @@ namespace DiscordBot.Services
             {
                 try
                 {
-                    await SendAsync(_audioClient, Settings.GetServerRootPath() + @"/music/kanashii.mp3");
+                    await SendAsync(_audioClient, _settings.ServerRootPath + @"/music/kanashii.mp3");
                     await Task.Delay(1000);
-                    await SendAsync(_audioClient, Settings.GetServerRootPath() + @"/music/oddloop.mp3");
+                    await SendAsync(_audioClient, _settings.ServerRootPath + @"/music/oddloop.mp3");
                 }
                 catch (Exception)
                 {

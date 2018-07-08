@@ -12,9 +12,11 @@ namespace DiscordBot.Services
 
         private readonly LoggingService _logging;
 
-        public DatabaseService(LoggingService logging)
-        {
-            _connection = SettingsHandler.LoadValueString("dbConnectionString", JsonFile.Settings);
+        private readonly Settings.Deserialized.Settings _settings;
+
+        public DatabaseService(LoggingService logging, Settings.Deserialized.Settings settings) {
+            _settings = settings;
+            _connection = _settings.ConnectionString;
             _logging = logging;
         }
 

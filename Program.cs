@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -8,12 +9,16 @@ using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
 using DiscordBot.Services;
+using DiscordBot.Settings.Deserialized;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using IMessage = Discord.IMessage;
 
 namespace DiscordBot
 {
-    class Program
-    {
+    public class Program {
+        public static string CommandList;
+        
         private DiscordSocketClient _client;
 
         private CommandService _commandService;
@@ -29,16 +34,17 @@ namespace DiscordBot
         private AnimeService _animeService;
         private CasinoService _casinoService;
 
-        private string _token = "";
+        private static PayWork _payWork;
+        private static Rules _rules;
+        private static Settings.Deserialized.Settings _settings;
+        private static UserSettings _userSettings;
 
-        static void Main(string[] args)
-        {
+        public static void Main(string[] args) => 
             new Program().MainAsync().GetAwaiter().GetResult();
-        }
 
-        public async Task MainAsync()
+        private async Task MainAsync()
         {
-            _token = SettingsHandler.LoadValueString("token", JsonFile.Settings);
+            DeserializeSettings();
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
@@ -52,16 +58,16 @@ namespace DiscordBot
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Async
             });
-            _loggingService = new LoggingService(_client);
-            _databaseService = new DatabaseService(_loggingService);
-            _publisherService = new PublisherService(_client, _databaseService);
-            _animeService = new AnimeService(_client, _loggingService);
-            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService);
-            _userService = new UserService(_databaseService, _loggingService, _updateService);
-            _workService = new WorkService();
+            _loggingService = new LoggingService(_client, _settings);
+            _databaseService = new DatabaseService(_loggingService, _settings);
+            _publisherService = new PublisherService(_client, _databaseService, _settings);
+            _animeService = new AnimeService(_client, _loggingService, _settings);
+            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService, _settings);
+            _userService = new UserService(_databaseService, _loggingService, _updateService, _settings, _userSettings);
+            _workService = new WorkService(_payWork);
             
-            _audioService = new AudioService(_loggingService, _client);
-            _casinoService = new CasinoService(_loggingService, _updateService, _databaseService);
+            _audioService = new AudioService(_loggingService, _client, _settings);
+            _casinoService = new CasinoService(_loggingService, _updateService, _databaseService, _settings);
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_loggingService);
             _serviceCollection.AddSingleton(_databaseService);
@@ -82,7 +88,7 @@ namespace DiscordBot
 
             // await InitCommands();
 
-            await _client.LoginAsync(TokenType.Bot, _token);
+            await _client.LoginAsync(TokenType.Bot, _settings.Token);
             await _client.StartAsync();
 
             _client.Ready += () =>
@@ -149,12 +155,12 @@ namespace DiscordBot
             {
                 commandList.Append($"**role {c.Name}** : {c.Summary}\n");
             }
-            Settings.SetCommandList(commandList.ToString());
+            CommandList = commandList.ToString();
         }
 
         private async Task MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
-            if (message.Value.Author.IsBot || channel.Id == Settings.GetBotAnnouncementChannel())
+            if (message.Value.Author.IsBot || channel.Id == _settings.BotAnnouncementChannel.Id)
                 return;
 
             var content = message.Value.Content;
@@ -183,9 +189,8 @@ namespace DiscordBot
             await _loggingService.LogAction(" ", false, true, embed);
         }
 
-        private async Task UserJoined(SocketGuildUser user)
-        {
-            ulong general = SettingsHandler.LoadValueUlong("generalChannel/id", JsonFile.Settings);
+        private async Task UserJoined(SocketGuildUser user) {
+            ulong general = _settings.GeneralChannel.Id;
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
 
             _databaseService.AddNewUser(user);
@@ -193,7 +198,7 @@ namespace DiscordBot
             //Check for existing mute
             if (_userService._mutedUsers.HasUser(user.Id))
             {
-                await user.AddRoleAsync(Settings.GetMutedRole(user.Guild));
+                await user.AddRoleAsync(socketTextChannel?.Guild.GetRole(_settings.MutedRoleId));
                 await _loggingService.LogAction(
                 $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
                 await socketTextChannel.SendMessageAsync($"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
@@ -212,7 +217,7 @@ namespace DiscordBot
                 await socketTextChannel.SendMessageAsync(string.Empty, false, em);
             }
 
-            string globalRules = Settings.GetRule(0).content;
+            string globalRules = _rules.Channel.First(x => x.Id == 0).Content;
             IDMChannel dm = await user.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync(
                 "Hello and welcome to Unity Developer Hub !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
@@ -253,13 +258,12 @@ namespace DiscordBot
         public async Task HandleCommand(SocketMessage messageParam)
         {
             // Don't process the command if it was a System Message
-            var message = messageParam as SocketUserMessage;
-            if (message == null)
+            if (!(messageParam is SocketUserMessage message))
                 return;
 
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
-            char prefix = SettingsHandler.LoadValueChar("prefix", JsonFile.Settings);
+            char prefix = _settings.Prefix;
             // Determine if the message is a command, based on if it starts with '!' or a mention prefix
             if (!(message.HasCharPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
                 return;
@@ -271,7 +275,29 @@ namespace DiscordBot
             if (!result.IsSuccess)
             {
                 IUserMessage m = await context.Channel.SendMessageAsync(result.ErrorReason);
-                Task.Delay(10000).ContinueWith(t => m.DeleteAsync());
+                await Task.Delay(10000).ContinueWith(t => m.DeleteAsync());
+            }
+        }
+
+        private static void DeserializeSettings () {
+            using (var file = File.OpenText(@"Settings\Settings.json")) {
+                var serializer = new JsonSerializer();
+                _settings = (Settings.Deserialized.Settings) serializer.Deserialize(file, typeof(Settings.Deserialized.Settings));
+            }
+            
+            using (var file = File.OpenText(@"Settings\PayWork.json")) {
+                var serializer = new JsonSerializer();
+                _payWork = (PayWork) serializer.Deserialize(file, typeof(PayWork));
+            }
+            
+            using (var file = File.OpenText(@"Settings\Rules.json")) {
+                var serializer = new JsonSerializer();
+                _rules = (Rules) serializer.Deserialize(file, typeof(Rules));
+            }
+            
+            using (var file = File.OpenText(@"Settings\UserSettings.json")) {
+                var serializer = new JsonSerializer();
+                _userSettings = (UserSettings) serializer.Deserialize(file, typeof(UserSettings));
             }
         }
     }

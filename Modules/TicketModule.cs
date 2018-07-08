@@ -8,8 +8,13 @@ using DiscordBot.Extensions;
 // ReSharper disable all UnusedMember.Local
 namespace DiscordBot.Modules
 {
-    public class TicketModule : ModuleBase
-    {
+    public class TicketModule : ModuleBase {
+        private Settings.Deserialized.Settings _settings;
+
+        public TicketModule (Settings.Deserialized.Settings settings) {
+            _settings = settings;
+        }
+        
         /// <summary>
         /// Creates a private channel only accessable by the mods, admins, and the user who used the command.
         ///
@@ -21,10 +26,10 @@ namespace DiscordBot.Modules
             var channelList = Context.Guild.GetChannelsAsync().Result;
             var channelName =
                 ParseToDiscordChannel(
-                    $"{SettingsHandler.LoadValueString("complaintChannelPrefix", JsonFile.Settings)}-{Context.User.Username}");
+                    $"{_settings.ComplaintChannelPrefix}-{Context.User.Username}");
             var categoryExists = false;
             var categoryList = Context.Guild.GetCategoriesAsync().Result;
-            var categoryName = SettingsHandler.LoadValueString("complaintCategoryName", JsonFile.Settings);
+            var categoryName = _settings.ComplaintCategoryName;
 
             var everyonePerms = new OverwritePermissions(viewChannel: PermValue.Deny);
             var userPerms = new OverwritePermissions(viewChannel: PermValue.Allow);
@@ -83,7 +88,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.ManageRoles)]
         private async Task Close()
         {
-            var channelName = SettingsHandler.LoadValueString("complaintChannelPrefix", JsonFile.Settings);
+            var channelName = _settings.ComplaintChannelPrefix;
 
             await Context.Message.DeleteAsync();
 
