@@ -183,7 +183,7 @@ namespace DiscordBot.Modules
 
             await Task.Delay(10000);
             await Context.Message.DeleteAsync();
-            await Task.Delay(TimeSpan.FromMinutes(1d));
+            await Task.Delay(TimeSpan.FromMinutes(3d));
             await profile.DeleteAsync();
         }
 
@@ -194,7 +194,7 @@ namespace DiscordBot.Modules
 
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
-            await Task.Delay(TimeSpan.FromMinutes(1d));
+            await Task.Delay(TimeSpan.FromMinutes(3d));
             await profile.DeleteAsync();
         }
 

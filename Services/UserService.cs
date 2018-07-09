@@ -456,7 +456,8 @@ namespace DiscordBot.Services
 
                     //XP Bar Inside
                     .StrokeColor(MagickColors.Transparent)
-                    .FillColor(MagickColors.LightGray)
+                    //.FillColor(MagickColors.LightGray)
+                    .FillColor(MagickColors.LimeGreen)
                     .Rectangle(xpBarInsideRectangle.UpperLeftX, xpBarInsideRectangle.UpperLeftY, xpBarInsideRectangle.LowerRightX,
                         xpBarInsideRectangle.LowerRightY);
             }
@@ -502,7 +503,7 @@ namespace DiscordBot.Services
                 return new Drawables()
                     .StrokeColor(levelColor)
                     .FillColor(levelColor)
-                    .FontPointSize(40)
+                    .FontPointSize(50)
                     .TextAlignment(TextAlignment.Center)
                     .Text(levelPosition.X, levelPosition.Y, lvl.ToString());
             }
