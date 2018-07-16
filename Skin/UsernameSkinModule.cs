@@ -7,18 +7,8 @@ namespace DiscordBot.Skin
     {
         public override Drawables GetDrawables(ProfileData data)
         {
-            PointD usernamePosition = new PointD(StartX, StartY);
-
-            return new Drawables()
-                .FontPointSize(FontPointSize)
-                .Font(Font)
-                .StrokeColor(new MagickColor(StrokeColor))
-                .StrokeWidth(StrokeWidth)
-                .StrokeAntialias(StrokeAntiAlias)
-                .FillColor(new MagickColor(FillColor))
-                .TextAlignment(TextAlignment.Left)
-                .TextAntialias(TextAntiAlias)
-                .Text(usernamePosition.X, usernamePosition.Y, $"{data.Nickname ?? data.Username}");
+            Text = $"{data.Nickname ?? data.Username}";
+            return base.GetDrawables(data);
         }
 
         public UsernameSkinModule()
@@ -27,8 +17,6 @@ namespace DiscordBot.Skin
             Font = "Consolas";
             StrokeColor = MagickColors.BlueViolet.ToString();
             FillColor = MagickColors.DeepSkyBlue.ToString();
-            StrokeAntiAlias = true;
-            StrokeWidth = 1;
         }
     }
 }

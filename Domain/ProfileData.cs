@@ -1,4 +1,5 @@
 using System.Drawing;
+using ImageMagick;
 
 namespace DiscordBot.Domain
 {
@@ -18,5 +19,6 @@ namespace DiscordBot.Domain
         public uint MaxXpShown { get; set; }
         public float XpPercentage { get; set; }
         public Color MainRoleColor { get; set; }
+        public MagickImage Picture { get; set; }
     }
 }

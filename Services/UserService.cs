@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -15,12 +14,10 @@ using DiscordBot.Skin;
 using ImageMagick;
 using ImageSharp;
 using ImageSharp.Drawing;
-using ImageSharp.Drawing.Brushes;
 using ImageSharp.Formats;
 using Newtonsoft.Json;
 using SixLabors.Fonts;
 using SixLabors.Primitives;
-using RectangleD = DiscordBot.Domain.RectangleD;
 
 namespace DiscordBot.Services
 {
@@ -357,13 +354,11 @@ namespace DiscordBot.Services
 
                 MagickImage background =
                     new MagickImage(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/skins/" + skin.Background);
-                MagickImage avatar;
-
 
                 string avatarUrl = user.GetAvatarUrl();
                 if (string.IsNullOrEmpty(avatarUrl))
                 {
-                    avatar = new MagickImage(
+                    profile.Picture = new MagickImage(
                         SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                         "/images/default.png");
                 }
@@ -378,26 +373,29 @@ namespace DiscordBot.Services
                             stream = await http.GetStreamAsync(new Uri(avatarUrl));
                         }
 
-                        avatar = new MagickImage(stream);
+                        profile.Picture = new MagickImage(stream);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
-                        avatar = new MagickImage(
+                        profile.Picture = new MagickImage(
                             SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
                             "/images/default.png");
                     }
                 }
 
-                avatar.Resize(skin.AvatarSize, skin.AvatarSize);
+                profile.Picture.Resize((int) skin.AvatarSize, skin.AvatarSize);
                 profileCard.Add(background);
 
                 foreach (var layer in skin.Layers)
                 {
                     if (layer.Image != null)
                     {
-                        MagickImage image = new MagickImage(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                                            "/skins/" + layer.Image);
+                        MagickImage image = layer.Image.ToLower() == "avatar"
+                            ? profile.Picture
+                            : new MagickImage(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
+                                              "/skins/" + layer.Image);
+
                         background.Composite(image, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
                     }
 
@@ -409,9 +407,6 @@ namespace DiscordBot.Services
 
                     background.Composite(l, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
                 }
-
-                //Composite avatar on top 
-                background.Composite(avatar, skin.AvatarX, skin.AvatarY, CompositeOperator.Over);
 
                 using (IMagickImage result = profileCard.Mosaic())
                 {
