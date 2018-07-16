@@ -33,7 +33,7 @@ namespace DiscordBot.Skin
             copy.Resize(1, 1);
             MagickColor color = copy.GetPixels()[0, 0].ToColor();            
             
-            if (WhiteFix && color.R + color.G + color.B > 600)
+            if (WhiteFix && color.R + color.G + color.B > 650)
                             color = new MagickColor(DefaultColor);
             
             return color;
