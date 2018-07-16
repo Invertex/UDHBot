@@ -1,106 +1,116 @@
 {
-    "Name": "Default",
-    "Codename": "default",
-    "Description": "Default avatar",
-    "AvatarSize": 128,
+    "Name": "flat",
+    "Codename": "flat",
+    "Description": "nobelium uranium",
+    "AvatarSize": 225,
     "Background": "background.png",
     "Layers": [
         {
-            "Image": "foreground.png",
-            "StartX": 30,
-            "StartY": 20,
+            "Image": null,
+            "StartX": 0,
+            "StartY": 0,
             "Width": 640,
             "Height": 209,
             "Modules": [
                 {
-                    "Type": "AvatarBorder",
-                    "StartX": 6,
-                    "StartY": 20
-                },
-                {
-                    "Type": "XpBar",
-                    "StartX": 150,
-                    "StartY": 42,
-                    "Width": 360,
-                    "Height": 18,
-                    "OutsideStrokeColor": "#778899FF",
-                    "OutsideFillColor": "#F5F5F5FF",
-                    "InsideStrokeColor": "#FFFFFF00",
-                    "InsideFillColor": "#32CD32FF"
-                },
-                {
-                    "Type": "XpBarInfo",
-                    "StartX": 315,
-                    "StartY": 57,
-                    "Width": 360,
-                    "Height": 18,
-                    "Font": "Consolas",
-                    "FillColor": "#000000FF",
-                    "StrokeColor": "#00000000",
-                    "FontPointSize": 17,
-                    "TextAlignment": "Center"
+                    "Type": "RectangleSampleAvatarColor",
+                    "StartX": 0,
+                    "StartY": 0,
+                    "Width": 640,
+                    "Height": 209,
+                    "WhiteFix" : true,
+                    "DefaultColor" : "#1B2631FF"
                 },
                 {
                     "Type": "Username",
-                    "StartX": 150,
-                    "StartY": 38,
-                    "FontPointSize": 34,
-                    "Font": "Consolas",
-                    "StrokeColor": "#8A2BE2FF",
-                    "FillColor": "#00BFFFFF",
-                    "StrokeAntialias": true,
-                    "StrokeWidth": 0.4
+                    "FontPointSize": 50,
+                    "StartX": 45,
+                    "StartY": 60,
+                    "StrokeColor": "#FFF",
+                    "FillColor": "#FFF",
+                    "StrokeWidth": 0,
+                    "StrokeAntiAlias": true
                 },
+                // Level
                 {
-                    "Type": "TotalXp",
-                    "StartX": 535,
-                    "StartY": 83,
-                    "FontPointSize": 17,
-                    "Font": "Consolas",
-                    "FillColor": "#000000FF",
-                    "TextAlignment": "Right"
-                },
-                {
-                    "Type": "XpRank",
-                    "StartX": 535,
-                    "StartY": 108,
-                    "FontPointSize": 17,
-                    "Font": "Consolas",
-                    "FillColor": "#000000FF",
-                    "TextAlignment": "Right"
-                },
-                {
-                    "Type": "KarmaRank",
-                    "StartX": 535,
-                    "StartY": 153,
-                    "FontPointSize": 17,
-                    "Font": "Consolas",
-                    "FillColor": "#000000FF",
-                    "TextAlignment": "Right"
-                },
-                {
-                    "Type": "KarmaPoints",
-                    "StartX": 535,
-                    "StartY": 130,
-                    "FontPointSize": 17,
-                    "Font": "Consolas",
-                    "FillColor": "#000000FF",
-                    "TextAlignment": "Right"
+                    "Type": "CustomText",
+                    "StartX": 45,
+                    "StartY": 102,
+                    "FillColor": "#FFF",
+                    "FontPointSize": 28,
+                    "Text": "LVL"
                 },
                 {
                     "Type": "Level",
-                    "StartX": 220,
-                    "StartY": 140,
-                    "FontPointSize": 50,
-                    "Font": "Consolas",
-                    "TextAlignment": "Center"
+                    "StartX": 105,
+                    "StartY": 102,
+                    "FontPointSize": 28,
+                    "FillColor": "#FFF",
+                    "StrokeColor": "#0000"
+                },
+                // xp stuff
+                {
+                    "Type": "XpBarInfo",
+                    "StartX": 45,
+                    "StartY": 183,
+                    "FillColor": "#FFF",
+                    "StrokeColor": "#0000",
+                    "FontPointSize": 12
+                },
+                {
+                    "Type": "XpRank",
+                    "StartX": 130,
+                    "StartY": 162,
+                    "FontPointSize": 20,
+                    "FillColor": "#FFF"
+                },
+                {
+                    "Type": "CustomText",
+                    "StartX": 45,
+                    "StartY": 162,
+                    "FontPointSize": 20,
+                    "FillColor": "#FFF",
+                    "Text": "XP Rank"
+                },
+                // Karma stuff
+                {
+                    "Type": "CustomText",
+                    "StartX": 240,
+                    "StartY": 162,
+                    "FontPointSize": 15,
+                    "FillColor": "#FFF",
+                    "Text": "Karma Rank"
+                },
+                {
+                    "Type": "KarmaRank",
+                    "StartX": 363,
+                    "StartY": 162,
+                    "FontPointSize": 15,
+                    "FillColor": "#FFFF",
+                    "TextAlignmnent" : "Right"
+                },
+                {
+                    "Type": "CustomText",
+                    "StartX": 240,
+                    "StartY": 183,
+                    "FillColor": "#FFF",
+                    "FontPointSize": 15,
+                    "Text": "Karma Points"
+                },
+                {
+                    "Type": "KarmaPoints",
+                    "StartX": 363,
+                    "StartY": 183,
+                    "FontPointSize": 15,
+                    "FillColor": "#FFF",
+                    "TextAlignmnent" : "Right"
                 }
             ]
         },
         {
             "Image": "avatar",
-            "StartX": 36,
-            "StartY": 40
+            "StartX": 431,
+            "StartY": 0
         }
     ]
 }

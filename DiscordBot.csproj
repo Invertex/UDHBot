@@ -20,6 +20,5 @@
   <ItemGroup>
     <Folder Include="SERVER\fonts" />
     <Folder Include="SERVER\images\profiles" />
-    <Folder Include="SERVER\skins" />
   </ItemGroup>
 </Project>

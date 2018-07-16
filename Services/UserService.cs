@@ -355,7 +355,7 @@ namespace DiscordBot.Services
                 MagickImage background =
                     new MagickImage(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/skins/" + skin.Background);
 
-                string avatarUrl = user.GetAvatarUrl();
+                string avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
                 if (string.IsNullOrEmpty(avatarUrl))
                 {
                     profile.Picture = new MagickImage(
