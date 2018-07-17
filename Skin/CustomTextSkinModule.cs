@@ -33,8 +33,9 @@ namespace DiscordBot.Skin
                 .StrokeWidth(StrokeWidth)
                 .StrokeAntialias(StrokeAntiAlias)
                 .FillColor(new MagickColor(FillColor))
-                .TextAlignment(TextAlignment.Left)
+                .TextAlignment(TextAlignment)
                 .TextAntialias(TextAntiAlias)
+                .TextKerning(TextKerning)
                 .Text(textPosition.X, textPosition.Y, $"{Text ?? Text}");
         }
 
