@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DiscordBot.Properties;
 
 namespace DiscordBot.Extensions
 {
@@ -85,6 +86,11 @@ namespace DiscordBot.Extensions
 
             // return result
             return matrix[source1Length, source2Length];
+        }
+
+        public static string AsCodeBlock(this string code, string language = "cs")
+        {
+            return Resources.DiscordCodeBlock.Replace("{code}", code).Replace("{language}", language);
         }
     }
 }

@@ -9,6 +9,7 @@ using System.Web;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
+using DiscordBot.Properties;
 using DiscordBot.Services;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
@@ -282,8 +283,7 @@ namespace DiscordBot.Modules
         [Alias("code", "compute", "assert")]
         private async Task CompileCode(params string[] code)
         {
-            string codeComplete =
-                $"using System;\nusing System.Collections.Generic;\n\n\tpublic class Hello\n\t{{\n\t\tpublic static void Main()\n\t\t{{\n\t\t\t{String.Join(" ", code)}\n\t\t}}\n\t}}\n";
+            var codeComplete = Resources.PaizaCodeTemplate.Replace("{code}", string.Join(" ", code));
 
             var parameters = new Dictionary<string, string>
             {
@@ -291,10 +291,10 @@ namespace DiscordBot.Modules
                 {"language", "csharp"},
                 {"api_key", "guest"}
             };
+
             var content = new FormUrlEncodedContent(parameters);
 
-            var message = await ReplyAsync("Please wait a moment, trying to compile your code interpreted as\n" +
-                                           $"```cs\n{codeComplete}```");
+            var message = await ReplyAsync($"Please wait a moment, trying to compile your code interpreted as\n {codeComplete.AsCodeBlock()}");
 
             using (HttpClient client = new HttpClient())
             {
@@ -330,22 +330,17 @@ namespace DiscordBot.Modules
                 string result = response["build_result"];
 
                 string fullMessage;
-
                 if (result == "failure")
                 {
-                    fullMessage = message.Content + "The code resulted in a failure.\n"
-                                                  + (build_stddout.Length > 0
-                                                      ? $"```cs\n{build_stddout}```\n"
-                                                      : "") +
-                                                  (build_stderr.Length > 0
-                                                      ? $"```cs\n{build_stderr}\n"
-                                                      : "```");
+                    fullMessage = message.Content + "The code resulted in a failure.\n";
+                    fullMessage += build_stddout.Length > 0 ? build_stddout.AsCodeBlock() : string.Empty;
+                    fullMessage += build_stderr.Length > 0 ? build_stderr.AsCodeBlock() : string.Empty;
                 }
                 else
                 {
-                    fullMessage = message.Content + "Result : "
-                                                  + (stdout.Length > 0 ? $"```cs\n{stdout}```" : "") +
-                                                  $"```cs\n{stderr}\n";
+                    fullMessage = message.Content + "Result : ";
+                    fullMessage += stdout.Length > 0 ? stdout.AsCodeBlock() : string.Empty;
+                    fullMessage += stderr.Length > 0 ? stderr.AsCodeBlock() : string.Empty;
                 }
 
                 httpResponse = await client.PostAsync("https://hastebin.com/documents", new StringContent(fullMessage.Truncate(10000)));
