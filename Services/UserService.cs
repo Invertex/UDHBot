@@ -38,17 +38,11 @@ namespace DiscordBot.Services
         private readonly Dictionary<ulong, DateTime> _thanksCooldown;
         private Dictionary<ulong, DateTime> _thanksReminderCooldown;
 
-        public Dictionary<ulong, DateTime> ThanksReminderCooldown
-        {
-            get { return _thanksReminderCooldown; }
-        }
+        public Dictionary<ulong, DateTime> ThanksReminderCooldown => _thanksReminderCooldown;
 
         private Dictionary<ulong, DateTime> _codeReminderCooldown;
 
-        public Dictionary<ulong, DateTime> CodeReminderCooldown
-        {
-            get { return _codeReminderCooldown; }
-        }
+        public Dictionary<ulong, DateTime> CodeReminderCooldown => _codeReminderCooldown;
 
         private readonly Random rand;
 

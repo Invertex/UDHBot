@@ -52,7 +52,7 @@ namespace DiscordBot
             });
 
             _commandService =
-                new CommandService(new CommandServiceConfig() {CaseSensitiveCommands = false, DefaultRunMode = RunMode.Async});
+                new CommandService(new CommandServiceConfig {CaseSensitiveCommands = false, DefaultRunMode = RunMode.Async});
             _loggingService = new LoggingService(_client, _settings);
             _databaseService = new DatabaseService(_loggingService, _settings);
             _publisherService = new PublisherService(_client, _databaseService, _settings);
@@ -73,6 +73,10 @@ namespace DiscordBot
             _serviceCollection.AddSingleton(_audioService);
             _serviceCollection.AddSingleton(_animeService);
             _serviceCollection.AddSingleton(_casinoService);
+            _serviceCollection.AddSingleton(_settings);
+            _serviceCollection.AddSingleton(_rules);
+            _serviceCollection.AddSingleton(_payWork);
+            _serviceCollection.AddSingleton(_userSettings);
             _services = _serviceCollection.BuildServiceProvider();
 
 
@@ -283,26 +287,22 @@ namespace DiscordBot
         {
             using (var file = File.OpenText(@"Settings\Settings.json"))
             {
-                var serializer = new JsonSerializer();
-                _settings = (Settings.Deserialized.Settings) serializer.Deserialize(file, typeof(Settings.Deserialized.Settings));
+                _settings = JsonConvert.DeserializeObject<Settings.Deserialized.Settings>(file.ReadToEnd());
             }
 
             using (var file = File.OpenText(@"Settings\PayWork.json"))
             {
-                var serializer = new JsonSerializer();
-                _payWork = (PayWork) serializer.Deserialize(file, typeof(PayWork));
+                _payWork = JsonConvert.DeserializeObject<PayWork>(file.ReadToEnd());
             }
 
             using (var file = File.OpenText(@"Settings\Rules.json"))
             {
-                var serializer = new JsonSerializer();
-                _rules = (Rules) serializer.Deserialize(file, typeof(Rules));
+                _rules = JsonConvert.DeserializeObject<Rules>(file.ReadToEnd());
             }
 
             using (var file = File.OpenText(@"Settings\UserSettings.json"))
             {
-                var serializer = new JsonSerializer();
-                _userSettings = (UserSettings) serializer.Deserialize(file, typeof(UserSettings));
+                _userSettings = JsonConvert.DeserializeObject<UserSettings>(file.ReadToEnd());
             }
         }
     }

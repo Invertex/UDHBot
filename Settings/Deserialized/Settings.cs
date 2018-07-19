@@ -7,7 +7,7 @@ namespace DiscordBot.Settings.Deserialized {
         public string Gmail { get; set; }
         public string GmailPassword { get; set; }
         
-        public string ConnectionString { get; set; }
+        public string DbConnectionString { get; set; }
         
         public string ServerRootPath { get; set; }
         

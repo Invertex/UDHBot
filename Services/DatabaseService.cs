@@ -17,7 +17,7 @@ namespace DiscordBot.Services
         public DatabaseService(LoggingService logging, Settings.Deserialized.Settings settings)
         {
             _settings = settings;
-            _connection = _settings.ConnectionString;
+            _connection = _settings.DbConnectionString;
             _logging = logging;
         }
 
