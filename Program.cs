@@ -16,9 +16,10 @@ using IMessage = Discord.IMessage;
 
 namespace DiscordBot
 {
-    public class Program {
+    public class Program
+    {
         public static string CommandList;
-        
+
         private DiscordSocketClient _client;
 
         private CommandService _commandService;
@@ -27,7 +28,6 @@ namespace DiscordBot
         private LoggingService _loggingService;
         private DatabaseService _databaseService;
         private UserService _userService;
-        private WorkService _workService;
         private PublisherService _publisherService;
         private UpdateService _updateService;
         private AudioService _audioService;
@@ -39,7 +39,7 @@ namespace DiscordBot
         private static Settings.Deserialized.Settings _settings;
         private static UserSettings _userSettings;
 
-        public static void Main(string[] args) => 
+        public static void Main(string[] args) =>
             new Program().MainAsync().GetAwaiter().GetResult();
 
         private async Task MainAsync()
@@ -48,24 +48,18 @@ namespace DiscordBot
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Verbose,
-                AlwaysDownloadUsers = true,
-                MessageCacheSize = 50
+                LogLevel = LogSeverity.Verbose, AlwaysDownloadUsers = true, MessageCacheSize = 50
             });
 
-            _commandService = new CommandService(new CommandServiceConfig()
-            {
-                CaseSensitiveCommands = false,
-                DefaultRunMode = RunMode.Async
-            });
+            _commandService =
+                new CommandService(new CommandServiceConfig() {CaseSensitiveCommands = false, DefaultRunMode = RunMode.Async});
             _loggingService = new LoggingService(_client, _settings);
             _databaseService = new DatabaseService(_loggingService, _settings);
             _publisherService = new PublisherService(_client, _databaseService, _settings);
             _animeService = new AnimeService(_client, _loggingService, _settings);
             _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService, _settings);
             _userService = new UserService(_databaseService, _loggingService, _updateService, _settings, _userSettings);
-            _workService = new WorkService(_payWork);
-            
+
             _audioService = new AudioService(_loggingService, _client, _settings);
             _casinoService = new CasinoService(_loggingService, _updateService, _databaseService, _settings);
             _serviceCollection = new ServiceCollection();
@@ -121,6 +115,7 @@ namespace DiscordBot
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     break;
             }
+
             Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message}");
             Console.ForegroundColor = cc;
             return Task.CompletedTask;
@@ -151,10 +146,12 @@ namespace DiscordBot
             {
                 commandList.Append($"**{c.Name}** : {c.Summary}\n");
             }
+
             foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role"))
             {
                 commandList.Append($"**role {c.Name}** : {c.Summary}\n");
             }
+
             CommandList = commandList.ToString();
         }
 
@@ -189,7 +186,8 @@ namespace DiscordBot
             await _loggingService.LogAction(" ", false, true, embed);
         }
 
-        private async Task UserJoined(SocketGuildUser user) {
+        private async Task UserJoined(SocketGuildUser user)
+        {
             ulong general = _settings.GeneralChannel.Id;
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
 
@@ -200,8 +198,9 @@ namespace DiscordBot
             {
                 await user.AddRoleAsync(socketTextChannel?.Guild.GetRole(_settings.MutedRoleId));
                 await _loggingService.LogAction(
-                $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
-                await socketTextChannel.SendMessageAsync($"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
+                    $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                await socketTextChannel.SendMessageAsync(
+                    $"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
                 _userService._mutedUsers.AddCooldown(user.Id, hours: 72);
                 return;
             }
@@ -237,6 +236,7 @@ namespace DiscordBot
                     $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
                 _databaseService.UpdateUserName(user.Id, user.Nickname);
             }
+
             if (oldUser.AvatarId != user.AvatarId)
             {
                 var avatar = user.GetAvatarUrl();
@@ -247,11 +247,11 @@ namespace DiscordBot
         private async Task UserLeft(SocketGuildUser user)
         {
             DateTime joinDate;
-            DateTime.TryParse(_databaseService.GetUserJoinDate(user.Id), out joinDate);
+            DateTime.TryParse(await _databaseService.GetUserJoinDate(user.Id), out joinDate);
             TimeSpan timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
-                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double)timeStayed.Days).ToString() + " days" : " ")}" +
-                $" {Math.Floor((double)timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +
+                $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
             _databaseService.DeleteUser(user.Id);
         }
 
@@ -279,23 +279,28 @@ namespace DiscordBot
             }
         }
 
-        private static void DeserializeSettings () {
-            using (var file = File.OpenText(@"Settings\Settings.json")) {
+        private static void DeserializeSettings()
+        {
+            using (var file = File.OpenText(@"Settings\Settings.json"))
+            {
                 var serializer = new JsonSerializer();
                 _settings = (Settings.Deserialized.Settings) serializer.Deserialize(file, typeof(Settings.Deserialized.Settings));
             }
-            
-            using (var file = File.OpenText(@"Settings\PayWork.json")) {
+
+            using (var file = File.OpenText(@"Settings\PayWork.json"))
+            {
                 var serializer = new JsonSerializer();
                 _payWork = (PayWork) serializer.Deserialize(file, typeof(PayWork));
             }
-            
-            using (var file = File.OpenText(@"Settings\Rules.json")) {
+
+            using (var file = File.OpenText(@"Settings\Rules.json"))
+            {
                 var serializer = new JsonSerializer();
                 _rules = (Rules) serializer.Deserialize(file, typeof(Rules));
             }
-            
-            using (var file = File.OpenText(@"Settings\UserSettings.json")) {
+
+            using (var file = File.OpenText(@"Settings\UserSettings.json"))
+            {
                 var serializer = new JsonSerializer();
                 _userSettings = (UserSettings) serializer.Deserialize(file, typeof(UserSettings));
             }

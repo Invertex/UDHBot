@@ -195,7 +195,7 @@ namespace DiscordBot.Services
             var u = user as SocketGuildUser;
             IRole publisher = u.Guild.GetRole(_settings.PublisherRoleId);
             await u.AddRoleAsync(publisher);
-            _databaseService.AddPublisherPackage(user.Username, user.DiscriminatorValue.ToString(), user.Id.ToString(), packageId);
+            await _databaseService.AddPublisherPackage(user.Username, user.DiscriminatorValue.ToString(), user.Id.ToString(), packageId);
 
             return "Your package has been verified and added to the daily advertisement list.";
         }

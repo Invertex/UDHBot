@@ -236,7 +236,7 @@ namespace DiscordBot.Services
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
             {
-                _databaseService.UpdateUserRanks();
+                await _databaseService.UpdateUserRanks();
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
         }

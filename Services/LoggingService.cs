@@ -33,7 +33,7 @@ namespace DiscordBot.Services
             }
         }
 
-        public async Task LogXp(string channel, string user, float baseXp, float bonusXp, float xpReduce, int totalXp)
+        public void LogXp(string channel, string user, float baseXp, float bonusXp, float xpReduce, int totalXp)
         {
             File.AppendAllText(_settings.ServerRootPath + @"/logXP.txt",
                 $"[{DateTime.Now:d/M/yy HH:mm:ss}] - {user} gained {totalXp}xp (base: {baseXp}, bonus : {bonusXp}, reduce : {xpReduce}) in channel {channel} {Environment.NewLine}");

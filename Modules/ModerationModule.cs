@@ -120,7 +120,7 @@ namespace DiscordBot.Modules
             MutedUsers.Remove(user.Id);
             await u.RemoveRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
             IUserMessage reply = await ReplyAsync("User " + user + " has been unmuted.");
-           // await Task.Delay(TimeSpan.FromSeconds(10d));
+            // await Task.Delay(TimeSpan.FromSeconds(10d));
             reply?.DeleteAfterSeconds(10d);
         }
 
@@ -170,10 +170,10 @@ namespace DiscordBot.Modules
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");
-            Task.Delay(5000).ContinueWith(t =>
+            await Task.Delay(5000).ContinueWith(async t =>
             {
-                m.DeleteAsync();
-                _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
+                await m.DeleteAsync();
+                await _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
             });
         }
 
@@ -207,7 +207,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.KickMembers)]
         async Task Rules(int seconds = 60)
         {
-            Rules(Context.Channel, seconds);
+            await Rules(Context.Channel, seconds);
             await Context.Message.DeleteAsync();
         }
 
@@ -304,7 +304,7 @@ namespace DiscordBot.Modules
 
         [Command("dbsync"), Summary("Force add user to database")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        async Task DbSync(IUser user)
+        void DbSync(IUser user)
         {
             _database.AddNewUser((SocketGuildUser) user);
         }

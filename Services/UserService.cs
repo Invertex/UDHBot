@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -86,7 +86,7 @@ namespace DiscordBot.Services
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
         public UserService(DatabaseService databaseService, LoggingService loggingService, UpdateService updateService,
-                           Settings.Deserialized.Settings settings, UserSettings userSettings)
+            Settings.Deserialized.Settings settings, UserSettings userSettings)
         {
             rand = new Random();
             _databaseService = databaseService;
@@ -103,9 +103,7 @@ namespace DiscordBot.Services
 
             _noXpChannels = new List<ulong>
             {
-                _settings.BotCommandsChannel.Id,
-                _settings.CasinoChannel.Id,
-                _settings.MusicCommandsChannel.Id
+                _settings.BotCommandsChannel.Id, _settings.CasinoChannel.Id, _settings.MusicCommandsChannel.Id
             };
 
             /*
@@ -150,7 +148,8 @@ namespace DiscordBot.Services
             StringBuilder sbThanks = new StringBuilder();
             var thx = _userSettings.Thanks;
             sbThanks.Append("(?i)\\b(");
-            foreach (var t in thx) {
+            foreach (var t in thx)
+            {
                 sbThanks.Append(t).Append("|");
             }
 
@@ -219,7 +218,7 @@ namespace DiscordBot.Services
             if (_xpCooldown.HasUser(userId))
                 return;
 
-            int karma = _databaseService.GetUserKarma(userId);
+            int karma = await _databaseService.GetUserKarma(userId);
             if (messageParam.Author.Activity != null)
             {
                 if (Regex.Match(messageParam.Author.Activity.Name, "(Unity.+)").Length > 0)
@@ -233,7 +232,7 @@ namespace DiscordBot.Services
                 baseXp *= .9f;
 
             //Lower xp for difference between level and karma
-            uint level = _databaseService.GetUserLevel(userId);
+            uint level = await _databaseService.GetUserLevel(userId);
             float reduceXp = 1f;
             if (karma < level)
             {
@@ -248,10 +247,10 @@ namespace DiscordBot.Services
             if (!await _databaseService.UserExists(userId))
                 _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
 
-            _databaseService.AddUserXp(userId, xpGain);
-            _databaseService.AddUserUdc(userId, (int) Math.Round(xpGain * .15f));
+            await _databaseService.AddUserXp(userId, xpGain);
+            await _databaseService.AddUserUdc(userId, (int) Math.Round(xpGain * .15f));
 
-            await _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
+            _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
             await LevelUp(messageParam, userId);
 
@@ -266,8 +265,8 @@ namespace DiscordBot.Services
         /// <returns></returns>
         public async Task LevelUp(SocketMessage messageParam, ulong userId)
         {
-            int level = (int) _databaseService.GetUserLevel(userId);
-            uint xp = _databaseService.GetUserXp(userId);
+            int level = (int) (await _databaseService.GetUserLevel(userId));
+            uint xp = await _databaseService.GetUserXp(userId);
 
             double xpLow = GetXpLow(level);
             double xpHigh = GetXpHigh(level);
@@ -275,8 +274,8 @@ namespace DiscordBot.Services
             if (xp < xpHigh)
                 return;
 
-            _databaseService.AddUserLevel(userId, 1);
-            _databaseService.AddUserUdc(userId, 1200);
+            await _databaseService.AddUserLevel(userId, 1);
+            await _databaseService.AddUserUdc(userId, 1200);
 
             await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(seconds: 60);
             //TODO: investigate why this is not running async
@@ -298,7 +297,8 @@ namespace DiscordBot.Services
 
         private SkinData GetSkinData()
         {
-            return JsonConvert.DeserializeObject<SkinData>(File.ReadAllText($"{_settings.ServerRootPath}/skins/skin.json"), new SkinModuleJsonConverter());
+            return JsonConvert.DeserializeObject<SkinData>(File.ReadAllText($"{_settings.ServerRootPath}/skins/skin.json"),
+                new SkinModuleJsonConverter());
         }
 
         /// <summary>
@@ -309,10 +309,10 @@ namespace DiscordBot.Services
         public async Task<string> GenerateProfileCard(IUser user)
         {
             ulong userId = user.Id;
-            uint xpTotal = _databaseService.GetUserXp(userId);
-            uint xpRank = _databaseService.GetUserRank(userId);
-            int karma = _databaseService.GetUserKarma(userId);
-            uint level = _databaseService.GetUserLevel(userId);
+            uint xpTotal = await _databaseService.GetUserXp(userId);
+            uint xpRank = await _databaseService.GetUserRank(userId);
+            int karma = await _databaseService.GetUserKarma(userId);
+            uint level = await _databaseService.GetUserLevel(userId);
             uint karmaRank = _databaseService.GetUserKarmaRank(userId);
             double xpLow = GetXpLow((int) level);
             double xpHigh = GetXpHigh((int) level);
@@ -469,7 +469,7 @@ namespace DiscordBot.Services
                     return;
                 }
 
-                DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out DateTime joinDate);
+                DateTime.TryParse(await _databaseService.GetUserJoinDate(userId), out DateTime joinDate);
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
                 if (j > DateTime.Now)
                 {
@@ -497,8 +497,8 @@ namespace DiscordBot.Services
                         continue;
                     }
 
-                    _databaseService.AddUserKarma(user.Id, 1);
-                    _databaseService.AddUserUdc(user.Id, 350);
+                    await _databaseService.AddUserKarma(user.Id, 1);
+                   await _databaseService.AddUserUdc(user.Id, 350);
                     sb.Append(user.Username).Append(" , ");
                 }
 
@@ -541,7 +541,7 @@ namespace DiscordBot.Services
 
             if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
             {
-                _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
+                await _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
             }
         }
 
@@ -655,7 +655,7 @@ public async Task EscapeMessage(SocketMessage messageParam)
             float beginHeight = image.Height - (image.Height * 0.3f);
             float beginWidth = (image.Width * .10f);
             float totalWidth = image.Width * .8f;
-          
+
             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight),
                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center,});
             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight),

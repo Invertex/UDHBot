@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
@@ -30,7 +30,7 @@ namespace DiscordBot.Modules
 
         public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
             PublisherService publisherService, UpdateService updateService, Rules rules
-                          , Settings.Deserialized.Settings settings)
+            , Settings.Deserialized.Settings settings)
         {
             _loggingService = loggingService;
             _databaseService = databaseService;
@@ -292,16 +292,12 @@ namespace DiscordBot.Modules
         {
             var codeComplete = Resources.PaizaCodeTemplate.Replace("{code}", string.Join(" ", code));
 
-            var parameters = new Dictionary<string, string>
-            {
-                {"source_code", codeComplete},
-                {"language", "csharp"},
-                {"api_key", "guest"}
-            };
+            var parameters = new Dictionary<string, string> {{"source_code", codeComplete}, {"language", "csharp"}, {"api_key", "guest"}};
 
             var content = new FormUrlEncodedContent(parameters);
 
-            var message = await ReplyAsync($"Please wait a moment, trying to compile your code interpreted as\n {codeComplete.AsCodeBlock()}");
+            var message = await ReplyAsync(
+                $"Please wait a moment, trying to compile your code interpreted as\n {codeComplete.AsCodeBlock()}");
 
             using (HttpClient client = new HttpClient())
             {
@@ -488,8 +484,8 @@ namespace DiscordBot.Modules
                 // Check if we are within the allowed number of results and if the result is valid (i.e. no evil ads)
                 if (counter <= resNum && IsValidResult(row))
                 {
-                    string title = HttpUtility.UrlDecode(row.InnerText);
-                    string url = HttpUtility.UrlDecode(row.Attributes["href"].Value.Replace("/l/?kh=-1&amp;uddg=", ""));
+                    string title = WebUtility.UrlDecode(row.InnerText);
+                    string url = WebUtility.UrlDecode(row.Attributes["href"].Value.Replace("/l/?kh=-1&amp;uddg=", ""));
                     string msg = "";
 
                     // Added line for pretty output
@@ -579,9 +575,9 @@ namespace DiscordBot.Modules
             double curScore = 0;
             int i = 0;
 
-            foreach (string q in s1.Split(" "))
+            foreach (string q in s1.Split(' '))
             {
-                foreach (string x in s2.Split(" "))
+                foreach (string x in s2.Split(' '))
                 {
                     i++;
                     if (x.Equals(q))
@@ -748,7 +744,7 @@ namespace DiscordBot.Modules
 
                     CultureInfo provider = CultureInfo.InvariantCulture;
                     string wrongFormat = "M/d/yyyy";
-                    string rightFormat = "dd-MMMM-yyyy";
+                    //string rightFormat = "dd-MMMM-yyyy";
 
                     string dateString = dateNode.InnerText;
                     if (!yearNode.InnerText.Contains("&nbsp;"))

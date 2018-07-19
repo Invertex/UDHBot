@@ -1,4 +1,4 @@
-using System.Drawing;
+using Discord;
 using ImageMagick;
 
 namespace DiscordBot.Domain

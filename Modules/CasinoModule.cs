@@ -30,9 +30,9 @@ namespace DiscordBot.Modules
 
             IUser user = Context.User;
 
-            var reply = _casinoService.PlaySlotMachine(user, amount);
+            var reply = await _casinoService.PlaySlotMachine(user, amount);
             if (reply.imagePath != null)
-                await Context.Channel.SendFileAsync(reply.imagePath, reply.reply);
+                await Context.Channel.SendFileAsync((string)reply.imagePath, reply.reply);
             else
                 await ReplyAsync(reply.reply);
         }
