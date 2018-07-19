@@ -285,22 +285,22 @@ namespace DiscordBot
 
         private static void DeserializeSettings()
         {
-            using (var file = File.OpenText(@"Settings\Settings.json"))
+            using (var file = File.OpenText(@"Settings/Settings.json"))
             {
                 _settings = JsonConvert.DeserializeObject<Settings.Deserialized.Settings>(file.ReadToEnd());
             }
 
-            using (var file = File.OpenText(@"Settings\PayWork.json"))
+            using (var file = File.OpenText(@"Settings/PayWork.json"))
             {
                 _payWork = JsonConvert.DeserializeObject<PayWork>(file.ReadToEnd());
             }
 
-            using (var file = File.OpenText(@"Settings\Rules.json"))
+            using (var file = File.OpenText(@"Settings/Rules.json"))
             {
                 _rules = JsonConvert.DeserializeObject<Rules>(file.ReadToEnd());
             }
 
-            using (var file = File.OpenText(@"Settings\UserSettings.json"))
+            using (var file = File.OpenText(@"Settings/UserSettings.json"))
             {
                 _userSettings = JsonConvert.DeserializeObject<UserSettings>(file.ReadToEnd());
             }
