@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -12,11 +11,12 @@ using Discord.WebSocket;
 using DiscordBot.Domain;
 using DiscordBot.Extensions;
 using DiscordBot.Settings.Deserialized;
+using DiscordBot.Skin;
 using ImageMagick;
 using ImageSharp;
 using ImageSharp.Drawing;
-using ImageSharp.Drawing.Brushes;
 using ImageSharp.Formats;
+using Newtonsoft.Json;
 using SixLabors.Fonts;
 using SixLabors.Primitives;
 
@@ -117,32 +117,23 @@ namespace DiscordBot.Services
                          "/fonts/OpenSans-Regular.ttf")
                 .CreateFont(16);*/
             _nameFont = _fontCollection
-                .Install($"{_settings.ServerRootPath} + /fonts/Consolas.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/Consolas.ttf")
                 .CreateFont(22);
             _xpFont = _fontCollection
-                .Install($"{_settings.ServerRootPath} + /fonts/Consolas.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/Consolas.ttf")
                 .CreateFont(12);
             _ranksFont = _fontCollection
-                .Install($"{_settings.ServerRootPath} + /fonts/Consolas.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/Consolas.ttf")
                 .CreateFont(16);
             _levelTextFont = _fontCollection
-                .Install($"{_settings.ServerRootPath} + /fonts/ConsolasBold.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/ConsolasBold.ttf")
                 .CreateFont(22);
             _levelNumberFont = _fontCollection
-                .Install($"{_settings.ServerRootPath} + /fonts/ConsolasBold.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/ConsolasBold.ttf")
                 .CreateFont(30);
-            /*_levelFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
-                .CreateFont(59);*/
-            /*_levelFontSmall = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
-                .CreateFont(45);*/
 
-            /*_subtitlesBlackFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/OpenSansEmoji.ttf")
-                .CreateFont(80);*/
             _subtitlesWhiteFont = _fontCollection
-                .Install($"{_settings.ServerRootPath} + /fonts/OpenSansEmoji.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/OpenSansEmoji.ttf")
                 .CreateFont(75);
 
             /*
@@ -207,9 +198,7 @@ namespace DiscordBot.Services
         {
             UserData data = new UserData
             {
-                MutedUsers = _mutedUsers,
-                ThanksReminderCooldown = _thanksReminderCooldown,
-                CodeReminderCooldown = _codeReminderCooldown
+                MutedUsers = _mutedUsers, ThanksReminderCooldown = _thanksReminderCooldown, CodeReminderCooldown = _codeReminderCooldown
             };
             _updateService.SetUserData(data);
         }
@@ -307,6 +296,11 @@ namespace DiscordBot.Services
             return 70d - (139.5d * (level + 2d)) + (69.5 * Math.Pow(level + 2d, 2d));
         }
 
+        private SkinData GetSkinData()
+        {
+            return JsonConvert.DeserializeObject<SkinData>(File.ReadAllText($"{_settings.ServerRootPath}/skins/skin.json"), new SkinModuleJsonConverter());
+        }
+
         /// <summary>
         /// Generate the profile card for a given user and returns the generated image path
         /// </summary>
@@ -314,17 +308,6 @@ namespace DiscordBot.Services
         /// <returns></returns>
         public async Task<string> GenerateProfileCard(IUser user)
         {
-            //Settings
-            var backgroundPath = $"{_settings.ServerRootPath} + /images/background.png";
-            var foregroundPath = $"{_settings.ServerRootPath} + /images/foreground.png";
-
-            int avatarSize = 128;
-            int foregroundStartX = 30;
-            int foregroundStartY = 20;
-
-            int avatarStartX = 6;
-            int avatarStartY = 20;
-
             ulong userId = user.Id;
             uint xpTotal = _databaseService.GetUserXp(userId);
             uint xpRank = _databaseService.GetUserRank(userId);
@@ -356,14 +339,31 @@ namespace DiscordBot.Services
 
             using (MagickImageCollection profileCard = new MagickImageCollection())
             {
-                MagickImage background = new MagickImage(backgroundPath);
-                MagickImage foreground = new MagickImage(foregroundPath);
-                MagickImage avatar;
+                SkinData skin = GetSkinData();
+                ProfileData profile = new ProfileData
+                {
+                    Karma = karma,
+                    KarmaRank = karmaRank,
+                    Level = level,
+                    MainRoleColor = mainRole.Color,
+                    MaxXpShown = maxXpShown,
+                    Nickname = (user as IGuildUser).Nickname,
+                    UserId = userId,
+                    Username = user.Username,
+                    XpHigh = xpHigh,
+                    XpLow = xpLow,
+                    XpPercentage = percentage,
+                    XpRank = xpRank,
+                    XpShown = xpShown,
+                    XpTotal = xpTotal
+                };
 
-                string avatarUrl = user.GetAvatarUrl();
+                MagickImage background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
+
+                string avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
                 if (string.IsNullOrEmpty(avatarUrl))
                 {
-                    avatar = new MagickImage($"{_settings.ServerRootPath} + /images/default.png");
+                    profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
                 }
                 else
                 {
@@ -376,195 +376,52 @@ namespace DiscordBot.Services
                             stream = await http.GetStreamAsync(new Uri(avatarUrl));
                         }
 
-                        avatar = new MagickImage(stream);
+                        profile.Picture = new MagickImage(stream);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
-                        avatar = new MagickImage($"{_settings.ServerRootPath} + /images/default.png");
+                        profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
                     }
                 }
 
-                avatar.Resize(avatarSize, avatarSize);
+                profile.Picture.Resize((int) skin.AvatarSize, skin.AvatarSize);
                 profileCard.Add(background);
 
-                background.Composite(foreground, foregroundStartX, foregroundStartY, CompositeOperator.Over);
-
-                using (MagickImage textLayer = new MagickImage(new MagickColor(MagickColor.FromRgba(0, 0, 0, 0)), background.Width,
-                    background.Height))
+                foreach (var layer in skin.Layers)
                 {
-                    GetAvatarContourDrawables().Draw(textLayer);
-                    GetUsernameDrawables().Draw(textLayer);
-                    GetXpBarDrawables(percentage).Draw(textLayer);
-                    GetXpBarInfoDrawables().Draw(textLayer);
-                    GetLevelDrawables(level).Draw(textLayer);
-                    GetTotalXpDrawables(xpTotal).Draw(textLayer);
-                    GetXpRankDrawables(xpRank).Draw(textLayer);
-                    GetKarmaPointsDrawables(karma).Draw(textLayer);
-                    GetKarmaRankDrawables(karmaRank).Draw(textLayer);
-
-                    background.Composite(textLayer, 0, 0, CompositeOperator.Over);
-
-                    //Composite avatar on top 
-                    background.Composite(avatar, foregroundStartX + avatarStartX, foregroundStartY + avatarStartY,
-                        CompositeOperator.Over);
-
-                    using (IMagickImage result = profileCard.Mosaic())
+                    if (layer.Image != null)
                     {
-                        result.Write($"{_settings.ServerRootPath} + /images/profiles/{user.Username}-profile.png");
+                        MagickImage image = layer.Image.ToLower() == "avatar"
+                            ? profile.Picture
+                            : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
+
+                        background.Composite(image, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
                     }
+
+                    MagickImage l = new MagickImage(MagickColors.Transparent, (int) layer.Width, (int) layer.Height);
+                    foreach (var module in layer.Modules)
+                    {
+                        module.GetDrawables(profile).Draw(l);
+                    }
+
+                    background.Composite(l, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
+                }
+
+                using (IMagickImage result = profileCard.Mosaic())
+                {
+                    result.Write($"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png");
                 }
             }
 
-            Drawables GetAvatarContourDrawables()
-            {
-                double avatarContourStartX = foregroundStartX + avatarStartX;
-                double avatarContourStartY = foregroundStartY + avatarStartY;
-                RectangleD avatarContour = new RectangleD(avatarContourStartX - 2, avatarContourStartY - 2,
-                    avatarContourStartX + avatarSize + 1, avatarContourStartY + avatarSize + 1);
-                MagickColor avatarContourColor = MagickColors.IndianRed;
-
-                return new Drawables()
-                    .StrokeColor(new MagickColor(mainRole.Color.R, mainRole.Color.G, mainRole.Color.B))
-                    .FillColor(new MagickColor(mainRole.Color.R, mainRole.Color.G, mainRole.Color.B))
-                    .Rectangle(avatarContour.UpperLeftX, avatarContour.UpperLeftY, avatarContour.LowerRightX, avatarContour.LowerRightY);
-            }
-
-            Drawables GetXpBarDrawables(float perc)
-            {
-                //XP Bar
-                double xpBarWidth = 360;
-                double xpBarHeight = 18;
-                double xpBarStartX = 150;
-                double xpBarStartY = 42;
-
-                RectangleD xpBarOutsideRectangle = new RectangleD(foregroundStartX + xpBarStartX, foregroundStartY + xpBarStartY,
-                    foregroundStartX + xpBarStartX + xpBarWidth, foregroundStartY + xpBarStartY + xpBarHeight);
-
-                RectangleD xpBarInsideRectangle =
-                    new RectangleD(xpBarOutsideRectangle.UpperLeftX + 2, xpBarOutsideRectangle.UpperLeftY + 2,
-                        foregroundStartX + xpBarStartX + (xpBarWidth * perc) - 2, xpBarOutsideRectangle.LowerRightY - 2);
-
-                return new Drawables()
-                    //XP Bar Outside
-                    .StrokeColor(MagickColors.LightSlateGray)
-                    .StrokeWidth(.4)
-                    .FillColor(MagickColors.WhiteSmoke)
-                    .Rectangle(xpBarOutsideRectangle.UpperLeftX, xpBarOutsideRectangle.UpperLeftY, xpBarOutsideRectangle.LowerRightX,
-                        xpBarOutsideRectangle.LowerRightY)
-
-                    //XP Bar Inside
-                    .StrokeColor(MagickColors.Transparent)
-                    .FillColor(MagickColors.LightGray)
-                    .Rectangle(xpBarInsideRectangle.UpperLeftX, xpBarInsideRectangle.UpperLeftY, xpBarInsideRectangle.LowerRightX,
-                        xpBarInsideRectangle.LowerRightY);
-            }
-
-            Drawables GetXpBarInfoDrawables()
-            {
-                MagickColor xpBarInfoColor = MagickColors.Black;
-                PointD xpBarPosition = new PointD(foregroundStartX + 315, foregroundStartY + 57);
-
-                return new Drawables()
-                    //XP Bar Info
-                    .StrokeColor(MagickColors.Transparent)
-                    .FillColor(xpBarInfoColor)
-                    .Font("Consolas")
-                    .FontPointSize(17)
-                    .TextAlignment(TextAlignment.Center)
-                    .Text(xpBarPosition.X, xpBarPosition.Y, $"{xpShown:#,##0} / {maxXpShown:N0} ({(percentage * 100):0}%)");
-            }
-
-            Drawables GetUsernameDrawables()
-            {
-                MagickColor usernameStrokeColor = MagickColors.BlueViolet;
-                MagickColor usernameFillColor = MagickColors.DeepSkyBlue;
-                PointD usernamePosition = new PointD(foregroundStartX + 150, foregroundStartY + 38);
-
-                return new Drawables()
-                    .FontPointSize(34)
-                    .Font("Consolas")
-                    .StrokeColor(usernameStrokeColor)
-                    .StrokeWidth(.4)
-                    .StrokeAntialias(true)
-                    .FillColor(usernameFillColor)
-                    .TextAlignment(TextAlignment.Left)
-                    .Text(usernamePosition.X, usernamePosition.Y, $"{u.Nickname ?? u.Username}");
-            }
-
-            Drawables GetLevelDrawables(uint lvl)
-            {
-                MagickColor levelColor = MagickColors.IndianRed;
-                //PointD levelTitlePosition = new PointD(_foregroundStartX + 170, _foregroundStartY + 90);
-                PointD levelPosition = new PointD(foregroundStartX + 220, foregroundStartY + 140);
-
-                return new Drawables()
-                    .StrokeColor(levelColor)
-                    .FillColor(levelColor)
-                    .FontPointSize(40)
-                    .TextAlignment(TextAlignment.Center)
-                    .Text(levelPosition.X, levelPosition.Y, lvl.ToString());
-            }
-
-            Drawables GetTotalXpDrawables(uint totalXp)
-            {
-                MagickColor xpColor = MagickColors.Black;
-                PointD xpPosition = new PointD(foregroundStartX + 535, foregroundStartY + 83);
-
-                return new Drawables()
-                    .FillColor(xpColor)
-                    .Font("Consolas")
-                    .FontPointSize(17)
-                    .TextAlignment(TextAlignment.Right)
-                    .Text(xpPosition.X, xpPosition.Y, totalXp.ToString("N0", new CultureInfo("en-US")));
-            }
-
-            Drawables GetXpRankDrawables(uint rank)
-            {
-                MagickColor xpColor = MagickColors.Black;
-                PointD xpPosition = new PointD(foregroundStartX + 535, foregroundStartY + 108);
-
-                return new Drawables()
-                    .FillColor(xpColor)
-                    .Font("Consolas")
-                    .FontPointSize(17)
-                    .TextAlignment(TextAlignment.Right)
-                    .Text(xpPosition.X, xpPosition.Y, $"#{rank}");
-            }
-
-            Drawables GetKarmaPointsDrawables(int karmaPoints)
-            {
-                MagickColor xpColor = MagickColors.Black;
-                PointD xpPosition = new PointD(foregroundStartX + 535, foregroundStartY + 130);
-
-                return new Drawables()
-                    .FillColor(xpColor)
-                    .Font("Consolas")
-                    .FontPointSize(17)
-                    .TextAlignment(TextAlignment.Right)
-                    .Text(xpPosition.X, xpPosition.Y, $"{karmaPoints}");
-            }
-
-            Drawables GetKarmaRankDrawables(uint rank)
-            {
-                MagickColor xpColor = MagickColors.Black;
-                PointD xpPosition = new PointD(foregroundStartX + 535, foregroundStartY + 153);
-
-                return new Drawables()
-                    .FillColor(xpColor)
-                    .Font("Consolas")
-                    .FontPointSize(17)
-                    .TextAlignment(TextAlignment.Right)
-                    .Text(xpPosition.X, xpPosition.Y, $"#{rank}");
-            }
-
-            return $"{_settings.ServerRootPath} + /images/profiles/{user.Username}-profile.png";
+            return $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
         }
 
 
         public Embed WelcomeMessage(string icon, string name, ushort discriminator)
         {
             icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
+
             EmbedBuilder builder = new EmbedBuilder()
                 .WithDescription($"Welcome to Unity Developer Hub **{name}#{discriminator}** !")
                 .WithColor(new Color(0x12D687))
@@ -574,6 +431,7 @@ namespace DiscordBot.Services
                         .WithName(name)
                         .WithIconUrl(icon);
                 });
+
             Embed embed = builder.Build();
             return embed;
         }
@@ -593,16 +451,13 @@ namespace DiscordBot.Services
         {
             if (messageParam.Author.IsBot)
                 return;
-
             Match match = Regex.Match(messageParam.Content, _thanksRegex);
             if (!match.Success)
                 return;
-
             IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
             mentions = mentions.Distinct().ToList();
             ulong userId = messageParam.Author.Id;
             const int defaultDelTime = 120;
-
             if (mentions.Count > 0)
             {
                 if (_thanksCooldown.HasUser(userId))
@@ -616,7 +471,6 @@ namespace DiscordBot.Services
 
                 DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out DateTime joinDate);
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
-
                 if (j > DateTime.Now)
                 {
                     await messageParam.Channel.SendMessageAsync(
@@ -628,7 +482,6 @@ namespace DiscordBot.Services
                 bool mentionedSelf = false;
                 bool mentionedBot = false;
                 StringBuilder sb = new StringBuilder();
-
                 sb.Append("**").Append(messageParam.Author.Username).Append("** gave karma to **");
                 foreach (SocketUser user in mentions)
                 {
@@ -651,7 +504,6 @@ namespace DiscordBot.Services
 
                 sb.Length -= 2; //Removes last instance of appended comma without convoluted tracking
                 sb.Append("**");
-
                 if (mentionedSelf)
                 {
                     await messageParam.Channel.SendMessageAsync(
@@ -667,12 +519,11 @@ namespace DiscordBot.Services
 
                 _canEditThanks.Remove(messageParam.Id);
 
-                //Don't give karma cooldown if user only mentioned himself or the bot or both
+//Don't give karma cooldown if user only mentioned himself or the bot or both
                 if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2))
                     return;
-
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
-                //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
+//Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
@@ -698,28 +549,24 @@ namespace DiscordBot.Services
         {
             if (messageParam.Author.IsBot)
                 return;
-
             ulong userId = messageParam.Author.Id;
 
-            //Simple check to cover most large code posting cases without being an issue for most non-code messages
-            // TODO: Perhaps work out a more advanced Regex based check at a later time
+//Simple check to cover most large code posting cases without being an issue for most non-code messages
+// TODO: Perhaps work out a more advanced Regex based check at a later time
             if (!CodeReminderCooldown.HasUser(userId))
             {
                 string content = messageParam.Content;
-                //Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
+//Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
                 bool foundCodeTags = Regex.Match(content, ".*?`[^`].*?`", RegexOptions.Singleline).Success;
                 bool foundCurlyFries = (content.Contains("{") && content.Contains("}"));
-
                 if (!foundCodeTags && foundCurlyFries)
                 {
                     CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
-
                     StringBuilder sb = new StringBuilder();
                     sb.Append(messageParam.Author.Mention)
                         .AppendLine(
                             " are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
                     sb.AppendLine(_codeReminderFormattingExample);
-
                     await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 10);
                 }
                 else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.ToLower().Contains("```cs"))
@@ -729,23 +576,18 @@ namespace DiscordBot.Services
                         .AppendLine(
                             " Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
                     sb.AppendLine(_codeReminderFormattingExample);
-
                     await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 8);
-
                     CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
                 }
             }
         }
 
-
         public async Task ScoldForAtEveryoneUsage(SocketMessage messageParam)
         {
             if (messageParam.Author.IsBot || ((IGuildUser) messageParam.Author).GuildPermissions.MentionEveryone)
                 return;
-
             ulong userId = messageParam.Author.Id;
             string content = messageParam.Content;
-
             if (content.Contains("@everyone") || content.Contains("@here"))
             {
                 await messageParam.Channel.SendMessageAsync(
@@ -755,37 +597,35 @@ namespace DiscordBot.Services
             }
         }
 
-        // TODO: Response to people asking if anyone is around to help.
-        /*
-        public async Task UselessAskingCheck(SocketMessage messageParam)
-        {
-            if (messageParam.Author.IsBot)
-                return;
+// TODO: Response to people asking if anyone is around to help.
+/*
+public async Task UselessAskingCheck(SocketMessage messageParam)
+{
+    if (messageParam.Author.IsBot)
+        return;
 
-            ulong userId = messageParam.Author.Id;
-            string content = messageParam.Content;
-        }*/
+    ulong userId = messageParam.Author.Id;
+    string content = messageParam.Content;
+}*/
 
-        //TODO: If Discord ever enables a hook that allows modifying a message during creation of it, then this could be put to use...
-        // Disabled for now.
-        /*
-        public async Task EscapeMessage(SocketMessage messageParam)
-        {
-            if (messageParam.Author.IsBot)
-                return;
+//TODO: If Discord ever enables a hook that allows modifying a message during creation of it, then this could be put to use...
+// Disabled for now.
+/*
+public async Task EscapeMessage(SocketMessage messageParam)
+{
+    if (messageParam.Author.IsBot)
+        return;
 
-            ulong userId = messageParam.Author.Id;
-            string content = messageParam.Content;
-            //Escape all \, ~, _, ` and * character's so they don't trigger any Discord formatting.
-            content = content.EscapeDiscordMarkup();
-        }*/
-
+    ulong userId = messageParam.Author.Id;
+    string content = messageParam.Content;
+    //Escape all \, ~, _, ` and * character's so they don't trigger any Discord formatting.
+    content = content.EscapeDiscordMarkup();
+}*/
         public async Task<string> SubtitleImage(IMessage message, string text)
         {
             var attachments = message.Attachments;
             Attachment file = null;
             Image<Rgba32> image = null;
-
             foreach (var a in attachments)
             {
                 if (Regex.Match(a.Filename, @"(.*?)\.(jpg|jpeg|png|gif)$").Success)
@@ -794,7 +634,6 @@ namespace DiscordBot.Services
 
             if (file == null)
                 return "";
-
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -802,7 +641,6 @@ namespace DiscordBot.Services
                     using (HttpResponseMessage response = await client.GetAsync(file.Url))
                     {
                         response.EnsureSuccessStatusCode();
-
                         byte[] reader = await response.Content.ReadAsByteArrayAsync();
                         image = ImageSharp.Image.Load(reader);
                     }
@@ -817,38 +655,20 @@ namespace DiscordBot.Services
             float beginHeight = image.Height - (image.Height * 0.3f);
             float beginWidth = (image.Width * .10f);
             float totalWidth = image.Width * .8f;
+          
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight),
+                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center,});
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight),
+                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight - 4),
+                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight + 4),
+                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
+            image.DrawText(text, _subtitlesWhiteFont, Rgba32.White, new PointF(beginWidth, beginHeight),
+                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
+            string path = $"{_settings.ServerRootPath}/images/subtitles/{message.Author}-{message.Id}.png";
 
-            //Shitty outline effect
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight), new TextGraphicsOptions(true)
-            {
-                WrapTextWidth = totalWidth,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            });
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight), new TextGraphicsOptions(true)
-            {
-                WrapTextWidth = totalWidth,
-                HorizontalAlignment = HorizontalAlignment.Center
-            });
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight - 4), new TextGraphicsOptions(true)
-            {
-                WrapTextWidth = totalWidth,
-                HorizontalAlignment = HorizontalAlignment.Center
-            });
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight + 4), new TextGraphicsOptions(true)
-            {
-                WrapTextWidth = totalWidth,
-                HorizontalAlignment = HorizontalAlignment.Center
-            });
-
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.White, new PointF(beginWidth, beginHeight), new TextGraphicsOptions(true)
-            {
-                WrapTextWidth = totalWidth,
-                HorizontalAlignment = HorizontalAlignment.Center
-            });
-
-            string path = $"{_settings.ServerRootPath} + /images/subtitles/{message.Author}-{message.Id}.png";
             image.Save(path, new JpegEncoder {Quality = 95});
-
             return path;
         }
     }
