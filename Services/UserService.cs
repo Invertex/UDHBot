@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +10,7 @@ using Discord;
 using Discord.WebSocket;
 using DiscordBot.Domain;
 using DiscordBot.Extensions;
+using DiscordBot.Settings.Deserialized;
 using DiscordBot.Skin;
 using ImageMagick;
 using ImageSharp;
@@ -26,6 +27,9 @@ namespace DiscordBot.Services
         private readonly DatabaseService _databaseService;
         private readonly LoggingService _loggingService;
         private readonly UpdateService _updateService;
+
+        private readonly Settings.Deserialized.Settings _settings;
+        private readonly UserSettings _userSettings;
 
         public Dictionary<ulong, DateTime> _mutedUsers;
 
@@ -81,12 +85,15 @@ namespace DiscordBot.Services
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
-        public UserService(DatabaseService databaseService, LoggingService loggingService, UpdateService updateService)
+        public UserService(DatabaseService databaseService, LoggingService loggingService, UpdateService updateService,
+                           Settings.Deserialized.Settings settings, UserSettings userSettings)
         {
             rand = new Random();
             _databaseService = databaseService;
             _loggingService = loggingService;
             _updateService = updateService;
+            _settings = settings;
+            _userSettings = userSettings;
             _mutedUsers = new Dictionary<ulong, DateTime>();
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _canEditThanks = new HashSet<ulong>(32);
@@ -96,7 +103,9 @@ namespace DiscordBot.Services
 
             _noXpChannels = new List<ulong>
             {
-                Settings.GetBotCommandsChannel(), Settings.GetCasinoChannel(), Settings.GetMusicCommandsChannel()
+                _settings.BotCommandsChannel.Id,
+                _settings.CasinoChannel.Id,
+                _settings.MusicCommandsChannel.Id
             };
 
             /*
@@ -108,55 +117,54 @@ namespace DiscordBot.Services
                          "/fonts/OpenSans-Regular.ttf")
                 .CreateFont(16);*/
             _nameFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/Consolas.ttf")
                 .CreateFont(22);
             _xpFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/Consolas.ttf")
                 .CreateFont(12);
             _ranksFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/Consolas.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/Consolas.ttf")
                 .CreateFont(16);
             _levelTextFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/ConsolasBold.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/ConsolasBold.ttf")
                 .CreateFont(22);
             _levelNumberFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/ConsolasBold.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/ConsolasBold.ttf")
                 .CreateFont(30);
 
             _subtitlesWhiteFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/fonts/OpenSansEmoji.ttf")
+                .Install($"{_settings.ServerRootPath}/fonts/OpenSansEmoji.ttf")
                 .CreateFont(75);
 
             /*
             Init XP
             */
-            _xpMinPerMessage = SettingsHandler.LoadValueInt("xpMinPerMessage", JsonFile.UserSettings);
-            _xpMaxPerMessage = SettingsHandler.LoadValueInt("xpMaxPerMessage", JsonFile.UserSettings);
-            _xpMinCooldown = SettingsHandler.LoadValueInt("xpMinCooldown", JsonFile.UserSettings);
-            _xpMaxCooldown = SettingsHandler.LoadValueInt("xpMaxCooldown", JsonFile.UserSettings);
+            _xpMinPerMessage = _userSettings.XpMinPerMessage;
+            _xpMaxPerMessage = _userSettings.XpMaxPerMessage;
+            _xpMinCooldown = _userSettings.XpMinCooldown;
+            _xpMaxCooldown = _userSettings.XpMaxCooldown;
 
             /*
             Init thanks
             */
             StringBuilder sbThanks = new StringBuilder();
-            string[] thx = SettingsHandler.LoadValueStringArray("thanks", JsonFile.UserSettings);
+            var thx = _userSettings.Thanks;
             sbThanks.Append("(?i)\\b(");
-            for (int i = 0; i < thx.Length; i++)
-            {
-                sbThanks.Append(thx[i]).Append("|");
+            foreach (var t in thx) {
+                sbThanks.Append(t).Append("|");
             }
 
             sbThanks.Length--; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
             sbThanks.Append(")\\b");
             _thanksRegex = sbThanks.ToString();
-            _thanksCooldownTime = SettingsHandler.LoadValueInt("thanksCooldown", JsonFile.UserSettings);
-            _thanksReminderCooldownTime = SettingsHandler.LoadValueInt("thanksReminderCooldown", JsonFile.UserSettings);
-            _thanksMinJoinTime = SettingsHandler.LoadValueInt("thanksMinJoinTime", JsonFile.UserSettings);
+            _thanksCooldownTime = _userSettings.ThanksCooldown;
+            _thanksReminderCooldownTime = _userSettings.ThanksReminderCooldown;
+            _thanksMinJoinTime = _userSettings.ThanksMinJoinTime;
 
             /*
              Init Code analysis
             */
-            _codeReminderCooldownTime = SettingsHandler.LoadValueInt("codeReminderCooldown", JsonFile.UserSettings);
+            _codeReminderCooldownTime = _userSettings.CodeReminderCooldown;
             _codeFormattingExample = (
                 @"\`\`\`cs" + Environment.NewLine +
                 "Write your code on new line here." + Environment.NewLine +
@@ -290,9 +298,7 @@ namespace DiscordBot.Services
 
         private SkinData GetSkinData()
         {
-            return JsonConvert.DeserializeObject<SkinData>(File.ReadAllText(
-                SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                "/skins/skin.json"), new SkinModuleJsonConverter());
+            return JsonConvert.DeserializeObject<SkinData>(File.ReadAllText($"{_settings.ServerRootPath}/skins/skin.json"), new SkinModuleJsonConverter());
         }
 
         /// <summary>
@@ -352,15 +358,12 @@ namespace DiscordBot.Services
                     XpTotal = xpTotal
                 };
 
-                MagickImage background =
-                    new MagickImage(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) + "/skins/" + skin.Background);
+                MagickImage background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
 
                 string avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
                 if (string.IsNullOrEmpty(avatarUrl))
                 {
-                    profile.Picture = new MagickImage(
-                        SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                        "/images/default.png");
+                    profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
                 }
                 else
                 {
@@ -378,9 +381,7 @@ namespace DiscordBot.Services
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
-                        profile.Picture = new MagickImage(
-                            SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                            "/images/default.png");
+                        profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
                     }
                 }
 
@@ -393,8 +394,7 @@ namespace DiscordBot.Services
                     {
                         MagickImage image = layer.Image.ToLower() == "avatar"
                             ? profile.Picture
-                            : new MagickImage(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                              "/skins/" + layer.Image);
+                            : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
 
                         background.Composite(image, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
                     }
@@ -410,13 +410,11 @@ namespace DiscordBot.Services
 
                 using (IMagickImage result = profileCard.Mosaic())
                 {
-                    result.Write(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                                 $"/images/profiles/{user.Username}-profile.png");
+                    result.Write($"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png");
                 }
             }
 
-            return SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                   $"/images/profiles/{user.Username}-profile.png";
+            return $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
         }
 
 
@@ -657,8 +655,7 @@ public async Task EscapeMessage(SocketMessage messageParam)
             float beginHeight = image.Height - (image.Height * 0.3f);
             float beginWidth = (image.Width * .10f);
             float totalWidth = image.Width * .8f;
-
-//Shitty outline effect
+          
             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight),
                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center,});
             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight),
@@ -669,8 +666,8 @@ public async Task EscapeMessage(SocketMessage messageParam)
                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
             image.DrawText(text, _subtitlesWhiteFont, Rgba32.White, new PointF(beginWidth, beginHeight),
                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-            string path = SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                          $"/images/subtitles/{message.Author}-{message.Id}.png";
+            string path = $"{_settings.ServerRootPath}/images/subtitles/{message.Author}-{message.Id}.png";
+
             image.Save(path, new JpegEncoder {Quality = 95});
             return path;
         }

@@ -23,7 +23,7 @@
     /*Code parameters*/
     "codeReminderCooldown": 86400,
 
-    "issomeonethere": [
+    "isSomeoneThere": [
         "is anyone around?",
         "can someone help?",
         "can someone help me?"

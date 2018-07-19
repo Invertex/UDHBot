@@ -8,6 +8,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
 using DiscordBot.Services;
+using DiscordBot.Settings.Deserialized;
 
 namespace DiscordBot.Modules
 {
@@ -18,17 +19,21 @@ namespace DiscordBot.Modules
         private readonly UpdateService _update;
         private readonly UserService _user;
         private readonly DatabaseService _database;
+        private readonly Settings.Deserialized.Settings _settings;
+        private readonly Rules _rules;
 
         private Dictionary<ulong, DateTime> MutedUsers => _user._mutedUsers;
 
         public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update, UserService user,
-            DatabaseService database)
+            DatabaseService database, Rules rules, Settings.Deserialized.Settings settings)
         {
             _logging = logging;
             _publisher = publisher;
             _update = update;
             _user = user;
             _database = database;
+            _rules = rules;
+            _settings = settings;
         }
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
@@ -39,13 +44,12 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAsync();
 
             var u = user as IGuildUser;
-            IRole muteRole = Settings.GetMutedRole(Context.Guild);
-            if (u != null && u.RoleIds.Contains(muteRole.Id))
+            if (u != null && u.RoleIds.Contains(_settings.MutedRoleId))
             {
                 return;
             }
 
-            await u.AddRoleAsync(muteRole);
+            await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
             IUserMessage reply = await ReplyAsync("User " + user + " has been muted for " + arg + " seconds.");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
@@ -65,13 +69,12 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAsync();
 
             var u = user as IGuildUser;
-            IRole muteRole = Settings.GetMutedRole(Context.Guild);
-            if (u != null && u.RoleIds.Contains(muteRole.Id))
+            if (u != null && u.RoleIds.Contains(_settings.MutedRoleId))
             {
                 return;
             }
 
-            await u.AddRoleAsync(muteRole);
+            await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
             IUserMessage reply = await ReplyAsync($"User {user} has been muted for {arg} seconds. Reason : {message}");
             await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds. Reason : {message}");
@@ -115,7 +118,7 @@ namespace DiscordBot.Modules
                 await Context.Message.DeleteAsync();
 
             MutedUsers.Remove(user.Id);
-            await u.RemoveRoleAsync(Settings.GetMutedRole(Context.Guild));
+            await u.RemoveRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
             IUserMessage reply = await ReplyAsync("User " + user + " has been unmuted.");
            // await Task.Delay(TimeSpan.FromSeconds(10d));
             reply?.DeleteAfterSeconds(10d);
@@ -126,7 +129,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.ManageRoles)]
         async Task AddRole(IRole role, IUser user)
         {
-            if (!Settings.IsRoleAssignable(role))
+            if (!_settings.AllRoles.Roles.Contains(role.Name))
             {
                 await ReplyAsync("Role is not assigneable");
                 return;
@@ -143,7 +146,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.ManageRoles)]
         async Task RemoveRole(IRole role, IUser user)
         {
-            if (!Settings.IsRoleAssignable(role))
+            if (!_settings.AllRoles.Roles.Contains(role.Name))
             {
                 await ReplyAsync("Role is not assigneable");
                 return;
@@ -213,7 +216,7 @@ namespace DiscordBot.Modules
         async Task Rules(IMessageChannel channel, int seconds = 60)
         {
             //Display rules of this channel for x seconds
-            Rule rule = Settings.GetRule(channel.Id);
+            var rule = _rules.Channel.First(x => x.Id == 0);
             IUserMessage m;
             IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
             if (rule == null)
@@ -222,7 +225,7 @@ namespace DiscordBot.Modules
             else
             {
                 m = await ReplyAsync(
-                    $"{rule.header}{(rule.content.Length > 0 ? rule.content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
+                    $"{rule.Header}{(rule.Content.Length > 0 ? rule.Content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
             }
 
             Task deleteAsync = Context.Message?.DeleteAsync();
@@ -239,7 +242,7 @@ namespace DiscordBot.Modules
         async Task GlobalRules(int seconds = 60)
         {
             //Display rules of this channel for x seconds
-            string globalRules = Settings.GetRule(0).content;
+            string globalRules = _rules.Channel.First(x => x.Id == 0).Content;
             var m = await ReplyAsync(globalRules);
             await Context.Message.DeleteAsync();
 
@@ -254,11 +257,11 @@ namespace DiscordBot.Modules
         async Task ChannelsDescription(int seconds = 60)
         {
             //Display rules of this channel for x seconds
-            List<(ulong, string)> headers = Settings.GetChannelsHeader();
+            var channelData = _rules.Channel;
             StringBuilder sb = new StringBuilder();
 
-            foreach (var h in headers)
-                sb.Append($"{(await Context.Guild.GetTextChannelAsync(h.Item1))?.Mention} - {h.Item2}\n");
+            foreach (var c in channelData)
+                sb.Append($"{(await Context.Guild.GetTextChannelAsync(c.Id))?.Mention} - {c.Header}\n");
             string text = sb.ToString();
             IUserMessage m;
             IUserMessage m2 = null;

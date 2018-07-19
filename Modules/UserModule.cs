@@ -10,6 +10,7 @@ using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
 using DiscordBot.Services;
+using DiscordBot.Settings.Deserialized;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 
@@ -23,14 +24,20 @@ namespace DiscordBot.Modules
         private readonly PublisherService _publisherService;
         private readonly UpdateService _updateService;
 
+        private readonly Rules _rules;
+        private static Settings.Deserialized.Settings _settings;
+
         public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
-            PublisherService publisherService, UpdateService updateService)
+            PublisherService publisherService, UpdateService updateService, Rules rules
+                          , Settings.Deserialized.Settings settings)
         {
             _loggingService = loggingService;
             _databaseService = databaseService;
             _userService = userService;
             _publisherService = publisherService;
             _updateService = updateService;
+            _rules = rules;
+            _settings = settings;
         }
 
         [Command("help"), Summary("Display available commands (this). Syntax : !help")]
@@ -38,14 +45,14 @@ namespace DiscordBot.Modules
         private async Task DisplayHelp()
         {
             //TODO: Be possible in DM
-            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+            if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
                 return;
             }
 
-            var commands = Settings.GetCommandList();
+            var commands = Program.CommandList;
 
             foreach (var message in commands.MessageSplit())
                 await ReplyAsync(message);
@@ -64,7 +71,7 @@ namespace DiscordBot.Modules
         [Alias("rule")]
         private async Task Rules(IMessageChannel channel)
         {
-            Rule rule = Settings.GetRule(channel.Id);
+            var rule = _rules.Channel.First(x => x.Id == channel.Id);
             //IUserMessage m; //Unused, plan to be used in future?
             IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
             if (rule == null)
@@ -75,7 +82,7 @@ namespace DiscordBot.Modules
             else
             {
                 await dm.SendMessageAsync(
-                    $"{rule.header}{(rule.content.Length > 0 ? rule.content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
+                    $"{rule.Header}{(rule.Content.Length > 0 ? rule.Content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
             }
 
             Task deleteAsync = Context.Message?.DeleteAsync();
@@ -85,7 +92,7 @@ namespace DiscordBot.Modules
         [Command("globalrules"), Summary("Get the Global Rules by DM. Syntax : !globalrules")]
         private async Task GlobalRules(int seconds = 60)
         {
-            string globalRules = Settings.GetRule(0).content;
+            string globalRules = _rules.Channel.First(x => x.Id == 0).Content;
             IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync(globalRules);
             await Context.Message.DeleteAsync();
@@ -95,10 +102,10 @@ namespace DiscordBot.Modules
         private async Task ChannelsDescription()
         {
             //Display rules of this channel for x seconds
-            List<(ulong, string)> headers = Settings.GetChannelsHeader();
+            var channelData = _rules.Channel;
             StringBuilder sb = new StringBuilder();
-            foreach (var h in headers)
-                sb.Append((await Context.Guild.GetTextChannelAsync(h.Item1))?.Mention).Append(" - ").Append(h.Item2).Append("\n");
+            foreach (var c in channelData)
+                sb.Append((await Context.Guild.GetTextChannelAsync(c.Id))?.Mention).Append(" - ").Append(c.Header).Append("\n");
             string text = sb.ToString();
 
             IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
@@ -411,7 +418,7 @@ namespace DiscordBot.Modules
         [Alias("publisherinfo")]
         private async Task PublisherInfo()
         {
-            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+            if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
@@ -434,7 +441,7 @@ namespace DiscordBot.Modules
         [Alias("package")]
         private async Task Package(uint packageId)
         {
-            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+            if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
@@ -448,7 +455,7 @@ namespace DiscordBot.Modules
         [Command("verify"), Summary("Verify a package with the code received by email. Syntax : !verify packageId code")]
         private async Task VerifyPackage(uint packageId, string code)
         {
-            if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+            if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
@@ -832,14 +839,14 @@ namespace DiscordBot.Modules
             [Command("add"), Summary("Add a role to yourself. Syntax : !role add role")]
             private async Task AddRoleUser(IRole role)
             {
-                if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+                if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
                 {
                     await Task.Delay(1000);
                     await Context.Message.DeleteAsync();
                     return;
                 }
 
-                if (!Settings.IsRoleAssignable(role))
+                if (!_settings.AllRoles.Roles.Contains(role.Name))
                 {
                     await ReplyAsync("This role is not assigneable");
                     return;
@@ -856,14 +863,14 @@ namespace DiscordBot.Modules
             [Alias("delete")]
             private async Task RemoveRoleUser(IRole role)
             {
-                if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+                if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
                 {
                     await Task.Delay(1000);
                     await Context.Message.DeleteAsync();
                     return;
                 }
 
-                if (!Settings.IsRoleAssignable(role))
+                if (!_settings.AllRoles.Roles.Contains(role.Name))
                 {
                     await ReplyAsync("Role is not assigneable");
                     return;
@@ -879,7 +886,7 @@ namespace DiscordBot.Modules
             [Command("list"), Summary("Display the list of roles. Syntax : !role list")]
             private async Task ListRole()
             {
-                if (Context.Channel.Id != Settings.GetBotCommandsChannel())
+                if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
                 {
                     await Task.Delay(1000);
                     await Context.Message.DeleteAsync();
