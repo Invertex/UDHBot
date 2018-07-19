@@ -126,37 +126,45 @@ namespace DiscordBot.Modules
 
         [Command("addrole"), Summary("Add a role to a user")]
         [Alias("roleadd")]
-        [RequireUserPermission(GuildPermission.ManageRoles)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
         async Task AddRole(IRole role, IUser user)
         {
-            if (!_settings.AllRoles.Roles.Contains(role.Name))
+            var contextUser = Context.User as SocketGuildUser;
+            await Context.Message.DeleteAsync();
+
+            if (_settings.AllRoles.Roles.Contains(role.Name) || (_settings.RolesModeration.Roles.Contains(role.Name)) &&
+                contextUser.IsUserModSquad(_settings.RoleModSquadPermission))
             {
-                await ReplyAsync("Role is not assigneable");
+                var u = user as IGuildUser;
+                await u.AddRoleAsync(role);
+                await ReplyAsync("Role " + role + " has been added to " + user).DeleteAfterTime(minutes: 5);
+                await _logging.LogAction($"{contextUser.Username} has added role {role} to {u.Username}");
                 return;
             }
 
-            var u = user as IGuildUser;
-            await u.AddRoleAsync(role);
-            await ReplyAsync("Role " + role + " has been added to " + user);
-            await _logging.LogAction($"{Context.User.Username} has added role {role} to {u.Username}");
+            await ReplyAsync($"Bot cannot add {role.Name} role. Administrator must do it manually.").DeleteAfterSeconds(25);
         }
 
         [Command("removerole"), Summary("Remove a role from a user")]
         [Alias("roleremove")]
-        [RequireUserPermission(GuildPermission.ManageRoles)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
         async Task RemoveRole(IRole role, IUser user)
         {
-            if (!_settings.AllRoles.Roles.Contains(role.Name))
+            var contextUser = Context.User as SocketGuildUser;
+            await Context.Message.DeleteAsync();
+
+            if (_settings.AllRoles.Roles.Contains(role.Name) || (_settings.RolesModeration.Roles.Contains(role.Name)) &&
+                contextUser.IsUserModSquad(_settings.RoleModSquadPermission))
             {
-                await ReplyAsync("Role is not assigneable");
+                var u = user as IGuildUser;
+
+                await u.RemoveRoleAsync(role);
+                await ReplyAsync("Role " + role + " has been removed from " + user).DeleteAfterTime(minutes: 5);
+                await _logging.LogAction($"{contextUser.Username} has removed role {role} from {u.Username}");
                 return;
             }
 
-            var u = user as IGuildUser;
-
-            await u.RemoveRoleAsync(role);
-            await ReplyAsync("Role " + role + " has been removed from " + user);
-            await _logging.LogAction($"{Context.User.Username} has removed role {role} from {u.Username}");
+            await ReplyAsync($"Bot cannot remove {role.Name} role. Administrator must do it manually.").DeleteAfterSeconds(25);
         }
 
         [Command("clear"), Summary("Remove last x messages")]
