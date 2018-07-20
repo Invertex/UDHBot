@@ -5,7 +5,7 @@
   "gmail": "YourGmailAdress",
   "gmailPassword": "YourGmailPassword",
   /* DB Info*/
-  "dbConnectionString": "server=YourServerIp;port=3306;database=YourServerDatabase;user id=YourDatabseUser;password=YourDatabasePassword",
+  "connectionString": "server=YourServerIp;port=3306;database=YourServerDatabase;user id=YourDatabseUser;password=YourDatabasePassword",
   /*Server Info*/
   "serverRootPath": "./SERVER",
   /* Base info */
@@ -23,8 +23,8 @@
   /* Remove the messages after x seconds */
   "deleteProfileMessageCacheTime": "1",
   /* All roles */
-  "allRoles": {
-    "desc": "All roles available",
+  "rolesUser": {
+    "desc": "All normal user assignable roles available",
     "roles": [
       "3DModelers",
       "Artists",
@@ -63,6 +63,16 @@
       "Overwatch",
       "UnityOfficial",
       "Carbon"
+    ]
+  },
+  /* Roles the bot can assign if initiated by ModSquad user */
+  "rolesModeration": {
+    "desc": "Roles that are used for moderation.",
+    "roles": [
+      "Muted",
+      "Mute-hire-you",
+      "Mute-hire-me",
+      "Mute-collab"
     ]
   },
   /* Modsqaud */

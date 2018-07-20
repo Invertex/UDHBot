@@ -55,6 +55,7 @@ namespace DiscordBot.Services
         private readonly DatabaseService _databaseService;
         private readonly AnimeService _animeService;
         private readonly CancellationToken _token;
+        private readonly Settings.Deserialized.Settings _settings;
         private BotData _botData;
         private List<FaqData> _faqData;
         private Random _random;
@@ -66,13 +67,14 @@ namespace DiscordBot.Services
         private string[][] _apiDatabase;
 
         public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService,
-            DatabaseService databaseService, AnimeService animeService)
+            DatabaseService databaseService, AnimeService animeService, Settings.Deserialized.Settings settings)
         {
             _client = client;
             _loggingService = loggingService;
             _publisherService = publisherService;
             _databaseService = databaseService;
             _animeService = animeService;
+            _settings = settings;
             _token = new CancellationToken();
             _random = new Random();
 
@@ -91,33 +93,33 @@ namespace DiscordBot.Services
 
         private void ReadDataFromFile()
         {
-            if (File.Exists($"{Settings.GetServerRootPath()}/botdata.json"))
+            if (File.Exists($"{_settings.ServerRootPath}/botdata.json"))
             {
-                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/botdata.json");
+                string json = File.ReadAllText($"{_settings.ServerRootPath}/botdata.json");
                 _botData = JsonConvert.DeserializeObject<BotData>(json);
             }
             else
                 _botData = new BotData();
 
-            if (File.Exists($"{Settings.GetServerRootPath()}/animedata.json"))
+            if (File.Exists($"{_settings.ServerRootPath}/animedata.json"))
             {
-                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/animedata.json");
+                string json = File.ReadAllText($"{_settings.ServerRootPath}/animedata.json");
                 _animeData = JsonConvert.DeserializeObject<AnimeData>(json);
             }
             else
                 _animeData = new AnimeData();
 
-            if (File.Exists($"{Settings.GetServerRootPath()}/userdata.json"))
+            if (File.Exists($"{_settings.ServerRootPath}/userdata.json"))
             {
-                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/userdata.json");
+                string json = File.ReadAllText($"{_settings.ServerRootPath}/userdata.json");
                 _userData = JsonConvert.DeserializeObject<UserData>(json);
 
                 Task.Run(
                     async () =>
                     {
                         while (_client.ConnectionState != ConnectionState.Connected || _client.LoginState != LoginState.LoggedIn)
-                            await Task.Delay(100);
-                        await Task.Delay(1000);
+                            await Task.Delay(100, _token);
+                        await Task.Delay(1000, _token);
                         //Check if there are users still muted
                         foreach (var userID in _userData.MutedUsers)
                         {
@@ -132,39 +134,39 @@ namespace DiscordBot.Services
 
                                 IGuildUser user = sgu as IGuildUser;
 
-                                IRole mutedRole = Settings.GetMutedRole(user.Guild);
+                                IRole mutedRole = user.Guild.GetRole(_settings.MutedRoleId);
                                 //Make sure they have the muted role
-                                if (!user.RoleIds.Contains(mutedRole.Id))
+                                if (!user.RoleIds.Contains(_settings.MutedRoleId))
                                 {
                                     await user.AddRoleAsync(mutedRole);
                                 }
 
                                 //Setup delay to remove role when time is up.
-                                Task.Run(async () =>
+                                await Task.Run(async () =>
                                 {
                                     await _userData.MutedUsers.AwaitCooldown(user.Id);
                                     await user.RemoveRoleAsync(mutedRole);
-                                });
+                                }, _token);
                             }
                         }
-                    });
+                    }, _token);
             }
             else
             {
                 _userData = new UserData();
             }
 
-            if (File.Exists($"{Settings.GetServerRootPath()}/casinodata.json"))
+            if (File.Exists($"{_settings.ServerRootPath}/casinodata.json"))
             {
-                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/casinodata.json");
+                string json = File.ReadAllText($"{_settings.ServerRootPath}/casinodata.json");
                 _casinoData = JsonConvert.DeserializeObject<CasinoData>(json);
             }
             else
                 _casinoData = new CasinoData();
 
-            if (File.Exists($"{Settings.GetServerRootPath()}/FAQs.json"))
+            if (File.Exists($"{_settings.ServerRootPath}/FAQs.json"))
             {
-                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/FAQs.json");
+                string json = File.ReadAllText($"{_settings.ServerRootPath}/FAQs.json");
                 _faqData = JsonConvert.DeserializeObject<List<FaqData>>(json);
             }
             else
@@ -183,16 +185,16 @@ namespace DiscordBot.Services
             while (true)
             {
                 var json = JsonConvert.SerializeObject(_botData);
-                File.WriteAllText($"{Settings.GetServerRootPath()}/botdata.json", json);
+                File.WriteAllText($"{_settings.ServerRootPath}/botdata.json", json);
 
                 json = JsonConvert.SerializeObject(_animeData);
-                File.WriteAllText($"{Settings.GetServerRootPath()}/animedata.json", json);
+                File.WriteAllText($"{_settings.ServerRootPath}/animedata.json", json);
 
                 json = JsonConvert.SerializeObject(_userData);
-                File.WriteAllText($"{Settings.GetServerRootPath()}/userdata.json", json);
+                File.WriteAllText($"{_settings.ServerRootPath}/userdata.json", json);
 
                 json = JsonConvert.SerializeObject(_casinoData);
-                File.WriteAllText($"{Settings.GetServerRootPath()}/casinodata.json", json);
+                File.WriteAllText($"{_settings.ServerRootPath}/casinodata.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
                 await Task.Delay(TimeSpan.FromSeconds(20d), _token);
             }
@@ -234,7 +236,7 @@ namespace DiscordBot.Services
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
             {
-                _databaseService.UpdateUserRanks();
+                await _databaseService.UpdateUserRanks();
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
         }
@@ -281,12 +283,12 @@ namespace DiscordBot.Services
 
         private async Task LoadDocDatabase()
         {
-            if (File.Exists($"{Settings.GetServerRootPath()}/unitymanual.json") &&
-                File.Exists($"{Settings.GetServerRootPath()}/unityapi.json"))
+            if (File.Exists($"{_settings.ServerRootPath}/unitymanual.json") &&
+                File.Exists($"{_settings.ServerRootPath}/unityapi.json"))
             {
-                string json = File.ReadAllText($"{Settings.GetServerRootPath()}/unitymanual.json");
+                string json = File.ReadAllText($"{_settings.ServerRootPath}/unitymanual.json");
                 _manualDatabase = JsonConvert.DeserializeObject<string[][]>(json);
-                json = File.ReadAllText($"{Settings.GetServerRootPath()}/unityapi.json");
+                json = File.ReadAllText($"{_settings.ServerRootPath}/unityapi.json");
                 _apiDatabase = JsonConvert.DeserializeObject<string[][]>(json);
             }
             else
@@ -308,8 +310,8 @@ namespace DiscordBot.Services
             _manualDatabase = ConvertJsToArray(manualInput, true);
             _apiDatabase = ConvertJsToArray(apiInput, false);
 
-            File.WriteAllText($"{Settings.GetServerRootPath()}/unitymanual.json", JsonConvert.SerializeObject(_manualDatabase));
-            File.WriteAllText($"{Settings.GetServerRootPath()}/unityapi.json", JsonConvert.SerializeObject(_apiDatabase));
+            File.WriteAllText($"{_settings.ServerRootPath}/unitymanual.json", JsonConvert.SerializeObject(_manualDatabase));
+            File.WriteAllText($"{_settings.ServerRootPath}/unityapi.json", JsonConvert.SerializeObject(_apiDatabase));
 
             string[][] ConvertJsToArray(string data, bool isManual)
             {
@@ -346,7 +348,7 @@ namespace DiscordBot.Services
                 if (_botData.LastUnityDocDatabaseUpdate < DateTime.Now - TimeSpan.FromDays(1d))
                     await DownloadDocDatabase();
 
-                await Task.Delay(TimeSpan.FromHours(1));
+                await Task.Delay(TimeSpan.FromHours(1), _token);
             }
         }
 

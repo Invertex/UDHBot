@@ -54,7 +54,7 @@ namespace DiscordBot.Extensions
                     return;
                 }
 
-                cooldowns[userId].Add(cooldownTime);
+                cooldowns[userId] = cooldowns[userId].Add(cooldownTime);
                 return;
             }
 

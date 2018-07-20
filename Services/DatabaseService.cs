@@ -12,9 +12,12 @@ namespace DiscordBot.Services
 
         private readonly LoggingService _logging;
 
-        public DatabaseService(LoggingService logging)
+        private readonly Settings.Deserialized.Settings _settings;
+
+        public DatabaseService(LoggingService logging, Settings.Deserialized.Settings settings)
         {
-            _connection = SettingsHandler.LoadValueString("dbConnectionString", JsonFile.Settings);
+            _settings = settings;
+            _connection = _settings.DbConnectionString;
             _logging = logging;
         }
 
@@ -50,7 +53,7 @@ namespace DiscordBot.Services
             return (0, 0);
         }
 
-        public void AddPublisherPackage(string username, string discriminator, string userid, uint packageID)
+        public async Task AddPublisherPackage(string username, string discriminator, string userid, uint packageID)
         {
             try
             {
@@ -65,14 +68,14 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                _logging.LogAction($"Error when trying to add package {packageID} from {username}#{discriminator} - {userid} : {e}");
+                await _logging.LogAction($"Error when trying to add package {packageID} from {username}#{discriminator} - {userid} : {e}");
             }
         }
 
         /*
         Update Service
         */
-        public void UpdateUserRanks()
+        public async Task UpdateUserRanks()
         {
             try
             {
@@ -88,81 +91,81 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                _logging.LogAction($"Error when trying to update ranks : {e}", true, false);
+                await _logging.LogAction($"Error when trying to update ranks : {e}", true, false);
             }
         }
 
 
-        public void AddUserXp(ulong id, int xp)
+        public async Task AddUserXp(ulong id, int xp)
         {
             int oldXp;
-            string reader = GetAttributeFromUser(id, "exp");
+            string reader = await GetAttributeFromUser(id, "exp");
 
             oldXp = Convert.ToInt32(reader);
             UpdateAttributeFromUser(id, "exp", oldXp + xp);
         }
 
-        public void AddUserLevel(ulong id, uint level)
+        public async Task AddUserLevel(ulong id, uint level)
         {
             uint oldLevel;
-            string reader = GetAttributeFromUser(id, "level");
+            string reader = await GetAttributeFromUser(id, "level");
 
             oldLevel = Convert.ToUInt32(reader);
             UpdateAttributeFromUser(id, "level", oldLevel + level);
         }
 
-        public void AddUserKarma(ulong id, int karma)
+        public async Task AddUserKarma(ulong id, int karma)
         {
             int oldKarma;
-            string reader = GetAttributeFromUser(id, "karma");
+            string reader = await GetAttributeFromUser(id, "karma");
 
             oldKarma = Convert.ToInt32(reader);
             UpdateAttributeFromUser(id, "karma", oldKarma + karma);
         }
 
-        public uint GetUserXp(ulong id)
+        public async Task<uint> GetUserXp(ulong id)
         {
             uint xp;
-            string reader = GetAttributeFromUser(id, "exp");
+            string reader = await GetAttributeFromUser(id, "exp");
 
             xp = Convert.ToUInt32(reader);
 
             return xp;
         }
 
-        public int GetUserKarma(ulong id)
+        public async Task<int> GetUserKarma(ulong id)
         {
             int karma;
-            string reader = GetAttributeFromUser(id, "karma");
+            string reader = await GetAttributeFromUser(id, "karma");
 
             karma = Convert.ToInt32(reader);
 
             return karma;
         }
 
-        public uint GetUserRank(ulong id)
+        public async Task<uint> GetUserRank(ulong id)
         {
             uint rank;
-            string reader = GetAttributeFromUser(id, "rank");
+            string reader = await GetAttributeFromUser(id, "rank");
 
             rank = Convert.ToUInt32(reader);
 
             return rank;
         }
 
-        public uint GetUserLevel(ulong id)
+        public async Task<uint> GetUserLevel(ulong id)
         {
             uint level;
-            string reader = GetAttributeFromUser(id, "level");
+            string reader = await GetAttributeFromUser(id, "level");
 
             level = Convert.ToUInt32(reader);
 
             return level;
         }
 
-        public string GetUserJoinDate(ulong id)
+        public async Task<string> GetUserJoinDate(ulong id)
         {
-            return GetAttributeFromUser(id, "joinDate");
+            return await GetAttributeFromUser(id, "joinDate");
         }
 
         public void UpdateUserName(ulong id, string name)
@@ -175,10 +178,10 @@ namespace DiscordBot.Services
             UpdateAttributeFromUser(id, "avatarUrl", avatar);
         }
 
-        public void AddUserUdc(ulong id, int udc)
+        public async Task AddUserUdc(ulong id, int udc)
         {
             int oldUdc;
-            string reader = GetAttributeFromUser(id, "udc");
+            string reader = await GetAttributeFromUser(id, "udc");
 
             oldUdc = Convert.ToInt32(reader);
             UpdateAttributeFromUser(id, "udc", oldUdc + udc);
@@ -191,7 +194,7 @@ namespace DiscordBot.Services
 
         public uint GetUserKarmaRank(ulong id)
         {
-            int karma;
+            //int karma;
 
             using (var connection = new MySqlConnection(_connection))
             {
@@ -207,6 +210,7 @@ namespace DiscordBot.Services
                     }
                 }
             }
+
             return 0;
         }
 
@@ -392,7 +396,7 @@ namespace DiscordBot.Services
             }
         }
 
-        private string GetAttributeFromUser(ulong id, string attribute)
+        private async Task<string> GetAttributeFromUser(ulong id, string attribute)
         {
             try
             {
@@ -412,7 +416,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                _logging.LogAction($"Error when trying to get attribute {attribute} from user {id} : {e}", true,
+                await _logging.LogAction($"Error when trying to get attribute {attribute} from user {id} : {e}", true,
                     false);
             }
 
