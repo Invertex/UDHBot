@@ -491,8 +491,8 @@ namespace DiscordBot.Services
                         continue;
                     }
 
-                    await _databaseService.AddUserKarma(user.Id, 1);
-                   await _databaseService.AddUserUdc(user.Id, 350);
+                    _databaseService.AddUserKarma(user.Id, 1);
+                    _databaseService.AddUserUdc(user.Id, 350);
                     sb.Append(user.Username).Append(" , ");
                 }
 
