@@ -178,10 +178,10 @@ namespace DiscordBot.Modules
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");
-            await Task.Delay(5000).ContinueWith(async t =>
+            Task.Delay(5000).ContinueWith(t =>
             {
-                await m.DeleteAsync();
-                await _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
+                m.DeleteAsync();
+                _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
             });
         }
 
@@ -215,7 +215,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.KickMembers)]
         async Task Rules(int seconds = 60)
         {
-            await Rules(Context.Channel, seconds);
+            Rules(Context.Channel, seconds);
             await Context.Message.DeleteAsync();
         }
 
