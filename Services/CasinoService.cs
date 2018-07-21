@@ -78,7 +78,7 @@ namespace DiscordBot.Services
 
             int random = _random.Next(0, 100);
 
-            await _databaseService.AddUserUdc(user.Id, -amount);
+            _databaseService.AddUserUdc(user.Id, -amount);
             _slotMachineCashPool += amount / 2;
 
             if (random <= 60) //Lose
@@ -90,7 +90,7 @@ namespace DiscordBot.Services
             {
                 if (Slot(65))
                 {
-                    await _databaseService.AddUserUdc(user.Id, amount * 2);
+                    _databaseService.AddUserUdc(user.Id, amount * 2);
                     return (_settings.ServerRootPath + "/casino/apple.png",
                         $"{user.Mention} The machine blinks and spins away with a captivating sound. As it begins to slow down, you see tasty apples begin to lock. One, two... and a third. A smile on your face, you almost jumps in joy but realize you *only* doubled your bet. You should try to invest your winnings and make even more money, you think. *You won {amount * 2}UDC*");
                 }
@@ -102,7 +102,7 @@ namespace DiscordBot.Services
             {
                 if (Slot(35))
                 {
-                    await _databaseService.AddUserUdc(user.Id, amount * 5);
+                    _databaseService.AddUserUdc(user.Id, amount * 5);
                     return (_settings.ServerRootPath + "/casino/banana.png",
                         $"{user.Mention} The heavy slot machine begins to grumble as the wheels whirls around fiercely. Yellow soon fills your view, locking in place one after the other. A tear drop from your eyes, a big smile draws on your face and you want to jump in joy. You won five times what you bet. You feel like you can win even more and want to try again. *You won {amount * 5}UDC*");
                 }
@@ -114,7 +114,7 @@ namespace DiscordBot.Services
             {
                 if (Slot(15))
                 {
-                    await _databaseService.AddUserUdc(user.Id, amount * 15);
+                    _databaseService.AddUserUdc(user.Id, amount * 15);
                     return (_settings.ServerRootPath + "/casino/donut.png",
                         $"{user.Mention} As the machine starts to spin you feel like it's your lucky day. It goes faster and faster, producing a melodious sound to your ears. Sugar soon hits your mouth, the sugar of those three donuts that just aligned. You jump in joy, having won fifteen times what you bet. It's really your lucky day, you should try again. *You won {amount * 15}UDC*");
                 }
@@ -126,7 +126,7 @@ namespace DiscordBot.Services
             {
                 if (Slot(4))
                 {
-                    await _databaseService.AddUserUdc(user.Id, _slotMachineCashPool);
+                    _databaseService.AddUserUdc(user.Id, _slotMachineCashPool);
                     int won = _slotMachineCashPool;
                     _slotMachineCashPool = 150000;
                     return (_settings.ServerRootPath + "/casino/jackpot.png",

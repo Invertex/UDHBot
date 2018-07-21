@@ -251,7 +251,7 @@ namespace DiscordBot
         private async Task UserLeft(SocketGuildUser user)
         {
             DateTime joinDate;
-            DateTime.TryParse(await _databaseService.GetUserJoinDate(user.Id), out joinDate);
+            DateTime.TryParse(_databaseService.GetUserJoinDate(user.Id), out joinDate);
             TimeSpan timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
                 $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +

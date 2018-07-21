@@ -212,7 +212,7 @@ namespace DiscordBot.Services
             if (_xpCooldown.HasUser(userId))
                 return;
 
-            int karma = await _databaseService.GetUserKarma(userId);
+            int karma = _databaseService.GetUserKarma(userId);
             if (messageParam.Author.Activity != null)
             {
                 if (Regex.Match(messageParam.Author.Activity.Name, "(Unity.+)").Length > 0)
@@ -226,7 +226,7 @@ namespace DiscordBot.Services
                 baseXp *= .9f;
 
             //Lower xp for difference between level and karma
-            uint level = await _databaseService.GetUserLevel(userId);
+            uint level = _databaseService.GetUserLevel(userId);
             float reduceXp = 1f;
             if (karma < level)
             {
@@ -241,8 +241,8 @@ namespace DiscordBot.Services
             if (!await _databaseService.UserExists(userId))
                 _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
 
-            await _databaseService.AddUserXp(userId, xpGain);
-            await _databaseService.AddUserUdc(userId, (int) Math.Round(xpGain * .15f));
+            _databaseService.AddUserXp(userId, xpGain);
+            _databaseService.AddUserUdc(userId, (int) Math.Round(xpGain * .15f));
 
             _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
@@ -259,8 +259,8 @@ namespace DiscordBot.Services
         /// <returns></returns>
         public async Task LevelUp(SocketMessage messageParam, ulong userId)
         {
-            int level = (int) (await _databaseService.GetUserLevel(userId));
-            uint xp = await _databaseService.GetUserXp(userId);
+            int level = (int) (_databaseService.GetUserLevel(userId));
+            uint xp = _databaseService.GetUserXp(userId);
 
             double xpLow = GetXpLow(level);
             double xpHigh = GetXpHigh(level);
@@ -268,8 +268,8 @@ namespace DiscordBot.Services
             if (xp < xpHigh)
                 return;
 
-            await _databaseService.AddUserLevel(userId, 1);
-            await _databaseService.AddUserUdc(userId, 1200);
+            _databaseService.AddUserLevel(userId, 1);
+            _databaseService.AddUserUdc(userId, 1200);
 
             await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(seconds: 60);
             //TODO: investigate why this is not running async
@@ -303,10 +303,10 @@ namespace DiscordBot.Services
         public async Task<string> GenerateProfileCard(IUser user)
         {
             ulong userId = user.Id;
-            uint xpTotal = await _databaseService.GetUserXp(userId);
-            uint xpRank = await _databaseService.GetUserRank(userId);
-            int karma = await _databaseService.GetUserKarma(userId);
-            uint level = await _databaseService.GetUserLevel(userId);
+            uint xpTotal = _databaseService.GetUserXp(userId);
+            uint xpRank = _databaseService.GetUserRank(userId);
+            int karma = _databaseService.GetUserKarma(userId);
+            uint level = _databaseService.GetUserLevel(userId);
             uint karmaRank = _databaseService.GetUserKarmaRank(userId);
             double xpLow = GetXpLow((int) level);
             double xpHigh = GetXpHigh((int) level);
@@ -463,7 +463,7 @@ namespace DiscordBot.Services
                     return;
                 }
 
-                DateTime.TryParse(await _databaseService.GetUserJoinDate(userId), out DateTime joinDate);
+                DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out DateTime joinDate);
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
                 if (j > DateTime.Now)
                 {
