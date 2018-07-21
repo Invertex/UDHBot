@@ -75,7 +75,7 @@ namespace DiscordBot.Services
         /*
         Update Service
         */
-        public async Task UpdateUserRanks()
+        public void UpdateUserRanks()
         {
             try
             {
@@ -91,7 +91,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                await _logging.LogAction($"Error when trying to update ranks : {e}", true, false);
+                _logging.LogAction($"Error when trying to update ranks : {e}", true, false);
             }
         }
 

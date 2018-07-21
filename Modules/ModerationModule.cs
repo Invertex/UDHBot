@@ -312,7 +312,7 @@ namespace DiscordBot.Modules
 
         [Command("dbsync"), Summary("Force add user to database")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        void DbSync(IUser user)
+        async Task DbSync(IUser user)
         {
             _database.AddNewUser((SocketGuildUser) user);
         }
