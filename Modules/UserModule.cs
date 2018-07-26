@@ -264,7 +264,9 @@ namespace DiscordBot.Modules
             channel = channel ?? Context.Channel;
 
             var message = await channel.GetMessageAsync(id);
-            string messageLink = "https://discordapp.com/channels/"+ Context.Guild.Id + "/" + Context.Channel.Id + "/" + Context.Message.Id;
+            string messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + (channel == null
+                ? Context.Channel.Id
+                : channel.Id) + "/" + id;
 
             var builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
@@ -272,8 +274,8 @@ namespace DiscordBot.Modules
                 .WithFooter(footer =>
                 {
                     footer
-                        .WithText($"In channel {message.Channel.Name}")                        ;
-                                    })
+                        .WithText($"In channel {message.Channel.Name}");
+                })
                 .WithTitle("Linkback")
                 .WithUrl(messageLink)
                 .WithAuthor(author =>
