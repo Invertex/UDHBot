@@ -8,7 +8,18 @@
         "thanx",
         "thankyou",
         "thank you",
-        "cheers"
+        "cheers",
+        "merci",
+        "gracias",
+        "danke",
+        "grazie",
+        "arigatou",
+        "有り難う",
+        "有難う",
+        "ありがとう",
+        "どうも",
+        "고맙습니다",
+        "谢谢"
     ],
     "thanksCooldown": 60, //In seconds
     "thanksReminderCooldown": 86400, //24 hours in seconds
