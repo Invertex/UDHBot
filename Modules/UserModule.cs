@@ -212,6 +212,7 @@ namespace DiscordBot.Modules
             var userId = Context.User.Id;
             DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out DateTime joinDate);
             await ReplyAsync($"{Context.User.Mention} you joined the {joinDate}");
+            await Context.Message.DeleteAsync();
         }
         #endregion
 
