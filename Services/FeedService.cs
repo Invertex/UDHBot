@@ -34,7 +34,7 @@ namespace DiscordBot.Services
                 {
                     feedData.PostedIds.Add(item.Id);
 
-                    string message = $"New unity * *beta * *release !**{item.Title.Text}**";
+                    string message = $"New unity **beta **release !**{item.Title.Text}**";
                     await channel.SendMessageAsync(message);
                 }
             }
