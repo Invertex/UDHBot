@@ -386,6 +386,7 @@ namespace DiscordBot.Services
 
         private async void UpdateRssFeeds()
         {
+            await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
             {
                 if (_feedData.LastUnityReleaseCheck < DateTime.Now - TimeSpan.FromMinutes(5))
@@ -403,7 +404,7 @@ namespace DiscordBot.Services
                     _feedService.CheckUnityBlog(_feedData);
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(30d));
+                await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             }
         }
 
