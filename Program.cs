@@ -33,6 +33,7 @@ namespace DiscordBot
         private AudioService _audioService;
         private AnimeService _animeService;
         private CasinoService _casinoService;
+        private FeedService _feedService;
 
         private static PayWork _payWork;
         private static Rules _rules;
@@ -57,7 +58,9 @@ namespace DiscordBot
             _databaseService = new DatabaseService(_loggingService, _settings);
             _publisherService = new PublisherService(_client, _databaseService, _settings);
             _animeService = new AnimeService(_client, _loggingService, _settings);
-            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService, _settings);
+            _feedService = new FeedService(_client, _settings);
+            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService, _settings,
+                _feedService);
             _userService = new UserService(_databaseService, _loggingService, _updateService, _settings, _userSettings);
 
             _audioService = new AudioService(_loggingService, _client, _settings);

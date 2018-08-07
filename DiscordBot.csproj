@@ -13,6 +13,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="ImageSharp" Version="1.0.0-*" />
     <PackageReference Include="ImageSharp.Drawing" Version="1.0.0-*" />
+    <PackageReference Include="System.ServiceModel.Syndication" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="SERVER\fonts" />
