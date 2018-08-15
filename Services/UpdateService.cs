@@ -330,46 +330,53 @@ namespace DiscordBot.Services
 
         private async Task DownloadDocDatabase()
         {
-            HtmlWeb htmlWeb = new HtmlWeb();
-            htmlWeb.CaptureRedirect = true;
-
-            HtmlDocument manual = await htmlWeb.LoadFromWebAsync("https://docs.unity3d.com/Manual/docdata/index.js");
-            string manualInput = manual.DocumentNode.OuterHtml;
-
-            HtmlDocument api = await htmlWeb.LoadFromWebAsync("https://docs.unity3d.com/ScriptReference/docdata/index.js");
-            string apiInput = api.DocumentNode.OuterHtml;
-
-
-            _manualDatabase = ConvertJsToArray(manualInput, true);
-            _apiDatabase = ConvertJsToArray(apiInput, false);
-
-            File.WriteAllText($"{_settings.ServerRootPath}/unitymanual.json", JsonConvert.SerializeObject(_manualDatabase));
-            File.WriteAllText($"{_settings.ServerRootPath}/unityapi.json", JsonConvert.SerializeObject(_apiDatabase));
-
-            string[][] ConvertJsToArray(string data, bool isManual)
+            try
             {
-                List<string[]> list = new List<string[]>();
-                string pagesInput;
-                if (isManual)
-                {
-                    pagesInput = data.Split("info = [")[0].Split("pages=")[1];
-                    pagesInput = pagesInput.Substring(2, pagesInput.Length - 4);
-                }
-                else
-                {
-                    pagesInput = data.Split("info =")[0];
-                    pagesInput = pagesInput.Substring(63, pagesInput.Length - 65);
-                }
+                HtmlWeb htmlWeb = new HtmlWeb();
+                htmlWeb.CaptureRedirect = true;
+
+                HtmlDocument manual = await htmlWeb.LoadFromWebAsync("https://docs.unity3d.com/Manual/docdata/index.js");
+                string manualInput = manual.DocumentNode.OuterHtml;
+
+                HtmlDocument api = await htmlWeb.LoadFromWebAsync("https://docs.unity3d.com/ScriptReference/docdata/index.js");
+                string apiInput = api.DocumentNode.OuterHtml;
 
 
-                foreach (string s in pagesInput.Split("],["))
-                {
-                    string[] ps = s.Split(",");
-                    list.Add(new string[] {ps[0].Replace("\"", ""), ps[1].Replace("\"", "")});
-                    //Console.WriteLine(ps[0].Replace("\"", "") + "," + ps[1].Replace("\"", ""));
-                }
+                _manualDatabase = ConvertJsToArray(manualInput, true);
+                _apiDatabase = ConvertJsToArray(apiInput, false);
 
-                return list.ToArray();
+                File.WriteAllText($"{_settings.ServerRootPath}/unitymanual.json", JsonConvert.SerializeObject(_manualDatabase));
+                File.WriteAllText($"{_settings.ServerRootPath}/unityapi.json", JsonConvert.SerializeObject(_apiDatabase));
+
+                string[][] ConvertJsToArray(string data, bool isManual)
+                {
+                    List<string[]> list = new List<string[]>();
+                    string pagesInput;
+                    if (isManual)
+                    {
+                        pagesInput = data.Split("info = [")[0].Split("pages=")[1];
+                        pagesInput = pagesInput.Substring(2, pagesInput.Length - 4);
+                    }
+                    else
+                    {
+                        pagesInput = data.Split("info =")[0];
+                        pagesInput = pagesInput.Substring(63, pagesInput.Length - 65);
+                    }
+
+
+                    foreach (string s in pagesInput.Split("],["))
+                    {
+                        string[] ps = s.Split(",");
+                        list.Add(new string[] {ps[0].Replace("\"", ""), ps[1].Replace("\"", "")});
+                        //Console.WriteLine(ps[0].Replace("\"", "") + "," + ps[1].Replace("\"", ""));
+                    }
+
+                    return list.ToArray();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
 
