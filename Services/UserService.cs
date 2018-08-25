@@ -314,7 +314,7 @@ namespace DiscordBot.Services
             uint xpShown = (uint) (xpTotal - xpLow);
             uint maxXpShown = (uint) (xpHigh - xpLow);
 
-            float percentage = (float) Math.Floor((float) xpShown / maxXpShown);
+            float percentage = (float) xpShown / maxXpShown;
 
             var u = user as IGuildUser;
             IRole mainRole = null;
