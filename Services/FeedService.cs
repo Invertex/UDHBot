@@ -37,7 +37,7 @@ namespace DiscordBot.Services
                     {
                         feedData.PostedIds.Add(item.Id);
 
-                        string message = $"New unity **beta **release !** {item.Title.Text}** \n <{item.Links[0].Uri}>";
+                        string message = $"New unity **beta **release !** {item.Title.Text}** \n <{item.Links[0].Uri.ToString().Replace("/fr/", "/")}>";
                         await channel.SendMessageAsync(message);
                     }
                 }
@@ -61,7 +61,7 @@ namespace DiscordBot.Services
                     {
                         feedData.PostedIds.Add(item.Id);
 
-                        string message = $"New unity release ! **{item.Title.Text}** \n <{item.Links[0].Uri}>";
+                        string message = $"New unity release ! **{item.Title.Text}** \n <{item.Links[0].Uri.ToString().Replace("/fr/", "/")}>";
                         await channel.SendMessageAsync(message);
                     }
                 }
@@ -85,7 +85,7 @@ namespace DiscordBot.Services
                     {
                         feedData.PostedIds.Add(item.Id);
 
-                        string message = $"New unity blog post ! **{item.Title.Text}**\n{item.Links[0].Uri}";
+                        string message = $"New unity blog post ! **{item.Title.Text}**\n{item.Links[0].Uri.ToString().Replace("/fr/", "/")}";
                         await channel.SendMessageAsync(message);
                     }
                 }
