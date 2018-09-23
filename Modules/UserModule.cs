@@ -851,7 +851,11 @@ namespace DiscordBot.Modules
                     return;
                 }
 
+<<<<<<< HEAD
                 if (!_settings.AllRoles.Roles.Contains(role.Name))
+=======
+                if (!Settings.IsRoleUserAssignable(role))
+>>>>>>> master
                 {
                     await ReplyAsync("This role is not assigneable");
                     return;
@@ -875,7 +879,11 @@ namespace DiscordBot.Modules
                     return;
                 }
 
+<<<<<<< HEAD
                 if (!_settings.AllRoles.Roles.Contains(role.Name))
+=======
+                if (!Settings.IsRoleUserAssignable(role))
+>>>>>>> master
                 {
                     await ReplyAsync("Role is not assigneable");
                     return;
