@@ -823,7 +823,7 @@ namespace DiscordBot.Modules
 
         #region Currency
 
-        [Command("currency"), Summary("Converts a currency. Syntax : !convert amount fromCurrency toCurrency")]
+        [Command("currency"), Summary("Converts a currency. Syntax : !currency amount fromCurrency toCurrency")]
         [Alias("curr")]
         private async Task ConvertCurrency(double amount, string from, string to)
         {
