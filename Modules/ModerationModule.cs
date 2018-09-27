@@ -51,8 +51,8 @@ namespace DiscordBot.Modules
 
             await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
-            IUserMessage reply = await ReplyAsync("User " + user + " has been muted for " + arg + " seconds.");
-            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
+            IUserMessage reply = await ReplyAsync("User " + user + " has been muted for " + Utils.FormatTime(arg) + ".");
+            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {Utils.FormatTime(arg)}");
 
             MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
 
@@ -76,13 +76,13 @@ namespace DiscordBot.Modules
 
             await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
-            IUserMessage reply = await ReplyAsync($"User {user} has been muted for {arg} seconds. Reason : {message}");
-            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds. Reason : {message}");
+            IUserMessage reply = await ReplyAsync($"User {user} has been muted for {Utils.FormatTime(arg)}. Reason : {message}");
+            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {Utils.FormatTime(arg)}. Reason : {message}");
             IDMChannel dm = await user.GetOrCreateDMChannelAsync(new RequestOptions { });
 
             try
             {
-                await dm.SendMessageAsync($"You have been muted from UDH for **{arg}** seconds for the following reason : **{message}**. " +
+                await dm.SendMessageAsync($"You have been muted from UDH for **{Utils.FormatTime(arg)}** for the following reason : **{message}**. " +
                                           $"This is not appealable and any tentative to avoid it will result in your permanent ban.", false,
                     null, new RequestOptions {RetryMode = RetryMode.RetryRatelimit, Timeout = 6000});
             }
@@ -90,7 +90,7 @@ namespace DiscordBot.Modules
             {
                 await ReplyAsync($"Sorry {user.Mention}, seems I couldn't DM you because you blocked me !\n" +
                                  $"I'll have to send your mute reason in public :wink:\n" +
-                                 $"You have been muted from UDH for **{arg}** seconds for the following reason : **{message}**. " +
+                                 $"You have been muted from UDH for **{Utils.FormatTime(arg)}** for the following reason : **{message}**. " +
                                  $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
                 await _logging.LogAction($"User {user.Username} has DM blocked and the mute reason couldn't be sent.", true, false);
             }
