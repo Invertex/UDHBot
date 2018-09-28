@@ -294,6 +294,15 @@ namespace DiscordBot.Modules
             if (deleteAsync != null) await deleteAsync;
         }
 
+        [Command("slowmode"), Summary("Put on slowmode.")]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        async Task SlowMode(int time)
+        {
+            await Context.Message.DeleteAsync();
+            await (Context.Channel as ITextChannel).ModifyAsync(p => p.SlowModeInterval = time);
+            await ReplyAsync($"Slowmode has been set to {time}s !").DeleteAfterSeconds(10);
+        }
+
         [Command("ad"), Summary("Post ad with databaseid")]
         [RequireUserPermission(GuildPermission.BanMembers)]
         async Task PostAd(uint dbId)
