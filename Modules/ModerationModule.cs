@@ -51,8 +51,8 @@ namespace DiscordBot.Modules
 
             await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
-            IUserMessage reply = await ReplyAsync("User " + user + " has been muted for " + Utils.FormatTime(arg) + ".");
-            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {Utils.FormatTime(arg)}");
+            IUserMessage reply = await ReplyAsync($"User {user} has been muted for {Utils.FormatTime(arg)} ({arg} seconds).");
+            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {Utils.FormatTime(arg)} ({arg} seconds).");
 
             MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
 
@@ -76,8 +76,8 @@ namespace DiscordBot.Modules
 
             await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
-            IUserMessage reply = await ReplyAsync($"User {user} has been muted for {Utils.FormatTime(arg)}. Reason : {message}");
-            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {Utils.FormatTime(arg)}. Reason : {message}");
+            IUserMessage reply = await ReplyAsync($"User {user} has been muted for {Utils.FormatTime(arg)} ({arg} seconds). Reason : {message}");
+            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {Utils.FormatTime(arg)} ({arg} seconds). Reason : {message}");
             IDMChannel dm = await user.GetOrCreateDMChannelAsync(new RequestOptions { });
 
             try
@@ -292,6 +292,15 @@ namespace DiscordBot.Modules
             await m.DeleteAsync();
             Task deleteAsync = m2?.DeleteAsync();
             if (deleteAsync != null) await deleteAsync;
+        }
+
+        [Command("slowmode"), Summary("Put on slowmode.")]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        async Task SlowMode(int time)
+        {
+            await Context.Message.DeleteAsync();
+            await (Context.Channel as ITextChannel).ModifyAsync(p => p.SlowModeInterval = time);
+            await ReplyAsync($"Slowmode has been set to {time}s !").DeleteAfterSeconds(10);
         }
 
         [Command("ad"), Summary("Post ad with databaseid")]

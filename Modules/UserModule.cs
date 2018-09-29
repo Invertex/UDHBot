@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -24,19 +25,21 @@ namespace DiscordBot.Modules
         private readonly UserService _userService;
         private readonly PublisherService _publisherService;
         private readonly UpdateService _updateService;
+        private readonly CurrencyService _currencyService;
 
         private readonly Rules _rules;
         private static Settings.Deserialized.Settings _settings;
 
         public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
-            PublisherService publisherService, UpdateService updateService, Rules rules
-            , Settings.Deserialized.Settings settings)
+            PublisherService publisherService, UpdateService updateService, CurrencyService currencyService,
+            Rules rules, Settings.Deserialized.Settings settings)
         {
             _loggingService = loggingService;
             _databaseService = databaseService;
             _userService = userService;
             _publisherService = publisherService;
             _updateService = updateService;
+            _currencyService = currencyService;
             _rules = rules;
             _settings = settings;
         }
@@ -53,9 +56,9 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            var commands = Program.CommandList;
+            var commands = Program.CommandList.MessageSplit();
 
-            foreach (var message in commands.MessageSplit())
+            foreach (var message in commands)
                 await ReplyAsync(message);
         }
 
@@ -214,6 +217,7 @@ namespace DiscordBot.Modules
             await ReplyAsync($"{Context.User.Mention} you joined **{joinDate:dddd dd/MM/yyy HH:mm:ss}**");
             await Context.Message.DeleteAsync();
         }
+
         #endregion
 
         #region Codetips
@@ -273,8 +277,8 @@ namespace DiscordBot.Modules
 
             var message = await channel.GetMessageAsync(id);
             string messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + (channel == null
-                ? Context.Channel.Id
-                : channel.Id) + "/" + id;
+                                     ? Context.Channel.Id
+                                     : channel.Id) + "/" + id;
 
             var builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
@@ -819,6 +823,34 @@ namespace DiscordBot.Modules
 
         #endregion
 
+        #region Currency
+
+        [Command("currency"), Summary("Converts a currency. Syntax : !currency amount fromCurrency toCurrency")]
+        [Alias("curr")]
+        private async Task ConvertCurrency(double amount, string from, string to)
+        {
+            from = from.ToUpper();
+            to = to.ToUpper();
+
+            // Get USD to fromCurrency rate
+            double fromRate = await _currencyService.GetRate(from);
+            // Get USD to toCurrency rate
+            double toRate = await _currencyService.GetRate(to);
+
+            if (fromRate == -1 || toRate == -1)
+            {
+                await ReplyAsync(
+                    $"{Context.User.Mention}, {from} or {to} are invalid currencies or I can't understand them.\nPlease use international currency code (example : **USD** for $, **EUR** for €, **PKR** for pakistani rupee).");
+                return;
+            }
+
+            // Convert fromCurrency amount to USD to toCurrency
+            double value = Math.Round((toRate / fromRate) * amount, 2);
+
+            await ReplyAsync($"{Context.User.Mention}  **{amount} {from}** = **{value} {to}**");
+        }
+
+        #endregion
 
         [Command("ping"), Summary("Display bot ping. Syntax : !ping")]
         [Alias("pong")]

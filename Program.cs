@@ -34,6 +34,7 @@ namespace DiscordBot
         private AnimeService _animeService;
         private CasinoService _casinoService;
         private FeedService _feedService;
+        private CurrencyService _currencyService;
 
         private static PayWork _payWork;
         private static Rules _rules;
@@ -65,6 +66,7 @@ namespace DiscordBot
 
             _audioService = new AudioService(_loggingService, _client, _settings);
             _casinoService = new CasinoService(_loggingService, _updateService, _databaseService, _settings);
+            _currencyService = new CurrencyService();
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_loggingService);
             _serviceCollection.AddSingleton(_databaseService);
@@ -80,6 +82,7 @@ namespace DiscordBot
             _serviceCollection.AddSingleton(_rules);
             _serviceCollection.AddSingleton(_payWork);
             _serviceCollection.AddSingleton(_userSettings);
+            _serviceCollection.AddSingleton(_currencyService);
             _services = _serviceCollection.BuildServiceProvider();
 
 
@@ -149,14 +152,19 @@ namespace DiscordBot
             await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
             StringBuilder commandList = new StringBuilder();
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule"))
-            {
-                commandList.Append($"**{c.Name}** : {c.Summary}\n");
-            }
 
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role"))
+            commandList.Append("__Role Commands__\n");
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role").OrderBy(c => c.Name))
             {
                 commandList.Append($"**role {c.Name}** : {c.Summary}\n");
+            }
+            
+            commandList.Append("\n");
+            commandList.Append("__General Commands__\n");
+            
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name))
+            {
+                commandList.Append($"**{c.Name}** : {c.Summary}\n");
             }
 
             CommandList = commandList.ToString();
