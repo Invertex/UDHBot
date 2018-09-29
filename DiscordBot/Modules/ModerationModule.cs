@@ -14,7 +14,7 @@ namespace DiscordBot.Modules
 {
     public class ModerationModule : ModuleBase
     {
-        private readonly LoggingService _logging;
+        private readonly ILoggingService _logging;
         private readonly PublisherService _publisher;
         private readonly UpdateService _update;
         private readonly UserService _user;
@@ -24,7 +24,7 @@ namespace DiscordBot.Modules
 
         private Dictionary<ulong, DateTime> MutedUsers => _user._mutedUsers;
 
-        public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update, UserService user,
+        public ModerationModule(ILoggingService logging, PublisherService publisher, UpdateService update, UserService user,
             DatabaseService database, Rules rules, Settings.Deserialized.Settings settings)
         {
             _logging = logging;

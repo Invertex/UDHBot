@@ -25,7 +25,7 @@ namespace DiscordBot
         private CommandService _commandService;
         private IServiceProvider _services;
         private IServiceCollection _serviceCollection;
-        private LoggingService _loggingService;
+        private ILoggingService _loggingService;
         private DatabaseService _databaseService;
         private UserService _userService;
         private PublisherService _publisherService;

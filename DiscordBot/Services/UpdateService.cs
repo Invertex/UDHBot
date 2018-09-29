@@ -64,7 +64,7 @@ namespace DiscordBot.Services
     public class UpdateService
     {
         DiscordSocketClient _client;
-        private readonly LoggingService _loggingService;
+        private readonly ILoggingService _loggingService;
         private readonly PublisherService _publisherService;
         private readonly DatabaseService _databaseService;
         private readonly AnimeService _animeService;
@@ -83,7 +83,7 @@ namespace DiscordBot.Services
         private string[][] _manualDatabase;
         private string[][] _apiDatabase;
 
-        public UpdateService(DiscordSocketClient client, LoggingService loggingService, PublisherService publisherService,
+        public UpdateService(DiscordSocketClient client, ILoggingService loggingService, PublisherService publisherService,
             DatabaseService databaseService, AnimeService animeService, Settings.Deserialized.Settings settings, FeedService feedService)
         {
             _client = client;
