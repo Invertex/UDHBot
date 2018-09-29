@@ -53,9 +53,9 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            var commands = Program.CommandList;
-
-            foreach (var message in commands.MessageSplit())
+            var commands = Program.CommandList.MessageSplit();
+            commands.Sort();
+            foreach (var message in commands)
                 await ReplyAsync(message);
         }
 
