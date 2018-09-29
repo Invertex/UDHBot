@@ -25,19 +25,21 @@ namespace DiscordBot.Modules
         private readonly UserService _userService;
         private readonly PublisherService _publisherService;
         private readonly UpdateService _updateService;
+        private readonly CurrencyService _currencyService;
 
         private readonly Rules _rules;
         private static Settings.Deserialized.Settings _settings;
 
         public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
-            PublisherService publisherService, UpdateService updateService, Rules rules
-            , Settings.Deserialized.Settings settings)
+            PublisherService publisherService, UpdateService updateService, CurrencyService currencyService,
+            Rules rules, Settings.Deserialized.Settings settings)
         {
             _loggingService = loggingService;
             _databaseService = databaseService;
             _userService = userService;
             _publisherService = publisherService;
             _updateService = updateService;
+            _currencyService = currencyService;
             _rules = rules;
             _settings = settings;
         }
@@ -820,6 +822,30 @@ namespace DiscordBot.Modules
 
         #endregion
 
+        #region Currency
+
+        [Command("currency"), Summary("Converts a currency. Syntax : !currency amount fromCurrency toCurrency")]
+        [Alias("curr")]
+        private async Task ConvertCurrency(double amount, string from, string to)
+        {
+            from = from.ToUpper();
+            to = to.ToUpper();
+
+            // Get USD to fromCurrency rate
+            double fromRate = await _currencyService.GetRate(from);
+            // Get USD to toCurrency rate
+            double toRate = await _currencyService.GetRate(to);
+
+            if (fromRate == -1 || toRate == -1)
+                Console.WriteLine("Invalid currency.");
+
+            // Convert fromCurrency amount to USD to toCurrency
+            double value = Math.Round((toRate / fromRate) * amount, 2);
+
+            await ReplyAsync($"{Context.User.Mention}  **{amount} {from}** is **{value} {to}**");
+        }
+
+        #endregion
 
         [Command("ping"), Summary("Display bot ping. Syntax : !ping")]
         [Alias("pong")]
