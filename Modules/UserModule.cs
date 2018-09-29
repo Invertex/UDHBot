@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -54,7 +55,7 @@ namespace DiscordBot.Modules
             }
 
             var commands = Program.CommandList.MessageSplit();
-            commands.Sort();
+            
             foreach (var message in commands)
                 await ReplyAsync(message);
         }

@@ -149,14 +149,19 @@ namespace DiscordBot
             await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
             StringBuilder commandList = new StringBuilder();
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule"))
-            {
-                commandList.Append($"**{c.Name}** : {c.Summary}\n");
-            }
 
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role"))
+            commandList.Append("__Role Commands__\n");
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role").OrderBy(c => c.Name))
             {
                 commandList.Append($"**role {c.Name}** : {c.Summary}\n");
+            }
+            
+            commandList.Append("\n");
+            commandList.Append("__General Commands__\n");
+            
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name))
+            {
+                commandList.Append($"**{c.Name}** : {c.Summary}\n");
             }
 
             CommandList = commandList.ToString();
