@@ -19,6 +19,7 @@ namespace DiscordBot.Tests.Modules
             var moderatorMock = new Mock<IUser>();
             var userMock = new Mock<IGuildUser>();
             var contextMock = new Mock<ICommandContext>();
+
             contextMock.Setup(c => c.User).Returns(moderatorMock.Object);
 
             var modModule = new ModerationModule(loggingMock.Object, null, null, null, null, null, null);
@@ -32,13 +33,14 @@ namespace DiscordBot.Tests.Modules
         public async Task IsModeratorAndUserLoggedOnKickAsync()
         {
             var loggingMock = new Mock<ILoggingService>();
+            var moderatorMock = new Mock<IUser>();
+            var contextMock = new Mock<ICommandContext>();
             var userMock = new Mock<IGuildUser>();
             var expectedUser = "UserName";
-            userMock.Setup(u => u.Username).Returns(expectedUser);
-            var moderatorMock = new Mock<IUser>();
             var expectedModerator = "ModeratorName";
+
+            userMock.Setup(u => u.Username).Returns(expectedUser);
             moderatorMock.Setup(mod => mod.Username).Returns(expectedModerator);
-            var contextMock = new Mock<ICommandContext>();
             contextMock.Setup(c => c.User).Returns(moderatorMock.Object);
 
             var modModule = new ModerationModule(loggingMock.Object, null, null, null, null, null, null);
