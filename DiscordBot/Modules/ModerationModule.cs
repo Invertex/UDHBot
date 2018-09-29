@@ -187,7 +187,7 @@ namespace DiscordBot.Modules
 
         [Command("kick"), Summary("Kick a user")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        async Task KickUser(IUser user)
+        internal async Task KickUser(IUser user)
         {
             var u = user as IGuildUser;
 
