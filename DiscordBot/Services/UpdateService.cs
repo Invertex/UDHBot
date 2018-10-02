@@ -10,6 +10,7 @@ using DiscordBot.Data;
 using DiscordBot.Extensions;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace DiscordBot.Services
 {
@@ -413,6 +414,39 @@ namespace DiscordBot.Services
 
                 await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             }
+        }
+
+        public async Task<String> DownloadWikipediaArticle(String articleName)
+        {
+
+            String url = Uri.EscapeUriString(_settings.WikipediaSearchPage + articleName);
+
+            try
+            {
+                HtmlWeb htmlWeb = new HtmlWeb();
+                htmlWeb.CaptureRedirect = true;
+
+                HtmlDocument manual = await htmlWeb.LoadFromWebAsync(url);
+
+                String jsonData = manual.DocumentNode.OuterHtml;
+
+                dynamic json = JObject.Parse(jsonData);
+
+                //2 hours have been spent trying to get this to work - just a warning to not stuff it up
+                foreach(JToken token in json["query"]["pages"].Children()) {
+                    //If its null its not an article
+                    if (token.First["extract"] == null) {
+                        break;
+                    }
+
+                    return token.First["extract"].ToString();
+                }
+                
+            } catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            return null;
         }
 
         public UserData GetUserData()
