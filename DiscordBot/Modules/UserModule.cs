@@ -946,20 +946,13 @@ namespace DiscordBot.Modules
                                  "```To get the publisher role type **!pinfo** and follow the instructions." +
                                  "https://www.assetstore.unity3d.com/en/#!/search/page=1/sortby=popularity/query=publisher:7285 <= Example Digits```\n");
                 await ReplyAsync("```!role add/remove Artists - The Graphic Designers, Artists and Modellers. \n" +
-                                 "!role add/remove 3DModelers - People behind every vertex. \n" +
-                                 "!role add/remove Coders - The valiant knights of programming who toil away, without rest. \n" +
-                                 "!role add/remove C# - If you are using C# to program in Unity3D \n" +
-                                 "!role add/remove Javascript - If you are using Javascript to program in Unity3D \n" +
-                                 "!role add/remove Game-Designers - Those who specialise in writing, gameplay design and level design.\n" +
-                                 "!role add/remove Audio-Artists - The unsung heroes of sound effects .\n" +
-                                 "!role add/remove Generalists - Generalist may refer to a person with a wide array of knowledge.\n" +
+                                 "!role add/remove Artist-3D - People behind every vertex. \n" +
+                                 "!role add/remove Programmer - The valiant knights of programming who toil away, without rest. \n" +
+                                 "!role add/remove Game-Designer - Those who specialise in writing, gameplay design and level design.\n" +
+                                 "!role add/remove Audio-Engineer - The unsung heroes of sound effects .\n" +
+                                 "!role add/remove Generalist - Generalist may refer to a person with a wide array of knowledge.\n" +
                                  "!role add/remove Hobbyists - A person who is interested in Unity3D or Game Making as a hobby.\n" +
-                                 "!role add/remove Vector-Artists - The people who love to have infinite resolution.\n" +
-                                 "!role add/remove Voxel-Artist - People who love to voxelize the world.\n" +
-                                 "!role add/remove Students - The eager learners among us, never stop learning. \n" +
-                                 "!role add/remove VR-Developers - Passionate people who wants to bridge virtual world with real life. \n" +
-                                 "--------------------------------------------------------------------------------------------\n" +
-                                 "!role add/remove Streamer - If you stream on twitch/youtube or other discord integrated platforms content about tutorials and gaming. \n" +
+                                 "!role add/remove Student - The eager learners among us, never stop learning. \n" +
                                  "```");
             }
         }
