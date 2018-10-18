@@ -945,7 +945,7 @@ namespace DiscordBot.Modules
                                  "\n" +
                                  "```To get the publisher role type **!pinfo** and follow the instructions." +
                                  "https://www.assetstore.unity3d.com/en/#!/search/page=1/sortby=popularity/query=publisher:7285 <= Example Digits```\n");
-                await ReplyAsync("```!role add/remove Artists - The Graphic Designers, Artists and Modellers. \n" +
+                await ReplyAsync("```!role add/remove Artist-2D - The Graphic Designers, Artists and Modellers. \n" +
                                  "!role add/remove Artist-3D - People behind every vertex. \n" +
                                  "!role add/remove Programmer - The valiant knights of programming who toil away, without rest. \n" +
                                  "!role add/remove Game-Designer - Those who specialise in writing, gameplay design and level design.\n" +
