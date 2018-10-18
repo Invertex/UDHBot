@@ -234,7 +234,7 @@ namespace DiscordBot
             string globalRules = _rules.Channel.First(x => x.Id == 0).Content;
             IDMChannel dm = await user.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync(
-                "Hello and welcome to Unity Developer Hub !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
+                "Hello and welcome to Unity Developer Community !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
                 "Please also read the additional informations in the **#welcome** channel." +
                 "You can get all the available commands on the server by typing !help in the **#bot-commands** channel.");
             await dm.SendMessageAsync(globalRules);
