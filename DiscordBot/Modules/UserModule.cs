@@ -826,6 +826,13 @@ namespace DiscordBot.Modules
 
         #region Currency
 
+        [Command("currency"), Summary("Converts a currency. Syntax : !currency fromCurrency toCurrency")]
+        [Alias("curr")]
+        private async Task ConvertCurrency(string from, string to)
+        {
+            await ConvertCurrency(1, from, to);
+        }
+
         [Command("currency"), Summary("Converts a currency. Syntax : !currency amount fromCurrency toCurrency")]
         [Alias("curr")]
         private async Task ConvertCurrency(double amount, string from, string to)
