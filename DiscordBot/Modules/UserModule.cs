@@ -153,7 +153,7 @@ namespace DiscordBot.Modules
             sb.Append("Here's the top 10 of users by level :");
             for (int i = 0; i < users.Count; i++)
                 sb.Append(
-                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ *Level* **{users[i].level}**");
+                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId))?.Username}** ~ *Level* **{users[i].level}**");
 
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
@@ -168,7 +168,7 @@ namespace DiscordBot.Modules
             sb.Append("Here's the top 10 of users by karma :");
             for (int i = 0; i < users.Count; i++)
                 sb.Append(
-                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].karma}** *Karma*");
+                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId))?.Username}** ~ **{users[i].karma}** *Karma*");
 
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
@@ -182,7 +182,7 @@ namespace DiscordBot.Modules
             StringBuilder sb = new StringBuilder();
             sb.Append("Here's the top 10 of users by UDC :");
             for (int i = 0; i < users.Count; i++)
-                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId)).Username}** ~ **{users[i].udc}** *UDC*");
+                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId))?.Username}** ~ **{users[i].udc}** *UDC*");
 
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
