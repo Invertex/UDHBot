@@ -940,19 +940,23 @@ namespace DiscordBot.Modules
 
                 await ReplyAsync("**The following roles are available on this server** :\n" +
                                  "\n" +
-                                 "We offer multiple roles to show what you specialize in, so if you are particularly good at anything, assign your role! \n" +
-                                 "You can have multiple specialties and your color is determined by the highest role you hold \n" +
+                                 "We offer multiple roles to show what you specialize in, whether it's professionnaly or as a hobby, so if there's something you're good at, assign the corresponding role! \n" +
+                                 "You can assign as much roles as you want, but try to keep them for what you're good at :) \n" +
                                  "\n" +
                                  "```To get the publisher role type **!pinfo** and follow the instructions." +
-                                 "https://www.assetstore.unity3d.com/en/#!/search/page=1/sortby=popularity/query=publisher:7285 <= Example Digits```\n");
-                await ReplyAsync("```!role add/remove Artist-2D - The Graphic Designers, Artists and Modellers. \n" +
-                                 "!role add/remove Artist-3D - People behind every vertex. \n" +
-                                 "!role add/remove Programmer - The valiant knights of programming who toil away, without rest. \n" +
-                                 "!role add/remove Game-Designer - Those who specialise in writing, gameplay design and level design.\n" +
-                                 "!role add/remove Audio-Engineer - The unsung heroes of sound effects .\n" +
-                                 "!role add/remove Generalist - Generalist may refer to a person with a wide array of knowledge.\n" +
-                                 "!role add/remove Hobbyists - A person who is interested in Unity3D or Game Making as a hobby.\n" +
-                                 "!role add/remove Student - The eager learners among us, never stop learning. \n" +
+                                 "https://www.assetstore.unity3d.com/en/#!/search/page=1/sortby=popularity/query=publisher:1 <= Example Digits```\n");
+                await ReplyAsync("```!role add/remove 2D-Artists - If you're good at drawing, painting, digital art, concept art or anything else that's flat. \n" +
+                                 "!role add/remove 3D-Artists - If you are a wizard with vertices or like to forge your models from mud. \n" +
+                                 "!role add/remove Animators - If you like to bring characters to life. \n" +
+                                 "!role add/remove Technical-Artists - If you write tools and shaders to bridge the gap between art and programming. \n" +
+                                 "!role add/remove Programmers - If you like typing away to make your dreams come true (or the code come to your dreams). \n" +
+                                 "!role add/remove Game-Designers - If you are good at designing games, mechanics and levels.\n" +
+                                 "!role add/remove Audio-Engineers - If you live life to the rhythm of your own music and sounds.\n" +
+                                 "!role add/remove Generalists - If you like to dabble in everything.\n" +
+                                 "!role add/remove Hobbyists - If you're using Unity as a hobby.\n" +
+                                 "!role add/remove Students - If you're currently studying in a gamedev related field. \n" +
+                                 "!role add/remove XR-Developers - If you're a VR, AR or MR sorcerer. \n" +
+                                 "!role add/remove Writers - If you like writing lore, scenarii, characters and stories. \n" +
                                  "```");
             }
         }
