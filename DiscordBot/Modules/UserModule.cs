@@ -824,6 +824,21 @@ namespace DiscordBot.Modules
 
         #endregion
 
+        #region Translate
+        [Command("translate"), Summary("Translate a message. Syntax : !translate messageId language")]
+        private async Task Translate(ulong id, string language = "en")
+        {
+            await Translate((await Context.Channel.GetMessageAsync(id)).Content, language);
+        }
+        [Command("translate"), Summary("Translate a message. Syntax : !translate text language")]
+        private async Task Translate(string message, string language = "en")
+        {
+            await ReplyAsync($"Here: https://translate.google.pt/#auto/{language}/{message}");
+            await Task.Delay(1000);
+            await Context.Message.DeleteAsync();
+        }
+        #endregion
+
         #region Currency
 
         [Command("currency"), Summary("Converts a currency. Syntax : !currency fromCurrency toCurrency")]
