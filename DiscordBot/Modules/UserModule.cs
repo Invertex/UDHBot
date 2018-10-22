@@ -886,6 +886,13 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAfterTime(minutes: 3);
         }
 
+        [Command("members"), Summary("Displays number of members Syntax : !members")]
+        [Alias("MemberCount")]
+        private async Task MemberCount()
+        {
+            await ReplyAsync($"We currently have {(await Context.Guild.GetUsersAsync()).Count-1} members. Let's keep on growing as the strong community we are :muscle:");
+        }
+
         [Group("role")]
         public class RoleModule : ModuleBase
         {
