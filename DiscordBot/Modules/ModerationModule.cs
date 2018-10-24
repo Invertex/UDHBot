@@ -51,8 +51,8 @@ namespace DiscordBot.Modules
 
             await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
-            IUserMessage reply = await ReplyAsync("User " + user + " has been muted for " + arg + " seconds.");
-            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds");
+            IUserMessage reply = await ReplyAsync($"User {user} has been muted for {Utils.FormatTime(arg)} ({arg} seconds).");
+            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {Utils.FormatTime(arg)} ({arg} seconds).");
 
             MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
 
@@ -76,13 +76,13 @@ namespace DiscordBot.Modules
 
             await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
-            IUserMessage reply = await ReplyAsync($"User {user} has been muted for {arg} seconds. Reason : {message}");
-            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {arg} seconds. Reason : {message}");
+            IUserMessage reply = await ReplyAsync($"User {user} has been muted for {Utils.FormatTime(arg)} ({arg} seconds). Reason : {message}");
+            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} for {Utils.FormatTime(arg)} ({arg} seconds). Reason : {message}");
             IDMChannel dm = await user.GetOrCreateDMChannelAsync(new RequestOptions { });
 
             try
             {
-                await dm.SendMessageAsync($"You have been muted from UDH for **{arg}** seconds for the following reason : **{message}**. " +
+                await dm.SendMessageAsync($"You have been muted from UDH for **{Utils.FormatTime(arg)}** for the following reason : **{message}**. " +
                                           $"This is not appealable and any tentative to avoid it will result in your permanent ban.", false,
                     null, new RequestOptions {RetryMode = RetryMode.RetryRatelimit, Timeout = 6000});
             }
@@ -90,7 +90,7 @@ namespace DiscordBot.Modules
             {
                 await ReplyAsync($"Sorry {user.Mention}, seems I couldn't DM you because you blocked me !\n" +
                                  $"I'll have to send your mute reason in public :wink:\n" +
-                                 $"You have been muted from UDH for **{arg}** seconds for the following reason : **{message}**. " +
+                                 $"You have been muted from UDH for **{Utils.FormatTime(arg)}** for the following reason : **{message}**. " +
                                  $"This is not appealable and any tentative to avoid it will result in your permanent ban.");
                 await _logging.LogAction($"User {user.Username} has DM blocked and the mute reason couldn't be sent.", true, false);
             }
@@ -178,10 +178,10 @@ namespace DiscordBot.Modules
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");
-            await Task.Delay(5000).ContinueWith(async t =>
+            Task.Delay(5000).ContinueWith(t =>
             {
-                await m.DeleteAsync();
-                await _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
+                m.DeleteAsync();
+                _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
             });
         }
 
@@ -215,7 +215,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.KickMembers)]
         async Task Rules(int seconds = 60)
         {
-            await Rules(Context.Channel, seconds);
+            Rules(Context.Channel, seconds);
             await Context.Message.DeleteAsync();
         }
 
@@ -294,6 +294,15 @@ namespace DiscordBot.Modules
             if (deleteAsync != null) await deleteAsync;
         }
 
+        [Command("slowmode"), Summary("Put on slowmode.")]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        async Task SlowMode(int time)
+        {
+            await Context.Message.DeleteAsync();
+            await (Context.Channel as ITextChannel).ModifyAsync(p => p.SlowModeInterval = time);
+            await ReplyAsync($"Slowmode has been set to {time}s !").DeleteAfterSeconds(10);
+        }
+
         [Command("ad"), Summary("Post ad with databaseid")]
         [RequireUserPermission(GuildPermission.BanMembers)]
         async Task PostAd(uint dbId)
@@ -312,9 +321,18 @@ namespace DiscordBot.Modules
 
         [Command("dbsync"), Summary("Force add user to database")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        void DbSync(IUser user)
+        async Task DbSync(IUser user)
         {
             _database.AddNewUser((SocketGuildUser) user);
+        }
+
+        [Command("say")]
+        async Task Say(IMessageChannel channel, string message)
+        {
+            if (Context.User.Id != 84252127995658240)
+                return;
+
+            await channel.SendMessageAsync(message);            
         }
     }
 }

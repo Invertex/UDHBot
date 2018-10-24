@@ -33,6 +33,8 @@ namespace DiscordBot
         private AudioService _audioService;
         private AnimeService _animeService;
         private CasinoService _casinoService;
+        private FeedService _feedService;
+        private CurrencyService _currencyService;
 
         private static PayWork _payWork;
         private static Rules _rules;
@@ -57,11 +59,14 @@ namespace DiscordBot
             _databaseService = new DatabaseService(_loggingService, _settings);
             _publisherService = new PublisherService(_client, _databaseService, _settings);
             _animeService = new AnimeService(_client, _loggingService, _settings);
-            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService, _settings);
+            _feedService = new FeedService(_client, _settings);
+            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService, _settings,
+                _feedService);
             _userService = new UserService(_databaseService, _loggingService, _updateService, _settings, _userSettings);
 
             _audioService = new AudioService(_loggingService, _client, _settings);
             _casinoService = new CasinoService(_loggingService, _updateService, _databaseService, _settings);
+            _currencyService = new CurrencyService();
             _serviceCollection = new ServiceCollection();
             _serviceCollection.AddSingleton(_loggingService);
             _serviceCollection.AddSingleton(_databaseService);
@@ -77,6 +82,7 @@ namespace DiscordBot
             _serviceCollection.AddSingleton(_rules);
             _serviceCollection.AddSingleton(_payWork);
             _serviceCollection.AddSingleton(_userSettings);
+            _serviceCollection.AddSingleton(_currencyService);
             _services = _serviceCollection.BuildServiceProvider();
 
 
@@ -146,14 +152,19 @@ namespace DiscordBot
             await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
             StringBuilder commandList = new StringBuilder();
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule"))
-            {
-                commandList.Append($"**{c.Name}** : {c.Summary}\n");
-            }
 
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role"))
+            commandList.Append("__Role Commands__\n");
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role").OrderBy(c => c.Name))
             {
                 commandList.Append($"**role {c.Name}** : {c.Summary}\n");
+            }
+            
+            commandList.Append("\n");
+            commandList.Append("__General Commands__\n");
+            
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name))
+            {
+                commandList.Append($"**{c.Name}** : {c.Summary}\n");
             }
 
             CommandList = commandList.ToString();
@@ -223,7 +234,7 @@ namespace DiscordBot
             string globalRules = _rules.Channel.First(x => x.Id == 0).Content;
             IDMChannel dm = await user.GetOrCreateDMChannelAsync();
             await dm.SendMessageAsync(
-                "Hello and welcome to Unity Developer Hub !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
+                "Hello and welcome to Unity Developer Community !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
                 "Please also read the additional informations in the **#welcome** channel." +
                 "You can get all the available commands on the server by typing !help in the **#bot-commands** channel.");
             await dm.SendMessageAsync(globalRules);
@@ -251,7 +262,7 @@ namespace DiscordBot
         private async Task UserLeft(SocketGuildUser user)
         {
             DateTime joinDate;
-            DateTime.TryParse(await _databaseService.GetUserJoinDate(user.Id), out joinDate);
+            DateTime.TryParse(_databaseService.GetUserJoinDate(user.Id), out joinDate);
             TimeSpan timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
                 $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +

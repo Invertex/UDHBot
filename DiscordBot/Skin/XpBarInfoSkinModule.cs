@@ -1,3 +1,4 @@
+using System;
 using DiscordBot.Domain;
 using ImageMagick;
 
@@ -7,7 +8,7 @@ namespace DiscordBot.Skin
     {
         public override Drawables GetDrawables(ProfileData data)
         {
-            Text = $"{data.XpShown:#,##0} / {data.MaxXpShown:N0} ({(data.XpPercentage * 100):0}%)";
+            Text = $"{data.XpShown:#,##0} / {data.MaxXpShown:N0} ({Math.Floor(data.XpPercentage * 100):0}%)";
             return base.GetDrawables(data);
         }
 
