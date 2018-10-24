@@ -67,13 +67,11 @@ namespace DiscordBot.Modules
 
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, everyonePerms);
             await newChannel.AddPermissionOverwriteAsync(Context.User, userPerms);
-            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Name == "Staff"), userPerms);
-            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Name == "Bots"), userPerms);
 
             await newChannel.SendMessageAsync(
                 $"The content of this conversation will stay strictly between you {Context.User.Mention} and the staff.\n" +
-                $"Please stay civil, any insults or offensive language could see you punished.\n" +
-                $"Do not ping anyone and wait until a staff member is free to examine your complaint.");
+                "Please stay civil, any insults or offensive language could see you punished.\n" +
+                "Do not ping anyone and wait until a staff member is free to examine your complaint.");
             await newChannel.SendMessageAsync($"An administrator will be able to close this chat by doing !close.");
 
             /*await newChannel.SendMessageAsync(
