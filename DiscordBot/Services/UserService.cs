@@ -25,7 +25,7 @@ namespace DiscordBot.Services
     public class UserService
     {
         private readonly DatabaseService _databaseService;
-        private readonly LoggingService _loggingService;
+        private readonly ILoggingService _loggingService;
         private readonly UpdateService _updateService;
 
         private readonly Settings.Deserialized.Settings _settings;
@@ -79,7 +79,7 @@ namespace DiscordBot.Services
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
-        public UserService(DatabaseService databaseService, LoggingService loggingService, UpdateService updateService,
+        public UserService(DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
             Settings.Deserialized.Settings settings, UserSettings userSettings)
         {
             rand = new Random();
