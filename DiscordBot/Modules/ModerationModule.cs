@@ -303,6 +303,17 @@ namespace DiscordBot.Modules
             await ReplyAsync($"Slowmode has been set to {time}s !").DeleteAfterSeconds(10);
         }
 
+        [Command("tagrole"), Summary("Tag a role and post a message.")]
+        [Alias("mentionrole")]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        async Task TagRole(IRole role, string message)
+        {
+            await role.ModifyAsync(properties => { properties.Mentionable = true; });
+            await Context.Channel.SendMessageAsync($"{role.Mention}\n{message}");
+            await role.ModifyAsync(properties => { properties.Mentionable = false; });
+            await Context.Message.DeleteAsync();
+        }
+
         [Command("ad"), Summary("Post ad with databaseid")]
         [RequireUserPermission(GuildPermission.BanMembers)]
         async Task PostAd(uint dbId)
