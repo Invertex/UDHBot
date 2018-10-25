@@ -21,7 +21,7 @@ namespace DiscordBot.Modules
 {
     public class UserModule : ModuleBase
     {
-        private readonly LoggingService _loggingService;
+        private readonly ILoggingService _loggingService;
         private readonly DatabaseService _databaseService;
         private readonly UserService _userService;
         private readonly PublisherService _publisherService;
@@ -31,7 +31,7 @@ namespace DiscordBot.Modules
         private readonly Rules _rules;
         private static Settings.Deserialized.Settings _settings;
 
-        public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
+        public UserModule(ILoggingService loggingService, DatabaseService databaseService, UserService userService,
             PublisherService publisherService, UpdateService updateService, CurrencyService currencyService,
             Rules rules, Settings.Deserialized.Settings settings)
         {
@@ -874,9 +874,9 @@ namespace DiscordBot.Modules
         [Group("role")]
         public class RoleModule : ModuleBase
         {
-            private readonly LoggingService _logging;
+            private readonly ILoggingService _logging;
 
-            public RoleModule(LoggingService logging)
+            public RoleModule(ILoggingService logging)
             {
                 _logging = logging;
             }
