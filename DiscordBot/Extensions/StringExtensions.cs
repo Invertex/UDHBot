@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using DiscordBot.Properties;
 
 namespace DiscordBot.Extensions
@@ -92,5 +94,27 @@ namespace DiscordBot.Extensions
         {
             return Resources.DiscordCodeBlock.Replace("{code}", code).Replace("{language}", language);
         }
+        
+        public static string GetSHA256(this string input)
+        {
+            var hash = new SHA256CryptoServiceProvider();
+            // Convert the input string to a byte array and compute the hash.
+            byte[] data = hash.ComputeHash(Encoding.UTF8.GetBytes(input));
+
+            // Create a new Stringbuilder to collect the bytes
+            // and create a string.
+            StringBuilder sb = new StringBuilder();
+
+            // Loop through each byte of the hashed data 
+            // and format each one as a hexadecimal string.
+            for (int i = 0; i < data.Length; i++)
+            {
+                sb.Append(data[i].ToString("x2"));
+            }
+
+            // Return the hexadecimal string.
+            return sb.ToString();
+        }
+
     }
 }

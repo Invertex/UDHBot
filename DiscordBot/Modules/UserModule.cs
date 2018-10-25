@@ -940,7 +940,7 @@ namespace DiscordBot.Modules
 
                 await ReplyAsync("**The following roles are available on this server** :\n" +
                                  "\n" +
-                                 "We offer multiple roles to show what you specialize in, whether it's professionnaly or as a hobby, so if there's something you're good at, assign the corresponding role! \n" +
+                                 "We offer multiple roles to show what you specialize in, whether it's professionally or as a hobby, so if there's something you're good at, assign the corresponding role! \n" +
                                  "You can assign as much roles as you want, but try to keep them for what you're good at :) \n" +
                                  "\n" +
                                  "```To get the publisher role type **!pinfo** and follow the instructions." +
@@ -957,6 +957,9 @@ namespace DiscordBot.Modules
                                  "!role add/remove Students - If you're currently studying in a gamedev related field. \n" +
                                  "!role add/remove XR-Developers - If you're a VR, AR or MR sorcerer. \n" +
                                  "!role add/remove Writers - If you like writing lore, scenarii, characters and stories. \n" +
+                                 "======Below are special roles that will get pinged for specific reasons====== \n" +
+                                 "!role add/remove Subs-Gamejam - Will be pinged when there is UDC gamejam related news. \n" +
+                                 "!role add/remove Subs-Poll - Will be pinged when there is new public polls. \n" +
                                  "```");
             }
         }

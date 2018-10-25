@@ -24,9 +24,10 @@ namespace DiscordBot.Modules
         private async Task Complaint()
         {
             var channelList = Context.Guild.GetChannelsAsync().Result;
+            var hash = Context.User.Id.ToString().GetSHA256().Substring(0, 8);
             var channelName =
                 ParseToDiscordChannel(
-                    $"{_settings.ComplaintChannelPrefix}-{Context.User.Username}");
+                    $"{_settings.ComplaintChannelPrefix}-{hash}");
             var categoryExists = false;
             var categoryList = Context.Guild.GetCategoriesAsync().Result;
             var categoryName = _settings.ComplaintCategoryName;
@@ -68,7 +69,7 @@ namespace DiscordBot.Modules
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, everyonePerms);
             await newChannel.AddPermissionOverwriteAsync(Context.User, userPerms);
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Name == "Staff"), userPerms);
-            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Name == "Bots"), userPerms);
+            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Name == "Bot"), userPerms);
 
             await newChannel.SendMessageAsync(
                 $"The content of this conversation will stay strictly between you {Context.User.Mention} and the staff.\n" +
