@@ -833,7 +833,7 @@ namespace DiscordBot.Modules
         [Command("translate"), Summary("Translate a message. Syntax : !translate text language")]
         private async Task Translate(string message, string language = "en")
         {
-            await ReplyAsync($"Here: https://translate.google.pt/#auto/{language}/{message}");
+            await ReplyAsync($"Here: https://translate.google.com/#auto/{language}/{message.Replace(" ", "%20")}");
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
         }
