@@ -26,7 +26,7 @@ namespace DiscordBot.Services
                 {
                     return -1;
                 }
-                _rates.Add(currency, rate);
+                _rates[currency] = rate;
             }
             return _rates[currency].value;
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -700,6 +700,38 @@ namespace DiscordBot.Modules
         private string FormatFaq(int id, FaqData faq)
         {
             return $"{id}. **{faq.Question}** - {faq.Answer}";
+        }
+
+
+        [Command("wiki"), Summary("Searches Wikipedia. Syntax : !wiki \"query\"")]
+        [Alias("wikipedia")]
+        private async Task SearchWikipedia([Remainder] string query)
+        {
+
+            String articleExtract = await _updateService.DownloadWikipediaArticle(query);
+
+            // If an article is found return it, else return error message
+            if (articleExtract == null) {
+                await ReplyAsync("No Articles Found."); 
+                return;
+            }
+
+            
+            //Trim if message is too long
+            if (articleExtract.Length > 350) {
+                articleExtract = articleExtract.Substring(0, 347) + "...";
+            }
+
+            await ReplyAsync(embed: GetWikipediaEmbed(query, articleExtract));
+        }
+
+        private Embed GetWikipediaEmbed(String subject, String articleExtract)
+        {
+            var builder = new EmbedBuilder()
+                .WithTitle($"Wikipedia | {subject}")
+                .WithDescription($"{articleExtract}")
+                .WithColor(new Color(0x33CC00));
+            return builder.Build();
         }
 
         private int ParseNumber(string s)

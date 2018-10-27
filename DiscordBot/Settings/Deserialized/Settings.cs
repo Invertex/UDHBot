@@ -75,6 +75,8 @@ namespace DiscordBot.Settings.Deserialized
 
         public string AssetStoreFrontPage { get; set; }
 
+        public string WikipediaSearchPage { get; set; }
+
         public string ComplaintCategoryName { get; set; }
         public string ComplaintChannelPrefix { get; set; }
     }
