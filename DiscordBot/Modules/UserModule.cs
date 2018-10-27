@@ -856,6 +856,21 @@ namespace DiscordBot.Modules
 
         #endregion
 
+        #region Translate
+        [Command("translate"), Summary("Translate a message. Syntax : !translate messageId language")]
+        private async Task Translate(ulong id, string language = "en")
+        {
+            await Translate((await Context.Channel.GetMessageAsync(id)).Content, language);
+        }
+        [Command("translate"), Summary("Translate a message. Syntax : !translate text language")]
+        private async Task Translate(string message, string language = "en")
+        {
+            await ReplyAsync($"Here: https://translate.google.com/#auto/{language}/{message.Replace(" ", "%20")}");
+            await Task.Delay(1000);
+            await Context.Message.DeleteAsync();
+        }
+        #endregion
+
         #region Currency
 
         [Command("currency"), Summary("Converts a currency. Syntax : !currency fromCurrency toCurrency")]
@@ -901,6 +916,13 @@ namespace DiscordBot.Modules
             await message.ModifyAsync(m => m.Content = $"Pong :blush: (**{time.TotalMilliseconds}** *ms*)");
             await message.DeleteAfterTime(minutes: 3);
             await Context.Message.DeleteAfterTime(minutes: 3);
+        }
+
+        [Command("members"), Summary("Displays number of members Syntax : !members")]
+        [Alias("MemberCount")]
+        private async Task MemberCount()
+        {
+            await ReplyAsync($"We currently have {(await Context.Guild.GetUsersAsync()).Count-1} members. Let's keep on growing as the strong community we are :muscle:");
         }
 
         [Group("role")]
