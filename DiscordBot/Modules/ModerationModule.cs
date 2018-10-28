@@ -304,7 +304,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("tagrole"), Summary("Tag a role and post a message.")]
-        [Alias("mentionrole")]
+        [Alias("mentionrole", "pingrole", "rolemention", "roletag", "roleping")]
         [RequireUserPermission(GuildPermission.BanMembers)]
         async Task TagRole(IRole role, string message)
         {
