@@ -716,20 +716,23 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            
             //Trim if message is too long
             if (articleExtract.Length > 350) {
                 articleExtract = articleExtract.Substring(0, 347) + "...";
             }
 
-            await ReplyAsync(embed: GetWikipediaEmbed(query, articleExtract));
+            //Generate url for users
+            String userUrl = new Uri("https://en.wikipedia.org/wiki/" + query).AbsoluteUri;
+
+            await ReplyAsync(embed: GetWikipediaEmbed(query, articleExtract, userUrl));
         }
 
-        private Embed GetWikipediaEmbed(String subject, String articleExtract)
+        private Embed GetWikipediaEmbed(String subject, String articleExtract, String articleUrl)
         {
             var builder = new EmbedBuilder()
                 .WithTitle($"Wikipedia | {subject}")
                 .WithDescription($"{articleExtract}")
+                .WithUrl(articleUrl)
                 .WithColor(new Color(0x33CC00));
             return builder.Build();
         }
