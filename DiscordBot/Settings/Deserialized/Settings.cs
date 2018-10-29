@@ -16,6 +16,7 @@ namespace DiscordBot.Settings.Deserialized
         public char Prefix { get; set; }
         public string AllowMentionPrefix { get; set; }
         public string Administrator { get; set; }
+        public string guildId { get; set; }
 
         public string TntDroid { get; set; }
 
