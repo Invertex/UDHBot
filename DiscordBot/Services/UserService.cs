@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -443,6 +443,15 @@ namespace DiscordBot.Services
 
         public async Task Thanks(SocketMessage messageParam)
         {
+            //Get guild id
+            SocketGuildChannel channel = messageParam.Channel as SocketGuildChannel;
+            ulong guildId = channel.Guild.Id;
+
+            //Make sure its in the UDH server
+            if (guildId.ToString() != _settings.guildId) {
+                return;
+            }
+
             if (messageParam.Author.IsBot)
                 return;
             Match match = Regex.Match(messageParam.Content, _thanksRegex);
