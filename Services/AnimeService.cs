@@ -21,17 +21,20 @@ namespace DiscordBot.Services
         private DiscordSocketClient _client;
         private LoggingService _loggingService;
 
-        public AnimeService(DiscordSocketClient client, LoggingService loggingService)
+        private readonly Settings.Deserialized.Settings _settings;
+
+        public AnimeService(DiscordSocketClient client, LoggingService loggingService, Settings.Deserialized.Settings settings)
         {
             _client = client;
             _loggingService = loggingService;
+            _settings = settings;
         }
 
         public async void PublishDailyAnime()
         {
             Console.WriteLine("Publish daily anime");
 
-            var channel = _client.GetChannel(Settings.GetAnimeChannel()) as ISocketMessageChannel;
+            var channel = _client.GetChannel(_settings.AnimeChannel.Id) as ISocketMessageChannel;
 
             var airingAnimes = await GetAiringAnimes(1);
 
@@ -40,17 +43,19 @@ namespace DiscordBot.Services
             foreach (var anime in airingAnimes.data.Page.airingSchedules)
             {
                 string malUrl = $"https://myanimelist.net/anime/{anime.media.idMal}";
-                TimeSpan timeUntilAiring = TimeSpan.FromSeconds((double) anime.timeUntilAiring);
-                var secondTitle = anime.media.title.english ?? anime.media.title.native;
-                string daysString = timeUntilAiring.Days > 0 ? timeUntilAiring.Days + "d " : "";
-                daysString += timeUntilAiring.Hours > 0 ? timeUntilAiring.Hours + "h " : "";
-                daysString += timeUntilAiring.Minutes > 0 ? timeUntilAiring.Minutes + "min" : "";
+                if (anime.timeUntilAiring != null) {
+                    TimeSpan timeUntilAiring = TimeSpan.FromSeconds((double) anime.timeUntilAiring);
+                    var secondTitle = anime.media.title.english ?? anime.media.title.native;
+                    string daysString = timeUntilAiring.Days > 0 ? timeUntilAiring.Days + "d " : "";
+                    daysString += timeUntilAiring.Hours > 0 ? timeUntilAiring.Hours + "h " : "";
+                    daysString += timeUntilAiring.Minutes > 0 ? timeUntilAiring.Minutes + "min" : "";
 
-                string episodeCount = anime.episode + (anime.media.episodes != null ? "/" + anime.media.episodes : "");
+                    string episodeCount = anime.episode + (anime.media.episodes != null ? "/" + anime.media.episodes : "");
 
-                reply += $"**{anime.media.title.romaji}** ({secondTitle}) - *Next airing episode* : **{episodeCount}** " +
-                         $"in *{daysString}* " + // at *{DateTime.Now + timeUntilAiring}*(UTC+1) " +
-                         $"<{malUrl}>\n";
+                    reply += $"**{anime.media.title.romaji}** ({secondTitle}) - *Next airing episode* : **{episodeCount}** " +
+                             $"in *{daysString}* " + // at *{DateTime.Now + timeUntilAiring}*(UTC+1) " +
+                             $"<{malUrl}>\n";
+                }
             }
 
             var str = reply.MessageSplit(1990);
@@ -65,7 +70,7 @@ namespace DiscordBot.Services
         {
             Console.WriteLine("Publish weekly anime");
 
-            var channel = _client.GetChannel(Settings.GetAnimeChannel()) as ISocketMessageChannel;
+            var channel = _client.GetChannel(_settings.AnimeChannel.Id) as ISocketMessageChannel;
 
             string reply = "こんにちは! This is 2B with your Weekly Anime Schedule !\n Here's what will be airing in the next 7 days !\n";
 

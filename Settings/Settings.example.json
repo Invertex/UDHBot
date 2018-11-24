@@ -5,7 +5,7 @@
   "gmail": "YourGmailAdress",
   "gmailPassword": "YourGmailPassword",
   /* DB Info*/
-  "dbConnectionString": "server=YourServerIp;port=3306;database=YourServerDatabase;user id=YourDatabseUser;password=YourDatabasePassword",
+  "connectionString": "server=YourServerIp;port=3306;database=YourServerDatabase;user id=YourDatabseUser;password=YourDatabasePassword",
   /*Server Info*/
   "serverRootPath": "./SERVER",
   /* Base info */

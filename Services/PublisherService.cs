@@ -20,13 +20,16 @@ namespace DiscordBot.Services
         private readonly DiscordSocketClient _client;
         private readonly DatabaseService _databaseService;
 
+        private readonly Settings.Deserialized.Settings _settings;
+
         private Dictionary<uint, string> _verificationCodes;
 
-        public PublisherService(DiscordSocketClient client, DatabaseService databaseService)
+        public PublisherService(DiscordSocketClient client, DatabaseService databaseService, Settings.Deserialized.Settings settings)
         {
             _client = client;
             _databaseService = databaseService;
             _verificationCodes = new Dictionary<uint, string>();
+            _settings = settings;
         }
 
         public async Task PostAd(uint id)
@@ -45,7 +48,7 @@ namespace DiscordBot.Services
             (string, Stream) r = await GetPublisherAdvertisting(userid, package, packageHead, packagePrice);
             Console.WriteLine("pub3");
 
-            var channel = _client.GetChannel(Settings.GetUnityNewsChannel()) as ISocketMessageChannel;
+            var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
             await channel.SendFileAsync(r.Item2, "image.jpg", r.Item1);
         }
 
@@ -159,7 +162,7 @@ namespace DiscordBot.Services
 
             _verificationCodes.Add(packageId, code);
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Unity Developer Hub", SettingsHandler.LoadValueString("gmail", JsonFile.Settings)));
+            message.From.Add(new MailboxAddress("Unity Developer Hub", _settings.Gmail));
             message.To.Add(new MailboxAddress(name, email));
             message.Subject = "Unity Developer Hub Package Validation";
             message.Body = new TextPart("plain")
@@ -172,7 +175,7 @@ namespace DiscordBot.Services
                 await client.ConnectAsync("smtp.gmail.com", 587);
 
                 client.AuthenticationMechanisms.Remove("XOAUTH2");
-                await client.AuthenticateAsync("unitydeveloperhub", SettingsHandler.LoadValueString("gmailPassword", JsonFile.Settings));
+                await client.AuthenticateAsync("unitydeveloperhub", _settings.GmailPassword);
 
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
@@ -190,9 +193,9 @@ namespace DiscordBot.Services
                 return "The verification code is not valid. Please verify it and try again.";
 
             var u = user as SocketGuildUser;
-            IRole publisher = u.Guild.GetRole(SettingsHandler.LoadValueUlong("publisherRoleID", JsonFile.Settings));
+            IRole publisher = u.Guild.GetRole(_settings.PublisherRoleId);
             await u.AddRoleAsync(publisher);
-            _databaseService.AddPublisherPackage(user.Username, user.DiscriminatorValue.ToString(), user.Id.ToString(), packageId);
+            await _databaseService.AddPublisherPackage(user.Username, user.DiscriminatorValue.ToString(), user.Id.ToString(), packageId);
 
             return "Your package has been verified and added to the daily advertisement list.";
         }

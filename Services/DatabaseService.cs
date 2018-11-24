@@ -12,9 +12,12 @@ namespace DiscordBot.Services
 
         private readonly LoggingService _logging;
 
-        public DatabaseService(LoggingService logging)
+        private readonly Settings.Deserialized.Settings _settings;
+
+        public DatabaseService(LoggingService logging, Settings.Deserialized.Settings settings)
         {
-            _connection = SettingsHandler.LoadValueString("dbConnectionString", JsonFile.Settings);
+            _settings = settings;
+            _connection = _settings.DbConnectionString;
             _logging = logging;
         }
 
@@ -50,7 +53,7 @@ namespace DiscordBot.Services
             return (0, 0);
         }
 
-        public void AddPublisherPackage(string username, string discriminator, string userid, uint packageID)
+        public async Task AddPublisherPackage(string username, string discriminator, string userid, uint packageID)
         {
             try
             {
@@ -65,7 +68,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                _logging.LogAction($"Error when trying to add package {packageID} from {username}#{discriminator} - {userid} : {e}");
+                await _logging.LogAction($"Error when trying to add package {packageID} from {username}#{discriminator} - {userid} : {e}");
             }
         }
 
@@ -191,7 +194,7 @@ namespace DiscordBot.Services
 
         public uint GetUserKarmaRank(ulong id)
         {
-            int karma;
+            //int karma;
 
             using (var connection = new MySqlConnection(_connection))
             {
@@ -207,6 +210,7 @@ namespace DiscordBot.Services
                     }
                 }
             }
+
             return 0;
         }
 

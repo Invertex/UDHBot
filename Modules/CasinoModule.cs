@@ -8,18 +8,20 @@ namespace DiscordBot.Modules
     public class CasinoModule : ModuleBase
     {
         private readonly CasinoService _casinoService;
+        private readonly Settings.Deserialized.Settings _settings;
 
 
-        public CasinoModule(CasinoService casinoService)
+        public CasinoModule(CasinoService casinoService, Settings.Deserialized.Settings settings)
         {
             _casinoService = casinoService;
+            _settings = settings;
         }
 
         [Command("slot"), Summary("Play the slot machine. Syntax : !slot amount")]
         [Alias("slotmachine")]
         private async Task SlotMachine(int amount)
         {
-            if (Context.Channel.Id != Settings.GetCasinoChannel())
+            if (Context.Channel.Id != _settings.CasinoChannel.Id)
             {
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
@@ -28,9 +30,9 @@ namespace DiscordBot.Modules
 
             IUser user = Context.User;
 
-            var reply = _casinoService.PlaySlotMachine(user, amount);
+            var reply = await _casinoService.PlaySlotMachine(user, amount);
             if (reply.imagePath != null)
-                await Context.Channel.SendFileAsync(reply.imagePath, reply.reply);
+                await Context.Channel.SendFileAsync((string)reply.imagePath, reply.reply);
             else
                 await ReplyAsync(reply.reply);
         }
@@ -39,7 +41,7 @@ namespace DiscordBot.Modules
         [Alias("coins", "coin")]
         private async Task Coins()
         {
-            if (Context.Channel.Id != Settings.GetCasinoChannel())
+            if (Context.Channel.Id != _settings.CasinoChannel.Id)
             {
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
@@ -54,7 +56,7 @@ namespace DiscordBot.Modules
         [Command("jackpot"), Summary("Get the slot machine jackpot. Syntax : !jackpot")]
         private async Task Jackpot()
         {
-            if (Context.Channel.Id != Settings.GetCasinoChannel())
+            if (Context.Channel.Id != _settings.CasinoChannel.Id)
             {
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
