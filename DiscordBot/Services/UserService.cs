@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,7 +25,7 @@ namespace DiscordBot.Services
     public class UserService
     {
         private readonly DatabaseService _databaseService;
-        private readonly LoggingService _loggingService;
+        private readonly ILoggingService _loggingService;
         private readonly UpdateService _updateService;
 
         private readonly Settings.Deserialized.Settings _settings;
@@ -79,7 +79,7 @@ namespace DiscordBot.Services
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
-        public UserService(DatabaseService databaseService, LoggingService loggingService, UpdateService updateService,
+        public UserService(DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
             Settings.Deserialized.Settings settings, UserSettings userSettings)
         {
             rand = new Random();
@@ -417,7 +417,7 @@ namespace DiscordBot.Services
             icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
 
             EmbedBuilder builder = new EmbedBuilder()
-                .WithDescription($"Welcome to Unity Developer Hub **{name}#{discriminator}** !")
+                .WithDescription($"Welcome to Unity Developer Community **{name}#{discriminator}** !")
                 .WithColor(new Color(0x12D687))
                 .WithAuthor(author =>
                 {
@@ -443,6 +443,15 @@ namespace DiscordBot.Services
 
         public async Task Thanks(SocketMessage messageParam)
         {
+            //Get guild id
+            SocketGuildChannel channel = messageParam.Channel as SocketGuildChannel;
+            ulong guildId = channel.Guild.Id;
+
+            //Make sure its in the UDH server
+            if (guildId.ToString() != _settings.guildId) {
+                return;
+            }
+
             if (messageParam.Author.IsBot)
                 return;
             Match match = Regex.Match(messageParam.Content, _thanksRegex);

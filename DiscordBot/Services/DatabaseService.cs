@@ -10,11 +10,11 @@ namespace DiscordBot.Services
     {
         private string _connection { get; }
 
-        private readonly LoggingService _logging;
+        private readonly ILoggingService _logging;
 
         private readonly Settings.Deserialized.Settings _settings;
 
-        public DatabaseService(LoggingService logging, Settings.Deserialized.Settings settings)
+        public DatabaseService(ILoggingService logging, Settings.Deserialized.Settings settings)
         {
             _settings = settings;
             _connection = _settings.DbConnectionString;

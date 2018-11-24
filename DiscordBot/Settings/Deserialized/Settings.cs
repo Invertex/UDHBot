@@ -16,6 +16,7 @@ namespace DiscordBot.Settings.Deserialized
         public char Prefix { get; set; }
         public string AllowMentionPrefix { get; set; }
         public string Administrator { get; set; }
+        public string guildId { get; set; }
 
         public string TntDroid { get; set; }
 
@@ -74,6 +75,8 @@ namespace DiscordBot.Settings.Deserialized
         public ulong StaffRoleId { get; set; }
 
         public string AssetStoreFrontPage { get; set; }
+
+        public string WikipediaSearchPage { get; set; }
 
         public string ComplaintCategoryName { get; set; }
         public string ComplaintChannelPrefix { get; set; }
