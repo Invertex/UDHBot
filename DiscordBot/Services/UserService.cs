@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,12 +13,7 @@ using DiscordBot.Extensions;
 using DiscordBot.Settings.Deserialized;
 using DiscordBot.Skin;
 using ImageMagick;
-using ImageSharp;
-using ImageSharp.Drawing;
-using ImageSharp.Formats;
 using Newtonsoft.Json;
-using SixLabors.Fonts;
-using SixLabors.Primitives;
 
 namespace DiscordBot.Services
 {
@@ -46,20 +41,6 @@ namespace DiscordBot.Services
 
         private readonly Random rand;
 
-        private readonly FontCollection _fontCollection;
-
-        //private readonly Font _defaultFont;
-        private readonly Font _nameFont;
-        private readonly Font _xpFont;
-        private readonly Font _ranksFont;
-        private readonly Font _levelTextFont;
-
-        private readonly Font _levelNumberFont;
-
-        /*private readonly Font _levelFont;
-        private readonly Font _levelFontSmall;
-        private readonly Font _subtitlesBlackFont;*/
-        private readonly Font _subtitlesWhiteFont;
         private readonly string _thanksRegex;
 
         private readonly int _thanksCooldownTime;
@@ -98,35 +79,7 @@ namespace DiscordBot.Services
             _noXpChannels = new List<ulong>
             {
                 _settings.BotCommandsChannel.Id, _settings.CasinoChannel.Id, _settings.MusicCommandsChannel.Id
-            };
-
-            /*
-            Init font for the profile card
-            */
-            _fontCollection = new FontCollection();
-            /*_defaultFont = _fontCollection
-                .Install(SettingsHandler.LoadValueString("serverRootPath", JsonFile.Settings) +
-                         "/fonts/OpenSans-Regular.ttf")
-                .CreateFont(16);*/
-            _nameFont = _fontCollection
-                .Install($"{_settings.ServerRootPath}/fonts/Consolas.ttf")
-                .CreateFont(22);
-            _xpFont = _fontCollection
-                .Install($"{_settings.ServerRootPath}/fonts/Consolas.ttf")
-                .CreateFont(12);
-            _ranksFont = _fontCollection
-                .Install($"{_settings.ServerRootPath}/fonts/Consolas.ttf")
-                .CreateFont(16);
-            _levelTextFont = _fontCollection
-                .Install($"{_settings.ServerRootPath}/fonts/ConsolasBold.ttf")
-                .CreateFont(22);
-            _levelNumberFont = _fontCollection
-                .Install($"{_settings.ServerRootPath}/fonts/ConsolasBold.ttf")
-                .CreateFont(30);
-
-            _subtitlesWhiteFont = _fontCollection
-                .Install($"{_settings.ServerRootPath}/fonts/OpenSansEmoji.ttf")
-                .CreateFont(75);
+            }; 
 
             /*
             Init XP
@@ -624,7 +577,7 @@ public async Task EscapeMessage(SocketMessage messageParam)
     //Escape all \, ~, _, ` and * character's so they don't trigger any Discord formatting.
     content = content.EscapeDiscordMarkup();
 }*/
-        public async Task<string> SubtitleImage(IMessage message, string text)
+       /* public async Task<string> SubtitleImage(IMessage message, string text)
         {
             var attachments = message.Attachments;
             Attachment file = null;
@@ -673,6 +626,6 @@ public async Task EscapeMessage(SocketMessage messageParam)
 
             image.Save(path, new JpegEncoder {Quality = 95});
             return path;
-        }
+        }*/
     }
 }

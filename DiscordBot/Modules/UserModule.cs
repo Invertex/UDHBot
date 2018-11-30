@@ -408,7 +408,7 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAsync();
         }
 
-        [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
+       /* [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
         [Alias("subtitles", "sub", "subs")]
         private async Task Subtitles(string text)
         {
@@ -418,7 +418,7 @@ namespace DiscordBot.Modules
             else
                 await Context.Channel.SendFileAsync(msg, $"From {Context.Message.Author.Mention}");
             await Context.Message.DeleteAsync();
-        }
+        }*/
 
         #endregion
 
