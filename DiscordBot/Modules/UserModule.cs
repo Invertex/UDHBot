@@ -765,7 +765,7 @@ namespace DiscordBot.Modules
 
             // XPath to the table row
             HtmlNode row = doc.DocumentNode.SelectSingleNode("/html/body/table/tr[2]/td");
-            string tableText = row.InnerText;
+            string tableText = System.Net.WebUtility.HtmlDecode(row.InnerText);
             string message = $"**{tableText}**";
 
             await ReplyAsync(message).DeleteAfterTime(minutes: 3);
@@ -826,7 +826,7 @@ namespace DiscordBot.Modules
             if (birthdate == default(DateTime))
             {
                 await ReplyAsync(
-                        $"Sorry, I couldn't find **{searchName}**'s birthday date. He can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform ! :stuck_out_tongue_winking_eye: ")
+                        $"Sorry, I couldn't find **{searchName}**'s birthday date. They can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform ! :stuck_out_tongue_winking_eye: ")
                     .DeleteAfterSeconds(30);
             }
             else
