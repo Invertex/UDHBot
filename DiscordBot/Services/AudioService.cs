@@ -10,13 +10,13 @@ namespace DiscordBot.Services
 {
     public class AudioService
     {
-        private LoggingService _logging;
+        private ILoggingService _logging;
         private DiscordSocketClient _client;
         private IAudioClient _audioClient;
 
         private readonly Settings.Deserialized.Settings _settings;
 
-        public AudioService(LoggingService logging, DiscordSocketClient client, Settings.Deserialized.Settings settings)
+        public AudioService(ILoggingService logging, DiscordSocketClient client, Settings.Deserialized.Settings settings)
         {
             _logging = logging;
             _client = client;

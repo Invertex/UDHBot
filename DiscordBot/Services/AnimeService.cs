@@ -19,11 +19,11 @@ namespace DiscordBot.Services
     public class AnimeService
     {
         private DiscordSocketClient _client;
-        private LoggingService _loggingService;
+        private ILoggingService _loggingService;
 
         private readonly Settings.Deserialized.Settings _settings;
 
-        public AnimeService(DiscordSocketClient client, LoggingService loggingService, Settings.Deserialized.Settings settings)
+        public AnimeService(DiscordSocketClient client, ILoggingService loggingService, Settings.Deserialized.Settings settings)
         {
             _client = client;
             _loggingService = loggingService;

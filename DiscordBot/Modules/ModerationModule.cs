@@ -14,7 +14,7 @@ namespace DiscordBot.Modules
 {
     public class ModerationModule : ModuleBase
     {
-        private readonly LoggingService _logging;
+        private readonly ILoggingService _logging;
         private readonly PublisherService _publisher;
         private readonly UpdateService _update;
         private readonly UserService _user;
@@ -24,7 +24,7 @@ namespace DiscordBot.Modules
 
         private Dictionary<ulong, DateTime> MutedUsers => _user._mutedUsers;
 
-        public ModerationModule(LoggingService logging, PublisherService publisher, UpdateService update, UserService user,
+        public ModerationModule(ILoggingService logging, PublisherService publisher, UpdateService update, UserService user,
             DatabaseService database, Rules rules, Settings.Deserialized.Settings settings)
         {
             _logging = logging;
@@ -187,7 +187,7 @@ namespace DiscordBot.Modules
 
         [Command("kick"), Summary("Kick a user")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        async Task KickUser(IUser user)
+        internal async Task KickUser(IUser user)
         {
             var u = user as IGuildUser;
 
@@ -301,6 +301,17 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAsync();
             await (Context.Channel as ITextChannel).ModifyAsync(p => p.SlowModeInterval = time);
             await ReplyAsync($"Slowmode has been set to {time}s !").DeleteAfterSeconds(10);
+        }
+
+        [Command("tagrole"), Summary("Tag a role and post a message.")]
+        [Alias("mentionrole", "pingrole", "rolemention", "roletag", "roleping")]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        async Task TagRole(IRole role, string message)
+        {
+            await role.ModifyAsync(properties => { properties.Mentionable = true; });
+            await Context.Channel.SendMessageAsync($"{role.Mention}\n{message}");
+            await role.ModifyAsync(properties => { properties.Mentionable = false; });
+            await Context.Message.DeleteAsync();
         }
 
         [Command("ad"), Summary("Post ad with databaseid")]

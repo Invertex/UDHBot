@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -21,7 +21,7 @@ namespace DiscordBot.Modules
 {
     public class UserModule : ModuleBase
     {
-        private readonly LoggingService _loggingService;
+        private readonly ILoggingService _loggingService;
         private readonly DatabaseService _databaseService;
         private readonly UserService _userService;
         private readonly PublisherService _publisherService;
@@ -31,7 +31,7 @@ namespace DiscordBot.Modules
         private readonly Rules _rules;
         private static Settings.Deserialized.Settings _settings;
 
-        public UserModule(LoggingService loggingService, DatabaseService databaseService, UserService userService,
+        public UserModule(ILoggingService loggingService, DatabaseService databaseService, UserService userService,
             PublisherService publisherService, UpdateService updateService, CurrencyService currencyService,
             Rules rules, Settings.Deserialized.Settings settings)
         {
@@ -408,7 +408,7 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAsync();
         }
 
-        [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
+       /* [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
         [Alias("subtitles", "sub", "subs")]
         private async Task Subtitles(string text)
         {
@@ -418,7 +418,7 @@ namespace DiscordBot.Modules
             else
                 await Context.Channel.SendFileAsync(msg, $"From {Context.Message.Author.Mention}");
             await Context.Message.DeleteAsync();
-        }
+        }*/
 
         #endregion
 
@@ -702,6 +702,41 @@ namespace DiscordBot.Modules
             return $"{id}. **{faq.Question}** - {faq.Answer}";
         }
 
+
+        [Command("wiki"), Summary("Searches Wikipedia. Syntax : !wiki \"query\"")]
+        [Alias("wikipedia")]
+        private async Task SearchWikipedia([Remainder] string query)
+        {
+
+            String articleExtract = await _updateService.DownloadWikipediaArticle(query);
+
+            // If an article is found return it, else return error message
+            if (articleExtract == null) {
+                await ReplyAsync("No Articles Found."); 
+                return;
+            }
+
+            //Trim if message is too long
+            if (articleExtract.Length > 350) {
+                articleExtract = articleExtract.Substring(0, 347) + "...";
+            }
+
+            //Generate url for users
+            String userUrl = new Uri("https://en.wikipedia.org/wiki/" + query).AbsoluteUri;
+
+            await ReplyAsync(embed: GetWikipediaEmbed(query, articleExtract, userUrl));
+        }
+
+        private Embed GetWikipediaEmbed(String subject, String articleExtract, String articleUrl)
+        {
+            var builder = new EmbedBuilder()
+                .WithTitle($"Wikipedia | {subject}")
+                .WithDescription($"{articleExtract}")
+                .WithUrl(articleUrl)
+                .WithColor(new Color(0x33CC00));
+            return builder.Build();
+        }
+
         private int ParseNumber(string s)
         {
             int id;
@@ -730,7 +765,7 @@ namespace DiscordBot.Modules
 
             // XPath to the table row
             HtmlNode row = doc.DocumentNode.SelectSingleNode("/html/body/table/tr[2]/td");
-            string tableText = row.InnerText;
+            string tableText = System.Net.WebUtility.HtmlDecode(row.InnerText);
             string message = $"**{tableText}**";
 
             await ReplyAsync(message).DeleteAfterTime(minutes: 3);
@@ -791,7 +826,7 @@ namespace DiscordBot.Modules
             if (birthdate == default(DateTime))
             {
                 await ReplyAsync(
-                        $"Sorry, I couldn't find **{searchName}**'s birthday date. He can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform ! :stuck_out_tongue_winking_eye: ")
+                        $"Sorry, I couldn't find **{searchName}**'s birthday date. They can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform ! :stuck_out_tongue_winking_eye: ")
                     .DeleteAfterSeconds(30);
             }
             else
@@ -896,9 +931,9 @@ namespace DiscordBot.Modules
         [Group("role")]
         public class RoleModule : ModuleBase
         {
-            private readonly LoggingService _logging;
+            private readonly ILoggingService _logging;
 
-            public RoleModule(LoggingService logging)
+            public RoleModule(ILoggingService logging)
             {
                 _logging = logging;
             }
@@ -962,7 +997,7 @@ namespace DiscordBot.Modules
 
                 await ReplyAsync("**The following roles are available on this server** :\n" +
                                  "\n" +
-                                 "We offer multiple roles to show what you specialize in, whether it's professionnaly or as a hobby, so if there's something you're good at, assign the corresponding role! \n" +
+                                 "We offer multiple roles to show what you specialize in, whether it's professionally or as a hobby, so if there's something you're good at, assign the corresponding role! \n" +
                                  "You can assign as much roles as you want, but try to keep them for what you're good at :) \n" +
                                  "\n" +
                                  "```To get the publisher role type **!pinfo** and follow the instructions." +
@@ -979,6 +1014,9 @@ namespace DiscordBot.Modules
                                  "!role add/remove Students - If you're currently studying in a gamedev related field. \n" +
                                  "!role add/remove XR-Developers - If you're a VR, AR or MR sorcerer. \n" +
                                  "!role add/remove Writers - If you like writing lore, scenarii, characters and stories. \n" +
+                                 "======Below are special roles that will get pinged for specific reasons====== \n" +
+                                 "!role add/remove Subs-Gamejam - Will be pinged when there is UDC gamejam related news. \n" +
+                                 "!role add/remove Subs-Poll - Will be pinged when there is new public polls. \n" +
                                  "```");
             }
         }
