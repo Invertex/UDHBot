@@ -270,8 +270,8 @@ namespace DiscordBot.Modules
         }
 
 
-        [Command("quote"), Summary("Quote a message. Syntax : !quote messageid (optionalSubtitle) (#channelname)")]
-        private async Task QuoteMessage(ulong id, string subtitle = null, IMessageChannel channel = null)
+        [Command("quote"), Summary("Quote a message. Syntax : !quote messageid (#channelname) (optionalSubtitle)")]
+        private async Task QuoteMessage(ulong id, IMessageChannel channel = null, string subtitle = null)
         {
             // If channel is null use Context.Channel, else use the provided channel
             channel = channel ?? Context.Channel;
