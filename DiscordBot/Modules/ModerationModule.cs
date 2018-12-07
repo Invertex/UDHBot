@@ -185,6 +185,24 @@ namespace DiscordBot.Modules
             });
         }
 
+        [Command("clear"), Summary("Remove messages until the message at the specified id")]
+        [Alias("clean", "nuke", "purge")]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        async Task ClearMessages(ulong messageId)
+        {
+            ITextChannel channel = Context.Channel as ITextChannel;
+
+            var messages = await channel.GetMessagesAsync(messageId, Direction.After).FlattenAsync();
+            await channel.DeleteMessagesAsync(messages);
+
+            var m = await ReplyAsync("Messages deleted.");
+            Task.Delay(5000).ContinueWith(t =>
+            {
+                m.DeleteAsync();
+                _logging.LogAction($"{Context.User.Username} has removed {messages.Count()} messages from {Context.Channel.Name}");
+            });
+        }
+
         [Command("kick"), Summary("Kick a user")]
         [RequireUserPermission(GuildPermission.KickMembers)]
         internal async Task KickUser(IUser user)

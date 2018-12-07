@@ -270,8 +270,8 @@ namespace DiscordBot.Modules
         }
 
 
-        [Command("quote"), Summary("Quote a message. Syntax : !quote messageid (#channelname)")]
-        private async Task QuoteMessage(ulong id, IMessageChannel channel = null)
+        [Command("quote"), Summary("Quote a message. Syntax : !quote messageid (#channelname) (optionalSubtitle)")]
+        private async Task QuoteMessage(ulong id, IMessageChannel channel = null, string subtitle = null)
         {
             // If channel is null use Context.Channel, else use the provided channel
             channel = channel ?? Context.Channel;
@@ -299,7 +299,7 @@ namespace DiscordBot.Modules
                 })
                 .AddField("Original message", message.Content.Truncate(1020));
             var embed = builder.Build();
-            await ReplyAsync("", false, embed);
+            await ReplyAsync(subtitle==null?"":$"`{Context.User.Username}:` {subtitle}", false, embed);
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
         }

@@ -289,8 +289,7 @@ namespace DiscordBot
             var result = await _commandService.ExecuteAsync(context, argPos, _services);
             if (!result.IsSuccess)
             {
-                IUserMessage m = await context.Channel.SendMessageAsync(result.ErrorReason);
-                await Task.Delay(10000).ContinueWith(t => m.DeleteAsync());
+                await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
             }
         }
 
