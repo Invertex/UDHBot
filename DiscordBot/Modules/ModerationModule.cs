@@ -323,7 +323,7 @@ namespace DiscordBot.Modules
 
         [Command("tagrole"), Summary("Tag a role and post a message.")]
         [Alias("mentionrole", "pingrole", "rolemention", "roletag", "roleping")]
-        [RequireUserPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.Administrator)]
         async Task TagRole(IRole role, string message)
         {
             await role.ModifyAsync(properties => { properties.Mentionable = true; });
@@ -331,9 +331,28 @@ namespace DiscordBot.Modules
             await role.ModifyAsync(properties => { properties.Mentionable = false; });
             await Context.Message.DeleteAsync();
         }
+        
+        [Command("closepoll"), Summary("Close a poll and append a message.")]
+        [Alias("pollclose")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        async Task ClosePoll(IMessageChannel channel, ulong messageId, string additionalNotes)
+        {
+            var message = (IUserMessage)await channel.GetMessageAsync(messageId);
+            var reactions = message.Reactions;
+
+            string reactionCount = "";
+            foreach (var reaction in reactions)
+            reactionCount += $" {reaction.Key.Name} ({reaction.Value.ReactionCount})";
+
+            await message.ModifyAsync((properties) =>
+            {
+                properties.Content = message.Content + 
+                    $"\n\nThe poll has been closed. Here's the vote results :{reactionCount}\nAdditional notes : {additionalNotes}";
+            });
+        }
 
         [Command("ad"), Summary("Post ad with databaseid")]
-        [RequireUserPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.Administrator)]
         async Task PostAd(uint dbId)
         {
             await _publisher.PostAd(dbId);
@@ -341,7 +360,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("forcead"), Summary("Force post ad")]
-        [RequireUserPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.Administrator)]
         async Task ForcePostAd()
         {
             await _update.CheckDailyPublisher(true);
@@ -349,7 +368,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("dbsync"), Summary("Force add user to database")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireUserPermission(GuildPermission.Administrator)]
         async Task DbSync(IUser user)
         {
             _database.AddNewUser((SocketGuildUser) user);
@@ -361,7 +380,8 @@ namespace DiscordBot.Modules
             if (Context.User.Id != 84252127995658240)
                 return;
 
-            await channel.SendMessageAsync(message);            
+            await channel.SendMessageAsync(message);
+            await Context.Message.DeleteAsync();
         }
         
         //TEMP: Adds XP for completing christmas event
