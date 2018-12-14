@@ -915,7 +915,7 @@ namespace DiscordBot.Modules
         private async Task Ping()
         {
             var message = await ReplyAsync($"Pong :blush:");
-            var time = message.Timestamp.Subtract(Context.Message.Timestamp);
+            var time = message.CreatedAt.Subtract(Context.Message.Timestamp);
             await message.ModifyAsync(m => m.Content = $"Pong :blush: (**{time.TotalMilliseconds}** *ms*)");
             await message.DeleteAfterTime(minutes: 3);
             await Context.Message.DeleteAfterTime(minutes: 3);

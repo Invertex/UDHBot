@@ -363,5 +363,23 @@ namespace DiscordBot.Modules
 
             await channel.SendMessageAsync(message);            
         }
+        
+        //TEMP: Adds XP for completing christmas event
+        [Command("completedchristmasevent")]
+        async Task ChristmasEvent(ulong userId) {
+            //Only allow UDH Santa to run this command
+            if (Context.User.Id != 514979161144557600) {
+                return;
+            }
+
+            ulong roleId = 521454263969513482;
+            
+            await Context.Message.DeleteAsync();
+            _database.AddUserXp(userId, 5000);
+            
+            //Add role
+            IGuildUser user = await Context.Guild.GetUserAsync(userId);
+            user.AddRoleAsync(Context.Guild.GetRole(roleId));
+        }
     }
 }
