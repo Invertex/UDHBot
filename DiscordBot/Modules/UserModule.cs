@@ -1017,6 +1017,8 @@ namespace DiscordBot.Modules
                                  "======Below are special roles that will get pinged for specific reasons====== \n" +
                                  "!role add/remove Subs-Gamejam - Will be pinged when there is UDC gamejam related news. \n" +
                                  "!role add/remove Subs-Poll - Will be pinged when there is new public polls. \n" +
+                                 "!role add/remove Subs-Releases - Will be pinged when there is new unity releases (beta and stable versions). \n" +
+                                 "!role add/remove Subs-News - Will be pinged when there is new unity news (mainly blog posts). \n" +
                                  "```");
             }
         }
