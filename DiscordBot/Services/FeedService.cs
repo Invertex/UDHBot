@@ -53,9 +53,9 @@ namespace DiscordBot.Services
                         await role.ModifyAsync(properties => { properties.Mentionable = true; });
                         string message =
                             $"{role.Mention} New unity **beta **release !** {item.Title.Text}** \n <{item.Links[0].Uri.ToString().Replace("/fr/", "/")}>";
-                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
 
                         await channel.SendMessageAsync(message);
+                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
                     }
                 }
             }
@@ -91,9 +91,9 @@ namespace DiscordBot.Services
                         await role.ModifyAsync(properties => { properties.Mentionable = true; });
                         string message =
                             $"{role.Mention} New unity release ! **{item.Title.Text}** \n <{item.Links[0].Uri.ToString().Replace("/fr/", "/")}>";
-                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
 
                         await channel.SendMessageAsync(message);
+                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
                     }
                 }
             }
@@ -128,9 +128,9 @@ namespace DiscordBot.Services
                         await role.ModifyAsync(properties => { properties.Mentionable = true; });
                         string message =
                             $"New unity blog post ! **{item.Title.Text}**\n{item.Links[0].Uri.ToString().Replace("/fr/", "/")}";
-                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
 
                         await channel.SendMessageAsync(message);
+                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
                     }
                 }
             }
