@@ -43,8 +43,7 @@ namespace DiscordBot.Services
 
                 SyndicationFeed feed = SyndicationFeed.Load(reader);
                 var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
-                var role = ((IGuildChannel) channel).Guild.GetRole(_settings.SubsReleasesRoleId);
-
+                var role = _client.GetGuild(_settings.guildId).GetRole(_settings.SubsReleasesRoleId);
                 foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
                 {
                     if (!feedData.PostedIds.Contains(item.Id))
@@ -81,7 +80,7 @@ namespace DiscordBot.Services
 
                 SyndicationFeed feed = SyndicationFeed.Load(reader);
                 var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
-                var role = ((IGuildChannel) channel).Guild.GetRole(_settings.SubsReleasesRoleId);
+                var role = _client.GetGuild(_settings.guildId).GetRole(_settings.SubsReleasesRoleId);
 
                 foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
                 {
@@ -119,8 +118,7 @@ namespace DiscordBot.Services
 
                 SyndicationFeed feed = SyndicationFeed.Load(reader);
                 var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
-                var role = ((IGuildChannel) channel).Guild.GetRole(_settings.SubsNewsRoleId);
-
+                var role = _client.GetGuild(_settings.guildId).GetRole(_settings.SubsNewsRoleId);
                 foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
                 {
                     if (!feedData.PostedIds.Contains(item.Id))
