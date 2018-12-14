@@ -401,7 +401,7 @@ namespace DiscordBot.Services
             ulong guildId = channel.Guild.Id;
 
             //Make sure its in the UDH server
-            if (guildId.ToString() != _settings.guildId) {
+            if (guildId != _settings.guildId) {
                 return;
             }
 
