@@ -49,15 +49,20 @@ namespace DiscordBot.Modules
         [Alias("command", "commands")]
         private async Task DisplayHelp()
         {
-            //TODO: Be possible in DM
+
+            var commands = Program.CommandList.MessageSplit();
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
+                
                 await Task.Delay(1000);
                 await Context.Message.DeleteAsync();
+                IDMChannel channel = await Context.User.GetOrCreateDMChannelAsync();
+
+                foreach (var message in commands)
+                    await ReplyAsync(message);
                 return;
             }
 
-            var commands = Program.CommandList.MessageSplit();
 
             foreach (var message in commands)
                 await ReplyAsync(message);
