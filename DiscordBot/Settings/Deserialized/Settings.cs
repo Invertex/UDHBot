@@ -71,6 +71,8 @@ namespace DiscordBot.Settings.Deserialized
         public ulong MutedRoleId { get; set; }
         public ulong StreamingRoleId { get; set; }
         public ulong StreamerRoleId { get; set; }
+        public ulong SubsReleasesRoleId { get; set; }
+        public ulong SubsNewsRoleId { get; set; }
         public ulong PublisherRoleId { get; set; }
         public ulong StaffRoleId { get; set; }
 

@@ -1,7 +1,11 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.ServiceModel.Syndication;
+using System.Text;
 using System.Xml;
+using Discord;
 using Discord.WebSocket;
 
 namespace DiscordBot.Services
@@ -28,11 +32,18 @@ namespace DiscordBot.Services
         {
             try
             {
-                SyndicationFeed feed = SyndicationFeed.Load(XmlReader.Create(BETA_URL, new XmlReaderSettings
-                {
-                    CheckCharacters = false
-                }));
+                HttpWebRequest webRequest = (HttpWebRequest) WebRequest.Create(BETA_URL);
+                HttpWebResponse webResponse = (HttpWebResponse) webRequest.GetResponse();
+                Stream dataStream = webResponse.GetResponseStream();
+                StreamReader streamReader = new StreamReader(dataStream, Encoding.UTF8);
+                string response = streamReader.ReadToEnd();
+                streamReader.Close();
+                response = Utils.SanitizeXml(response);
+                XmlReader reader = new XmlTextReader(new StringReader(response));
+
+                SyndicationFeed feed = SyndicationFeed.Load(reader);
                 var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
+                var role = ((IGuildChannel) channel).Guild.GetRole(_settings.SubsReleasesRoleId);
 
                 foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
                 {
@@ -40,7 +51,11 @@ namespace DiscordBot.Services
                     {
                         feedData.PostedIds.Add(item.Id);
 
-                        string message = $"New unity **beta **release !** {item.Title.Text}** \n <{item.Links[0].Uri.ToString().Replace("/fr/", "/")}>";
+                        await role.ModifyAsync(properties => { properties.Mentionable = true; });
+                        string message =
+                            $"{role.Mention} New unity **beta **release !** {item.Title.Text}** \n <{item.Links[0].Uri.ToString().Replace("/fr/", "/")}>";
+                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
+
                         await channel.SendMessageAsync(message);
                     }
                 }
@@ -55,11 +70,18 @@ namespace DiscordBot.Services
         {
             try
             {
-                SyndicationFeed feed = SyndicationFeed.Load(XmlReader.Create(RELEASE_URL, new XmlReaderSettings
-                {
-                    CheckCharacters = false
-                }));
+                HttpWebRequest webRequest = (HttpWebRequest) WebRequest.Create(RELEASE_URL);
+                HttpWebResponse webResponse = (HttpWebResponse) webRequest.GetResponse();
+                Stream dataStream = webResponse.GetResponseStream();
+                StreamReader streamReader = new StreamReader(dataStream, Encoding.UTF8);
+                string response = streamReader.ReadToEnd();
+                streamReader.Close();
+                response = Utils.SanitizeXml(response);
+                XmlReader reader = new XmlTextReader(new StringReader(response));
+
+                SyndicationFeed feed = SyndicationFeed.Load(reader);
                 var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
+                var role = ((IGuildChannel) channel).Guild.GetRole(_settings.SubsReleasesRoleId);
 
                 foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
                 {
@@ -67,7 +89,11 @@ namespace DiscordBot.Services
                     {
                         feedData.PostedIds.Add(item.Id);
 
-                        string message = $"New unity release ! **{item.Title.Text}** \n <{item.Links[0].Uri.ToString().Replace("/fr/", "/")}>";
+                        await role.ModifyAsync(properties => { properties.Mentionable = true; });
+                        string message =
+                            $"{role.Mention} New unity release ! **{item.Title.Text}** \n <{item.Links[0].Uri.ToString().Replace("/fr/", "/")}>";
+                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
+
                         await channel.SendMessageAsync(message);
                     }
                 }
@@ -82,8 +108,18 @@ namespace DiscordBot.Services
         {
             try
             {
-                SyndicationFeed feed = SyndicationFeed.Load(XmlReader.Create(BLOG_URL));
+                HttpWebRequest webRequest = (HttpWebRequest) WebRequest.Create(BLOG_URL);
+                HttpWebResponse webResponse = (HttpWebResponse) webRequest.GetResponse();
+                Stream dataStream = webResponse.GetResponseStream();
+                StreamReader streamReader = new StreamReader(dataStream, Encoding.UTF8);
+                string response = streamReader.ReadToEnd();
+                streamReader.Close();
+                response = Utils.SanitizeXml(response);
+                XmlReader reader = new XmlTextReader(new StringReader(response));
+
+                SyndicationFeed feed = SyndicationFeed.Load(reader);
                 var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
+                var role = ((IGuildChannel) channel).Guild.GetRole(_settings.SubsNewsRoleId);
 
                 foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
                 {
@@ -91,7 +127,11 @@ namespace DiscordBot.Services
                     {
                         feedData.PostedIds.Add(item.Id);
 
-                        string message = $"New unity blog post ! **{item.Title.Text}**\n{item.Links[0].Uri.ToString().Replace("/fr/", "/")}";
+                        await role.ModifyAsync(properties => { properties.Mentionable = true; });
+                        string message =
+                            $"New unity blog post ! **{item.Title.Text}**\n{item.Links[0].Uri.ToString().Replace("/fr/", "/")}";
+                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
+
                         await channel.SendMessageAsync(message);
                     }
                 }
