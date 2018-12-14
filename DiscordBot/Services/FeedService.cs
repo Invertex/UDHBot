@@ -28,7 +28,10 @@ namespace DiscordBot.Services
         {
             try
             {
-                SyndicationFeed feed = SyndicationFeed.Load(XmlReader.Create(BETA_URL));
+                SyndicationFeed feed = SyndicationFeed.Load(XmlReader.Create(BETA_URL, new XmlReaderSettings
+                {
+                    CheckCharacters = false
+                }));
                 var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
 
                 foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
@@ -52,7 +55,10 @@ namespace DiscordBot.Services
         {
             try
             {
-                SyndicationFeed feed = SyndicationFeed.Load(XmlReader.Create(RELEASE_URL));
+                SyndicationFeed feed = SyndicationFeed.Load(XmlReader.Create(RELEASE_URL, new XmlReaderSettings
+                {
+                    CheckCharacters = false
+                }));
                 var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
 
                 foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
