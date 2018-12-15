@@ -127,7 +127,7 @@ namespace DiscordBot.Services
 
                         await role.ModifyAsync(properties => { properties.Mentionable = true; });
                         string message =
-                            $"New unity blog post ! **{item.Title.Text}**\n{item.Links[0].Uri.ToString().Replace("/fr/", "/")}";
+                            $"{role.Mention} New unity blog post ! **{item.Title.Text}**\n{item.Links[0].Uri.ToString().Replace("/fr/", "/")}";
 
                         await channel.SendMessageAsync(message);
                         await role.ModifyAsync(properties => { properties.Mentionable = false; });
