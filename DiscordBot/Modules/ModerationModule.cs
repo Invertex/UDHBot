@@ -124,33 +124,6 @@ namespace DiscordBot.Modules
             reply?.DeleteAfterSeconds(10d);
         }
 
-        [Command("edit")]
-        [Summary("Edits a bot message. Syntax: ``!edit messageId newMessage (OptionalChannel)``")]
-        [Alias("botedit")]
-        [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task Edit(ulong id, string content, IMessageChannel channel = null)
-        {
-            channel = channel ?? Context.Channel;
-            if (await channel.GetMessageAsync(id) is IUserMessage message && message.Author.Id == Context.Client.CurrentUser.Id)
-            {
-                if (message.MentionedRoleIds.Count > 0)
-                {
-                    IRole role = Context.Guild.GetRole(message.MentionedRoleIds.First());
-                    await role.ModifyAsync(x => x.Mentionable = true);
-                    await message.ModifyAsync(x => x.Content = $"{role.Mention}\n{content}");
-                    await role.ModifyAsync(x => x.Mentionable = false);
-                }
-                else
-                {
-                    await message.ModifyAsync(x => x.Content = content);
-                }
-            }
-            else
-            {
-                await ReplyAsync("I can only edit my own messages");
-            }
-        }
-
         [Command("addrole"), Summary("Add a role to a user")]
         [Alias("roleadd")]
         [RequireUserPermission(GuildPermission.KickMembers)]
