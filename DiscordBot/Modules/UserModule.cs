@@ -273,6 +273,7 @@ namespace DiscordBot.Modules
         [Command("quote"), Summary("Quote a message. Syntax : !quote messageid (#channelname) (optionalSubtitle)")]
         private async Task QuoteMessage(ulong id, IMessageChannel channel = null, string subtitle = null)
         {
+            if (subtitle != null && (subtitle.Contains("@everyone") || subtitle.Contains("@here"))) return;
             // If channel is null use Context.Channel, else use the provided channel
             channel = channel ?? Context.Channel;
 
