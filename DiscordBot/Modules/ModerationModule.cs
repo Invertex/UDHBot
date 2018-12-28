@@ -9,6 +9,7 @@ using Discord.WebSocket;
 using DiscordBot.Extensions;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
+using Pathoschild.NaturalTimeParser.Parser;
 
 namespace DiscordBot.Modules
 {
@@ -52,13 +53,37 @@ namespace DiscordBot.Modules
             await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
             IUserMessage reply = await ReplyAsync($"User {user} has been muted for {Utils.FormatTime(arg)} ({arg} seconds).");
-            await _logging.LogAction($"{Context.User.Username} has muted {u.Username} ({u.Id}) for {Utils.FormatTime(arg)} ({arg} seconds).");
+            await _logging.LogAction(
+                $"{Context.User.Username} has muted {u.Username} ({u.Id}) for {Utils.FormatTime(arg)} ({arg} seconds).");
 
             MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
 
             await MutedUsers.AwaitCooldown(u.Id);
             await reply.DeleteAsync();
             await UnmuteUser(user, true);
+        }
+
+        [Command("mute"), Summary("Mute a user for a fixed duration")]
+        [Alias("shutup", "stfu")]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        async Task MuteUser(IUser user, string naturalDuration, params string[] messages)
+        {
+            try
+            {
+                DateTime dt = DateTime.Now.Offset(naturalDuration);
+                if (dt < DateTime.Now)
+                {
+                    await ReplyAsync("Invalid DateTime specified.");
+                    return;
+                }
+
+                await MuteUser(user, (uint) (dt - DateTime.Now).TotalSeconds, messages);
+            }
+            catch (Exception e)
+            {
+                await ReplyAsync("Invalid DateTime specified.");
+                await Context.Message.DeleteAsync();
+            }
         }
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
@@ -389,7 +414,7 @@ namespace DiscordBot.Modules
                 return;
 
             string message = String.Join(' ', messages);
-            
+
             await channel.SendMessageAsync(message);
             await Context.Message.DeleteAsync();
         }

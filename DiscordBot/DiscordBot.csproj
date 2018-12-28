@@ -11,6 +11,7 @@
     <PackageReference Include="MySql.Data" Version="8.0.11" />
     <PackageReference Include="NETCore.MailKit" Version="2.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Pathoschild.NaturalTimeParser" Version="0.2.0-alpha" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
