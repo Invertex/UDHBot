@@ -19,6 +19,7 @@ namespace DiscordBot.Services
 {
     public class UserService
     {
+        private readonly DiscordSocketClient _client;
         private readonly DatabaseService _databaseService;
         private readonly ILoggingService _loggingService;
         private readonly UpdateService _updateService;
@@ -60,9 +61,10 @@ namespace DiscordBot.Services
 
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
-        public UserService(DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
+        public UserService(DiscordSocketClient client,DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
             Settings.Deserialized.Settings settings, UserSettings userSettings)
         {
+            _client = client;
             rand = new Random();
             _databaseService = databaseService;
             _loggingService = loggingService;
@@ -551,6 +553,11 @@ namespace DiscordBot.Services
                         "Thankfully, you do not have permission to do so. If you are asking a question, people will help you when they have time.")
                     .DeleteAfterTime(minutes: 5);
             }
+        }
+
+        public int GetGatewayPing()
+        {
+            return _client.Latency;
         }
 
 // TODO: Response to people asking if anyone is around to help.
