@@ -62,7 +62,7 @@ namespace DiscordBot
             _feedService = new FeedService(_client, _settings);
             _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService, _settings,
                 _feedService);
-            _userService = new UserService(_databaseService, _loggingService, _updateService, _settings, _userSettings);
+            _userService = new UserService(_client, _databaseService, _loggingService, _updateService, _settings, _userSettings);
 
             _audioService = new AudioService(_loggingService, _client, _settings);
             _casinoService = new CasinoService(_loggingService, _updateService, _databaseService, _settings);
@@ -89,7 +89,6 @@ namespace DiscordBot
             await InstallCommands();
 
             _client.Log += Logger;
-
             // await InitCommands();
 
             await _client.LoginAsync(TokenType.Bot, _settings.Token);
@@ -289,8 +288,7 @@ namespace DiscordBot
             var result = await _commandService.ExecuteAsync(context, argPos, _services);
             if (!result.IsSuccess)
             {
-                IUserMessage m = await context.Channel.SendMessageAsync(result.ErrorReason);
-                await Task.Delay(10000).ContinueWith(t => m.DeleteAsync());
+                await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
             }
         }
 
