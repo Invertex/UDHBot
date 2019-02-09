@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using DiscordBot.Extensions;
 using DiscordBot.Properties;
 using DiscordBot.Services;
@@ -270,9 +271,10 @@ namespace DiscordBot.Modules
         }
 
 
-        [Command("quote"), Summary("Quote a message. Syntax : !quote messageid (#channelname)")]
-        private async Task QuoteMessage(ulong id, IMessageChannel channel = null)
+        [Command("quote"), Summary("Quote a message. Syntax : !quote messageid (#channelname) (optionalSubtitle)")]
+        private async Task QuoteMessage(ulong id, IMessageChannel channel = null, string subtitle = null)
         {
+            if (subtitle != null && (subtitle.Contains("@everyone") || subtitle.Contains("@here"))) return;
             // If channel is null use Context.Channel, else use the provided channel
             channel = channel ?? Context.Channel;
 
@@ -299,7 +301,7 @@ namespace DiscordBot.Modules
                 })
                 .AddField("Original message", message.Content.Truncate(1020));
             var embed = builder.Build();
-            await ReplyAsync("", false, embed);
+            await ReplyAsync(subtitle == null ? "" : $"`{Context.User.Username}:` {subtitle}", false, embed);
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
         }
@@ -408,17 +410,17 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAsync();
         }
 
-        [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
-        [Alias("subtitles", "sub", "subs")]
-        private async Task Subtitles(string text)
-        {
-            var msg = await _userService.SubtitleImage(Context.Message, text);
-            if (msg.Length < 6)
-                await ReplyAsync("Sorry, there was an error processing your image.");
-            else
-                await Context.Channel.SendFileAsync(msg, $"From {Context.Message.Author.Mention}");
-            await Context.Message.DeleteAsync();
-        }
+        /* [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
+         [Alias("subtitles", "sub", "subs")]
+         private async Task Subtitles(string text)
+         {
+             var msg = await _userService.SubtitleImage(Context.Message, text);
+             if (msg.Length < 6)
+                 await ReplyAsync("Sorry, there was an error processing your image.");
+             else
+                 await Context.Channel.SendFileAsync(msg, $"From {Context.Message.Author.Mention}");
+             await Context.Message.DeleteAsync();
+         }*/
 
         #endregion
 
@@ -707,17 +709,18 @@ namespace DiscordBot.Modules
         [Alias("wikipedia")]
         private async Task SearchWikipedia([Remainder] string query)
         {
-
             String articleExtract = await _updateService.DownloadWikipediaArticle(query);
 
             // If an article is found return it, else return error message
-            if (articleExtract == null) {
-                await ReplyAsync("No Articles Found."); 
+            if (articleExtract == null)
+            {
+                await ReplyAsync("No Articles Found.");
                 return;
             }
 
             //Trim if message is too long
-            if (articleExtract.Length > 350) {
+            if (articleExtract.Length > 350)
+            {
                 articleExtract = articleExtract.Substring(0, 347) + "...";
             }
 
@@ -860,11 +863,13 @@ namespace DiscordBot.Modules
         #endregion
 
         #region Translate
+
         [Command("translate"), Summary("Translate a message. Syntax : !translate messageId language")]
         private async Task Translate(ulong id, string language = "en")
         {
             await Translate((await Context.Channel.GetMessageAsync(id)).Content, language);
         }
+
         [Command("translate"), Summary("Translate a message. Syntax : !translate text language")]
         private async Task Translate(string message, string language = "en")
         {
@@ -872,6 +877,7 @@ namespace DiscordBot.Modules
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
         }
+
         #endregion
 
         #region Currency
@@ -915,9 +921,12 @@ namespace DiscordBot.Modules
         private async Task Ping()
         {
             var message = await ReplyAsync($"Pong :blush:");
-            var time = message.Timestamp.Subtract(Context.Message.Timestamp);
-            await message.ModifyAsync(m => m.Content = $"Pong :blush: (**{time.TotalMilliseconds}** *ms*)");
+            var time = message.CreatedAt.Subtract(Context.Message.Timestamp);
+            await message.ModifyAsync(m =>
+                m.Content = $"Pong :blush: (**{time.TotalMilliseconds}** *ms* / gateway **{_userService.GetGatewayPing()}** *ms*)");
             await message.DeleteAfterTime(minutes: 3);
+
+
             await Context.Message.DeleteAfterTime(minutes: 3);
         }
 
@@ -925,7 +934,8 @@ namespace DiscordBot.Modules
         [Alias("MemberCount")]
         private async Task MemberCount()
         {
-            await ReplyAsync($"We currently have {(await Context.Guild.GetUsersAsync()).Count-1} members. Let's keep on growing as the strong community we are :muscle:");
+            await ReplyAsync(
+                $"We currently have {(await Context.Guild.GetUsersAsync()).Count - 1} members. Let's keep on growing as the strong community we are :muscle:");
         }
 
         [Group("role")]
@@ -1002,22 +1012,25 @@ namespace DiscordBot.Modules
                                  "\n" +
                                  "```To get the publisher role type **!pinfo** and follow the instructions." +
                                  "https://www.assetstore.unity3d.com/en/#!/search/page=1/sortby=popularity/query=publisher:1 <= Example Digits```\n");
-                await ReplyAsync("```!role add/remove 2D-Artists - If you're good at drawing, painting, digital art, concept art or anything else that's flat. \n" +
-                                 "!role add/remove 3D-Artists - If you are a wizard with vertices or like to forge your models from mud. \n" +
-                                 "!role add/remove Animators - If you like to bring characters to life. \n" +
-                                 "!role add/remove Technical-Artists - If you write tools and shaders to bridge the gap between art and programming. \n" +
-                                 "!role add/remove Programmers - If you like typing away to make your dreams come true (or the code come to your dreams). \n" +
-                                 "!role add/remove Game-Designers - If you are good at designing games, mechanics and levels.\n" +
-                                 "!role add/remove Audio-Engineers - If you live life to the rhythm of your own music and sounds.\n" +
-                                 "!role add/remove Generalists - If you like to dabble in everything.\n" +
-                                 "!role add/remove Hobbyists - If you're using Unity as a hobby.\n" +
-                                 "!role add/remove Students - If you're currently studying in a gamedev related field. \n" +
-                                 "!role add/remove XR-Developers - If you're a VR, AR or MR sorcerer. \n" +
-                                 "!role add/remove Writers - If you like writing lore, scenarii, characters and stories. \n" +
-                                 "======Below are special roles that will get pinged for specific reasons====== \n" +
-                                 "!role add/remove Subs-Gamejam - Will be pinged when there is UDC gamejam related news. \n" +
-                                 "!role add/remove Subs-Poll - Will be pinged when there is new public polls. \n" +
-                                 "```");
+                await ReplyAsync(
+                    "```!role add/remove 2D-Artists - If you're good at drawing, painting, digital art, concept art or anything else that's flat. \n" +
+                    "!role add/remove 3D-Artists - If you are a wizard with vertices or like to forge your models from mud. \n" +
+                    "!role add/remove Animators - If you like to bring characters to life. \n" +
+                    "!role add/remove Technical-Artists - If you write tools and shaders to bridge the gap between art and programming. \n" +
+                    "!role add/remove Programmers - If you like typing away to make your dreams come true (or the code come to your dreams). \n" +
+                    "!role add/remove Game-Designers - If you are good at designing games, mechanics and levels.\n" +
+                    "!role add/remove Audio-Engineers - If you live life to the rhythm of your own music and sounds.\n" +
+                    "!role add/remove Generalists - If you like to dabble in everything.\n" +
+                    "!role add/remove Hobbyists - If you're using Unity as a hobby.\n" +
+                    "!role add/remove Students - If you're currently studying in a gamedev related field. \n" +
+                    "!role add/remove XR-Developers - If you're a VR, AR or MR sorcerer. \n" +
+                    "!role add/remove Writers - If you like writing lore, scenarii, characters and stories. \n" +
+                    "======Below are special roles that will get pinged for specific reasons====== \n" +
+                    "!role add/remove Subs-Gamejam - Will be pinged when there is UDC gamejam related news. \n" +
+                    "!role add/remove Subs-Poll - Will be pinged when there is new public polls. \n" +
+                    "!role add/remove Subs-Releases - Will be pinged when there is new unity releases (beta and stable versions). \n" +
+                    "!role add/remove Subs-News - Will be pinged when there is new unity news (mainly blog posts). \n" +
+                    "```");
             }
         }
 
