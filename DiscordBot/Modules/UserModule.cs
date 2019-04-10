@@ -786,6 +786,9 @@ namespace DiscordBot.Modules
             HtmlDocument doc = new HtmlWeb().Load(birthdayTable);
             DateTime birthdate = default(DateTime);
 
+            HtmlNode matchedNode = null;
+            int matchedLength = int.MaxValue;
+
             // XPath to each table row
             foreach (HtmlNode row in doc.DocumentNode.SelectNodes("/html/body/table/tr"))
             {
@@ -794,38 +797,52 @@ namespace DiscordBot.Modules
                 string name = nameNode.InnerText;
                 if (name.ToLower().Contains(searchName.ToLower()))
                 {
-                    // XPath to the date column (B)
-                    HtmlNode dateNode = row.SelectSingleNode("td[1]");
-                    // XPath to the year column (D)
-                    HtmlNode yearNode = row.SelectSingleNode("td[3]");
-
-                    CultureInfo provider = CultureInfo.InvariantCulture;
-                    string wrongFormat = "M/d/yyyy";
-                    //string rightFormat = "dd-MMMM-yyyy";
-
-                    string dateString = dateNode.InnerText;
-                    if (!yearNode.InnerText.Contains("&nbsp;"))
+                    // Check for a "Closer" match
+                    if (name.Length < matchedLength)
                     {
-                        dateString = dateString + "/" + yearNode.InnerText;
+                        matchedNode = nameNode;
+                        matchedLength = name.Length;
+                        // Nothing will match "Better" so we may as well break out
+                        if (name.Length == searchName.Length)
+                        {
+                            break;
+                        }
                     }
-
-                    dateString = dateString.Trim();
-
-                    try
-                    {
-                        // Converting the birthdate from the wrong format to the right format WITH year
-                        birthdate = DateTime.ParseExact(dateString, wrongFormat, provider);
-                    }
-                    catch (FormatException)
-                    {
-                        // Converting the birthdate from the wrong format to the right format WITHOUT year
-                        birthdate = DateTime.ParseExact(dateString, "M/d", provider);
-                    }
-
-                    break;
                 }
             }
 
+            if (matchedNode != null)
+            {
+                // XPath to the date column (B)
+                HtmlNode dateNode = matchedNode.SelectSingleNode("td[1]");
+                // XPath to the year column (D)
+                HtmlNode yearNode = matchedNode.SelectSingleNode("td[3]");
+
+                CultureInfo provider = CultureInfo.InvariantCulture;
+                string wrongFormat = "M/d/yyyy";
+                //string rightFormat = "dd-MMMM-yyyy";
+
+                string dateString = dateNode.InnerText;
+                if (!yearNode.InnerText.Contains("&nbsp;"))
+                {
+                    dateString = dateString + "/" + yearNode.InnerText;
+                }
+
+                dateString = dateString.Trim();
+
+                try
+                {
+                    // Converting the birthdate from the wrong format to the right format WITH year
+                    birthdate = DateTime.ParseExact(dateString, wrongFormat, provider);
+                }
+                catch (FormatException)
+                {
+                    // Converting the birthdate from the wrong format to the right format WITHOUT year
+                    birthdate = DateTime.ParseExact(dateString, "M/d", provider);
+                }
+            }
+
+            // Business as usual
             if (birthdate == default(DateTime))
             {
                 await ReplyAsync(
