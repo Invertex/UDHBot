@@ -363,7 +363,6 @@ namespace DiscordBot.Modules
             await role.ModifyAsync(properties => { properties.Mentionable = true; });
             await Context.Channel.SendMessageAsync($"{role.Mention}\n{message}");
             if (!isMentionable) await role.ModifyAsync(properties => { properties.Mentionable = false; });
-            await role.ModifyAsync(properties => { properties.Mentionable = false; });
             await Context.Message.DeleteAsync();
         }
 
