@@ -800,7 +800,7 @@ namespace DiscordBot.Modules
                     // Check for a "Closer" match
                     if (name.Length < matchedLength)
                     {
-                        matchedNode = nameNode;
+                        matchedNode = row;
                         matchedLength = name.Length;
                         // Nothing will match "Better" so we may as well break out
                         if (name.Length == searchName.Length)
