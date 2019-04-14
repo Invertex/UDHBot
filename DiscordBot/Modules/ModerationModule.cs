@@ -39,7 +39,7 @@ namespace DiscordBot.Modules
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
         [Alias("shutup", "stfu")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task MuteUser(IUser user, uint arg)
         {
             await Context.Message.DeleteAsync();
@@ -65,7 +65,7 @@ namespace DiscordBot.Modules
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
         [Alias("shutup", "stfu")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task MuteUser(IUser user, string naturalDuration, params string[] messages)
         {
             try
@@ -88,7 +88,7 @@ namespace DiscordBot.Modules
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
         [Alias("shutup", "stfu")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task MuteUser(IUser user, uint arg, params string[] messages)
         {
             string message = string.Join(' ', messages);
@@ -133,7 +133,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("unmute"), Summary("Unmute a muted user")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task UnmuteUser(IUser user, bool fromMute = false)
         {
             var u = user as IGuildUser;
@@ -156,7 +156,7 @@ namespace DiscordBot.Modules
 
         [Command("addrole"), Summary("Add a role to a user")]
         [Alias("roleadd")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task AddRole(IRole role, IUser user)
         {
             var contextUser = Context.User as SocketGuildUser;
@@ -177,7 +177,7 @@ namespace DiscordBot.Modules
 
         [Command("removerole"), Summary("Remove a role from a user")]
         [Alias("roleremove")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task RemoveRole(IRole role, IUser user)
         {
             var contextUser = Context.User as SocketGuildUser;
@@ -199,7 +199,7 @@ namespace DiscordBot.Modules
 
         [Command("clear"), Summary("Remove last x messages")]
         [Alias("clean", "nuke", "purge")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task ClearMessages(int count)
         {
             ITextChannel channel = Context.Channel as ITextChannel;
@@ -217,7 +217,7 @@ namespace DiscordBot.Modules
 
         [Command("clear"), Summary("Remove messages until the message at the specified id")]
         [Alias("clean", "nuke", "purge")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task ClearMessages(ulong messageId)
         {
             ITextChannel channel = Context.Channel as ITextChannel;
@@ -261,7 +261,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("rules"), Summary("Display rules of the current channel.")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task Rules(int seconds = 60)
         {
             Rules(Context.Channel, seconds);
@@ -269,7 +269,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("rules"), Summary("Display rules of the mentionned channel.")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task Rules(IMessageChannel channel, int seconds = 60)
         {
             //Display rules of this channel for x seconds
@@ -295,7 +295,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("globalrules"), Summary("Display globalrules in current channel.")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task GlobalRules(int seconds = 60)
         {
             //Display rules of this channel for x seconds
@@ -310,7 +310,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("channels"), Summary("Get a description of the channels.")]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireStaff]
         async Task ChannelsDescription(int seconds = 60)
         {
             //Display rules of this channel for x seconds
@@ -344,7 +344,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("slowmode"), Summary("Put on slowmode.")]
-        [RequireUserPermission(GuildPermission.BanMembers)]
+        [RequireStaff]
         async Task SlowMode(int time)
         {
             await Context.Message.DeleteAsync();
@@ -358,9 +358,11 @@ namespace DiscordBot.Modules
         async Task TagRole(IRole role, params string[] messages)
         {
             string message = String.Join(' ', messages);
+            var isMentionable = role.IsMentionable;
+            if (!isMentionable) await role.ModifyAsync(properties => { properties.Mentionable = true; });
             await role.ModifyAsync(properties => { properties.Mentionable = true; });
             await Context.Channel.SendMessageAsync($"{role.Mention}\n{message}");
-            await role.ModifyAsync(properties => { properties.Mentionable = false; });
+            if (!isMentionable) await role.ModifyAsync(properties => { properties.Mentionable = false; });
             await Context.Message.DeleteAsync();
         }
 
@@ -417,26 +419,6 @@ namespace DiscordBot.Modules
 
             await channel.SendMessageAsync(message);
             await Context.Message.DeleteAsync();
-        }
-
-        //TEMP: Adds XP for completing christmas event
-        [Command("completedchristmasevent")]
-        async Task ChristmasEvent(ulong userId)
-        {
-            //Only allow UDH Santa to run this command
-            if (Context.User.Id != 514979161144557600)
-            {
-                return;
-            }
-
-            ulong roleId = 521454263969513482;
-
-            await Context.Message.DeleteAsync();
-            _database.AddUserXp(userId, 5000);
-
-            //Add role
-            IGuildUser user = await Context.Guild.GetUserAsync(userId);
-            user.AddRoleAsync(Context.Guild.GetRole(roleId));
         }
     }
 }
