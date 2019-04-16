@@ -779,44 +779,54 @@ namespace DiscordBot.Modules
         [Alias("bday")]
         private async Task Birthday(IUser user)
         {
-            string searchName = user.Username;
+            string searchName = user.Username.ToLower();
+            int userDiscriminator = (int)user.DiscriminatorValue;
+
             // URL to columns B to D of Corn's google sheet
             string birthdayTable =
                 "https://docs.google.com/spreadsheets/d/10iGiKcrBl1fjoBNTzdtjEVYEgOfTveRXdI5cybRTnj4/gviz/tq?tqx=out:html&gid=318080247&range=B:D";
             HtmlDocument doc = new HtmlWeb().Load(birthdayTable);
             DateTime birthdate = default(DateTime);
 
-            HtmlNode matchedNode = null;
-            int matchedLength = int.MaxValue;
+            HtmlNode bestMatch = null;
+            int bestDifference = 2;
 
             // XPath to each table row
             foreach (HtmlNode row in doc.DocumentNode.SelectNodes("/html/body/table/tr"))
             {
                 // XPath to the name column (C)
                 HtmlNode nameNode = row.SelectSingleNode("td[2]");
-                string name = nameNode.InnerText;
-                if (name.ToLower().Contains(searchName.ToLower()))
+                string name = nameNode.InnerText.Trim().ToLower();
+
+                if (name.Contains(searchName))
                 {
-                    // Check for a "Closer" match
-                    if (name.Length < matchedLength)
+                    //Check if there's a user tag number, if it doesn't match mentioned user, go to next user
+                    if (name.Length > 5 && name[name.Length - 5] == '#')
                     {
-                        matchedNode = row;
-                        matchedLength = name.Length;
-                        // Nothing will match "Better" so we may as well break out
-                        if (name.Length == searchName.Length)
+                        int discriminator;
+                        if (int.TryParse(name.Substring(name.Length - 4, 3), out discriminator))
                         {
-                            break;
+                            if (discriminator != userDiscriminator) { continue; }
                         }
+                    }
+
+                    int nameDiff = searchName.Difference(name.Substring(0, name.Length - 5));
+
+                    if (nameDiff < bestDifference)
+                    {
+                        bestMatch = row;
+                        if (nameDiff == 0) { break; }
+                        bestDifference = nameDiff;
                     }
                 }
             }
 
-            if (matchedNode != null)
+            if (bestMatch != null)
             {
                 // XPath to the date column (B)
-                HtmlNode dateNode = matchedNode.SelectSingleNode("td[1]");
+                HtmlNode dateNode = bestMatch.SelectSingleNode("td[1]");
                 // XPath to the year column (D)
-                HtmlNode yearNode = matchedNode.SelectSingleNode("td[3]");
+                HtmlNode yearNode = bestMatch.SelectSingleNode("td[3]");
 
                 CultureInfo provider = CultureInfo.InvariantCulture;
                 string wrongFormat = "M/d/yyyy";
@@ -840,22 +850,17 @@ namespace DiscordBot.Modules
                     // Converting the birthdate from the wrong format to the right format WITHOUT year
                     birthdate = DateTime.ParseExact(dateString, "M/d", provider);
                 }
-            }
+                string message =
+                $"**{searchName}**'s birthdate: __**{birthdate.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}**__ " +
+                $"({(int)((DateTime.Now - birthdate).TotalDays / 365)}yo)";
 
-            // Business as usual
-            if (birthdate == default(DateTime))
+                await ReplyAsync(message).DeleteAfterTime(minutes: 3);
+            }
+            else
             {
                 await ReplyAsync(
                         $"Sorry, I couldn't find **{searchName}**'s birthday date. They can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform ! :stuck_out_tongue_winking_eye: ")
                     .DeleteAfterSeconds(30);
-            }
-            else
-            {
-                string message =
-                    $"**{searchName}**'s birthdate: __**{birthdate.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}**__ " +
-                    $"({(int) ((DateTime.Now - birthdate).TotalDays / 365)}yo)";
-
-                await ReplyAsync(message).DeleteAfterTime(minutes: 3);
             }
 
             await Context.Message.DeleteAfterTime(minutes: 3);
