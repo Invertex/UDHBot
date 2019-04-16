@@ -277,6 +277,7 @@ namespace DiscordBot.Services
 
         private async void UpdateAnime()
         {
+            return;
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
             {
