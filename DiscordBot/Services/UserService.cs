@@ -366,6 +366,7 @@ namespace DiscordBot.Services
             return $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
         }
 
+
         public Embed WelcomeMessage(string icon, string name, ushort discriminator)
         {
             icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
@@ -394,19 +395,15 @@ namespace DiscordBot.Services
             }
         }
 
+
         public async Task Thanks(SocketMessage messageParam)
         {
             //Get guild id
             SocketGuildChannel channel = messageParam.Channel as SocketGuildChannel;
+            ulong guildId = channel.Guild.Id;
 
             //Make sure its in the UDH server
-            if (channel.Guild.Id != _settings.guildId) {
-                return;
-            }
-            //Avoid thanking related functions in channels where regular users aren't allowed.
-            var everyoneRole = channel.Guild.EveryoneRole;
-            if(everyoneRole == null || everyoneRole.Permissions.ReadMessageHistory == false)
-            {
+            if (guildId != _settings.guildId) {
                 return;
             }
 
