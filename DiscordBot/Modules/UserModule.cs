@@ -714,7 +714,7 @@ namespace DiscordBot.Modules
             // If an article is found return it, else return error message
             if (article.url == null)
             {
-                await ReplyAsync($"No Articles for \"{query}\" Found.");
+                await ReplyAsync($"No Articles for \"{query}\" were found.");
                 return;
             }
 

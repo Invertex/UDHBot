@@ -417,7 +417,7 @@ namespace DiscordBot.Services
             }
         }
 
-        public async Task<(String articleName, String articleSummary, String articleUrl)> DownloadWikipediaArticle(String searchQuery)
+        public async Task<(String name, String extract, String url)> DownloadWikipediaArticle(String searchQuery)
         {
             String openSearchUri = Uri.EscapeUriString(_settings.WikipediaSearchPage + searchQuery);
             HtmlWeb htmlWeb = new HtmlWeb() { CaptureRedirect = true };
