@@ -366,6 +366,39 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAsync();
         }
 
+        [Command("react")]
+        [Alias("reaction", "reactions", "addreactions", "addreaction"), Summary("Adds the requested reactions to a message")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task React(ulong msgId, params string[] emojis)
+        {
+            IUserMessage msg = (IUserMessage) await Context.Channel.GetMessageAsync(msgId);
+            await Context.Message.DeleteAsync();
+            foreach (string emoji in emojis)
+            {
+                if (Emote.TryParse(emoji, out Emote emote))
+                    await msg.AddReactionAsync(emote);
+                else
+                    await msg.AddReactionAsync(new Emoji(emoji));
+            }
+        }
+
+        [Command("react")]
+        [Alias("reaction", "reactions", "addreactions", "addreaction"), Summary("Adds the requested reactions to a message")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task React(params string[] emojis)
+        {
+            IUserMessage msg = (IUserMessage) (await Context.Channel.GetMessagesAsync(2).FlattenAsync()).Last();
+
+            await Context.Message.DeleteAsync();
+            foreach (string emoji in emojis)
+            {
+                if (Emote.TryParse(emoji, out Emote emote))
+                    await msg.AddReactionAsync(emote);
+                else
+                    await msg.AddReactionAsync(new Emoji(emoji));
+            }
+        }
+
         [Command("closepoll"), Summary("Close a poll and append a message.")]
         [Alias("pollclose")]
         [RequireUserPermission(GuildPermission.Administrator)]

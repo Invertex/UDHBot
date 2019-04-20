@@ -34,7 +34,8 @@ namespace DiscordBot.Services
         private static async Task<Rate> GetNewRate(string currency)
         {
             // Url to exchange rate from USD
-            var rateUrl = $"https://free.currencyconverterapi.com/api/v6/convert?q=USD_{currency}&compact=ultra";
+            string apiKey = "5d733a03e0274dff3e7f";
+            string rateUrl = $"https://free.currencyconverterapi.com/api/v6/convert?q=USD_{currency}&compact=ultra&apiKey={apiKey}";
 
             string rateJson;
             using (var wc = new WebClient())
