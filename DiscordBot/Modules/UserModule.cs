@@ -719,9 +719,9 @@ namespace DiscordBot.Modules
             }
 
             //Trim if message is too long
-            if (article.extract.Length > 350)
+            if (article.extract.Length > 450)
             {
-                article.extract = article.extract.Substring(0, 347) + "...";
+                article.extract = article.extract.Substring(0, 447) + "...";
             }
 
             await ReplyAsync(embed: GetWikipediaEmbed(article.name, article.extract, article.url));
