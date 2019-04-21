@@ -446,7 +446,7 @@ namespace DiscordBot.Services
                 String articleUrl = openSearchJSON[3][0].ToString();
 
                 //If search returns multiple results, display them instead of just "may refer to:" with nothing else.
-                if(articleExtract.Contains("may refer to:")
+                if(openSearchJSON[1].Count<JToken>() > 1 && articleExtract.Contains("may refer to:"))
                 {
                     articleName = articleExtract;
                     StringBuilder sb = new StringBuilder();
