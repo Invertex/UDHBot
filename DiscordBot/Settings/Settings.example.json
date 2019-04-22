@@ -169,5 +169,5 @@
   "complaintCategoryName": "Complaints",
   "complaintChannelPrefix": "Complaint",
   /*Commands Configuration*/
-  "wikipediaSearchPage": "https://en.wikipedia.org/w/api.php?format=json&action=opensearch&profile=fuzzy&redirects=resolve&limit=1&namespace=0&search=",
+  "wikipediaSearchPage": "https://en.wikipedia.org/w/api.php?format=json&action=opensearch&profile=fuzzy&limit=5&redirects=resolve&search=",
 }

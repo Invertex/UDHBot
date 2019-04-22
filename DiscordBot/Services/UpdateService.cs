@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
@@ -443,6 +444,23 @@ namespace DiscordBot.Services
                 String articleName = openSearchJSON[1][0].ToString();
                 String articleExtract = openSearchJSON[2][0].ToString();
                 String articleUrl = openSearchJSON[3][0].ToString();
+
+                //If search returns multiple results, display them instead of just "may refer to:" with nothing else.
+                if(openSearchJSON[1].Count<JToken>() > 1 && articleExtract.Contains("may refer to:"))
+                {
+                    articleName = articleExtract;
+                    StringBuilder sb = new StringBuilder();
+
+                    for (int i = 1; i < openSearchJSON[1].Count<JToken>(); i++)
+                    {
+                        sb.Append("-");
+                        sb.Append(openSearchJSON[1][i].ToString());
+                        sb.Append(": ");
+                        sb.AppendLine(openSearchJSON[2][i].ToString());
+                    }
+
+                    articleExtract = sb.ToString();
+                }
 
                 return (articleName, articleExtract, articleUrl);
             }
