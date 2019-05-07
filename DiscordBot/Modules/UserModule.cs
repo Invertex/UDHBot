@@ -709,25 +709,22 @@ namespace DiscordBot.Modules
         [Alias("wikipedia")]
         private async Task SearchWikipedia([Remainder] string query)
         {
-            String articleExtract = await _updateService.DownloadWikipediaArticle(query);
+            (String name, String extract, String url) article = await _updateService.DownloadWikipediaArticle(query);
 
             // If an article is found return it, else return error message
-            if (articleExtract == null)
+            if (article.url == null)
             {
-                await ReplyAsync("No Articles Found.");
+                await ReplyAsync($"No Articles for \"{query}\" were found.");
                 return;
             }
 
             //Trim if message is too long
-            if (articleExtract.Length > 350)
+            if (article.extract.Length > 450)
             {
-                articleExtract = articleExtract.Substring(0, 347) + "...";
+                article.extract = article.extract.Substring(0, 447) + "...";
             }
 
-            //Generate url for users
-            String userUrl = new Uri("https://en.wikipedia.org/wiki/" + query).AbsoluteUri;
-
-            await ReplyAsync(embed: GetWikipediaEmbed(query, articleExtract, userUrl));
+            await ReplyAsync(embed: GetWikipediaEmbed(article.name, article.extract, article.url));
         }
 
         private Embed GetWikipediaEmbed(String subject, String articleExtract, String articleUrl)

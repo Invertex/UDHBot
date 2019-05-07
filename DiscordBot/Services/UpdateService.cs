@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
@@ -417,37 +418,59 @@ namespace DiscordBot.Services
             }
         }
 
-        public async Task<String> DownloadWikipediaArticle(String articleName)
+        public async Task<(String name, String extract, String url)> DownloadWikipediaArticle(String searchQuery)
         {
+            String openSearchUri = Uri.EscapeUriString(_settings.WikipediaSearchPage + searchQuery);
+            HtmlWeb htmlWeb = new HtmlWeb() { CaptureRedirect = true };
+            HtmlDocument openSearchResponse;
 
-            String url = Uri.EscapeUriString(_settings.WikipediaSearchPage + articleName);
-
+            try { openSearchResponse = await htmlWeb.LoadFromWebAsync(openSearchUri); }
+            catch
+            {
+                Console.WriteLine("Wikipedia method failed loading URL: " + openSearchUri);
+                return (null, null, null);
+            }
             try
             {
-                HtmlWeb htmlWeb = new HtmlWeb();
-                htmlWeb.CaptureRedirect = true;
+                JArray openSearchJSON = JArray.Parse(openSearchResponse.Text);
 
-                HtmlDocument manual = await htmlWeb.LoadFromWebAsync(url);
+                //They don't use keys in the JSON structure for this response, it's just a JSON array, so has to be accessed manually.
+                if (openSearchJSON.Count < 4
+                    || !openSearchJSON[1].Any<JToken>()
+                    || !openSearchJSON[2].Any<JToken>()
+                    || !openSearchJSON[3].Any<JToken>())
+                { return (null, null, null); }
 
-                String jsonData = manual.DocumentNode.OuterHtml;
+                String articleName = openSearchJSON[1][0].ToString();
+                String articleExtract = openSearchJSON[2][0].ToString();
+                String articleUrl = openSearchJSON[3][0].ToString();
 
-                dynamic json = JObject.Parse(jsonData);
+                //If search returns multiple results, display them instead of just "may refer to:" with nothing else.
+                if(openSearchJSON[1].Count<JToken>() > 1 && articleExtract.Contains("may refer to:"))
+                {
+                    articleName = articleExtract;
+                    StringBuilder sb = new StringBuilder();
 
-                //2 hours have been spent trying to get this to work - just a warning to not stuff it up
-                foreach(JToken token in json["query"]["pages"].Children()) {
-                    //If its null its not an article
-                    if (token.First["extract"] == null) {
-                        break;
+                    for (int i = 1; i < openSearchJSON[1].Count<JToken>(); i++)
+                    {
+                        sb.Append("-");
+                        sb.Append(openSearchJSON[1][i].ToString());
+                        sb.Append(": ");
+                        sb.AppendLine(openSearchJSON[2][i].ToString());
                     }
 
-                    return token.First["extract"].ToString();
+                    articleExtract = sb.ToString();
                 }
-                
-            } catch (Exception e)
+
+                return (articleName, articleExtract, articleUrl);
+            }
+            catch (Exception e)
             {
                 Console.WriteLine(e);
+                Console.WriteLine("Wikipedia method likely failed to parse JSON response from: " + openSearchUri);
             }
-            return null;
+
+            return (null, null, null);
         }
 
         public UserData GetUserData()
