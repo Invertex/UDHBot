@@ -267,6 +267,7 @@ namespace DiscordBot.Modules
                 _userService.ThanksReminderCooldown.SetPermanent(Context.User.Id, true);
             }
 
+            await Context.Message.DeleteAsync();
             await ReplyAsync($"{Context.User.Username}, " + replyMessage).DeleteAfterTime(seconds: 20);
         }
 
