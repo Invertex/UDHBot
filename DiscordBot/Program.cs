@@ -34,6 +34,7 @@ namespace DiscordBot
         private AnimeService _animeService;
         private FeedService _feedService;
         private CurrencyService _currencyService;
+        private ReactRoleService _reactRoleService;
 
         private static PayWork _payWork;
         private static Rules _rules;
@@ -66,6 +67,8 @@ namespace DiscordBot
             _audioService = new AudioService(_loggingService, _client, _settings);
             _currencyService = new CurrencyService();
             _serviceCollection = new ServiceCollection();
+            _reactRoleService = new ReactRoleService(_client, _loggingService, _settings);
+
             _serviceCollection.AddSingleton(_loggingService);
             _serviceCollection.AddSingleton(_databaseService);
             _serviceCollection.AddSingleton(_userService);
@@ -80,6 +83,7 @@ namespace DiscordBot
             _serviceCollection.AddSingleton(_payWork);
             _serviceCollection.AddSingleton(_userSettings);
             _serviceCollection.AddSingleton(_currencyService);
+            _serviceCollection.AddSingleton(_reactRoleService);
             _services = _serviceCollection.BuildServiceProvider();
 
 

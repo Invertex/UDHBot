@@ -28,6 +28,8 @@ namespace DiscordBot.Settings.Deserialized
 
         public AllRoles AllRoles { get; set; }
 
+        public UserReactRoles ReactRoles { get; set; }
+
         public RolesBanned RolesBanned { get; set; }
 
         public RolesModeration RolesModeration { get; set; }
@@ -90,6 +92,14 @@ namespace DiscordBot.Settings.Deserialized
         public List<string> Roles { get; set; }
     }
 
+    public class UserReactRoles
+    {
+        public string Desc { get; set; }
+        public List<string> RoleID { get; set; }
+        public List<string> EmojiID { get; set; }
+
+        public int RoleCount() { return RoleID.Count; }
+    }
 
     public class RolesBanned
     {
