@@ -42,16 +42,26 @@ namespace DiscordBot.Services
             _client.Ready += ClientIsReady;
         }
 
+        private void LoadSettings()
+        {
+            try
+            {
+                using (var file = File.OpenText(@"Settings/ReactionRoles.json"))
+                {
+                    _reactSettings = JsonConvert.DeserializeObject<ReactRoleSettings>(file.ReadToEnd());
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to Deserialize 'ReactionRoles.Json' err: {ex.Message}");
+                isRunning = false;
+            }
+        }
+
         private async Task ClientIsReady()
         {
             // This could be with all the others loading, but self-managed seems cleaner.
-            using (var file = File.OpenText(@"Settings/ReactionRoles.json"))
-            {
-                _reactSettings = JsonConvert.DeserializeObject<ReactRoleSettings>(file.ReadToEnd());
-            }
-            //TODO We should probably do a bit more than just check if the file existed
-            if (_reactSettings != null)
-                isRunning = false;
+            LoadSettings();
             // Get the main channel we use
             _messageChannel = _client.GetChannel(_reactSettings.ChannelIndex) as IMessageChannel;
             // Get our Emotes
