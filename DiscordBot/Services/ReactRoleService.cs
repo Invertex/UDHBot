@@ -2,8 +2,10 @@
 using Discord.WebSocket;
 using DiscordBot.Extensions;
 using DiscordBot.Settings.Deserialized;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,23 +15,18 @@ namespace DiscordBot.Services
 {
     class ReactRoleService
     {
-        private readonly ulong MsgIndex = 603187631982903296; //TODO Add to settings?
-        private readonly ulong MsgChannel = 603187532078776340; //TODO Add to settings?
-
-        private IUserMessage _reactMessage = null;
+        private ReactRoleSettings _reactSettings;
 
         private readonly Settings.Deserialized.Settings _settings;
         private readonly DiscordSocketClient _client;
         private readonly ILoggingService _loggingService;
 
-        private IMessageChannel _msgChannel = null;
-        private IGuild _serverGuild;
-
-        private UserReactRoles ReactRoles = null;
-
-        private Dictionary<string, GuildEmote> ReactEmojis = new Dictionary<string, GuildEmote>();
-        private Dictionary<string, IRole> EmojiRoles = new Dictionary<string, IRole>();
-        private Dictionary<string, ulong> EmojiRoleID = new Dictionary<string, ulong>();
+        private IMessageChannel _messageChannel;
+        // Dictionaries to simplify lookup
+        private Dictionary<ulong, IUserMessage> ReactMessages = new Dictionary<ulong, IUserMessage>();
+        // GuildRoles uses EmojiID as Key
+        private Dictionary<ulong, IRole> GuildRoles = new Dictionary<ulong, IRole>();
+        private Dictionary<ulong, GuildEmote> GuildEmotes = new Dictionary<ulong, GuildEmote>();
 
         public ReactRoleService(DiscordSocketClient client, ILoggingService logging, Settings.Deserialized.Settings settings)
         {
@@ -42,96 +39,125 @@ namespace DiscordBot.Services
 
             // Event so we can Initialize
             _client.Ready += ClientIsReady;
-
-            // Pull our junk from Settings
-            ReactRoles = _settings.ReactRoles;
         }
 
         private async Task ClientIsReady()
         {
-            _serverGuild = _client.GetGuild(_settings.guildId);
-            if (_serverGuild == null)
+            // This could be with all the others loading, but self-managed seems cleaner.
+            using (var file = File.OpenText(@"Settings/ReactionRoles.json"))
             {
-                //TODO Log this shit
+                _reactSettings = JsonConvert.DeserializeObject<ReactRoleSettings>(file.ReadToEnd());
             }
+            //TODO Should probably log if this is valid or not
+            // Get the main channel we use
+            _messageChannel = _client.GetChannel(_reactSettings.ChannelIndex) as IMessageChannel;
             // Get our Emotes
-            for (int i = 0; i < ReactRoles.RoleCount(); i++)
+            //TODO Should probably make this work with global emotes as well?
+            var ServerGuild = _client.GetGuild(_settings.guildId);
+            foreach (var ReactList in _reactSettings.UserReactRoleList)
             {
-                ReactEmojis.Add(ReactRoles.EmojiID[i], await _serverGuild.GetEmoteAsync(ulong.Parse(ReactRoles.EmojiID[i])));
-                EmojiRoles.Add(ReactEmojis[ReactRoles.EmojiID[i]].Name, _serverGuild.GetRole(ulong.Parse(ReactRoles.RoleID[i])));
-                EmojiRoleID.Add(ReactEmojis[ReactRoles.EmojiID[i]].Name, ulong.Parse(ReactRoles.RoleID[i]));
-                // We should add some more debugging for both of these
-            }
-
-            _msgChannel = _client.GetChannel(MsgChannel) as IMessageChannel;
-            if (_msgChannel == null)
-            {
-                //TODO Log this shit
-            }
-            _reactMessage = await _msgChannel.GetMessageAsync(MsgIndex) as IUserMessage;
-            if (_reactMessage == null)
-            {
-                //TODO log this shit
-            }
-            else
-            {
-                List<GuildEmote> MissingEmojis = new List<GuildEmote>();
-                for (int i = 0; i < ReactRoles.RoleCount(); i++)
+                // Get The Message for this group of reactions
+                if (!ReactMessages.ContainsKey(ReactList.MessageIndex))
                 {
-                    // Role Emoji not added
-                    if (!_reactMessage.Reactions.ContainsKey(ReactEmojis[ReactRoles.EmojiID[i]]))
+                    ReactMessages.Add(ReactList.MessageIndex, await _messageChannel.GetMessageAsync(ReactList.MessageIndex) as IUserMessage);
+                }
+                for (int i = 0; i < ReactList.RoleCount(); i++)
+                {
+                    // Add a Reference to our Roles to simplify lookup
+                    if (!GuildRoles.ContainsKey(ReactList.Reactions[i].EmojiID))
                     {
-                        MissingEmojis.Add(ReactEmojis[ReactRoles.EmojiID[i]]);
+                        GuildRoles.Add(ReactList.Reactions[i].EmojiID, ServerGuild.GetRole(ReactList.Reactions[i].RoleID));
+                    }
+                    // Same for the Emojis, saves constant look-arounds
+                    if (!GuildEmotes.ContainsKey(ReactList.Reactions[i].EmojiID))
+                    {
+                        GuildEmotes.Add(ReactList.Reactions[i].EmojiID, await ServerGuild.GetEmoteAsync(ReactList.Reactions[i].EmojiID));
+                    }
+                    // If our message doesn't have the emote we've just added, we add it.
+                    if (!ReactMessages[ReactList.MessageIndex].Reactions.ContainsKey(GuildEmotes[ReactList.Reactions[i].EmojiID]))
+                    {
+                        // We could add these in bulk, but that'd require a bit more setup
+                        await ReactMessages[ReactList.MessageIndex].AddReactionAsync(GuildEmotes[ReactList.Reactions[i].EmojiID]);
                     }
                 }
-                // We Apply all missing Emojis
-                //TODO Should log the missing emojis?
-                if (MissingEmojis.Count > 0)
-                    await _reactMessage.AddReactionsAsync(MissingEmojis.ToArray());
-
-                //? We could check if the message has more reacts than we have emojis and delete any extra emojis?
-
-                // Just to reduce our RateLimit potential we self-limit
-                // Timer t = new Timer(30000);
-                // t.Elapsed += ReminderCheck;
-                // t.Start();
             }
         }
 
         private async Task ReationAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            if (message.Id != MsgIndex)
-                return;
-            if (reaction.User.Value.IsBot)
-                return;
-
-            IGuildUser user = reaction.User.Value as IGuildUser;
-            if (EmojiRoles.ContainsKey(reaction.Emote.Name))
+            if (ReactMessages.ContainsKey(message.Id))
             {
-                if (user.RoleIds.Contains(EmojiRoleID[reaction.Emote.Name]))
+                IGuildUser user = reaction.User.Value as IGuildUser;
+                if (IsUserValid(user))
                 {
-                    return;
+                    // Check if their emote relates to a role and apply them.
+                    Emote emote = reaction.Emote as Emote;
+                    IRole targetRole;
+                    if (GuildRoles.TryGetValue(emote.Id, out targetRole))
+                    {
+                        if (user.RoleIds.Contains(targetRole.Id))
+                        {
+                            return;
+                        }
+                        await user.AddRoleAsync(targetRole);
+                        if (_reactSettings.LogUpdates)
+                            await _loggingService.LogAction($"**{user.Username}** added role '**{targetRole.Name}**'.");
+                    }
                 }
-                await user.AddRoleAsync(EmojiRoles[reaction.Emote.Name]);
             }
         }
 
         private async Task ReactionRemoved(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            if (message.Id != MsgIndex)
-                return;
-            if (reaction.User.Value.IsBot)
-                return;
-
-            IGuildUser user = reaction.User.Value as IGuildUser;
-            if (EmojiRoles.ContainsKey(reaction.Emote.Name))
+            if (ReactMessages.ContainsKey(message.Id))
             {
-                if (!user.RoleIds.Contains(EmojiRoleID[reaction.Emote.Name]))
+                IGuildUser user = reaction.User.Value as IGuildUser;
+                if (IsUserValid(user))
                 {
-                    return;
+                    // Check if their emote relates to a role and apply them.
+                    Emote emote = reaction.Emote as Emote;
+                    IRole targetRole;
+                    if (GuildRoles.TryGetValue(emote.Id, out targetRole))
+                    {
+                        if (!user.RoleIds.Contains(targetRole.Id))
+                        {
+                            return;
+                        }
+                        await user.RemoveRoleAsync(targetRole);
+                        if (_reactSettings.LogUpdates)
+                            await _loggingService.LogAction($"**{user.Username}** removed role '**{targetRole.Name}**'.");
+                    }
                 }
-                await user.RemoveRoleAsync(EmojiRoles[reaction.Emote.Name]);
             }
         }
+
+        private bool IsUserValid(IGuildUser user)
+        {
+            if (user.IsBot || user.RoleIds.Contains(_settings.MutedRoleId))
+                return false;
+            return true;
+        }
     }
+
+    #region ReactRole Containers
+    public class ReactRoleSettings
+    {
+        public ulong ChannelIndex;
+        public bool LogUpdates;
+        public List<UserReactRoles> UserReactRoleList;
+    }
+    public class UserReactRoles
+    {
+        public ulong MessageIndex;
+        public string Desc { get; set; }
+        public List<ReactRole> Reactions;
+
+        public int RoleCount() { return Reactions.Count; }
+    }
+    public class ReactRole
+    {
+        public ulong RoleID { get; set; }
+        public ulong EmojiID { get; set; }
+    }
+    #endregion
 }
