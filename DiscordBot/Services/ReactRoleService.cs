@@ -16,6 +16,7 @@ namespace DiscordBot.Services
     class ReactRoleService
     {
         private ReactRoleSettings _reactSettings;
+        private bool isRunning = false;
 
         private readonly Settings.Deserialized.Settings _settings;
         private readonly DiscordSocketClient _client;
@@ -48,7 +49,9 @@ namespace DiscordBot.Services
             {
                 _reactSettings = JsonConvert.DeserializeObject<ReactRoleSettings>(file.ReadToEnd());
             }
-            //TODO Should probably log if this is valid or not
+            //TODO We should probably do a bit more than just check if the file existed
+            if (_reactSettings != null)
+                isRunning = false;
             // Get the main channel we use
             _messageChannel = _client.GetChannel(_reactSettings.ChannelIndex) as IMessageChannel;
             // Get our Emotes
@@ -85,6 +88,8 @@ namespace DiscordBot.Services
 
         private async Task ReationAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {
+            if (!isRunning)
+                return;
             if (ReactMessages.ContainsKey(message.Id))
             {
                 IGuildUser user = reaction.User.Value as IGuildUser;
@@ -109,6 +114,8 @@ namespace DiscordBot.Services
 
         private async Task ReactionRemoved(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {
+            if (!isRunning)
+                return;
             if (ReactMessages.ContainsKey(message.Id))
             {
                 IGuildUser user = reaction.User.Value as IGuildUser;
