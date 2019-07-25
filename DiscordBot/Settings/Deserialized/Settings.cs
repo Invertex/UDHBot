@@ -28,8 +28,6 @@ namespace DiscordBot.Settings.Deserialized
 
         public AllRoles AllRoles { get; set; }
 
-        public UserReactRoles ReactRoles { get; set; }
-
         public RolesBanned RolesBanned { get; set; }
 
         public RolesModeration RolesModeration { get; set; }
