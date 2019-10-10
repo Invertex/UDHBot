@@ -77,7 +77,7 @@ namespace DiscordBot.Modules
                     return;
                 }
 
-                await MuteUser(user, (uint) (dt - DateTime.Now).TotalSeconds, messages);
+                await MuteUser(user, (uint) Math.Round((dt - DateTime.Now).TotalSeconds), messages);
             }
             catch (Exception e)
             {
