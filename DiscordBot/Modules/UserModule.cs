@@ -1069,7 +1069,6 @@ namespace DiscordBot.Modules
             _databaseService.AddUserXp((ulong)userId, xpGain);
 
             await Context.Message.DeleteAsync();
-            await ReplyAsync("Success");
         }
 
         [Group("anime")]
