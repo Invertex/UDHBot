@@ -267,6 +267,7 @@ namespace DiscordBot.Modules
                 _userService.ThanksReminderCooldown.SetPermanent(Context.User.Id, true);
             }
 
+            await Context.Message.DeleteAsync();
             await ReplyAsync($"{Context.User.Username}, " + replyMessage).DeleteAfterTime(seconds: 20);
         }
 
@@ -709,7 +710,7 @@ namespace DiscordBot.Modules
         [Alias("wikipedia")]
         private async Task SearchWikipedia([Remainder] string query)
         {
-            (String name, String extract, String url) article = await _updateService.DownloadWikipediaArticle(query);
+            (string name, string extract, string url) article = await _updateService.DownloadWikipediaArticle(query);
 
             // If an article is found return it, else return error message
             if (article.url == null)
@@ -718,16 +719,10 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            //Trim if message is too long
-            if (article.extract.Length > 450)
-            {
-                article.extract = article.extract.Substring(0, 447) + "...";
-            }
-
             await ReplyAsync(embed: GetWikipediaEmbed(article.name, article.extract, article.url));
         }
 
-        private Embed GetWikipediaEmbed(String subject, String articleExtract, String articleUrl)
+        private Embed GetWikipediaEmbed(string subject, string articleExtract, string articleUrl)
         {
             var builder = new EmbedBuilder()
                 .WithTitle($"Wikipedia | {subject}")
