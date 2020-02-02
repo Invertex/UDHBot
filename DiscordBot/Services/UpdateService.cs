@@ -141,7 +141,7 @@ namespace DiscordBot.Services
                     {
                         while (_client.ConnectionState != ConnectionState.Connected || _client.LoginState != LoginState.LoggedIn)
                             await Task.Delay(100, _token);
-                        await Task.Delay(1000, _token);
+                        await Task.Delay(10000, _token);
                         //Check if there are users still muted
                         foreach (var userID in _userData.MutedUsers)
                         {
@@ -164,7 +164,7 @@ namespace DiscordBot.Services
                                 }
 
                                 //Setup delay to remove role when time is up.
-                                await Task.Run(async () =>
+                                Task.Run(async () =>
                                 {
                                     await _userData.MutedUsers.AwaitCooldown(user.Id);
                                     await user.RemoveRoleAsync(mutedRole);
