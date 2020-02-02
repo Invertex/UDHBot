@@ -147,7 +147,7 @@ namespace DiscordBot.Services
                         {
                             if (_userData.MutedUsers.HasUser(userID.Key, evenIfCooldownNowOver: true))
                             {
-                                SocketGuild guild = _client.Guilds.First();
+                                SocketGuild guild = _client.Guilds.First(g => g.Id == _settings.guildId);
                                 SocketGuildUser sgu = guild.GetUser(userID.Key);
                                 if (sgu == null)
                                 {
