@@ -460,13 +460,13 @@ namespace DiscordBot.Services
                         pages.Sort((x, y) => x.Index.CompareTo(y.Index)); //Sort from smallest index to biggest, smallest index is indicitive of best matching result
                         var page = pages[0];
 
-                        const string referToString = "may refer to:\n";
+                        const string referToString = "may refer to:...";
                         int referToIndex = page.Extract.IndexOf(referToString);
                         //If a multi-refer result was given, reformat title to indicate this and strip the "may refer to" portion from the body
                         if(referToIndex > 0)
                         {
                             int splitIndex = referToIndex + referToString.Length;
-                            page.Title = page.Extract.Substring(0, splitIndex - 2); //-2 to strip the useless \n since this will be a title
+                            page.Title = page.Extract.Substring(0, splitIndex - 4); //-4 to strip the useless characters since this will be a title
                             page.Extract = page.Extract.Substring(splitIndex);
                             page.Extract.Replace("\n", Environment.NewLine + "-");
                         } 
