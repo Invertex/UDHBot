@@ -18,12 +18,4 @@
     <Folder Include="SERVER\fonts" />
     <Folder Include="SERVER\images\profiles" />
   </ItemGroup>
-  <ItemGroup>
-    <None Update="Resources\DiscordCodeBlock.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\PaizaCodeTemplate.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>
