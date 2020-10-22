@@ -66,17 +66,17 @@ namespace DiscordBot.Services
 
         public void CheckUnityBetas(FeedData feedData)
         {
-            this.HandleFeed(feedData, BETA_URL, _settings.UnityNewsChannel.Id, _settings.SubsReleasesRoleId, $"{0} New unity **beta **release !** {1}** \n <{2}>");
+            this.HandleFeed(feedData, BETA_URL, _settings.UnityNewsChannel.Id, _settings.SubsReleasesRoleId, "{0} New unity **beta **release !** {1}** \n <{2}>");
         }
 
         public void CheckUnityReleases(FeedData feedData)
         {
-            this.HandleFeed(feedData, RELEASE_URL, _settings.UnityNewsChannel.Id, _settings.SubsReleasesRoleId, $"{0} New unity release ! **{1}** \n <{2}>");
+            this.HandleFeed(feedData, RELEASE_URL, _settings.UnityNewsChannel.Id, _settings.SubsReleasesRoleId, "{0} New unity release ! **{1}** \n <{2}>");
         }
 
         public void CheckUnityBlog(FeedData feedData)
         {
-            this.HandleFeed(feedData, BLOG_URL, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId, $"{0} New unity blog post ! **{1}**\n{2}");
+            this.HandleFeed(feedData, BLOG_URL, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId, "{0} New unity blog post ! **{1}**\n{2}");
         }
     }
 }
