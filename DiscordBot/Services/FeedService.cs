@@ -53,7 +53,7 @@ namespace DiscordBot.Services
                         await role.ModifyAsync(properties => { properties.Mentionable = true; });
                         string messageToSend = string.Format(message, role.Mention, item.Title.Text, item.Links[0].Uri.ToString().Replace("/fr/", "/"));
 
-                        await channel.SendMessageAsync(message);
+                        await channel.SendMessageAsync(messageToSend);
                         await role.ModifyAsync(properties => { properties.Mentionable = false; });
                     }
                 }
