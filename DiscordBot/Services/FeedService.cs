@@ -50,11 +50,12 @@ namespace DiscordBot.Services
                     {
                         feedData.PostedIds.Add(item.Id);
 
+                        var wasRoleMentionable = role.IsMentionable;
                         await role.ModifyAsync(properties => { properties.Mentionable = true; });
                         string messageToSend = string.Format(message, role.Mention, item.Title.Text, item.Links[0].Uri.ToString());
 
                         await channel.SendMessageAsync(messageToSend);
-                        await role.ModifyAsync(properties => { properties.Mentionable = false; });
+                        await role.ModifyAsync(properties => { properties.Mentionable = wasRoleMentionable; });
                     }
                 }
             }
