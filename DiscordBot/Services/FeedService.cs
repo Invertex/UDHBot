@@ -12,8 +12,8 @@ namespace DiscordBot.Services
 {
     public class FeedService
     {
-        private const string BETA_URL = "https://unity3d.com/fr/unity/beta/latest.xml";
-        private const string RELEASE_URL = "https://unity3d.com/fr/unity/releases.xml";
+        private const string BETA_URL = "https://unity3d.com/unity/beta/latest.xml";
+        private const string RELEASE_URL = "https://unity3d.com/unity/releases.xml";
         private const string BLOG_URL = "https://blogs.unity3d.com/feed/";
 
         private const int MAXIMUM_CHECK = 3;
@@ -51,7 +51,7 @@ namespace DiscordBot.Services
                         feedData.PostedIds.Add(item.Id);
 
                         await role.ModifyAsync(properties => { properties.Mentionable = true; });
-                        string messageToSend = string.Format(message, role.Mention, item.Title.Text, item.Links[0].Uri.ToString().Replace("/fr/", "/"));
+                        string messageToSend = string.Format(message, role.Mention, item.Title.Text, item.Links[0].Uri.ToString());
 
                         await channel.SendMessageAsync(messageToSend);
                         await role.ModifyAsync(properties => { properties.Mentionable = false; });
