@@ -28,7 +28,7 @@ namespace DiscordBot.Services
             _client = client;
         }
 
-        public async void HandleFeed(FeedData feedData, string url, ulong channelID, ulong roleID, string message)
+        public async void HandleFeed(FeedData feedData, string url, ulong channelID, ulong? roleID, string message)
         {
             try
             {
@@ -43,19 +43,24 @@ namespace DiscordBot.Services
 
                 SyndicationFeed feed = SyndicationFeed.Load(reader);
                 var channel = _client.GetChannel(channelID) as ISocketMessageChannel;
-                var role = _client.GetGuild(_settings.guildId).GetRole(roleID);
                 foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
                 {
                     if (!feedData.PostedIds.Contains(item.Id))
                     {
                         feedData.PostedIds.Add(item.Id);
 
-                        var wasRoleMentionable = role.IsMentionable;
-                        await role.ModifyAsync(properties => { properties.Mentionable = true; });
-                        string messageToSend = string.Format(message, role.Mention, item.Title.Text, item.Links[0].Uri.ToString());
+                        string messageToSend = string.Format(message, item.Title.Text, item.Links[0].Uri.ToString());
+
+                        var role = _client.GetGuild(_settings.guildId).GetRole(roleID ?? 0);
+                        bool wasRoleMentionable = false;
+                        if (role != null) {
+                            wasRoleMentionable = role.IsMentionable;
+                            await role.ModifyAsync(properties => { properties.Mentionable = true; });
+                            messageToSend = $"{role.Mention} {messageToSend}";
+                        }
 
                         await channel.SendMessageAsync(messageToSend);
-                        await role.ModifyAsync(properties => { properties.Mentionable = wasRoleMentionable; });
+                        if (role != null) await role.ModifyAsync(properties => { properties.Mentionable = wasRoleMentionable; });
                     }
                 }
             }
@@ -67,17 +72,17 @@ namespace DiscordBot.Services
 
         public void CheckUnityBetas(FeedData feedData)
         {
-            this.HandleFeed(feedData, BETA_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "{0} New unity **beta **release !** {1}** \n <{2}>");
+            this.HandleFeed(feedData, BETA_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity **beta **release !** {0}** \n <{1}>");
         }
 
         public void CheckUnityReleases(FeedData feedData)
         {
-            this.HandleFeed(feedData, RELEASE_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "{0} New unity release ! **{1}** \n <{2}>");
+            this.HandleFeed(feedData, RELEASE_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity release ! **{0}** \n <{1}>");
         }
 
         public void CheckUnityBlog(FeedData feedData)
         {
-            this.HandleFeed(feedData, BLOG_URL, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId, "{0} New unity blog post ! **{1}**\n{2}");
+            this.HandleFeed(feedData, BLOG_URL, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId, "New unity blog post ! **{0}**\n{1}");
         }
     }
 }
