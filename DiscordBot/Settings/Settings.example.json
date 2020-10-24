@@ -172,7 +172,7 @@
   "streamerRoleID": "233814950710214659",
   "publisherRoleID": "206830803575898112",
   "staffRoleId": "460573273134989313",
-  "SubsNewsRoleId": "0",
+  "SubsNewsRoleId": null,
   "SubsReleasesRoleId": "0",
   /*Publisher Stuff*/
   "assetStoreFrontPage": "https://www.assetstore.unity3d.com/en/",
