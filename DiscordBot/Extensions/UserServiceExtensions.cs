@@ -22,6 +22,7 @@ namespace DiscordBot.Extensions
                 {
                     return true;
                 }
+
                 cooldowns.Remove(userId);
 
                 if (evenIfCooldownNowOver)
@@ -42,7 +43,7 @@ namespace DiscordBot.Extensions
         /// <param name="days"></param>
         /// <param name="ignoreExisting">Sets the cooldown time absolutely, instead of adding to existing.</param>
         public static void AddCooldown(this Dictionary<ulong, DateTime> cooldowns, ulong userId, int seconds = 0, int minutes = 0,
-            int hours = 0, int days = 0, bool ignoreExisting = false)
+                                       int hours = 0, int days = 0, bool ignoreExisting = false)
         {
             TimeSpan cooldownTime = new TimeSpan(days, hours, minutes, seconds);
 
@@ -96,6 +97,7 @@ namespace DiscordBot.Extensions
         {
             return (cooldowns.HasUser(userId)) ? cooldowns[userId].Subtract(DateTime.Now).TotalSeconds : 0;
         }
+
         public static double Milliseconds(this Dictionary<ulong, DateTime> cooldowns, ulong userId)
         {
             return (cooldowns.HasUser(userId)) ? cooldowns[userId].Subtract(DateTime.Now).TotalMilliseconds : 0;
@@ -111,7 +113,11 @@ namespace DiscordBot.Extensions
         {
             while (cooldowns.HasUser(userId))
             {
-                await Task.Delay(cooldowns.Milliseconds(userId).ToInt() + 100);
+                var delay = cooldowns.Milliseconds(userId).ToInt() + 100;
+                if (delay > 0)
+                    await Task.Delay(delay);
+                else
+                    await Task.Delay(1000);
             }
         }
 
@@ -125,9 +131,17 @@ namespace DiscordBot.Extensions
         /// <returns></returns>
         public static int ToInt(this double val)
         {
-            if (val > int.MaxValue) { return int.MaxValue; }
-            if (val < int.MinValue) { return int.MinValue; }
-            return (int)val;
+            if (val > int.MaxValue)
+            {
+                return int.MaxValue;
+            }
+
+            if (val < int.MinValue)
+            {
+                return int.MinValue;
+            }
+
+            return (int) val;
         }
     }
 }

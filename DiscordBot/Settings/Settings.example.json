@@ -1,18 +1,23 @@
 ﻿{
+  /* Auth Info requires creating a Bot which can be done through https://discordapp.com/developers/applications/ (Make sure to give it Administrator Perms)*/
   /* Auth info */
-  "token": "YourBotToken",
+  "token": "Y O U R _ B O T _ T O K E N",
+
+  // Unused
   "invite": "InviteLink",
   "gmail": "YourGmailAdress",
   "gmailPassword": "YourGmailPassword",
+
+  /* 'SSL MODE' and 'Allow User Variables' are only required when running on a local machine with XAMPP. This can often be removed. */
   /* DB Info*/
-  "connectionString": "server=YourServerIp;port=3306;database=YourServerDatabase;user id=YourDatabseUser;password=YourDatabasePassword",
+  "DbConnectionString": "server=localhost;port=3306;database=test;user id=USER;Password=USERPASSWORD;SSL Mode=None;Allow User Variables=True",
   /*Server Info*/
   "serverRootPath": "./SERVER",
   /* Base info */
   "prefix": "!",
   "allowMentionPrefix": "1",
   "Administrator": "id",
-  "guildId": "493510779866316801",
+  "guildId": "493510779866316801", // Replace this with your Servers ID
   // id
   "TNTDroid": "id",
   // id
@@ -91,11 +96,11 @@
   /* Channels */
   "serverID": {
     "desc": "Unity Developer Hub - General-Chat",
-    "id": "204951876960124928"
+    "id": "493511009256996875"
   },
   "generalChannel": {
     "desc": "General-Chat Channel",
-    "id": "206813296790077443"
+    "id": "493511024037724180"
   },
   "botDevelopmentChannel": {
     "desc": "Bot-Development Channel",
@@ -127,7 +132,7 @@
   },
   "unityNewsChannel": {
     "desc": "Unity News Channel",
-    "id": "211111851503779840"
+    "id": "493511009256996875"
   },
   "botPrivateChannel": {
     "desc": "Admin Private Channel",
@@ -138,23 +143,23 @@
     "id": "234188067194273793"
   },
   "workForHireChannel": {
-    "dec": "Work For Hire Channel",
+    "desc": "Work For Hire Channel",
     "id": "206829581041139712"
   },
   "collaborationChannel": {
-    "dec": "Collaboration Channel",
+    "desc": "Collaboration Channel",
     "id": "264335890791339425"
   },
   "animeChannel": {
-    "dec": "Anime Channel",
-    "id": "300660661464334336"
+    "desc": "Anime Channel",
+    "id": "567628191221547008"
   },
   "casinoChannel": {
-    "dec": "Casino Channel",
+    "desc": "Casino Channel",
     "id": "428675701596749824"
   },
   "musicCommandsChannel": {
-    "dec": "Music Commands Channel",
+    "desc": "Music Commands Channel",
     "id": "432242383606906891"
   },
   /* Role Ids */
@@ -163,11 +168,13 @@
   "streamerRoleID": "233814950710214659",
   "publisherRoleID": "206830803575898112",
   "staffRoleId": "460573273134989313",
+  "SubsNewsRoleId": "0",
+  "SubsReleasesRoleId": "0",
   /*Publisher Stuff*/
   "assetStoreFrontPage": "https://www.assetstore.unity3d.com/en/",
   /*Complaints Channels Stuff*/
   "complaintCategoryName": "Complaints",
   "complaintChannelPrefix": "Complaint",
   /*Commands Configuration*/
-  "wikipediaSearchPage": "https://en.wikipedia.org/w/api.php?format=json&action=opensearch&profile=fuzzy&limit=5&redirects=resolve&search=",
+  "wikipediaSearchPage": "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|info&generator=prefixsearch&redirects=1&converttitles=1&utf8=1&formatversion=2&exchars=750&exintro=1&explaintext=1&exsectionformat=plain&inprop=url&gpslimit=5&gpsprofile=fuzzy&gpssearch="
 }

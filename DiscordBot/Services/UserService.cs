@@ -423,7 +423,8 @@ namespace DiscordBot.Services
                     await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must wait " +
                         $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
-                        "seconds before giving another karma point").DeleteAfterTime(seconds: defaultDelTime);
+                        "seconds before giving another karma point." + System.Environment.NewLine +
+                        "(In the future, if you are trying to thank multiple people, include all their names in the thanks message)").DeleteAfterTime(seconds: defaultDelTime);
                     return;
                 }
 

@@ -141,13 +141,13 @@ namespace DiscordBot.Services
                     {
                         while (_client.ConnectionState != ConnectionState.Connected || _client.LoginState != LoginState.LoggedIn)
                             await Task.Delay(100, _token);
-                        await Task.Delay(1000, _token);
+                        await Task.Delay(10000, _token);
                         //Check if there are users still muted
                         foreach (var userID in _userData.MutedUsers)
                         {
                             if (_userData.MutedUsers.HasUser(userID.Key, evenIfCooldownNowOver: true))
                             {
-                                SocketGuild guild = _client.Guilds.First();
+                                SocketGuild guild = _client.Guilds.First(g => g.Id == _settings.guildId);
                                 SocketGuildUser sgu = guild.GetUser(userID.Key);
                                 if (sgu == null)
                                 {
@@ -164,7 +164,7 @@ namespace DiscordBot.Services
                                 }
 
                                 //Setup delay to remove role when time is up.
-                                await Task.Run(async () =>
+                                Task.Run(async () =>
                                 {
                                     await _userData.MutedUsers.AwaitCooldown(user.Id);
                                     await user.RemoveRoleAsync(mutedRole);
@@ -417,57 +417,70 @@ namespace DiscordBot.Services
                 await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             }
         }
-
-        public async Task<(String name, String extract, String url)> DownloadWikipediaArticle(String searchQuery)
+        /// <summary>
+        /// JSON object for the Wikipedia command to convert results to.
+        /// </summary>
+        private partial class WikiPage
         {
-            String openSearchUri = Uri.EscapeUriString(_settings.WikipediaSearchPage + searchQuery);
-            HtmlWeb htmlWeb = new HtmlWeb() { CaptureRedirect = true };
-            HtmlDocument openSearchResponse;
+            [JsonProperty("index")]
+            public long Index { get; set; }
 
-            try { openSearchResponse = await htmlWeb.LoadFromWebAsync(openSearchUri); }
+            [JsonProperty("title")]
+            public string Title { get; set; }
+
+            [JsonProperty("extract")]
+            public string Extract { get; set; }
+
+            [JsonProperty("fullurl")]
+            public Uri FullURL { get; set; }
+        }
+
+        public async Task<(string name, string extract, string url)> DownloadWikipediaArticle(string searchQuery)
+        {
+            string wikiSearchUri = Uri.EscapeUriString(_settings.WikipediaSearchPage + searchQuery);
+            HtmlWeb htmlWeb = new HtmlWeb() { CaptureRedirect = true };
+            HtmlDocument wikiSearchResponse;
+
+            try { wikiSearchResponse = await htmlWeb.LoadFromWebAsync(wikiSearchUri); }
             catch
             {
-                Console.WriteLine("Wikipedia method failed loading URL: " + openSearchUri);
+                Console.WriteLine("Wikipedia method failed loading URL: " + wikiSearchUri);
                 return (null, null, null);
             }
             try
             {
-                JArray openSearchJSON = JArray.Parse(openSearchResponse.Text);
+                JObject job = JObject.Parse(wikiSearchResponse.Text);
 
-                //They don't use keys in the JSON structure for this response, it's just a JSON array, so has to be accessed manually.
-                if (openSearchJSON.Count < 4
-                    || !openSearchJSON[1].Any<JToken>()
-                    || !openSearchJSON[2].Any<JToken>()
-                    || !openSearchJSON[3].Any<JToken>())
-                { return (null, null, null); }
-
-                String articleName = openSearchJSON[1][0].ToString();
-                String articleExtract = openSearchJSON[2][0].ToString();
-                String articleUrl = openSearchJSON[3][0].ToString();
-
-                //If search returns multiple results, display them instead of just "may refer to:" with nothing else.
-                if(openSearchJSON[1].Count<JToken>() > 1 && articleExtract.Contains("may refer to:"))
+                if(job.TryGetValue("query", out var query))
                 {
-                    articleName = articleExtract;
-                    StringBuilder sb = new StringBuilder();
-
-                    for (int i = 1; i < openSearchJSON[1].Count<JToken>(); i++)
+                    var pages = JsonConvert.DeserializeObject<List<WikiPage>>(job[query.Path]["pages"].ToString(), new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+                    
+                    if (pages != null && pages.Count > 0)
                     {
-                        sb.Append("-");
-                        sb.Append(openSearchJSON[1][i].ToString());
-                        sb.Append(": ");
-                        sb.AppendLine(openSearchJSON[2][i].ToString());
+                        pages.Sort((x, y) => x.Index.CompareTo(y.Index)); //Sort from smallest index to biggest, smallest index is indicitive of best matching result
+                        var page = pages[0];
+
+                        const string referToString = "may refer to:...";
+                        int referToIndex = page.Extract.IndexOf(referToString);
+                        //If a multi-refer result was given, reformat title to indicate this and strip the "may refer to" portion from the body
+                        if(referToIndex > 0)
+                        {
+                            int splitIndex = referToIndex + referToString.Length;
+                            page.Title = page.Extract.Substring(0, splitIndex - 4); //-4 to strip the useless characters since this will be a title
+                            page.Extract = page.Extract.Substring(splitIndex);
+                            page.Extract.Replace("\n", Environment.NewLine + "-");
+                        } 
+                        else { page.Extract = page.Extract.Replace("\n", Environment.NewLine); }
+                        
+                        return (page.Title + ":", page.Extract, page.FullURL.ToString());
                     }
-
-                    articleExtract = sb.ToString();
                 }
-
-                return (articleName, articleExtract, articleUrl);
+                else { return (null, null, null); }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                Console.WriteLine("Wikipedia method likely failed to parse JSON response from: " + openSearchUri);
+                Console.WriteLine("Wikipedia method likely failed to parse JSON response from: " + wikiSearchUri);
             }
 
             return (null, null, null);
