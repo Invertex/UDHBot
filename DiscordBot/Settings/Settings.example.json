@@ -132,6 +132,10 @@
   },
   "unityNewsChannel": {
     "desc": "Unity News Channel",
+    "id": "768486730953130034"
+  },
+  "unityReleasesChannel": {
+    "desc": "Unity Releases Channel",
     "id": "493511009256996875"
   },
   "botPrivateChannel": {

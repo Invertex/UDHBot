@@ -54,6 +54,8 @@ namespace DiscordBot.Settings.Deserialized
 
         public UnityNewsChannel UnityNewsChannel { get; set; }
 
+        public UnityReleasesChannel UnityReleasesChannel { get; set; }
+
         public BotPrivateChannel BotPrivateChannel { get; set; }
 
         public DevStreamChannel DevStreamChannel { get; set; }
@@ -164,6 +166,12 @@ namespace DiscordBot.Settings.Deserialized
     }
 
     public class UnityNewsChannel
+    {
+        public string Desc { get; set; }
+        public ulong Id { get; set; }
+    }
+
+    public class UnityReleasesChannel
     {
         public string Desc { get; set; }
         public ulong Id { get; set; }
