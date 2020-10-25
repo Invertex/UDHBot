@@ -1,5 +1,6 @@
 {
   "ChannelIndex": "493510975006441473", // This is #Welcome
+  "RoleAddDelay":  5000, // How long in seconds before changes are grouped together (Prevents easy abuse through throttle)
   "LogUpdates": "false", // If you want it to spam #bot-announcement
   "UserReactRoleList": [
     {
