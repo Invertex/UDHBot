@@ -21,8 +21,8 @@ namespace DiscordBot
             return Task.FromResult(PreconditionResult.FromError(user + " attempted to use admin only command!"));
         }
     }
-    
-        [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
     public class RequireStaffAttribute : PreconditionAttribute
     {
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
