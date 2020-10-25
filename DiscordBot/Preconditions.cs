@@ -13,8 +13,8 @@ namespace DiscordBot
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             SocketGuildUser user = context.Message.Author as SocketGuildUser;
-            
-            if (user.Roles.Any(x => x.Id == 228015486120624130))
+
+            if (user.Roles.Any(x => x.Permissions.Administrator))
             {
                 return Task.FromResult(PreconditionResult.FromSuccess());
             }
