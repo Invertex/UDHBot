@@ -121,10 +121,6 @@ namespace DiscordBot
 
         public async Task InstallCommands()
         {
-            // Hook the MessageReceived Event into our Command Handler
-            _client.MessageReceived += HandleCommand;
-            //_client.MessageReceived += _userService.UselessAskingCheck; //to do declared at method
-
             //_client.MessageReceived += _work.OnMessageAdded;
             _client.MessageDeleted += MessageDeleted;
             _client.UserJoined += UserJoined;
@@ -252,29 +248,7 @@ namespace DiscordBot
                 $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
             _databaseService.DeleteUser(user.Id);
         }
-
-        public async Task HandleCommand(SocketMessage messageParam)
-        {
-            // Don't process the command if it was a System Message
-            if (!(messageParam is SocketUserMessage message))
-                return;
-
-            // Create a number to track where the prefix ends and the command begins
-            int argPos = 0;
-            char prefix = _settings.Prefix;
-            // Determine if the message is a command, based on if it starts with '!' or a mention prefix
-            if (!(message.HasCharPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
-                return;
-            // Create a Command Context
-            var context = new CommandContext(_client, message);
-            // Execute the command. (result does not indicate a return value,
-            // rather an object stating if the command executed successfully)
-            var result = await _commandService.ExecuteAsync(context, argPos, _services);
-            if (!result.IsSuccess)
-            {
-                await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
-            }
-        }
+        
 
         private static void DeserializeSettings()
         {
