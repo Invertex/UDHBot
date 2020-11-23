@@ -24,16 +24,9 @@ namespace DiscordBot
 
         private CommandService _commandService;
         private IServiceProvider _services;
-        private IServiceCollection _serviceCollection;
         private ILoggingService _loggingService;
         private DatabaseService _databaseService;
         private UserService _userService;
-        private PublisherService _publisherService;
-        private UpdateService _updateService;
-        private AudioService _audioService;
-        private AnimeService _animeService;
-        private FeedService _feedService;
-        private CurrencyService _currencyService;
 
         private static PayWork _payWork;
         private static Rules _rules;
@@ -51,45 +44,23 @@ namespace DiscordBot
             {
                 LogLevel = LogSeverity.Verbose, AlwaysDownloadUsers = true, MessageCacheSize = 50
             });
+            
+            _commandService = new CommandService(new CommandServiceConfig
+            {
+                CaseSensitiveCommands = false, DefaultRunMode = RunMode.Async
+            });
 
-            _commandService =
-                new CommandService(new CommandServiceConfig {CaseSensitiveCommands = false, DefaultRunMode = RunMode.Async});
-            _loggingService = new LoggingService(_client, _settings);
-            _databaseService = new DatabaseService(_loggingService, _settings);
-            _publisherService = new PublisherService(_client, _databaseService, _settings);
-            _animeService = new AnimeService(_client, _loggingService, _settings);
-            _feedService = new FeedService(_client, _settings);
-            _updateService = new UpdateService(_client, _loggingService, _publisherService, _databaseService, _animeService, _settings,
-                _feedService);
-            _userService = new UserService(_client, _databaseService, _loggingService, _updateService, _settings, _userSettings);
-
-            _audioService = new AudioService(_loggingService, _client, _settings);
-            _currencyService = new CurrencyService();
-            _serviceCollection = new ServiceCollection();
-            _serviceCollection.AddSingleton(_loggingService);
-            _serviceCollection.AddSingleton(_databaseService);
-            _serviceCollection.AddSingleton(_userService);
-            //_serviceCollection.AddSingleton(_work);
-            //TODO: rework work service
-            _serviceCollection.AddSingleton(_publisherService);
-            _serviceCollection.AddSingleton(_updateService);
-            _serviceCollection.AddSingleton(_audioService);
-            _serviceCollection.AddSingleton(_animeService);
-            _serviceCollection.AddSingleton(_settings);
-            _serviceCollection.AddSingleton(_rules);
-            _serviceCollection.AddSingleton(_payWork);
-            _serviceCollection.AddSingleton(_userSettings);
-            _serviceCollection.AddSingleton(_currencyService);
-            _services = _serviceCollection.BuildServiceProvider();
-
-
-            await InstallCommands();
+            _services = ConfigureServices();
+            _loggingService = _services.GetRequiredService<ILoggingService>();
+            _databaseService = _services.GetRequiredService<DatabaseService>();
+            _userService = _services.GetRequiredService<UserService>();
 
             _client.Log += Logger;
-            // await InitCommands();
 
             await _client.LoginAsync(TokenType.Bot, _settings.Token);
             await _client.StartAsync();
+            
+            await InstallCommands();
 
             _client.Ready += () =>
             {
@@ -99,6 +70,27 @@ namespace DiscordBot
             };
 
             await Task.Delay(-1);
+        }
+        
+        private ServiceProvider ConfigureServices()
+        {
+            return new ServiceCollection()
+                .AddSingleton(_settings)
+                .AddSingleton(_rules)
+                .AddSingleton(_payWork)
+                .AddSingleton(_userSettings)
+                .AddSingleton(_client)
+                .AddSingleton(_commandService)
+                .AddSingleton<ILoggingService, LoggingService>()
+                .AddSingleton<DatabaseService>()
+                .AddSingleton<UserService>()
+                .AddSingleton<PublisherService>()
+                .AddSingleton<FeedService>()
+                .AddSingleton<UpdateService>()
+                .AddSingleton<AudioService>()
+                .AddSingleton<AnimeService>()
+                .AddSingleton<CurrencyService>()
+                .BuildServiceProvider();
         }
 
         private static Task Logger(LogMessage message)
@@ -131,11 +123,6 @@ namespace DiscordBot
         {
             // Hook the MessageReceived Event into our Command Handler
             _client.MessageReceived += HandleCommand;
-            _client.MessageReceived += _userService.UpdateXp;
-            _client.MessageReceived += _userService.Thanks;
-            _client.MessageUpdated += _userService.ThanksEdited;
-            _client.MessageReceived += _userService.CodeCheck;
-            _client.MessageReceived += _userService.ScoldForAtEveryoneUsage;
             //_client.MessageReceived += _userService.UselessAskingCheck; //to do declared at method
 
             //_client.MessageReceived += _work.OnMessageAdded;

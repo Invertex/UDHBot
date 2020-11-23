@@ -120,6 +120,15 @@ namespace DiscordBot.Services
             _codeReminderFormattingExample = (
                 _codeFormattingExample + Environment.NewLine +
                 "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
+            
+            /*
+             Event subscriptions
+            */
+            _client.MessageReceived += UpdateXp;
+            _client.MessageReceived += Thanks;
+            _client.MessageUpdated += ThanksEdited;
+            _client.MessageReceived += CodeCheck;
+            _client.MessageReceived += ScoldForAtEveryoneUsage;
 
             LoadData();
             UpdateLoop();
