@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -18,8 +16,6 @@ namespace DiscordBot
 {
     public class Program
     {
-        public static string CommandList;
-
         private DiscordSocketClient _client;
 
         private CommandService _commandService;
@@ -27,6 +23,7 @@ namespace DiscordBot
         private ILoggingService _loggingService;
         private DatabaseService _databaseService;
         private UserService _userService;
+        private CommandHandlingService _commandHandlingService;
 
         private static PayWork _payWork;
         private static Rules _rules;
@@ -54,13 +51,19 @@ namespace DiscordBot
             _loggingService = _services.GetRequiredService<ILoggingService>();
             _databaseService = _services.GetRequiredService<DatabaseService>();
             _userService = _services.GetRequiredService<UserService>();
+            _commandHandlingService = _services.GetRequiredService<CommandHandlingService>();
+            
+            await _commandHandlingService.Initialize();
 
             _client.Log += Logger;
 
             await _client.LoginAsync(TokenType.Bot, _settings.Token);
             await _client.StartAsync();
-            
-            await InstallCommands();
+
+            _client.MessageDeleted += MessageDeleted;
+            _client.UserJoined += UserJoined;
+            _client.GuildMemberUpdated += UserUpdated;
+            _client.UserLeft += UserLeft;
 
             _client.Ready += () =>
             {
@@ -81,6 +84,7 @@ namespace DiscordBot
                 .AddSingleton(_userSettings)
                 .AddSingleton(_client)
                 .AddSingleton(_commandService)
+                .AddSingleton<CommandHandlingService>()
                 .AddSingleton<ILoggingService, LoggingService>()
                 .AddSingleton<DatabaseService>()
                 .AddSingleton<UserService>()
@@ -117,36 +121,6 @@ namespace DiscordBot
             Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message}");
             Console.ForegroundColor = cc;
             return Task.CompletedTask;
-        }
-
-        public async Task InstallCommands()
-        {
-            //_client.MessageReceived += _work.OnMessageAdded;
-            _client.MessageDeleted += MessageDeleted;
-            _client.UserJoined += UserJoined;
-            _client.GuildMemberUpdated += UserUpdated;
-            _client.UserLeft += UserLeft;
-
-            // Discover all of the commands in this assembly and load them.
-            await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-
-            StringBuilder commandList = new StringBuilder();
-
-            commandList.Append("__Role Commands__\n");
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role").OrderBy(c => c.Name))
-            {
-                commandList.Append($"**role {c.Name}** : {c.Summary}\n");
-            }
-            
-            commandList.Append("\n");
-            commandList.Append("__General Commands__\n");
-            
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name))
-            {
-                commandList.Append($"**{c.Name}** : {c.Summary}\n");
-            }
-
-            CommandList = commandList.ToString();
         }
 
         private async Task MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)

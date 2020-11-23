@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -8,6 +11,8 @@ namespace DiscordBot.Services
 {
     public class CommandHandlingService
     {
+        public static string CommandList;
+        
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commandService;
         private readonly IServiceProvider _services;
@@ -29,6 +34,30 @@ namespace DiscordBot.Services
              Event subscriptions
             */
             _client.MessageReceived += HandleCommand;
+        }
+
+        public async Task Initialize()
+        {
+            // Discover all of the commands in this assembly and load them.
+            await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+
+            StringBuilder commandList = new StringBuilder();
+
+            commandList.Append("__Role Commands__\n");
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role").OrderBy(c => c.Name))
+            {
+                commandList.Append($"**role {c.Name}** : {c.Summary}\n");
+            }
+            
+            commandList.Append("\n");
+            commandList.Append("__General Commands__\n");
+            
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name))
+            {
+                commandList.Append($"**{c.Name}** : {c.Summary}\n");
+            }
+
+            CommandList = commandList.ToString();
         }
 
         private async Task HandleCommand(SocketMessage messageParam)
