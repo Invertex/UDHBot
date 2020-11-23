@@ -72,7 +72,7 @@ namespace DiscordBot
             await Task.Delay(-1);
         }
         
-        private ServiceProvider ConfigureServices()
+        private IServiceProvider ConfigureServices()
         {
             return new ServiceCollection()
                 .AddSingleton(_settings)
