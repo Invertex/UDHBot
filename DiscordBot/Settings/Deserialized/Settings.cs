@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace DiscordBot.Settings.Deserialized
 {
@@ -84,6 +84,8 @@ namespace DiscordBot.Settings.Deserialized
 
         public ulong ComplaintCategoryId { get; set; }
         public string ComplaintChannelPrefix { get; set; }
+        public ulong ClosedComplaintCategoryId { get; set; }
+        public string ClosedComplaintChannelPrefix { get; set; }
     }
 
     public class AllRoles
