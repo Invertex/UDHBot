@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -14,7 +14,7 @@ namespace DiscordBot.Modules
         public TicketModule (Settings.Deserialized.Settings settings) {
             _settings = settings;
         }
-        
+
         /// <summary>
         /// Creates a private channel only accessable by the mods, admins, and the user who used the command.
         ///
