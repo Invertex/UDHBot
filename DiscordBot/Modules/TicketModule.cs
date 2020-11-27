@@ -14,7 +14,7 @@ namespace DiscordBot.Modules
         public TicketModule (Settings.Deserialized.Settings settings) {
             _settings = settings;
         }
-        
+
         /// <summary>
         /// Creates a private channel only accessable by the mods, admins, and the user who used the command.
         ///
@@ -28,30 +28,18 @@ namespace DiscordBot.Modules
             var channelName =
                 ParseToDiscordChannel(
                     $"{_settings.ComplaintChannelPrefix}-{hash}");
-            var categoryExists = false;
             var categoryList = Context.Guild.GetCategoriesAsync().Result;
-            var categoryName = _settings.ComplaintCategoryName;
 
             var everyonePerms = new OverwritePermissions(viewChannel: PermValue.Deny);
             var userPerms = new OverwritePermissions(viewChannel: PermValue.Allow);
 
-            ulong? categoryId = null;
+            ulong? categoryId = ulong.Parse(_settings.ComplaintCategoryId);
 
             await Context.Message.DeleteAsync();
 
-            foreach (var category in categoryList)
+            if (!categoryList.Any(c => c.Id == categoryId))
             {
-                if (string.Equals(category.Name, categoryName, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    categoryId = category.Id;
-                    categoryExists = true;
-                    break;
-                }
-            }
-
-            if (!categoryExists)
-            {
-                var category = Context.Guild.CreateCategoryAsync(categoryName);
+                var category = Context.Guild.CreateCategoryAsync("Complaints");
                 categoryId = category.Result.Id;
             }
 
@@ -68,8 +56,8 @@ namespace DiscordBot.Modules
 
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, everyonePerms);
             await newChannel.AddPermissionOverwriteAsync(Context.User, userPerms);
-            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Name == "Staff"), userPerms);
-            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Name == "Bot"), userPerms);
+            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Id == _settings.StaffRoleId), userPerms);
+            await newChannel.AddPermissionOverwriteAsync(Context.Client.CurrentUser, userPerms);
 
             await newChannel.SendMessageAsync(
                 $"The content of this conversation will stay strictly between you {Context.User.Mention} and the staff.\n" +
