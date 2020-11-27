@@ -69,7 +69,7 @@ namespace DiscordBot.Modules
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, everyonePerms);
             await newChannel.AddPermissionOverwriteAsync(Context.User, userPerms);
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Id == _settings.StaffRoleId), userPerms);
-            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Name == "Bot"), userPerms);
+            await newChannel.AddPermissionOverwriteAsync(Context.Client.CurrentUser, userPerms);
 
             await newChannel.SendMessageAsync(
                 $"The content of this conversation will stay strictly between you {Context.User.Mention} and the staff.\n" +
