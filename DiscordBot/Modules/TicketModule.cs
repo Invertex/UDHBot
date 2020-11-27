@@ -38,9 +38,9 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            var newChannel = await Context.Guild.CreateTextChannelAsync(channelName, x =>
-                x.CategoryId = categoryExist ? _settings.ComplaintCategoryId : null
-            );
+            var newChannel = await Context.Guild.CreateTextChannelAsync(channelName, x => {
+                if (categoryExist) x.CategoryId = _settings.ComplaintCategoryId;
+            });
 
             var userPerms = new OverwritePermissions(viewChannel: PermValue.Allow);
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
@@ -82,7 +82,7 @@ namespace DiscordBot.Modules
             }
 
             await currentChannel.ModifyAsync(x => {
-                x.CategoryId = categoryExist ? _settings.ClosedComplaintCategoryId : null;
+                if (categoryExist) x.CategoryId = _settings.ClosedComplaintCategoryId;
                 x.Name = _settings.ClosedComplaintChannelPrefix + x.Name;
             });
 
