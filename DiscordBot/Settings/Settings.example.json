@@ -6,6 +6,7 @@
   // Unused
   "invite": "InviteLink",
   "gmail": "YourGmailAdress",
+  "gmailUsername": "YourGmailUsername",
   "gmailPassword": "YourGmailPassword",
 
   /* 'SSL MODE' and 'Allow User Variables' are only required when running on a local machine with XAMPP. This can often be removed. */

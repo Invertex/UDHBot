@@ -37,7 +37,7 @@ namespace DiscordBot.Services
             (uint, ulong) ad = _databaseService.GetPublisherAd(id);
             await PublisherAdvertising(ad.Item1, ad.Item2);
         }
-        
+
         public async Task PublisherAdvertising(uint packageId, ulong userid)
         {
             Console.WriteLine("pub1 " + packageId);
@@ -57,7 +57,7 @@ namespace DiscordBot.Services
         PackageOBject => https://www.assetstore.unity3d.com/api/en-US/content/overview/[PACKAGEID].json
         PriceObject (€) => https://www.assetstore.unity3d.com/api/en-US/content/price/[PACKAGEID].json
         PackageHead => https://www.assetstore.unity3d.com/api/en-US/head/package/[PACKAGEID].json
-        blogfeed (xml) => https://blogs.unity3d.com/feed/  
+        blogfeed (xml) => https://blogs.unity3d.com/feed/
         */
 
         public async Task<DailyObject> GetDaily()
@@ -106,7 +106,7 @@ namespace DiscordBot.Services
         {
             string descStrippedHtml = Regex.Replace(package.content.description, "<.*?>", String.Empty);
             descStrippedHtml = Regex.Replace(descStrippedHtml, "&nbsp;", String.Empty);
-            
+
             StringBuilder sb = new StringBuilder();
             sb.Append("**--- Publisher everyday Advertising ---**\n\n");
             sb.Append($"Today's daily advertisting goes to {_client.GetUser(userid).Mention} (**{packageHead.result.publisher}**)\n");
@@ -143,7 +143,7 @@ namespace DiscordBot.Services
             string name = (await GetPackageHead(packageId)).result.publisher;
 
             Console.WriteLine("before sending verification code");
-            
+
             await SendVerificationCode(name, package.content.publisher.support_email, packageId);
             Console.WriteLine("after sending verification code");
             return (true,
@@ -175,7 +175,7 @@ namespace DiscordBot.Services
                 await client.ConnectAsync("smtp.gmail.com", 587);
 
                 client.AuthenticationMechanisms.Remove("XOAUTH2");
-                await client.AuthenticateAsync("unitydeveloperhub", _settings.GmailPassword);
+                await client.AuthenticateAsync(_settings.GmailUsername, _settings.GmailPassword);
 
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
