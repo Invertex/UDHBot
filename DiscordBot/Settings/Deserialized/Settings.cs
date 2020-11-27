@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using MailKit.Security;
 
 namespace DiscordBot.Settings.Deserialized
 {
@@ -7,6 +8,7 @@ namespace DiscordBot.Settings.Deserialized
         public string Token { get; set; }
         public string Invite { get; set; }
         public string Gmail { get; set; }
+        public string GmailUsername { get; set; }
         public string GmailPassword { get; set; }
 
         public string DbConnectionString { get; set; }
