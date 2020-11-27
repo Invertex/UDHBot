@@ -441,17 +441,5 @@ namespace DiscordBot.Modules
         {
             _database.AddNewUser((SocketGuildUser) user);
         }
-
-        [Command("say")]
-        async Task Say(IMessageChannel channel, params string[] messages)
-        {
-            if (Context.User.Id != 84252127995658240)
-                return;
-
-            string message = String.Join(' ', messages);
-
-            await channel.SendMessageAsync(message);
-            await Context.Message.DeleteAsync();
-        }
     }
 }
