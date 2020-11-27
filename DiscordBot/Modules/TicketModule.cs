@@ -33,7 +33,7 @@ namespace DiscordBot.Modules
             var everyonePerms = new OverwritePermissions(viewChannel: PermValue.Deny);
             var userPerms = new OverwritePermissions(viewChannel: PermValue.Allow);
 
-            ulong? categoryId = ulong.Parse(_settings.ComplaintCategoryId);
+            ulong? categoryId = _settings.ComplaintCategoryId;
 
             await Context.Message.DeleteAsync();
 
