@@ -28,30 +28,18 @@ namespace DiscordBot.Modules
             var channelName =
                 ParseToDiscordChannel(
                     $"{_settings.ComplaintChannelPrefix}-{hash}");
-            var categoryExists = false;
             var categoryList = Context.Guild.GetCategoriesAsync().Result;
-            var categoryName = _settings.ComplaintCategoryId;
 
             var everyonePerms = new OverwritePermissions(viewChannel: PermValue.Deny);
             var userPerms = new OverwritePermissions(viewChannel: PermValue.Allow);
 
-            ulong? categoryId = null;
+            ulong? categoryId = ulong.Parse(_settings.ComplaintCategoryId);
 
             await Context.Message.DeleteAsync();
 
-            foreach (var category in categoryList)
+            if (!categoryList.Any(c => c.Id == categoryId))
             {
-                if (string.Equals(category.Name, categoryName, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    categoryId = category.Id;
-                    categoryExists = true;
-                    break;
-                }
-            }
-
-            if (!categoryExists)
-            {
-                var category = Context.Guild.CreateCategoryAsync(categoryName);
+                var category = Context.Guild.CreateCategoryAsync("Complaints");
                 categoryId = category.Result.Id;
             }
 
