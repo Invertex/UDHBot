@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot
 {
@@ -28,8 +29,9 @@ namespace DiscordBot
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             SocketGuildUser user = context.Message.Author as SocketGuildUser;
+            Settings.Deserialized.Settings settings = services.GetRequiredService<Settings.Deserialized.Settings>();
             
-            if (user.Roles.Any(x => x.Name == "Staff"))
+            if (user.Roles.Any(x => x.Id == settings.StaffRoleId))
             {
                 return Task.FromResult(PreconditionResult.FromSuccess());
             }
