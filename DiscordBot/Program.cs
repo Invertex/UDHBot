@@ -68,23 +68,23 @@ namespace DiscordBot
         private IServiceProvider ConfigureServices()
         {
             return new ServiceCollection()
-                .AddSingleton(_settings)//
-                .AddSingleton(_rules)//
+                .AddSingleton(_settings)
+                .AddSingleton(_rules)
                 .AddSingleton(_payWork)
                 .AddSingleton(_userSettings)
-                .AddSingleton(_client)//
-                .AddSingleton(_commandService)//
-                .AddSingleton<CommandHandlingService>()//
-                .AddSingleton<ILoggingService, LoggingService>()//
-                .AddSingleton<DatabaseService>()//
-                .AddSingleton<UserService>()//
-                .AddSingleton<ModerationService>()//
-                .AddSingleton<PublisherService>()//
+                .AddSingleton(_client)
+                .AddSingleton(_commandService)
+                .AddSingleton<CommandHandlingService>()
+                .AddSingleton<ILoggingService, LoggingService>()
+                .AddSingleton<DatabaseService>()
+                .AddSingleton<UserService>()
+                .AddSingleton<ModerationService>()
+                .AddSingleton<PublisherService>()
                 .AddSingleton<FeedService>()
-                .AddSingleton<UpdateService>()//
+                .AddSingleton<UpdateService>()
                 .AddSingleton<AudioService>()
-                .AddSingleton<AnimeService>()//
-                .AddSingleton<CurrencyService>()//
+                .AddSingleton<AnimeService>()
+                .AddSingleton<CurrencyService>()
                 .BuildServiceProvider();
         }
 
