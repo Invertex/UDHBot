@@ -30,7 +30,7 @@ namespace DiscordBot.Modules
                     $"{_settings.ComplaintChannelPrefix}-{hash}");
             var categoryExists = false;
             var categoryList = Context.Guild.GetCategoriesAsync().Result;
-            var categoryName = _settings.ComplaintCategoryName;
+            var categoryName = _settings.ComplaintCategoryId;
 
             var everyonePerms = new OverwritePermissions(viewChannel: PermValue.Deny);
             var userPerms = new OverwritePermissions(viewChannel: PermValue.Allow);
