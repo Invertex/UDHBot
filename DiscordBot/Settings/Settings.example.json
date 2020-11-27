@@ -178,7 +178,7 @@
   /*Publisher Stuff*/
   "assetStoreFrontPage": "https://www.assetstore.unity3d.com/en/",
   /*Complaints Channels Stuff*/
-  "complaintCategoryName": "Complaints",
+  "complaintCategoryId": "520853507851681797",
   "complaintChannelPrefix": "Complaint",
   /*Commands Configuration*/
   "wikipediaSearchPage": "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|info&generator=prefixsearch&redirects=1&converttitles=1&utf8=1&formatversion=2&exchars=750&exintro=1&explaintext=1&exsectionformat=plain&inprop=url&gpslimit=5&gpsprofile=fuzzy&gpssearch="

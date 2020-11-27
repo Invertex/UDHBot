@@ -84,7 +84,7 @@ namespace DiscordBot.Settings.Deserialized
 
         public string WikipediaSearchPage { get; set; }
 
-        public string ComplaintCategoryName { get; set; }
+        public string ComplaintCategoryId { get; set; }
         public string ComplaintChannelPrefix { get; set; }
     }
 
