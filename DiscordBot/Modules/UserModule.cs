@@ -277,13 +277,19 @@ namespace DiscordBot.Modules
         {
             if (subtitle != null && (subtitle.Contains("@everyone") || subtitle.Contains("@here"))) return;
             // If channel is null use Context.Channel, else use the provided channel
-            channel = channel ?? Context.Channel;
-
+            channel ??= Context.Channel;
             var message = await channel.GetMessageAsync(id);
-            string messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + (channel == null
-                                     ? Context.Channel.Id
-                                     : channel.Id) + "/" + id;
+            // Can't imagine we need to quote the bots
+            if (message.Author.IsBot)
+                return;
+            string messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + channel.Id + "/" + id;
+            var msgContent = (message.Content == string.Empty ? "" : message.Content.Truncate(1020));
 
+            string msgAttachment = string.Empty;
+            if (message.Attachments?.Count > 0)
+            {
+                msgAttachment = $"\t📸";
+            }
             var builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
                 .WithTimestamp(message.Timestamp)
@@ -292,19 +298,25 @@ namespace DiscordBot.Modules
                     footer
                         .WithText($"In channel {message.Channel.Name}");
                 })
-                .WithTitle("Linkback")
-                .WithUrl(messageLink)
                 .WithAuthor(author =>
                 {
                     author
                         .WithName(message.Author.Username)
                         .WithIconUrl(message.Author.GetAvatarUrl());
-                })
-                .AddField("Original message", message.Content.Truncate(1020));
+                });
+            var messageTitle = "Original message";
+            if (msgContent == string.Empty)
+            {
+                messageTitle = $"~~{messageTitle}~~";
+                if (msgAttachment != string.Empty)
+                    msgContent = "📸";
+            }
+            builder.AddField(messageTitle, $"{msgContent}\n" +
+                                           $"**Linkback**\t[__Message__]({messageLink})" +
+                                           $"{msgAttachment}");
             var embed = builder.Build();
             await ReplyAsync(subtitle == null ? "" : $"`{Context.User.Username}:` {subtitle}", false, embed);
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
+            await Context.Message.DeleteAfterSeconds(1.0);
         }
 
         [Command("compile"),
