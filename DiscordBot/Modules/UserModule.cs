@@ -460,7 +460,13 @@ namespace DiscordBot.Modules
                 await Context.Message.DeleteAsync();
                 return;
             }
-
+            
+            if (_settings.Gmail == string.Empty)
+            {
+                await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(5f);
+                return;
+            }
+            
             (bool, string) verif = await _publisherService.VerifyPackage(packageId);
             await ReplyAsync(verif.Item2);
         }
