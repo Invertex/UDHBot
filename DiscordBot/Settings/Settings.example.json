@@ -2,106 +2,86 @@
   /* Auth Info requires creating a Bot which can be done through https://discordapp.com/developers/applications/ (Make sure to give it Administrator Perms)*/
   /* Auth info */
   "token": "Y O U R _ B O T _ T O K E N",
-
-  // Unused
-  "invite": "InviteLink",
-  "gmail": "YourGmailAdress",
+  
+  "invite": "InviteLink", // Currently Unused
+  
+  /* Gmail information for Asset Publisher Role to work. */
+  "gmail": "",
   "gmailUsername": "YourGmailUsername",
   "gmailPassword": "YourGmailPassword",
-
+  
   /* 'SSL MODE' and 'Allow User Variables' are only required when running on a local machine with XAMPP. This can often be removed. */
   /* DB Info*/
   "DbConnectionString": "server=localhost;port=3306;database=test;user id=USER;Password=USERPASSWORD;SSL Mode=None;Allow User Variables=True",
+  
   /*Server Info*/
   "serverRootPath": "./SERVER",
+  
   /* Base info */
   "prefix": "!",
-  "guildId": "493510779866316801", // Replace this with your Servers ID
-  /* All roles */
+  "Administrator": "0",
+  "ModeratorRoleId": "0",
+  "guildId": "0", // Replace with your servers guild ID
+  
+  /* All assignable roles as of 29/04/21 */
   "UserAssignableRoles": {
     "desc": "All normal user assignable roles available",
     "roles": [
-      "3DModelers",
-      "Artists",
-      "BetaTester",
-      "Coders",
-      "C#",
-      "JavaScript",
+      "Audio-Engineers",
+      "Technical-Artists",
+      "Animators",
+      "3D-Artists",
+      "2D-Artists",
+      "XR-Developers",
+      "Programmers",
+      "Writers",
       "Game-Designers",
-      "Audio-Artists",
       "Generalists",
       "Hobbyists",
-      "Vector-Artists",
-      "Voxel-Artists",
-      "Students",
-      "VR-Developers",
-      "Streamer"
+      "Students"
     ]
   },
-  "generalChannel": {
+  
+  /* Channel IDs for certain channels. */
+  "generalChannel": { // Off-topic
     "desc": "General-Chat Channel",
-    "id": "493511024037724180"
+    "id": "0"
   },
-  "botDevelopmentChannel": {
-    "desc": "Bot-Development Channel",
-    "id": "206821282258485248"
-  },
-  "botFunctionalityChannel": {
-    "desc": "Bot-Functionality Channel",
-    "id": "256411017842655236"
-  },
-  "botAnnouncementChannel": {
+  "botAnnouncementChannel": { // Most bot logs will go here
     "desc": "Bot-Announcement Channel",
-    "id": "213177844833058817"
+    "id": "0"
   },
-  "botXPMessageChannel": {
-    "desc": "Bot-XPMessage Channel",
-    "id": "260416365092012032"
-  },
-  "announcementsChannel": {
+  "announcementsChannel": { // Not used by bot
     "desc": "General Announcement Channel",
-    "id": "206846565925650432"
+    "id": "0" // Currently Unused 29/04/21
   },
   "botCommandsChannel": {
     "desc": "Bot-Commands Channel",
-    "id": "207741022262919170"
+    "id": "0"
   },
   "unityNewsChannel": {
     "desc": "Unity News Channel",
-    "id": "768486730953130034"
-  },
-  "unityReleasesChannel": {
-    "desc": "Unity Releases Channel",
-    "id": "493511009256996875"
-  },
-  "devStreamChannel": {
-    "desc": "Dev-Stream Channel",
-    "id": "234188067194273793"
+    "id": "0"
   },
   "LookingToHire": {
-    "desc": "Looking to hire",
-    "id": "493511844904828990"
+    "desc": "Work For Hire Channel",
+    "id": "0" // Currently Unused 29/04/21
   },
   "LookingForWork": {
-    "desc": "Looking for work",
-    "id": "493511872709001221"
-  },
-  "CollaborationChannel": {
     "desc": "Collaboration Channel",
-    "id": "493511872709001221"
+    "id": "0" // Currently Unused 29/04/21
   },
+  
   /* Role Ids */
-  "mutedRoleID": "221120789544435714",
-  "streamingRoleID": "233830762883842048",
-  "streamerRoleID": "233814950710214659",
-  "publisherRoleID": "206830803575898112",
-  "staffRoleId": "460573273134989313",
-  "SubsNewsRoleId": "523205988317396993",
-  "SubsReleasesRoleId": "523205962279157771",
+  "mutedRoleID": "0",
+  "publisherRoleID": "0",
+  "SubsNewsRoleId": "0",
+  "SubsReleasesRoleId": "0",
+  
   /*Publisher Stuff*/
   "assetStoreFrontPage": "https://www.assetstore.unity3d.com/en/",
   /*Complaints Channels Stuff*/
-  "complaintCategoryId": "520853507851681797",
+  "complaintCategoryId": "0",
   "complaintChannelPrefix": "Complaint",
   /*Commands Configuration*/
   "wikipediaSearchPage": "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|info&generator=prefixsearch&redirects=1&converttitles=1&utf8=1&formatversion=2&exchars=750&exintro=1&explaintext=1&exsectionformat=plain&inprop=url&gpslimit=5&gpsprofile=fuzzy&gpssearch="
