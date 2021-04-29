@@ -149,14 +149,8 @@ namespace DiscordBot.Modules
         private async Task TopLevel()
         {
             var users = _databaseService.GetTopLevel();
-
-            StringBuilder sb = new StringBuilder();
-            sb.Append("Here's the top 10 of users by level :");
-            for (int i = 0; i < users.Count; i++)
-                sb.Append(
-                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId))?.Username}** ~ *Level* **{users[i].level}**");
-
-            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
+            var embed = GenerateRankEmbedFromList(users, "Level");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 3);
         }
 
         [Command("topkarma"), Summary("Display top 10 users by karma. Syntax : !topkarma")]
@@ -164,14 +158,32 @@ namespace DiscordBot.Modules
         private async Task TopKarma()
         {
             var users = _databaseService.GetTopKarma();
+            var embed = GenerateRankEmbedFromList(users, "Karma");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 3);
+        }
 
-            StringBuilder sb = new StringBuilder();
-            sb.Append("Here's the top 10 of users by karma :");
-            for (int i = 0; i < users.Count; i++)
-                sb.Append(
-                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId))?.Username}** ~ **{users[i].karma}** *Karma*");
+        private Embed GenerateRankEmbedFromList(List<(ulong userID, int value)> data, string labelName)
+        {
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.Title = "Top 10 Users";
+            embedBuilder.Description = $"The best of the best, by {labelName}.";
+            
+            StringBuilder rank = new StringBuilder();
+            StringBuilder nick = new StringBuilder();
+            StringBuilder level = new StringBuilder();
+            for (int i = 0; i < data.Count; i++)
+            {
+                rank.Append($"#{(i+1)}\n");
+                // rank.Append($"{(i+1)}{i switch { 0 => "st", 1 => "nd", 2 => "rd", _ => "th" }}\n");
+                nick.Append($"<@{data[i].userID}>\n");
+                level.Append($"{data[i].value.ToString()}\n");
+            }
+            
+            embedBuilder.AddField("Rank", $"**{rank}**", true);
+            embedBuilder.AddField("User", nick, true);
+            embedBuilder.AddField(labelName, $"**{level}**", true);
 
-            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
+            return embedBuilder.Build();
         }
 
         [Command("topudc"), Summary("Display top 10 users by UDC. Syntax : !topudc")]
@@ -191,13 +203,7 @@ namespace DiscordBot.Modules
         [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
         private async Task DisplayProfile()
         {
-            IUserMessage profile =
-                await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
-
-            await Task.Delay(10000);
-            await Context.Message.DeleteAsync();
-            await Task.Delay(TimeSpan.FromMinutes(3d));
-            await profile.DeleteAsync();
+            await DisplayProfile(Context.Message.Author);
         }
 
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
