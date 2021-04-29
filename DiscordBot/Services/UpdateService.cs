@@ -344,21 +344,23 @@ namespace DiscordBot.Services
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
             {
-                if (_feedData.LastUnityReleaseCheck < DateTime.Now - TimeSpan.FromMinutes(5))
+                if (_feedData != null)
                 {
-                    _feedData.LastUnityReleaseCheck = DateTime.Now;
+                    if (_feedData.LastUnityReleaseCheck < DateTime.Now - TimeSpan.FromMinutes(5))
+                    {
+                        _feedData.LastUnityReleaseCheck = DateTime.Now;
 
-                    _feedService.CheckUnityBetas(_feedData);
-                    _feedService.CheckUnityReleases(_feedData);
+                        _feedService.CheckUnityBetas(_feedData);
+                        _feedService.CheckUnityReleases(_feedData);
+                    }
+
+                    if (_feedData.LastUnityBlogCheck < DateTime.Now - TimeSpan.FromMinutes(10))
+                    {
+                        _feedData.LastUnityBlogCheck = DateTime.Now;
+
+                        _feedService.CheckUnityBlog(_feedData);
+                    }
                 }
-
-                if (_feedData.LastUnityBlogCheck < DateTime.Now - TimeSpan.FromMinutes(10))
-                {
-                    _feedData.LastUnityBlogCheck = DateTime.Now;
-
-                    _feedService.CheckUnityBlog(_feedData);
-                }
-
                 await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             }
         }
