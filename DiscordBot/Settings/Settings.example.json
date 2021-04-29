@@ -156,13 +156,6 @@
     "id": "264335890791339425"
   },
   },
-  "casinoChannel": {
-    "desc": "Casino Channel",
-    "id": "428675701596749824"
-  },
-  "musicCommandsChannel": {
-    "desc": "Music Commands Channel",
-    "id": "432242383606906891"
   },
   /* Role Ids */
   "mutedRoleID": "221120789544435714",

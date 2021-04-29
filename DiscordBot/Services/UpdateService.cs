@@ -35,13 +35,7 @@ namespace DiscordBot.Services
             CodeReminderCooldown = new Dictionary<ulong, DateTime>();
         }
     }
-
-    public class CasinoData
-    {
-        public int SlotMachineCashPool { get; set; }
-        public int LotteryCashPool { get; set; }
-    }
-
+    
     public class FaqData
     {
         public string Question { get; set; }
@@ -77,7 +71,6 @@ namespace DiscordBot.Services
         private List<FaqData> _faqData;
         private Random _random;
         private UserData _userData;
-        private CasinoData _casinoData;
         private FeedData _feedData;
 
         private string[][] _manualDatabase;
@@ -165,15 +158,7 @@ namespace DiscordBot.Services
             {
                 _userData = new UserData();
             }
-
-            if (File.Exists($"{_settings.ServerRootPath}/casinodata.json"))
-            {
-                string json = File.ReadAllText($"{_settings.ServerRootPath}/casinodata.json");
-                _casinoData = JsonConvert.DeserializeObject<CasinoData>(json);
-            }
-            else
-                _casinoData = new CasinoData();
-
+            
             if (File.Exists($"{_settings.ServerRootPath}/FAQs.json"))
             {
                 string json = File.ReadAllText($"{_settings.ServerRootPath}/FAQs.json");
@@ -209,10 +194,7 @@ namespace DiscordBot.Services
                 
                 json = JsonConvert.SerializeObject(_userData);
                 File.WriteAllText($"{_settings.ServerRootPath}/userdata.json", json);
-
-                json = JsonConvert.SerializeObject(_casinoData);
-                File.WriteAllText($"{_settings.ServerRootPath}/casinodata.json", json);
-
+                
                 json = JsonConvert.SerializeObject(_feedData);
                 File.WriteAllText($"{_settings.ServerRootPath}/feeds.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
@@ -457,16 +439,6 @@ namespace DiscordBot.Services
         public void SetUserData(UserData data)
         {
             _userData = data;
-        }
-
-        public CasinoData GetCasinoData()
-        {
-            return _casinoData;
-        }
-
-        public void SetCasinoData(CasinoData data)
-        {
-            _casinoData = data;
         }
     }
 }

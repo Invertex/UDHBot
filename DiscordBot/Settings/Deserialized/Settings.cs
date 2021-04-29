@@ -203,16 +203,4 @@ namespace DiscordBot.Settings.Deserialized
         public string Desc { get; set; }
         public ulong Id { get; set; }
     }
-
-    public class CasinoChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class MusicCommandsChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
 }
