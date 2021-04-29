@@ -69,7 +69,6 @@ namespace DiscordBot.Services
         private readonly ILoggingService _loggingService;
         private readonly PublisherService _publisherService;
         private readonly DatabaseService _databaseService;
-        private readonly AnimeService _animeService;
         private readonly FeedService _feedService;
         private readonly CancellationToken _token;
         private readonly Settings.Deserialized.Settings _settings;
@@ -77,7 +76,6 @@ namespace DiscordBot.Services
         private BotData _botData;
         private List<FaqData> _faqData;
         private Random _random;
-        private AnimeData _animeData;
         private UserData _userData;
         private CasinoData _casinoData;
         private FeedData _feedData;
@@ -86,13 +84,12 @@ namespace DiscordBot.Services
         private string[][] _apiDatabase;
 
         public UpdateService(DiscordSocketClient client, ILoggingService loggingService, PublisherService publisherService,
-            DatabaseService databaseService, AnimeService animeService, Settings.Deserialized.Settings settings, FeedService feedService)
+            DatabaseService databaseService, Settings.Deserialized.Settings settings, FeedService feedService)
         {
             _client = client;
             _loggingService = loggingService;
             _publisherService = publisherService;
             _databaseService = databaseService;
-            _animeService = animeService;
             _feedService = feedService;
 
             _settings = settings;
@@ -108,7 +105,6 @@ namespace DiscordBot.Services
             SaveDataToFile();
             //CheckDailyPublisher();
             UpdateUserRanks();
-            UpdateAnime();
             UpdateDocDatabase();
             UpdateRssFeeds();
         }
@@ -122,15 +118,7 @@ namespace DiscordBot.Services
             }
             else
                 _botData = new BotData();
-
-            if (File.Exists($"{_settings.ServerRootPath}/animedata.json"))
-            {
-                string json = File.ReadAllText($"{_settings.ServerRootPath}/animedata.json");
-                _animeData = JsonConvert.DeserializeObject<AnimeData>(json);
-            }
-            else
-                _animeData = new AnimeData();
-
+            
             if (File.Exists($"{_settings.ServerRootPath}/userdata.json"))
             {
                 string json = File.ReadAllText($"{_settings.ServerRootPath}/userdata.json");
@@ -218,10 +206,7 @@ namespace DiscordBot.Services
             {
                 var json = JsonConvert.SerializeObject(_botData);
                 File.WriteAllText($"{_settings.ServerRootPath}/botdata.json", json);
-
-                json = JsonConvert.SerializeObject(_animeData);
-                File.WriteAllText($"{_settings.ServerRootPath}/animedata.json", json);
-
+                
                 json = JsonConvert.SerializeObject(_userData);
                 File.WriteAllText($"{_settings.ServerRootPath}/userdata.json", json);
 
@@ -275,29 +260,7 @@ namespace DiscordBot.Services
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
         }
-
-        private async void UpdateAnime()
-        {
-            return;
-            await Task.Delay(TimeSpan.FromSeconds(30d), _token);
-            while (true)
-            {
-                if (_animeData.LastDailyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(1d))
-                {
-                    _animeService.PublishDailyAnime();
-                    _animeData.LastDailyAnimeAiringList = DateTime.Now;
-                }
-
-                if (_animeData.LastWeeklyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(7d))
-                {
-                    _animeService.PublishWeeklyAnime();
-                    _animeData.LastWeeklyAnimeAiringList = DateTime.Now;
-                }
-
-                await Task.Delay(TimeSpan.FromMinutes(1d), _token);
-            }
-        }
-
+        
         public async Task<string[][]> GetManualDatabase()
         {
             if (_manualDatabase == null)
