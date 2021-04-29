@@ -11,68 +11,33 @@ namespace DiscordBot.Settings.Deserialized
         public string Gmail { get; set; }
         public string GmailUsername { get; set; }
         public string GmailPassword { get; set; }
-
+        
         public string DbConnectionString { get; set; }
 
         public string ServerRootPath { get; set; }
 
         public char Prefix { get; set; }
-        public string AllowMentionPrefix { get; set; }
-        public string Administrator { get; set; }
         public ulong guildId { get; set; }
-
-        public string TntDroid { get; set; }
-
-        public string SendJoinMessage { get; set; }
-        public string SendMessage { get; set; }
-        public string DeleteProfileMessageCache { get; set; }
-
-        public string DeleteProfileMessageCacheTime { get; set; }
-
-        public AllRoles AllRoles { get; set; }
-
-        public RolesBanned RolesBanned { get; set; }
-
-        public RolesModeration RolesModeration { get; set; }
-
-        public RoleModSquadPermission RoleModSquadPermission { get; set; }
-
-        public ServerId ServerId { get; set; }
-
+        
+        public UserAssignableRoles AllRoles { get; set; }
+        
         public GeneralChannel GeneralChannel { get; set; }
-
-        public BotDevelopmentChannel BotDevelopmentChannel { get; set; }
-
-        public BotFunctionalityChannel BotFunctionalityChannel { get; set; }
-
+        
         public BotAnnouncementChannel BotAnnouncementChannel { get; set; }
-
-        public BotXpMessageChannel BotXpMessageChannel { get; set; }
-
+        
         public AnnouncementsChannel AnnouncementsChannel { get; set; }
 
         public BotCommandsChannel BotCommandsChannel { get; set; }
-
-        public BotPublisherPrivateChannel BotPublisherPrivateChannel { get; set; }
 
         public UnityNewsChannel UnityNewsChannel { get; set; }
 
         public UnityReleasesChannel UnityReleasesChannel { get; set; }
 
-        public BotPrivateChannel BotPrivateChannel { get; set; }
-
-        public DevStreamChannel DevStreamChannel { get; set; }
-
-        public WorkForHireChannel WorkForHireChannel { get; set; }
-
+        // Recruitment Channels
+        public WorkForHireChannel LookingToHire { get; set; }
+        public WorkForHireChannel LookingForWork { get; set; }
         public CollaborationChannel CollaborationChannel { get; set; }
-
-        public AnimeChannel AnimeChannel { get; set; }
-
-        public CasinoChannel CasinoChannel { get; set; }
-
-        public MusicCommandsChannel MusicCommandsChannel { get; set; }
-
+        
         public ulong MutedRoleId { get; set; }
         public ulong StreamingRoleId { get; set; }
         public ulong StreamerRoleId { get; set; }
@@ -89,118 +54,32 @@ namespace DiscordBot.Settings.Deserialized
         public string ComplaintChannelPrefix { get; set; }
     }
 
-    public class AllRoles
+    #region Role Group Collections
+    // Classes used to hold information regarding a collection of role ids with a description.
+    public class RoleGroup
     {
         public string Desc { get; set; }
         public List<string> Roles { get; set; }
     }
-
-
-    public class RolesBanned
-    {
-        public string Desc { get; set; }
-        public List<string> Roles { get; set; }
-    }
-
-    public class RolesModeration
-    {
-        public string Desc { get; set; }
-        public List<string> Roles { get; set; }
-    }
-
-    public class RoleModSquadPermission
-    {
-        public string Desc { get; set; }
-        public List<string> Roles { get; set; }
-    }
-
-    public class ServerId
+    
+    public class UserAssignableRoles : RoleGroup {};
+    #endregion
+    
+    #region Channel Information
+    // Channel Information. Description and Channel ID
+    public class ChannelInfo
     {
         public string Desc { get; set; }
         public ulong Id { get; set; }
     }
-
-    public class GeneralChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class BotDevelopmentChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class BotFunctionalityChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class BotAnnouncementChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class BotXpMessageChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class AnnouncementsChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class BotCommandsChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class BotPublisherPrivateChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class UnityNewsChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class UnityReleasesChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class BotPrivateChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class DevStreamChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class WorkForHireChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
-
-    public class CollaborationChannel
-    {
-        public string Desc { get; set; }
-        public ulong Id { get; set; }
-    }
+    
+    public class GeneralChannel : ChannelInfo {};
+    public class BotAnnouncementChannel : ChannelInfo {};
+    public class AnnouncementsChannel : ChannelInfo {};
+    public class BotCommandsChannel : ChannelInfo {};
+    public class UnityNewsChannel : ChannelInfo {};
+    public class UnityReleasesChannel : ChannelInfo {};
+    public class WorkForHireChannel : ChannelInfo {};
+    public class CollaborationChannel : ChannelInfo {};
+    #endregion
 }
