@@ -21,7 +21,7 @@ namespace DiscordBot.Modules
         /// One command, no args, simple.
         /// </summary>
         [Command("complain"), Alias("complains", "complaint"), Summary("Opens a private channel to complain. Syntax : !complain")]
-        private async Task Complaint()
+        public async Task Complaint()
         {
             var channelList = Context.Guild.GetChannelsAsync().Result;
             var hash = Context.User.Id.ToString().GetSHA256().Substring(0, 8);
@@ -75,7 +75,7 @@ namespace DiscordBot.Modules
         /// </summary>
         [Command("close"), Alias("end", "done", "bye"), Summary("Closes the ticket")]
         [RequireUserPermission(GuildPermission.ManageRoles)]
-        private async Task Close()
+        public async Task Close()
         {
             var channelName = _settings.ComplaintChannelPrefix;
 
