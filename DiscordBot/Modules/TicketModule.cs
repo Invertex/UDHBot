@@ -20,7 +20,7 @@ namespace DiscordBot.Modules
         /// One command, no args, simple.
         /// </summary>
         [Command("complain"), Alias("complains", "complaint"), Summary("Opens a private channel to complain. Syntax : !complain")]
-        private async Task Complaint()
+        public async Task Complaint()
         {
             await Context.Message.DeleteAsync();
 
@@ -63,7 +63,7 @@ namespace DiscordBot.Modules
         /// </summary>
         [Command("close"), Alias("end", "done", "bye", "archive"), Summary("Closes the ticket")]
         [RequireStaff]
-        private async Task Close()
+        public async Task Close()
         {
             await Context.Message.DeleteAsync();
 
