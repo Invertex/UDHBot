@@ -11,13 +11,15 @@ name: .NET Build & Deploy
 
 on:
   push:
-    branches: [ master ]
+    branches: [ dev ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    
+    environment:
+      name: dev
+      
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET Core
