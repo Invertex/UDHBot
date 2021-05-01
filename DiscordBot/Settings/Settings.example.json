@@ -64,10 +64,14 @@
     "id": "0"
   },
   "LookingToHire": {
-    "desc": "Work For Hire Channel",
+    "desc": "Looking To Hire Channel",
     "id": "0" // Currently Unused 29/04/21
   },
   "LookingForWork": {
+    "desc": "Looking For Work Channel",
+    "id": "0" // Currently Unused 29/04/21
+  },
+  "CollaborationChannel": {
     "desc": "Collaboration Channel",
     "id": "0" // Currently Unused 29/04/21
   },
