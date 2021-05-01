@@ -1,4 +1,4 @@
-# UDHBot
+# UDC-Bot
 
 A [Discord.NET](https://github.com/discord-net/Discord.Net) bot made for the server Unity Developer Community
 Join us on [Discord](https://discord.gg/bu3bbby) !
