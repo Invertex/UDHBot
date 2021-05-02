@@ -80,9 +80,10 @@ namespace DiscordBot.Services
             _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
             _codeReminderCooldown = new Dictionary<ulong, DateTime>();
 
+            //TODO We should make this into a config file that we can confiure during runtime.
             _noXpChannels = new List<ulong>
             {
-                _settings.BotCommandsChannel.Id, _settings.CasinoChannel.Id, _settings.MusicCommandsChannel.Id
+                _settings.BotCommandsChannel.Id
             }; 
 
             /*

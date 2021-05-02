@@ -56,7 +56,7 @@ namespace DiscordBot.Modules
 
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, everyonePerms);
             await newChannel.AddPermissionOverwriteAsync(Context.User, userPerms);
-            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Id == _settings.StaffRoleId), userPerms);
+            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Id == _settings.ModeratorRoleId), userPerms);
             await newChannel.AddPermissionOverwriteAsync(Context.Client.CurrentUser, userPerms);
 
             await newChannel.SendMessageAsync(
