@@ -209,12 +209,16 @@ namespace DiscordBot.Modules
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
         public async Task DisplayProfile(IUser user)
         {
+            try {
             IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
 
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
             await Task.Delay(TimeSpan.FromMinutes(3d));
             await profile.DeleteAsync();
+            } catch (Exception e) {
+                Console.Error.WriteLine(e);
+            }
         }
 
         [Command("joindate"), Summary("Display your join date. Syntax : !joindate")]
