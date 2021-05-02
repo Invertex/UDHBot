@@ -1,4 +1,4 @@
-name: .NET Build & Deploy
+name: Deploy to Test Server
 
 # Needed to make work
 # Secrets:
@@ -12,6 +12,7 @@ name: .NET Build & Deploy
 on:
   push:
     branches: [ dev ]
+  workflow_dispatch:
 
 jobs:
   build:
