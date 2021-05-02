@@ -41,6 +41,7 @@ jobs:
         script: |
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
+          chmod +x ${{ secrets.SERVER_BUILD_DIR }}DiscordBot
           ${{ secrets.SERVER_COMMAND }}
         host: ${{ secrets.SERVER_IP }}
         port: ${{ secrets.SERVER_PORT }}
