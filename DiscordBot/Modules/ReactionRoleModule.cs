@@ -18,7 +18,7 @@ namespace DiscordBot.Modules
 
         private static string _commandList;
 
-        private readonly IEmote ThumbUpEmote = new Emoji("👍");
+        private readonly IEmote _thumbUpEmote = new Emoji("👍");
 
         private readonly ILoggingService _logging;
         private readonly ReactRoleService _reactRoleService;
@@ -36,7 +36,7 @@ namespace DiscordBot.Modules
         async Task SetReactRoleDelay(uint delay)
         {
             if (_reactRoleService.SetReactRoleDelay(delay))
-                await Context.Message.AddReactionAsync(ThumbUpEmote);
+                await Context.Message.AddReactionAsync(_thumbUpEmote);
         }
         [RequireUserPermission(GuildPermission.Administrator)]
         [Summary("Log all updates, can get spammy. Default: false")]
@@ -44,7 +44,7 @@ namespace DiscordBot.Modules
         async Task SetReactLogState(bool state)
         {
             if (_reactRoleService.SetReactLogState(state))
-                await Context.Message.AddReactionAsync(ThumbUpEmote);
+                await Context.Message.AddReactionAsync(_thumbUpEmote);
         }
         #endregion
 
@@ -150,7 +150,7 @@ namespace DiscordBot.Modules
             _reactRoleService.NewMessage.Reactions.Add(newRole);
 
             await Context.Message.AddReactionAsync(emote);
-            await Context.Message.AddReactionAsync(ThumbUpEmote);
+            await Context.Message.AddReactionAsync(_thumbUpEmote);
         }
 
 
@@ -185,7 +185,7 @@ namespace DiscordBot.Modules
                 return;
             }
             _reactRoleService.NewMessage = null;
-            await Context.Message.AddReactionAsync(ThumbUpEmote);
+            await Context.Message.AddReactionAsync(_thumbUpEmote);
         }
 
 
@@ -260,7 +260,7 @@ namespace DiscordBot.Modules
             await ReplyAsync("Reaction role service is restarting.");
             var results = await _reactRoleService.Restart();
             if (results)
-                await Context.Message.AddReactionAsync(ThumbUpEmote);
+                await Context.Message.AddReactionAsync(_thumbUpEmote);
             else
                 await ReplyAsync("Failed to restart reaction role service.");
         }

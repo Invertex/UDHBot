@@ -34,12 +34,12 @@ namespace DiscordBot.Services
 
         private readonly Dictionary<IGuildUser, ReactRoleUserData> _pendingUserUpdate = new Dictionary<IGuildUser, ReactRoleUserData>();
 
-        public class ReactRoleUserData
+        private class ReactRoleUserData
         {
             public IGuildUser User;
             public DateTime LastChange = DateTime.Now;
-            public List<IRole> RolesToAdd = new List<IRole>();
-            public List<IRole> RolesToRemove = new List<IRole>();
+            public readonly List<IRole> RolesToAdd = new List<IRole>();
+            public readonly List<IRole> RolesToRemove = new List<IRole>();
             public ReactRoleUserData(IGuildUser id)
             {
                 User = id;
@@ -111,6 +111,7 @@ namespace DiscordBot.Services
         {
             LoadSettings();
 
+            // Escape early since we have nothing to process
             if (ReactSettings.UserReactRoleList == null)
             {
                 _isRunning = true;
