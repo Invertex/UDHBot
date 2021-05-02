@@ -16,10 +16,8 @@ on:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
-
-    environment:
-      name: dev
 
     steps:
     - uses: actions/checkout@v2
@@ -33,11 +31,30 @@ jobs:
       run: dotnet build --configuration Release --no-restore
     - name: Test
       run: dotnet test --no-restore --verbosity normal
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: ${{ github.workspace }}/DiscordBot/bin/Release/netcoreapp3.1/
 
+  upload:
+    name: Upload to Server
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: dev
+
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: dist
+        path: dist
     - name: Copy build to server
       uses: garygrossgarten/github-action-scp@release
       with:
-        local: ${{ github.workspace }}/DiscordBot/bin/Release/netcoreapp3.1/
+        local: ${{ github.workspace }}/dist
         remote: ${{ secrets.SERVER_BUILD_DIR }}
         host: ${{ secrets.SERVER_IP }}
         port: ${{ secrets.SERVER_PORT }}
@@ -58,7 +75,16 @@ jobs:
 #        name: Latest-Build
 #        path: ${{ github.workspace }}/DiscordBot/bin/Release/netcoreapp3.1/build.zip
 
-    - name: Restart Bot
+  restart:
+    name: Restart Bot
+    needs: restart
+    runs-on: ubuntu-latest
+
+    environment:
+      name: dev
+
+    steps:
+    - name: Run commands in SSH
       uses: appleboy/ssh-action@master
       with:
         script: |
