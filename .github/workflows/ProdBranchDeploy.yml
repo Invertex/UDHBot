@@ -38,7 +38,10 @@ jobs:
     - name: Restart Bot
       uses: appleboy/ssh-action@master
       with:
-        script: ${{ secrets.SERVER_COMMAND }}
+        script: |
+          export NVM_DIR=~/.nvm
+          source ~/.nvm/nvm.sh
+          ${{ secrets.SERVER_COMMAND }}
         host: ${{ secrets.SERVER_IP }}
         port: ${{ secrets.SERVER_PORT }}
         username: ${{ secrets.SERVER_USER }}
