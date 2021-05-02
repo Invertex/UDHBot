@@ -62,7 +62,7 @@ namespace DiscordBot.Modules
         /// Archives the ticket.
         /// </summary>
         [Command("close"), Alias("end", "done", "bye", "archive"), Summary("Closes the ticket")]
-        [RequireStaff]
+        [RequireModerator]
         public async Task Close()
         {
             await Context.Message.DeleteAsync();
