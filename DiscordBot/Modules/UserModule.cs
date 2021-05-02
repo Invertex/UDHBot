@@ -283,13 +283,19 @@ namespace DiscordBot.Modules
         {
             if (subtitle != null && (subtitle.Contains("@everyone") || subtitle.Contains("@here"))) return;
             // If channel is null use Context.Channel, else use the provided channel
-            channel = channel ?? Context.Channel;
-
+            channel ??= Context.Channel;
             var message = await channel.GetMessageAsync(id);
-            string messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + (channel == null
-                                     ? Context.Channel.Id
-                                     : channel.Id) + "/" + id;
+            // Can't imagine we need to quote the bots
+            if (message.Author.IsBot)
+                return;
+            string messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + channel.Id + "/" + id;
+            var msgContent = (message.Content == string.Empty ? "" : message.Content.Truncate(1020));
 
+            string msgAttachment = string.Empty;
+            if (message.Attachments?.Count > 0)
+            {
+                msgAttachment = $"\t📸";
+            }
             var builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
                 .WithTimestamp(message.Timestamp)
@@ -298,19 +304,25 @@ namespace DiscordBot.Modules
                     footer
                         .WithText($"In channel {message.Channel.Name}");
                 })
-                .WithTitle("Linkback")
-                .WithUrl(messageLink)
                 .WithAuthor(author =>
                 {
                     author
                         .WithName(message.Author.Username)
                         .WithIconUrl(message.Author.GetAvatarUrl());
-                })
-                .AddField("Original message", message.Content.Truncate(1020));
+                });
+            var messageTitle = "Original message";
+            if (msgContent == string.Empty)
+            {
+                messageTitle = $"~~{messageTitle}~~";
+                if (msgAttachment != string.Empty)
+                    msgContent = "📸";
+            }
+            builder.AddField(messageTitle, $"{msgContent}\n" +
+                                           $"**Linkback**\t[__Message__]({messageLink})" +
+                                           $"{msgAttachment}");
             var embed = builder.Build();
             await ReplyAsync(subtitle == null ? "" : $"`{Context.User.Username}:` {subtitle}", false, embed);
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
+            await Context.Message.DeleteAfterSeconds(1.0);
         }
 
         [Command("compile"),
@@ -466,7 +478,13 @@ namespace DiscordBot.Modules
                 await Context.Message.DeleteAsync();
                 return;
             }
-
+            
+            if (_settings.Gmail == string.Empty)
+            {
+                await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(5f);
+                return;
+            }
+            
             (bool, string) verif = await _publisherService.VerifyPackage(packageId);
             await ReplyAsync(verif.Item2);
         }
@@ -1070,90 +1088,6 @@ namespace DiscordBot.Modules
             _databaseService.AddUserXp((ulong)userId, xpGain);
 
             await Context.Message.DeleteAsync();
-        }
-
-        [Group("anime")]
-        public class AnimeModule : ModuleBase
-        {
-            private readonly AnimeService _animeService;
-
-            public AnimeModule(AnimeService animeService)
-            {
-                _animeService = animeService;
-            }
-
-            [Command("search"), Summary("Returns an anime. Syntax : !anime search animeTitle")]
-            public async Task SearchAnime(string title)
-            {
-                /*{
-                  "content": "Here's your search result @blabla",
-                  "embed": {
-                    "title": "Anime search result",
-
-                    "url": "https://discordapp.com",
-                    "color": 14574459,
-                    "thumbnail": {
-                      "url": "https://cdn.anilist.co/img/dir/anime/reg/20800-Bdc1fJOBED6C.jpg"
-                    },
-                    "image": {
-                      "url": "https://cdn.anilist.co/img/dir/anime/reg/20800-Bdc1fJOBED6C.jpg"
-                    },
-
-                    "fields": [
-                      {
-                        "name" : "Titles",
-                        "value" : "Yuuki Yuuna wa Yuusha De Aru, 結城友奈は勇者である"
-                      },
-                      {
-                        "name": "Description",
-                        "value": "The story takes place in the era of the gods, year 300. Yuuna Yuuki lives an ordinary life as a second year middle school student, but she's also a member of the \"Hero Club,\" where club activities involve dealing with a mysterious being called \"Vertex.\""
-                      },
-                      {
-                        "name": "Genres",
-                        "value" : "Mahou Shoujo, Action, Drama"
-                      },
-                      {
-                        "name": "MAL Link",
-                        "value" : "https://myanimelist.net/anime/25519"
-                      },
-                      {
-                        "name": "Start Date",
-                        "value": "17/10/2014",
-                        "inline": true
-                      },
-                      {
-                        "name": "End Date",
-                        "value": "26/12/2014",
-                        "inline": true
-                      }
-                    ]
-                  }
-                }*/
-
-                var animes = await _animeService.SearchAnime(title);
-                var anime = animes.data.Page.media.FirstOrDefault();
-                if (anime == null)
-                {
-                    await ReplyAsync("I'm sorry, I couldn't find an anime with this name.");
-                    return;
-                }
-
-                var builder = new EmbedBuilder()
-                    .WithTitle("Anime search result")
-                    .WithUrl("https://myanimelist.net/anime/" + anime.idMal)
-                    .WithColor(new Color(0xDE637B))
-                    .WithThumbnailUrl(anime.coverImage.medium)
-                    .WithImageUrl(anime.coverImage.medium)
-                    .AddField("Titles", $"{anime.title.romaji}, {anime.title.native}")
-                    .AddField("Description", anime.description.Truncate(1020))
-                    .AddField("Genres", string.Join(",", anime.genres))
-                    .AddField("MAL Link", "https://myanimelist.net/anime/" + anime.idMal)
-                    .AddField("Start Date", $"{anime.startDate.day}/{anime.startDate.month}/{anime.startDate.year}")
-                    .AddField("End Date", $"{anime.endDate.day}/{anime.endDate.month}/{anime.endDate.year}");
-                var embed = builder.Build();
-                await Context.Channel.SendMessageAsync($"Here's your search result {Context.Message.Author.Mention}", false, embed)
-                    .ConfigureAwait(false);
-            }
         }
     }
 }
