@@ -48,8 +48,10 @@ namespace DiscordBot.Settings.Deserialized
 
         public string WikipediaSearchPage { get; set; }
 
-        public string ComplaintCategoryId { get; set; }
+        public ulong ComplaintCategoryId { get; set; }
         public string ComplaintChannelPrefix { get; set; }
+        public ulong ClosedComplaintCategoryId { get; set; }
+        public string ClosedComplaintChannelPrefix { get; set; }
     }
 
     #region Role Group Collections
