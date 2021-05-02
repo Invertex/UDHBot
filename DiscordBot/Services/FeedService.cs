@@ -59,7 +59,9 @@ namespace DiscordBot.Services
                             messageToSend = $"{role.Mention} {messageToSend}";
                         }
 
-                        await channel.SendMessageAsync(messageToSend);
+                        var postedMessage = await channel.SendMessageAsync(messageToSend);
+                        if (channel is SocketNewsChannel)await postedMessage.CrosspostAsync();
+
                         if (role != null) await role.ModifyAsync(properties => { properties.Mentionable = wasRoleMentionable; });
                     }
                 }
