@@ -83,7 +83,6 @@ namespace DiscordBot
                 .AddSingleton<FeedService>()
                 .AddSingleton<UpdateService>()
                 .AddSingleton<AudioService>()
-                .AddSingleton<AnimeService>()
                 .AddSingleton<CurrencyService>()
                 .BuildServiceProvider();
         }
