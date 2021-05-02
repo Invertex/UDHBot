@@ -320,7 +320,7 @@ namespace DiscordBot.Services
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
                     command.ExecuteNonQuery();
@@ -361,7 +361,7 @@ namespace DiscordBot.Services
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
                     command.ExecuteNonQuery();
@@ -382,7 +382,7 @@ namespace DiscordBot.Services
                 value = MySqlHelper.EscapeString(value);
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
                     command.ExecuteNonQuery();
@@ -402,7 +402,7 @@ namespace DiscordBot.Services
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"Select {attribute} FROM users WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"Select `{attribute}` FROM users WHERE userid='{id}'", connection);
                     connection.Open();
                     MySqlDataReader reader;
                     using (reader = command.ExecuteReader())
