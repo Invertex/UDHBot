@@ -39,8 +39,8 @@ namespace DiscordBot.Modules
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
         [Alias("shutup", "stfu")]
-        [RequireStaff]
-        async Task MuteUser(IUser user, uint arg)
+        [RequireModerator]
+        public async Task MuteUser(IUser user, uint arg)
         {
             await Context.Message.DeleteAsync();
 
@@ -65,8 +65,8 @@ namespace DiscordBot.Modules
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
         [Alias("shutup", "stfu")]
-        [RequireStaff]
-        async Task MuteUser(IUser user, string naturalDuration, params string[] messages)
+        [RequireModerator]
+        public async Task MuteUser(IUser user, string naturalDuration, params string[] messages)
         {
             try
             {
@@ -88,8 +88,8 @@ namespace DiscordBot.Modules
 
         [Command("mute"), Summary("Mute a user for a fixed duration")]
         [Alias("shutup", "stfu")]
-        [RequireStaff]
-        async Task MuteUser(IUser user, uint arg, params string[] messages)
+        [RequireModerator]
+        public async Task MuteUser(IUser user, uint arg, params string[] messages)
         {
             string message = string.Join(' ', messages);
 
@@ -133,8 +133,8 @@ namespace DiscordBot.Modules
         }
 
         [Command("unmute"), Summary("Unmute a muted user")]
-        [RequireStaff]
-        async Task UnmuteUser(IUser user, bool fromMute = false)
+        [RequireModerator]
+        public async Task UnmuteUser(IUser user, bool fromMute = false)
         {
             var u = user as IGuildUser;
 
@@ -156,14 +156,13 @@ namespace DiscordBot.Modules
 
         [Command("addrole"), Summary("Add a role to a user")]
         [Alias("roleadd")]
-        [RequireStaff]
-        async Task AddRole(IRole role, IUser user)
+        [RequireModerator]
+        public async Task AddRole(IRole role, IUser user)
         {
             var contextUser = Context.User as SocketGuildUser;
             await Context.Message.DeleteAsync();
 
-            if (_settings.AllRoles.Roles.Contains(role.Name) || (_settings.RolesModeration.Roles.Contains(role.Name)) &&
-                contextUser.IsUserModSquad(_settings.RoleModSquadPermission))
+            if (_settings.AllRoles.Roles.Contains(role.Name))
             {
                 var u = user as IGuildUser;
                 await u.AddRoleAsync(role);
@@ -177,14 +176,13 @@ namespace DiscordBot.Modules
 
         [Command("removerole"), Summary("Remove a role from a user")]
         [Alias("roleremove")]
-        [RequireStaff]
-        async Task RemoveRole(IRole role, IUser user)
+        [RequireModerator]
+        public async Task RemoveRole(IRole role, IUser user)
         {
             var contextUser = Context.User as SocketGuildUser;
             await Context.Message.DeleteAsync();
 
-            if (_settings.AllRoles.Roles.Contains(role.Name) || (_settings.RolesModeration.Roles.Contains(role.Name)) &&
-                contextUser.IsUserModSquad(_settings.RoleModSquadPermission))
+            if (_settings.AllRoles.Roles.Contains(role.Name))
             {
                 var u = user as IGuildUser;
 
@@ -199,8 +197,8 @@ namespace DiscordBot.Modules
 
         [Command("clear"), Summary("Remove last x messages")]
         [Alias("clean", "nuke", "purge")]
-        [RequireStaff]
-        async Task ClearMessages(int count)
+        [RequireModerator]
+        public async Task ClearMessages(int count)
         {
             ITextChannel channel = Context.Channel as ITextChannel;
 
@@ -217,8 +215,8 @@ namespace DiscordBot.Modules
 
         [Command("clear"), Summary("Remove messages until the message at the specified id")]
         [Alias("clean", "nuke", "purge")]
-        [RequireStaff]
-        async Task ClearMessages(ulong messageId)
+        [RequireModerator]
+        public async Task ClearMessages(ulong messageId)
         {
             ITextChannel channel = Context.Channel as ITextChannel;
 
@@ -245,7 +243,7 @@ namespace DiscordBot.Modules
 
         [Command("ban"), Summary("Ban an user")]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        async Task BanUser(IUser user, params string[] reasons)
+        public async Task BanUser(IUser user, params string[] reasons)
         {
             string reason = string.Join(' ', reasons);
             await Context.Guild.AddBanAsync(user, 7, reason, RequestOptions.Default);
@@ -254,23 +252,23 @@ namespace DiscordBot.Modules
 
         [Command("debug"), Summary("Debug")]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        async Task Debug(IUser user)
+        public async Task Debug(IUser user)
         {
             var guildUser = (IGuildUser) user;
             await ReplyAsync(guildUser.RoleIds.Count.ToString());
         }
 
         [Command("rules"), Summary("Display rules of the current channel.")]
-        [RequireStaff]
-        async Task Rules(int seconds = 60)
+        [RequireModerator]
+        public async Task Rules(int seconds = 60)
         {
             Rules(Context.Channel, seconds);
             await Context.Message.DeleteAsync();
         }
 
         [Command("rules"), Summary("Display rules of the mentionned channel.")]
-        [RequireStaff]
-        async Task Rules(IMessageChannel channel, int seconds = 60)
+        [RequireModerator]
+        public async Task Rules(IMessageChannel channel, int seconds = 60)
         {
             //Display rules of this channel for x seconds
             var rule = _rules.Channel.First(x => x.Id == 0);
@@ -295,8 +293,8 @@ namespace DiscordBot.Modules
         }
 
         [Command("globalrules"), Summary("Display globalrules in current channel.")]
-        [RequireStaff]
-        async Task GlobalRules(int seconds = 60)
+        [RequireModerator]
+        public async Task GlobalRules(int seconds = 60)
         {
             //Display rules of this channel for x seconds
             string globalRules = _rules.Channel.First(x => x.Id == 0).Content;
@@ -310,8 +308,8 @@ namespace DiscordBot.Modules
         }
 
         [Command("channels"), Summary("Get a description of the channels.")]
-        [RequireStaff]
-        async Task ChannelsDescription(int seconds = 60)
+        [RequireModerator]
+        public async Task ChannelsDescription(int seconds = 60)
         {
             //Display rules of this channel for x seconds
             var channelData = _rules.Channel;
@@ -344,8 +342,8 @@ namespace DiscordBot.Modules
         }
 
         [Command("slowmode"), Summary("Put on slowmode.")]
-        [RequireStaff]
-        async Task SlowMode(int time)
+        [RequireModerator]
+        public async Task SlowMode(int time)
         {
             await Context.Message.DeleteAsync();
             await (Context.Channel as ITextChannel).ModifyAsync(p => p.SlowModeInterval = time);
@@ -355,7 +353,7 @@ namespace DiscordBot.Modules
         [Command("tagrole"), Summary("Tag a role and post a message.")]
         [Alias("mentionrole", "pingrole", "rolemention", "roletag", "roleping")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        async Task TagRole(IRole role, params string[] messages)
+        public async Task TagRole(IRole role, params string[] messages)
         {
             string message = String.Join(' ', messages);
             var isMentionable = role.IsMentionable;
@@ -402,7 +400,7 @@ namespace DiscordBot.Modules
         [Command("closepoll"), Summary("Close a poll and append a message.")]
         [Alias("pollclose")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        async Task ClosePoll(IMessageChannel channel, ulong messageId, params string[] additionalNotes)
+        public async Task ClosePoll(IMessageChannel channel, ulong messageId, params string[] additionalNotes)
         {
             string additionalNote = String.Join(' ', additionalNotes);
             var message = (IUserMessage) await channel.GetMessageAsync(messageId);
@@ -421,7 +419,7 @@ namespace DiscordBot.Modules
 
         [Command("ad"), Summary("Post ad with databaseid")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        async Task PostAd(uint dbId)
+        public async Task PostAd(uint dbId)
         {
             await _publisher.PostAd(dbId);
             await ReplyAsync("Ad posted.");
@@ -429,7 +427,7 @@ namespace DiscordBot.Modules
 
         [Command("forcead"), Summary("Force post ad")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        async Task ForcePostAd()
+        public async Task ForcePostAd()
         {
             await _update.CheckDailyPublisher(true);
             await ReplyAsync("New ad posted.");
@@ -437,7 +435,7 @@ namespace DiscordBot.Modules
 
         [Command("dbsync"), Summary("Force add user to database")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        async Task DbSync(IUser user)
+        public async Task DbSync(IUser user)
         {
             _database.AddNewUser((SocketGuildUser) user);
         }

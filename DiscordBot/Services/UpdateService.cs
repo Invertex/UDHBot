@@ -35,13 +35,7 @@ namespace DiscordBot.Services
             CodeReminderCooldown = new Dictionary<ulong, DateTime>();
         }
     }
-
-    public class CasinoData
-    {
-        public int SlotMachineCashPool { get; set; }
-        public int LotteryCashPool { get; set; }
-    }
-
+    
     public class FaqData
     {
         public string Question { get; set; }
@@ -69,7 +63,6 @@ namespace DiscordBot.Services
         private readonly ILoggingService _loggingService;
         private readonly PublisherService _publisherService;
         private readonly DatabaseService _databaseService;
-        private readonly AnimeService _animeService;
         private readonly FeedService _feedService;
         private readonly CancellationToken _token;
         private readonly Settings.Deserialized.Settings _settings;
@@ -77,22 +70,19 @@ namespace DiscordBot.Services
         private BotData _botData;
         private List<FaqData> _faqData;
         private Random _random;
-        private AnimeData _animeData;
         private UserData _userData;
-        private CasinoData _casinoData;
         private FeedData _feedData;
 
         private string[][] _manualDatabase;
         private string[][] _apiDatabase;
 
         public UpdateService(DiscordSocketClient client, ILoggingService loggingService, PublisherService publisherService,
-            DatabaseService databaseService, AnimeService animeService, Settings.Deserialized.Settings settings, FeedService feedService)
+            DatabaseService databaseService, Settings.Deserialized.Settings settings, FeedService feedService)
         {
             _client = client;
             _loggingService = loggingService;
             _publisherService = publisherService;
             _databaseService = databaseService;
-            _animeService = animeService;
             _feedService = feedService;
 
             _settings = settings;
@@ -108,7 +98,6 @@ namespace DiscordBot.Services
             SaveDataToFile();
             //CheckDailyPublisher();
             UpdateUserRanks();
-            UpdateAnime();
             UpdateDocDatabase();
             UpdateRssFeeds();
         }
@@ -122,15 +111,7 @@ namespace DiscordBot.Services
             }
             else
                 _botData = new BotData();
-
-            if (File.Exists($"{_settings.ServerRootPath}/animedata.json"))
-            {
-                string json = File.ReadAllText($"{_settings.ServerRootPath}/animedata.json");
-                _animeData = JsonConvert.DeserializeObject<AnimeData>(json);
-            }
-            else
-                _animeData = new AnimeData();
-
+            
             if (File.Exists($"{_settings.ServerRootPath}/userdata.json"))
             {
                 string json = File.ReadAllText($"{_settings.ServerRootPath}/userdata.json");
@@ -177,15 +158,7 @@ namespace DiscordBot.Services
             {
                 _userData = new UserData();
             }
-
-            if (File.Exists($"{_settings.ServerRootPath}/casinodata.json"))
-            {
-                string json = File.ReadAllText($"{_settings.ServerRootPath}/casinodata.json");
-                _casinoData = JsonConvert.DeserializeObject<CasinoData>(json);
-            }
-            else
-                _casinoData = new CasinoData();
-
+            
             if (File.Exists($"{_settings.ServerRootPath}/FAQs.json"))
             {
                 string json = File.ReadAllText($"{_settings.ServerRootPath}/FAQs.json");
@@ -218,16 +191,10 @@ namespace DiscordBot.Services
             {
                 var json = JsonConvert.SerializeObject(_botData);
                 File.WriteAllText($"{_settings.ServerRootPath}/botdata.json", json);
-
-                json = JsonConvert.SerializeObject(_animeData);
-                File.WriteAllText($"{_settings.ServerRootPath}/animedata.json", json);
-
+                
                 json = JsonConvert.SerializeObject(_userData);
                 File.WriteAllText($"{_settings.ServerRootPath}/userdata.json", json);
-
-                json = JsonConvert.SerializeObject(_casinoData);
-                File.WriteAllText($"{_settings.ServerRootPath}/casinodata.json", json);
-
+                
                 json = JsonConvert.SerializeObject(_feedData);
                 File.WriteAllText($"{_settings.ServerRootPath}/feeds.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
@@ -275,29 +242,7 @@ namespace DiscordBot.Services
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
         }
-
-        private async void UpdateAnime()
-        {
-            return;
-            await Task.Delay(TimeSpan.FromSeconds(30d), _token);
-            while (true)
-            {
-                if (_animeData.LastDailyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(1d))
-                {
-                    _animeService.PublishDailyAnime();
-                    _animeData.LastDailyAnimeAiringList = DateTime.Now;
-                }
-
-                if (_animeData.LastWeeklyAnimeAiringList < DateTime.Now - TimeSpan.FromDays(7d))
-                {
-                    _animeService.PublishWeeklyAnime();
-                    _animeData.LastWeeklyAnimeAiringList = DateTime.Now;
-                }
-
-                await Task.Delay(TimeSpan.FromMinutes(1d), _token);
-            }
-        }
-
+        
         public async Task<string[][]> GetManualDatabase()
         {
             if (_manualDatabase == null)
@@ -399,21 +344,23 @@ namespace DiscordBot.Services
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
             {
-                if (_feedData.LastUnityReleaseCheck < DateTime.Now - TimeSpan.FromMinutes(5))
+                if (_feedData != null)
                 {
-                    _feedData.LastUnityReleaseCheck = DateTime.Now;
+                    if (_feedData.LastUnityReleaseCheck < DateTime.Now - TimeSpan.FromMinutes(5))
+                    {
+                        _feedData.LastUnityReleaseCheck = DateTime.Now;
 
-                    _feedService.CheckUnityBetas(_feedData);
-                    _feedService.CheckUnityReleases(_feedData);
+                        _feedService.CheckUnityBetas(_feedData);
+                        _feedService.CheckUnityReleases(_feedData);
+                    }
+
+                    if (_feedData.LastUnityBlogCheck < DateTime.Now - TimeSpan.FromMinutes(10))
+                    {
+                        _feedData.LastUnityBlogCheck = DateTime.Now;
+
+                        _feedService.CheckUnityBlog(_feedData);
+                    }
                 }
-
-                if (_feedData.LastUnityBlogCheck < DateTime.Now - TimeSpan.FromMinutes(10))
-                {
-                    _feedData.LastUnityBlogCheck = DateTime.Now;
-
-                    _feedService.CheckUnityBlog(_feedData);
-                }
-
                 await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             }
         }
@@ -494,16 +441,6 @@ namespace DiscordBot.Services
         public void SetUserData(UserData data)
         {
             _userData = data;
-        }
-
-        public CasinoData GetCasinoData()
-        {
-            return _casinoData;
-        }
-
-        public void SetCasinoData(CasinoData data)
-        {
-            _casinoData = data;
         }
     }
 }
