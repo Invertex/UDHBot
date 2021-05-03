@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
+using DiscordBot.Modules;
 
 namespace DiscordBot.Services
 {
@@ -59,7 +60,7 @@ namespace DiscordBot.Services
 
             CommandList = commandList.ToString();
             
-            // Generates a similar command help list used for ReactionRole
+            // Generates an individual command list for the Reaction Roles
             ReactionRoleModule.GenerateCommandList(_commandService);
         }
 
