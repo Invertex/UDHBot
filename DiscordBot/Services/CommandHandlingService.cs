@@ -58,6 +58,9 @@ namespace DiscordBot.Services
             }
 
             CommandList = commandList.ToString();
+            
+            // Generates a similar command help list used for ReactionRole
+            ReactionRoleModule.GenerateCommandList(_commandService);
         }
 
         private async Task HandleCommand(SocketMessage messageParam)
