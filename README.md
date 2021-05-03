@@ -1,4 +1,4 @@
-# UDHBot
+# UDC-Bot
 
 A [Discord.NET](https://github.com/discord-net/Discord.Net) bot made for the server Unity Developer Community
 Join us on [Discord](https://discord.gg/bu3bbby) !
@@ -40,6 +40,8 @@ If you run the bot now, it will attempt to generate the table for the database. 
 - ~~**Mockusers.sql** A table that creates the database structure, but contains some mock user data as well.~~ (Not yet)
 
 *Once you have imported the database, be sure to create a user in phpmyadmin which can access the database, and the details match your **DbConnectionString**.*
+
+On Linux you might need `sudo apt install ttf-mscorefonts-installer` for ImageMagick.
 
 ## Notes
 

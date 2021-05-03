@@ -26,6 +26,7 @@ namespace DiscordBot.Services
 
         private readonly Settings.Deserialized.Settings _settings;
         private readonly UserSettings _userSettings;
+        private readonly Rules _rules;
 
         public Dictionary<ulong, DateTime> _mutedUsers;
 
@@ -62,7 +63,7 @@ namespace DiscordBot.Services
         //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
 
         public UserService(DiscordSocketClient client,DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
-            Settings.Deserialized.Settings settings, UserSettings userSettings)
+            Settings.Deserialized.Settings settings, UserSettings userSettings, Rules rules)
         {
             _client = client;
             rand = new Random();
@@ -71,6 +72,7 @@ namespace DiscordBot.Services
             _updateService = updateService;
             _settings = settings;
             _userSettings = userSettings;
+            _rules = rules;
             _mutedUsers = new Dictionary<ulong, DateTime>();
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _canEditThanks = new HashSet<ulong>(32);
@@ -78,9 +80,10 @@ namespace DiscordBot.Services
             _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
             _codeReminderCooldown = new Dictionary<ulong, DateTime>();
 
+            //TODO We should make this into a config file that we can confiure during runtime.
             _noXpChannels = new List<ulong>
             {
-                _settings.BotCommandsChannel.Id, _settings.CasinoChannel.Id, _settings.MusicCommandsChannel.Id
+                _settings.BotCommandsChannel.Id
             }; 
 
             /*
@@ -120,6 +123,18 @@ namespace DiscordBot.Services
             _codeReminderFormattingExample = (
                 _codeFormattingExample + Environment.NewLine +
                 "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
+            
+            /*
+             Event subscriptions
+            */
+            _client.MessageReceived += UpdateXp;
+            _client.MessageReceived += Thanks;
+            _client.MessageUpdated += ThanksEdited;
+            _client.MessageReceived += CodeCheck;
+            _client.MessageReceived += ScoldForAtEveryoneUsage;
+            _client.UserJoined += UserJoined;
+            _client.GuildMemberUpdated += UserUpdated;
+            _client.UserLeft += UserLeft;
 
             LoadData();
             UpdateLoop();
@@ -385,6 +400,8 @@ namespace DiscordBot.Services
             return embed;
         }
 
+        #region Events
+
         // Message Edited Thanks
         public async Task ThanksEdited(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam,
             ISocketMessageChannel socketMessageChannel)
@@ -423,7 +440,7 @@ namespace DiscordBot.Services
                     await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you must wait " +
                         $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
-                        "seconds before giving another karma point." + System.Environment.NewLine +
+                        "seconds before giving another karma point." + Environment.NewLine +
                         "(In the future, if you are trying to thank multiple people, include all their names in the thanks message)").DeleteAfterTime(seconds: defaultDelTime);
                     return;
                 }
@@ -555,6 +572,77 @@ namespace DiscordBot.Services
                     .DeleteAfterTime(minutes: 5);
             }
         }
+        
+        private async Task UserJoined(SocketGuildUser user)
+        {
+            ulong general = _settings.GeneralChannel.Id;
+            var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
+
+            _databaseService.AddNewUser(user);
+
+            //Check for existing mute
+            if (_mutedUsers.HasUser(user.Id))
+            {
+                await user.AddRoleAsync(socketTextChannel?.Guild.GetRole(_settings.MutedRoleId));
+                await _loggingService.LogAction(
+                    $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                await socketTextChannel.SendMessageAsync(
+                    $"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
+                _mutedUsers.AddCooldown(user.Id, hours: 72);
+                return;
+            }
+
+
+            await _loggingService.LogAction(
+                $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+
+            Embed em = WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+
+            if (socketTextChannel != null)
+            {
+                await socketTextChannel.SendMessageAsync(string.Empty, false, em);
+            }
+
+            string globalRules = _rules.Channel.First(x => x.Id == 0).Content;
+            IDMChannel dm = await user.GetOrCreateDMChannelAsync();
+            await dm.SendMessageAsync(
+                "Hello and welcome to Unity Developer Community !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
+                "Please also read the additional informations in the **#welcome** channel." +
+                "You can get all the available commands on the server by typing !help in the **#bot-commands** channel.");
+            await dm.SendMessageAsync(globalRules);
+
+            //TODO: add users when bot was offline
+        }
+
+        private async Task UserUpdated(SocketGuildUser oldUser, SocketGuildUser user)
+        {
+            if (oldUser.Nickname != user.Nickname)
+            {
+                await _loggingService.LogAction(
+                    $"User {oldUser.Nickname ?? oldUser.Username}#{oldUser.DiscriminatorValue} changed his " +
+                    $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
+                _databaseService.UpdateUserName(user.Id, user.Nickname);
+            }
+
+            if (oldUser.AvatarId != user.AvatarId)
+            {
+                var avatar = user.GetAvatarUrl();
+                _databaseService.UpdateUserAvatar(user.Id, avatar);
+            }
+        }
+
+        private async Task UserLeft(SocketGuildUser user)
+        {
+            DateTime joinDate;
+            DateTime.TryParse(_databaseService.GetUserJoinDate(user.Id), out joinDate);
+            TimeSpan timeStayed = DateTime.Now - joinDate;
+            await _loggingService.LogAction(
+                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +
+                $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+            _databaseService.DeleteUser(user.Id);
+        }
+
+        #endregion
 
         public int GetGatewayPing()
         {

@@ -48,7 +48,7 @@ namespace DiscordBot.Modules
 
         [Command("help"), Summary("Display available commands (this). Syntax : !help")]
         [Alias("command", "commands")]
-        private async Task DisplayHelp()
+        public async Task DisplayHelp()
         {
             //TODO: Be possible in DM
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
@@ -58,7 +58,7 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            var commands = Program.CommandList.MessageSplit();
+            var commands = CommandHandlingService.CommandList.MessageSplit();
 
             foreach (var message in commands)
                 await ReplyAsync(message);
@@ -67,7 +67,7 @@ namespace DiscordBot.Modules
         #region Rules
 
         [Command("rules"), Summary("Get the of the current channel by DM. Syntax : !rules")]
-        private async Task Rules()
+        public async Task Rules()
         {
             await Rules(Context.Channel);
             await Context.Message.DeleteAsync();
@@ -75,7 +75,7 @@ namespace DiscordBot.Modules
 
         [Command("rules"), Summary("Get the rules of the mentionned channel by DM. !rules #channel")]
         [Alias("rule")]
-        private async Task Rules(IMessageChannel channel)
+        public async Task Rules(IMessageChannel channel)
         {
             var rule = _rules.Channel.First(x => x.Id == channel.Id);
             //IUserMessage m; //Unused, plan to be used in future?
@@ -96,7 +96,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("globalrules"), Summary("Get the Global Rules by DM. Syntax : !globalrules")]
-        private async Task GlobalRules(int seconds = 60)
+        public async Task GlobalRules(int seconds = 60)
         {
             string globalRules = _rules.Channel.First(x => x.Id == 0).Content;
             IDMChannel dm = await Context.User.GetOrCreateDMChannelAsync();
@@ -105,7 +105,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("channels"), Summary("Get description of the channels by DM. Syntax : !channels")]
-        private async Task ChannelsDescription()
+        public async Task ChannelsDescription()
         {
             //Display rules of this channel for x seconds
             var channelData = _rules.Channel;
@@ -134,7 +134,7 @@ namespace DiscordBot.Modules
         #region XP & Karma
 
         [Command("karma"), Summary("Display description of what Karma is for. Syntax : !karma")]
-        private async Task KarmaDescription(int seconds = 60)
+        public async Task KarmaDescription(int seconds = 60)
         {
             await ReplyAsync($"{Context.User.Username}, " +
                              $"Karma is tracked on your !profile, helping indicate how much you've helped others.{Environment.NewLine}" +
@@ -146,37 +146,49 @@ namespace DiscordBot.Modules
 
         [Command("top"), Summary("Display top 10 users by level. Syntax : !top")]
         [Alias("toplevel", "ranking")]
-        private async Task TopLevel()
+        public async Task TopLevel()
         {
             var users = _databaseService.GetTopLevel();
-
-            StringBuilder sb = new StringBuilder();
-            sb.Append("Here's the top 10 of users by level :");
-            for (int i = 0; i < users.Count; i++)
-                sb.Append(
-                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId))?.Username}** ~ *Level* **{users[i].level}**");
-
-            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
+            var embed = GenerateRankEmbedFromList(users, "Level");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 3);
         }
 
         [Command("topkarma"), Summary("Display top 10 users by karma. Syntax : !topkarma")]
         [Alias("karmarank", "rankingkarma")]
-        private async Task TopKarma()
+        public async Task TopKarma()
         {
             var users = _databaseService.GetTopKarma();
+            var embed = GenerateRankEmbedFromList(users, "Karma");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 3);
+        }
 
-            StringBuilder sb = new StringBuilder();
-            sb.Append("Here's the top 10 of users by karma :");
-            for (int i = 0; i < users.Count; i++)
-                sb.Append(
-                    $"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId))?.Username}** ~ **{users[i].karma}** *Karma*");
+        private Embed GenerateRankEmbedFromList(List<(ulong userID, int value)> data, string labelName)
+        {
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.Title = "Top 10 Users";
+            embedBuilder.Description = $"The best of the best, by {labelName}.";
+            
+            StringBuilder rank = new StringBuilder();
+            StringBuilder nick = new StringBuilder();
+            StringBuilder level = new StringBuilder();
+            for (int i = 0; i < data.Count; i++)
+            {
+                rank.Append($"#{(i+1)}\n");
+                // rank.Append($"{(i+1)}{i switch { 0 => "st", 1 => "nd", 2 => "rd", _ => "th" }}\n");
+                nick.Append($"<@{data[i].userID}>\n");
+                level.Append($"{data[i].value.ToString()}\n");
+            }
+            
+            embedBuilder.AddField("Rank", $"**{rank}**", true);
+            embedBuilder.AddField("User", nick, true);
+            embedBuilder.AddField(labelName, $"**{level}**", true);
 
-            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
+            return embedBuilder.Build();
         }
 
         [Command("topudc"), Summary("Display top 10 users by UDC. Syntax : !topudc")]
         [Alias("udcrank")]
-        private async Task TopUdc()
+        public async Task TopUdc()
         {
             var users = _databaseService.GetTopUdc();
 
@@ -189,30 +201,28 @@ namespace DiscordBot.Modules
         }
 
         [Command("profile"), Summary("Display current user profile card. Syntax : !profile")]
-        private async Task DisplayProfile()
+        public async Task DisplayProfile()
         {
-            IUserMessage profile =
-                await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(Context.Message.Author));
-
-            await Task.Delay(10000);
-            await Context.Message.DeleteAsync();
-            await Task.Delay(TimeSpan.FromMinutes(3d));
-            await profile.DeleteAsync();
+            await DisplayProfile(Context.Message.Author);
         }
 
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
-        private async Task DisplayProfile(IUser user)
+        public async Task DisplayProfile(IUser user)
         {
+            try {
             IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
 
             await Task.Delay(1000);
             await Context.Message.DeleteAsync();
             await Task.Delay(TimeSpan.FromMinutes(3d));
             await profile.DeleteAsync();
+            } catch (Exception e) {
+                Console.Error.WriteLine(e);
+            }
         }
 
         [Command("joindate"), Summary("Display your join date. Syntax : !joindate")]
-        private async Task JoinDate()
+        public async Task JoinDate()
         {
             var userId = Context.User.Id;
             DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out DateTime joinDate);
@@ -226,7 +236,7 @@ namespace DiscordBot.Modules
 
         [Command("codetip"), Summary("Show code formatting example. Syntax : !codetip userToPing(optional)")]
         [Alias("codetips")]
-        private async Task CodeTip(IUser user = null)
+        public async Task CodeTip(IUser user = null)
         {
             var message = (user != null) ? user.Mention + ", " : "";
             message += "When posting code, format it like this to display it properly:" + Environment.NewLine;
@@ -237,7 +247,7 @@ namespace DiscordBot.Modules
 
         [Command("disablecodetips"),
          Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
-        private async Task DisableCodeTips()
+        public async Task DisableCodeTips()
         {
             ulong userID = Context.User.Id;
             string replyMessage = "You've already told me to stop reminding you, don't worry, I won't forget!";
@@ -256,7 +266,7 @@ namespace DiscordBot.Modules
 
         [Command("disablethanksreminder"),
          Summary("Prevents being reminded to mention the person you are thanking. Syntax : !disablethanksreminder")]
-        private async Task DisableThanksReminder()
+        public async Task DisableThanksReminder()
         {
             ulong userID = Context.User.Id;
             string replyMessage = "You've already told me to stop reminding you, don't worry, I won't forget!";
@@ -273,17 +283,23 @@ namespace DiscordBot.Modules
 
 
         [Command("quote"), Summary("Quote a message. Syntax : !quote messageid (#channelname) (optionalSubtitle)")]
-        private async Task QuoteMessage(ulong id, IMessageChannel channel = null, string subtitle = null)
+        public async Task QuoteMessage(ulong id, IMessageChannel channel = null, string subtitle = null)
         {
             if (subtitle != null && (subtitle.Contains("@everyone") || subtitle.Contains("@here"))) return;
             // If channel is null use Context.Channel, else use the provided channel
-            channel = channel ?? Context.Channel;
-
+            channel ??= Context.Channel;
             var message = await channel.GetMessageAsync(id);
-            string messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + (channel == null
-                                     ? Context.Channel.Id
-                                     : channel.Id) + "/" + id;
+            // Can't imagine we need to quote the bots
+            if (message.Author.IsBot)
+                return;
+            string messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + channel.Id + "/" + id;
+            var msgContent = (message.Content == string.Empty ? "" : message.Content.Truncate(1020));
 
+            string msgAttachment = string.Empty;
+            if (message.Attachments?.Count > 0)
+            {
+                msgAttachment = $"\t📸";
+            }
             var builder = new EmbedBuilder()
                 .WithColor(new Color(200, 128, 128))
                 .WithTimestamp(message.Timestamp)
@@ -292,25 +308,31 @@ namespace DiscordBot.Modules
                     footer
                         .WithText($"In channel {message.Channel.Name}");
                 })
-                .WithTitle("Linkback")
-                .WithUrl(messageLink)
                 .WithAuthor(author =>
                 {
                     author
                         .WithName(message.Author.Username)
                         .WithIconUrl(message.Author.GetAvatarUrl());
-                })
-                .AddField("Original message", message.Content.Truncate(1020));
+                });
+            var messageTitle = "Original message";
+            if (msgContent == string.Empty)
+            {
+                messageTitle = $"~~{messageTitle}~~";
+                if (msgAttachment != string.Empty)
+                    msgContent = "📸";
+            }
+            builder.AddField(messageTitle, $"{msgContent}\n" +
+                                           $"**Linkback**\t[__Message__]({messageLink})" +
+                                           $"{msgAttachment}");
             var embed = builder.Build();
             await ReplyAsync(subtitle == null ? "" : $"`{Context.User.Username}:` {subtitle}", false, embed);
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
+            await Context.Message.DeleteAfterSeconds(1.0);
         }
 
         [Command("compile"),
          Summary("Try to compile a snippet of C# code. Be sure to escape your strings. Syntax : !compile \"Your code\"")]
         [Alias("code", "compute", "assert")]
-        private async Task CompileCode(params string[] code)
+        public async Task CompileCode(params string[] code)
         {
             var codeComplete = Resources.PaizaCodeTemplate.Replace("{code}", string.Join(" ", code));
 
@@ -379,7 +401,7 @@ namespace DiscordBot.Modules
         #region Fun
 
         [Command("slap"), Summary("Slap the specified user(s). Syntax : !slap @user1 [@user2 @user3...]")]
-        private async Task SlapUser(params IUser[] users)
+        public async Task SlapUser(params IUser[] users)
         {
             StringBuilder sb = new StringBuilder();
             string[] slaps = {"trout", "duck", "truck"};
@@ -401,7 +423,7 @@ namespace DiscordBot.Modules
 
         [Command("coinflip"), Summary("Flip a coin and see the result. Syntax : !coinflip")]
         [Alias("flipcoin")]
-        private async Task CoinFlip()
+        public async Task CoinFlip()
         {
             Random rand = new Random();
             var coin = new[] {"Heads", "Tails"};
@@ -429,7 +451,7 @@ namespace DiscordBot.Modules
 
         [Command("pinfo"), Summary("Information on how to get the publisher role. Syntax : !pinfo")]
         [Alias("publisherinfo")]
-        private async Task PublisherInfo()
+        public async Task PublisherInfo()
         {
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
@@ -452,7 +474,7 @@ namespace DiscordBot.Modules
 
         [Command("pkg"), Summary("Add your published package to the daily advertising. Syntax : !pkg packageId")]
         [Alias("package")]
-        private async Task Package(uint packageId)
+        public async Task Package(uint packageId)
         {
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
@@ -460,13 +482,19 @@ namespace DiscordBot.Modules
                 await Context.Message.DeleteAsync();
                 return;
             }
-
+            
+            if (_settings.Gmail == string.Empty)
+            {
+                await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(5f);
+                return;
+            }
+            
             (bool, string) verif = await _publisherService.VerifyPackage(packageId);
             await ReplyAsync(verif.Item2);
         }
 
         [Command("verify"), Summary("Verify a package with the code received by email. Syntax : !verify packageId code")]
-        private async Task VerifyPackage(uint packageId, string code)
+        public async Task VerifyPackage(uint packageId, string code)
         {
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
@@ -485,7 +513,7 @@ namespace DiscordBot.Modules
 
         [Command("search"), Summary("Searches on DuckDuckGo for web results. Syntax : !search \"query\" resNum site")]
         [Alias("s", "ddg")]
-        private async Task SearchResults(string query, uint resNum = 3, string site = "")
+        public async Task SearchResults(string query, uint resNum = 3, string site = "")
         {
             // Cleaning inputs from user (maybe we can ban certain domains or keywords)
             resNum = resNum <= 5 ? resNum : 5;
@@ -537,7 +565,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("manual"), Summary("Searches on Unity3D manual results. Syntax : !manual \"query\"")]
-        private async Task SearchManual(params string[] queries)
+        public async Task SearchManual(params string[] queries)
         {
             // Download Unity3D Documentation Database (lol)
 
@@ -565,7 +593,7 @@ namespace DiscordBot.Modules
 
         [Command("doc"), Summary("Searches on Unity3D API results. Syntax : !api \"query\"")]
         [Alias("ref", "reference", "api", "docs")]
-        private async Task SearchApi(params string[] queries)
+        public async Task SearchApi(params string[] queries)
         {
             // Download Unity3D Documentation Database (lol)
 
@@ -614,7 +642,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("faq"), Summary("Searches UDH FAQs. Syntax : !faq \"query\"")]
-        private async Task SearchFaqs(params string[] queries)
+        public async Task SearchFaqs(params string[] queries)
         {
             List<FaqData> faqDataList = _updateService.GetFaqData();
 
@@ -708,7 +736,7 @@ namespace DiscordBot.Modules
 
         [Command("wiki"), Summary("Searches Wikipedia. Syntax : !wiki \"query\"")]
         [Alias("wikipedia")]
-        private async Task SearchWikipedia([Remainder] string query)
+        public async Task SearchWikipedia([Remainder] string query)
         {
             (string name, string extract, string url) article = await _updateService.DownloadWikipediaArticle(query);
 
@@ -751,7 +779,7 @@ namespace DiscordBot.Modules
 
         [Command("birthday"), Summary("Display next member birthday. Syntax : !birthday")]
         [Alias("bday")]
-        private async Task Birthday()
+        public async Task Birthday()
         {
             // URL to cell C15/"Next birthday" cell from Corn's google sheet
             string nextBirthday =
@@ -769,7 +797,7 @@ namespace DiscordBot.Modules
 
         [Command("birthday"), Summary("Display birthday of mentioned user. Syntax : !birthday @user")]
         [Alias("bday")]
-        private async Task Birthday(IUser user)
+        public async Task Birthday(IUser user)
         {
             string searchName = user.Username;
             // URL to columns B to D of Corn's google sheet
@@ -858,13 +886,13 @@ namespace DiscordBot.Modules
         #region temperatures
 
         [Command("ftoc"), Summary("Converts a temperature in fahrenheit to celsius. Syntax : !ftoc temperature")]
-        private async Task FahrenheitToCelsius(float f)
+        public async Task FahrenheitToCelsius(float f)
         {
             await ReplyAsync($"{Context.User.Mention} {f}°F is {Math.Round((f - 32) * 0.555555f, 2)}°C.");
         }
 
         [Command("ctof"), Summary("Converts a temperature in celsius to fahrenheit. Syntax : !ftoc temperature")]
-        private async Task CelsiusToFahrenheit(float c)
+        public async Task CelsiusToFahrenheit(float c)
         {
             await ReplyAsync($"{Context.User.Mention}  {c}°C is {Math.Round(c * 1.8f + 32, 2)}°F");
         }
@@ -874,13 +902,13 @@ namespace DiscordBot.Modules
         #region Translate
 
         [Command("translate"), Summary("Translate a message. Syntax : !translate messageId language")]
-        private async Task Translate(ulong id, string language = "en")
+        public async Task Translate(ulong id, string language = "en")
         {
             await Translate((await Context.Channel.GetMessageAsync(id)).Content, language);
         }
 
         [Command("translate"), Summary("Translate a message. Syntax : !translate text language")]
-        private async Task Translate(string message, string language = "en")
+        public async Task Translate(string message, string language = "en")
         {
             await ReplyAsync($"Here: https://translate.google.com/#auto/{language}/{message.Replace(" ", "%20")}");
             await Task.Delay(1000);
@@ -893,14 +921,14 @@ namespace DiscordBot.Modules
 
         [Command("currency"), Summary("Converts a currency. Syntax : !currency fromCurrency toCurrency")]
         [Alias("curr")]
-        private async Task ConvertCurrency(string from, string to)
+        public async Task ConvertCurrency(string from, string to)
         {
             await ConvertCurrency(1, from, to);
         }
 
         [Command("currency"), Summary("Converts a currency. Syntax : !currency amount fromCurrency toCurrency")]
         [Alias("curr")]
-        private async Task ConvertCurrency(double amount, string from, string to)
+        public async Task ConvertCurrency(double amount, string from, string to)
         {
             from = from.ToUpper();
             to = to.ToUpper();
@@ -927,7 +955,7 @@ namespace DiscordBot.Modules
 
         [Command("ping"), Summary("Display bot ping. Syntax : !ping")]
         [Alias("pong")]
-        private async Task Ping()
+        public async Task Ping()
         {
             var message = await ReplyAsync($"Pong :blush:");
             var time = message.CreatedAt.Subtract(Context.Message.Timestamp);
@@ -941,7 +969,7 @@ namespace DiscordBot.Modules
 
         [Command("members"), Summary("Displays number of members Syntax : !members")]
         [Alias("MemberCount")]
-        private async Task MemberCount()
+        public async Task MemberCount()
         {
             await ReplyAsync(
                 $"We currently have {(await Context.Guild.GetUsersAsync()).Count - 1} members. Let's keep on growing as the strong community we are :muscle:");
@@ -958,7 +986,7 @@ namespace DiscordBot.Modules
             }
 
             [Command("add"), Summary("Add a role to yourself. Syntax : !role add role")]
-            private async Task AddRoleUser(IRole role)
+            public async Task AddRoleUser(IRole role)
             {
                 if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
                 {
@@ -982,7 +1010,7 @@ namespace DiscordBot.Modules
 
             [Command("remove"), Summary("Remove a role from yourself. Syntax : !role remove role")]
             [Alias("delete")]
-            private async Task RemoveRoleUser(IRole role)
+            public async Task RemoveRoleUser(IRole role)
             {
                 if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
                 {
@@ -1005,7 +1033,7 @@ namespace DiscordBot.Modules
             }
 
             [Command("list"), Summary("Display the list of roles. Syntax : !role list")]
-            private async Task ListRole()
+            public async Task ListRole()
             {
                 if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
                 {
@@ -1044,7 +1072,7 @@ namespace DiscordBot.Modules
         }
         
         [Command("ChristmasCompleted"), Summary("Gives rewards to people who complete the christmas event.")]
-        private async Task UserCompleted(String message)
+        public async Task UserCompleted(String message)
         {
 
             //Make sure they're the santa bot
@@ -1064,90 +1092,6 @@ namespace DiscordBot.Modules
             _databaseService.AddUserXp((ulong)userId, xpGain);
 
             await Context.Message.DeleteAsync();
-        }
-
-        [Group("anime")]
-        public class AnimeModule : ModuleBase
-        {
-            private readonly AnimeService _animeService;
-
-            public AnimeModule(AnimeService animeService)
-            {
-                _animeService = animeService;
-            }
-
-            [Command("search"), Summary("Returns an anime. Syntax : !anime search animeTitle")]
-            private async Task SearchAnime(string title)
-            {
-                /*{
-                  "content": "Here's your search result @blabla",
-                  "embed": {
-                    "title": "Anime search result",
-
-                    "url": "https://discordapp.com",
-                    "color": 14574459,
-                    "thumbnail": {
-                      "url": "https://cdn.anilist.co/img/dir/anime/reg/20800-Bdc1fJOBED6C.jpg"
-                    },
-                    "image": {
-                      "url": "https://cdn.anilist.co/img/dir/anime/reg/20800-Bdc1fJOBED6C.jpg"
-                    },
-
-                    "fields": [
-                      {
-                        "name" : "Titles",
-                        "value" : "Yuuki Yuuna wa Yuusha De Aru, 結城友奈は勇者である"
-                      },
-                      {
-                        "name": "Description",
-                        "value": "The story takes place in the era of the gods, year 300. Yuuna Yuuki lives an ordinary life as a second year middle school student, but she's also a member of the \"Hero Club,\" where club activities involve dealing with a mysterious being called \"Vertex.\""
-                      },
-                      {
-                        "name": "Genres",
-                        "value" : "Mahou Shoujo, Action, Drama"
-                      },
-                      {
-                        "name": "MAL Link",
-                        "value" : "https://myanimelist.net/anime/25519"
-                      },
-                      {
-                        "name": "Start Date",
-                        "value": "17/10/2014",
-                        "inline": true
-                      },
-                      {
-                        "name": "End Date",
-                        "value": "26/12/2014",
-                        "inline": true
-                      }
-                    ]
-                  }
-                }*/
-
-                var animes = await _animeService.SearchAnime(title);
-                var anime = animes.data.Page.media.FirstOrDefault();
-                if (anime == null)
-                {
-                    await ReplyAsync("I'm sorry, I couldn't find an anime with this name.");
-                    return;
-                }
-
-                var builder = new EmbedBuilder()
-                    .WithTitle("Anime search result")
-                    .WithUrl("https://myanimelist.net/anime/" + anime.idMal)
-                    .WithColor(new Color(0xDE637B))
-                    .WithThumbnailUrl(anime.coverImage.medium)
-                    .WithImageUrl(anime.coverImage.medium)
-                    .AddField("Titles", $"{anime.title.romaji}, {anime.title.native}")
-                    .AddField("Description", anime.description.Truncate(1020))
-                    .AddField("Genres", string.Join(",", anime.genres))
-                    .AddField("MAL Link", "https://myanimelist.net/anime/" + anime.idMal)
-                    .AddField("Start Date", $"{anime.startDate.day}/{anime.startDate.month}/{anime.startDate.year}")
-                    .AddField("End Date", $"{anime.endDate.day}/{anime.endDate.month}/{anime.endDate.year}");
-                var embed = builder.Build();
-                await Context.Channel.SendMessageAsync($"Here's your search result {Context.Message.Author.Mention}", false, embed)
-                    .ConfigureAwait(false);
-            }
         }
     }
 }
