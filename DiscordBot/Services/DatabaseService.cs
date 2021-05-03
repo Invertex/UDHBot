@@ -83,7 +83,7 @@ namespace DiscordBot.Services
                 {
                     var command = new MySqlCommand(
                         "SET @prev_value = NULL; SET @rank_count = 0; " +
-                        "UPDATE users SET rank = @rank_count := IF(@prev_value = rank, @rank_count, @rank_count + 1) " +
+                        "UPDATE users SET `rank` = @rank_count := IF(@prev_value = `rank`, @rank_count, @rank_count + 1) " +
                         "ORDER BY exp DESC", connection);
                     connection.Open();
                     command.ExecuteNonQuery();
@@ -199,7 +199,7 @@ namespace DiscordBot.Services
             using (var connection = new MySqlConnection(_connection))
             {
                 var command = new MySqlCommand(
-                    $"SELECT COUNT(1)+1 as rank FROM `users` WHERE karma > (SELECT karma FROM users WHERE userid='{id}')", connection);
+                    $"SELECT COUNT(1)+1 as `rank` FROM `users` WHERE karma > (SELECT karma FROM users WHERE userid='{id}')", connection);
                 connection.Open();
                 MySqlDataReader reader;
                 using (reader = command.ExecuteReader())
@@ -320,7 +320,7 @@ namespace DiscordBot.Services
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
                     command.ExecuteNonQuery();
@@ -361,7 +361,7 @@ namespace DiscordBot.Services
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
                     command.ExecuteNonQuery();
@@ -382,7 +382,7 @@ namespace DiscordBot.Services
                 value = MySqlHelper.EscapeString(value);
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"UPDATE users SET {attribute}=@Value WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
                     connection.Open();
                     command.ExecuteNonQuery();
@@ -402,7 +402,7 @@ namespace DiscordBot.Services
             {
                 using (var connection = new MySqlConnection(_connection))
                 {
-                    var command = new MySqlCommand($"Select {attribute} FROM users WHERE userid='{id}'", connection);
+                    var command = new MySqlCommand($"Select `{attribute}` FROM users WHERE userid='{id}'", connection);
                     connection.Open();
                     MySqlDataReader reader;
                     using (reader = command.ExecuteReader())

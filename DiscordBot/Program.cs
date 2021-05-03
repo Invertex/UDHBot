@@ -6,6 +6,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
+using DiscordBot.Modules;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,7 @@ namespace DiscordBot
         private CommandService _commandService;
         private IServiceProvider _services;
         private CommandHandlingService _commandHandlingService;
-
+      
         private static PayWork _payWork;
         private static Rules _rules;
         private static Settings.Deserialized.Settings _settings;
@@ -113,7 +114,7 @@ namespace DiscordBot
             Console.ForegroundColor = cc;
             return Task.CompletedTask;
         }
-
+      
         private static void DeserializeSettings()
         {
             using (var file = File.OpenText(@"Settings/Settings.json"))
