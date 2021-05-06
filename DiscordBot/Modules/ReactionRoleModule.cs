@@ -103,11 +103,8 @@ namespace DiscordBot.Modules
                 }
 
                 _reactRoleService.NewMessage = foundMessage;
-
-                string previewLinkback = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + foundMessage.ChannelId + "/" + messageId;
-
                 await ReplyAsync(
-                    $"Message linked, future changes will be made to {previewLinkback}");
+                    $"Message linked, future changes will be made to {foundMessage.MessageLinkBack(Context.Guild.Id)}");
             }
         }
 
@@ -236,12 +233,10 @@ namespace DiscordBot.Modules
 
             foreach (var reactMessage in messageList)
             {
-                string previewLinkback = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + reactMessage.ChannelId + "/" + reactMessage.MessageId;
-
                 var channel = await Context.Guild.GetChannelAsync(reactMessage.ChannelId);
                 var message = await Context.Channel.GetMessageAsync(reactMessage.MessageId);
 
-                var linkedInfoMessage = await ReplyAsync($"Linked Location: {previewLinkback} which should contain {reactMessage.RoleCount()} emotes.\n");
+                var linkedInfoMessage = await ReplyAsync($"Linked Location: {reactMessage.MessageLinkBack(Context.Guild.Id)} which should contain {reactMessage.RoleCount()} emotes.\n");
                 foreach (var reactRole in reactMessage.Reactions)
                 {
                     GuildEmote emote = await Context.Guild.GetEmoteAsync(reactRole.EmojiId);
