@@ -1,4 +1,4 @@
-name: .NET Core
+name: .NET Build
 
 on:
   push:
@@ -8,8 +8,7 @@ on:
 
 jobs:
   build:
-    name: fds
-
+    name: Build & Test
     runs-on: ubuntu-latest
 
     steps:
