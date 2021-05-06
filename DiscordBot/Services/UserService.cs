@@ -84,7 +84,7 @@ namespace DiscordBot.Services
             _noXpChannels = new List<ulong>
             {
                 _settings.BotCommandsChannel.Id
-            }; 
+            };
 
             /*
             Init XP
@@ -123,7 +123,7 @@ namespace DiscordBot.Services
             _codeReminderFormattingExample = (
                 _codeFormattingExample + Environment.NewLine +
                 "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
-            
+
             /*
              Event subscriptions
             */
@@ -209,7 +209,7 @@ namespace DiscordBot.Services
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
             if (!await _databaseService.UserExists(userId))
-                _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
+                await _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
 
             _databaseService.AddUserXp(userId, xpGain);
             _databaseService.AddUserUdc(userId, (int) Math.Round(xpGain * .15f));
@@ -517,7 +517,7 @@ namespace DiscordBot.Services
 
             if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
             {
-                _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
+                var _ = _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
             }
         }
 
@@ -572,13 +572,13 @@ namespace DiscordBot.Services
                     .DeleteAfterTime(minutes: 5);
             }
         }
-        
+
         private async Task UserJoined(SocketGuildUser user)
         {
             ulong general = _settings.GeneralChannel.Id;
             var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
 
-            _databaseService.AddNewUser(user);
+            await _databaseService.AddNewUser(user);
 
             //Check for existing mute
             if (_mutedUsers.HasUser(user.Id))

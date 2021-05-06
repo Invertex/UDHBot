@@ -79,7 +79,7 @@ namespace DiscordBot.Modules
 
                 await MuteUser(user, (uint) Math.Round((dt - DateTime.Now).TotalSeconds), messages);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 await ReplyAsync("Invalid DateTime specified.");
                 await Context.Message.DeleteAsync();
@@ -206,7 +206,7 @@ namespace DiscordBot.Modules
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");
-            Task.Delay(5000).ContinueWith(t =>
+            var _ =Task.Delay(5000).ContinueWith(t =>
             {
                 m.DeleteAsync();
                 _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
@@ -224,7 +224,7 @@ namespace DiscordBot.Modules
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");
-            Task.Delay(5000).ContinueWith(t =>
+            var _ = Task.Delay(5000).ContinueWith(t =>
             {
                 m.DeleteAsync();
                 _logging.LogAction($"{Context.User.Username} has removed {messages.Count()} messages from {Context.Channel.Name}");
@@ -262,7 +262,7 @@ namespace DiscordBot.Modules
         [RequireModerator]
         public async Task Rules(int seconds = 60)
         {
-            Rules(Context.Channel, seconds);
+            await Rules(Context.Channel, seconds);
             await Context.Message.DeleteAsync();
         }
 
@@ -437,7 +437,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task DbSync(IUser user)
         {
-            _database.AddNewUser((SocketGuildUser) user);
+            await _database.AddNewUser((SocketGuildUser) user);
         }
     }
 }

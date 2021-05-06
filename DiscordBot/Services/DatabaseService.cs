@@ -269,7 +269,7 @@ namespace DiscordBot.Services
             return users;
         }
 
-        public async void AddNewUser(SocketGuildUser user)
+        public async Task AddNewUser(SocketGuildUser user)
         {
             try
             {

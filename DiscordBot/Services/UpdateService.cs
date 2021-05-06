@@ -35,7 +35,7 @@ namespace DiscordBot.Services
             CodeReminderCooldown = new Dictionary<ulong, DateTime>();
         }
     }
-    
+
     public class FaqData
     {
         public string Question { get; set; }
@@ -111,7 +111,7 @@ namespace DiscordBot.Services
             }
             else
                 _botData = new BotData();
-            
+
             if (File.Exists($"{_settings.ServerRootPath}/userdata.json"))
             {
                 string json = File.ReadAllText($"{_settings.ServerRootPath}/userdata.json");
@@ -145,7 +145,7 @@ namespace DiscordBot.Services
                                 }
 
                                 //Setup delay to remove role when time is up.
-                                Task.Run(async () =>
+                                var _ = Task.Run(async () =>
                                 {
                                     await _userData.MutedUsers.AwaitCooldown(user.Id);
                                     await user.RemoveRoleAsync(mutedRole);
@@ -158,7 +158,7 @@ namespace DiscordBot.Services
             {
                 _userData = new UserData();
             }
-            
+
             if (File.Exists($"{_settings.ServerRootPath}/FAQs.json"))
             {
                 string json = File.ReadAllText($"{_settings.ServerRootPath}/FAQs.json");
@@ -191,10 +191,10 @@ namespace DiscordBot.Services
             {
                 var json = JsonConvert.SerializeObject(_botData);
                 File.WriteAllText($"{_settings.ServerRootPath}/botdata.json", json);
-                
+
                 json = JsonConvert.SerializeObject(_userData);
                 File.WriteAllText($"{_settings.ServerRootPath}/userdata.json", json);
-                
+
                 json = JsonConvert.SerializeObject(_feedData);
                 File.WriteAllText($"{_settings.ServerRootPath}/feeds.json", json);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
@@ -242,7 +242,7 @@ namespace DiscordBot.Services
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
         }
-        
+
         public async Task<string[][]> GetManualDatabase()
         {
             if (_manualDatabase == null)
@@ -401,7 +401,7 @@ namespace DiscordBot.Services
                 if(job.TryGetValue("query", out var query))
                 {
                     var pages = JsonConvert.DeserializeObject<List<WikiPage>>(job[query.Path]["pages"].ToString(), new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
-                    
+
                     if (pages != null && pages.Count > 0)
                     {
                         pages.Sort((x, y) => x.Index.CompareTo(y.Index)); //Sort from smallest index to biggest, smallest index is indicitive of best matching result
@@ -416,9 +416,9 @@ namespace DiscordBot.Services
                             page.Title = page.Extract.Substring(0, splitIndex - 4); //-4 to strip the useless characters since this will be a title
                             page.Extract = page.Extract.Substring(splitIndex);
                             page.Extract.Replace("\n", Environment.NewLine + "-");
-                        } 
+                        }
                         else { page.Extract = page.Extract.Replace("\n", Environment.NewLine); }
-                        
+
                         return (page.Title + ":", page.Extract, page.FullURL.ToString());
                     }
                 }
