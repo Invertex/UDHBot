@@ -75,13 +75,10 @@ namespace DiscordBot.Modules
                     Description = description,
                     MessageId = messageId
                 };
-
-                string previewLinkback = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + channel.Id + "/" + messageId;
-
                 await ReplyAsync(
-                    $"Setup began, Reaction roles will be attached to {previewLinkback}");
+                    $"Setup began, Reaction roles will be attached to {linkedMessage.GetJumpUrl()}");
                 await ReplyAsync(
-                    $"Now use !ReactRole Emote \"Role/RoleID\" \"Emoji\" \"Name (optional)\" to begin paring.");
+                    $"Use `ReactRole Emote` \"Role\" \"Emoji\" \"Name (optional)\" to add emotes.");
             }
         }
 
@@ -120,8 +117,9 @@ namespace DiscordBot.Modules
                 await ReplyAsync("No message is being prepared, use NewMessage first!");
                 return;
             }
-
-            if (emoteId == 0)
+            
+            // If empty we check the message for the role passed in, if it exists we remove that role from the message.
+            if (emoteString == string.Empty)
             {
                 var reactionRemove =
                     _reactRoleService.NewMessage.Reactions?.Find(reactRole => reactRole.RoleId == role.Id);
@@ -129,18 +127,29 @@ namespace DiscordBot.Modules
                 {
                     await ReplyAsync($"Role {role.Name} was not attached to this message.");
                     return;
-                } 
+                }
+
                 _reactRoleService.NewMessage.Reactions.Remove(reactionRemove);
                 await ReplyAsync($"Removed Role {role.Name} from message.");
                 return;
             }
-
-            GuildEmote emote = await Context.Guild.GetEmoteAsync(emoteId);
-            if (emote == null)
+            // Try pull the Emote ID from the emote used.
+            Emote tempEmote;
+            if (!Emote.TryParse(emoteString, out tempEmote))
             {
-                await ReplyAsync($"Emote Invalid ({emoteId}), returned null");
+                await ReplyAsync($"Emote ({emoteString}) does not exist in this server.");
                 return;
             }
+            // We make sure we have access to it on this server
+            GuildEmote emote = await Context.Guild.GetEmoteAsync(tempEmote.Id);
+            if (emote == null)
+            {
+                await ReplyAsync($"Failed to use ({emoteString}), unknown error.");
+                return;
+            }
+
+            if (name == string.Empty)
+                name = emote.Name;
 
             // Add our Reaction Role
             _reactRoleService.NewMessage.Reactions ??= new List<ReactRole>();
@@ -217,6 +226,7 @@ namespace DiscordBot.Modules
             }
             _reactRoleService.ReactSettings.UserReactRoleList.Remove(foundMessage);
             await ReplyAsync("Deleted the configuration for that ID, use \"!reactrole restart\" to enable these changes.");
+            await _logging.LogAction($"{Context.User} deleted the reactionrole configuration for `{foundMessage}`.");
         }
 
 
@@ -253,6 +263,7 @@ namespace DiscordBot.Modules
         [Command("Restart"), Priority(90)]
         public async Task ReactRestartService()
         {
+            await _logging.LogAction($"{Context.User} restarted the ReactionRole service.");
             await ReplyAsync("Reaction role service is restarting.");
             var results = await _reactRoleService.Restart();
             if (results)

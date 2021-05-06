@@ -1,16 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using DiscordBot.Extensions;
 using DiscordBot.Settings.Deserialized;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Timers;
 
 namespace DiscordBot.Services
 {
@@ -120,10 +116,23 @@ namespace DiscordBot.Services
 
             // Get our Emotes
             var serverGuild = _client.GetGuild(_settings.guildId);
-            foreach (var reactMessage in ReactSettings.UserReactRoleList)
+            if (serverGuild == null)
             {
+                Console.WriteLine("ReactRoleService failed to start, could not return guild information.");
+                await _loggingService.LogAction($"ReactRoleService failed to start.");
+                return false;
+            }
+            for (int messageIndex = 0; messageIndex < ReactSettings.UserReactRoleList.Count; messageIndex++)
+            {
+                UserReactMessage reactMessage = ReactSettings.UserReactRoleList[messageIndex];
                 // Channel used for message
                 var messageChannel = _client.GetChannel(reactMessage.ChannelId) as IMessageChannel;
+                if (messageChannel == null)
+                {
+                    Console.WriteLine($"ReactRoleService: Channel {reactMessage.ChannelId} does not exist.");
+                    continue;
+                }
+                
                 // Get The Message for this group of reactions
                 if (!_reactMessages.ContainsKey(reactMessage.MessageId))
                 { 
@@ -131,21 +140,31 @@ namespace DiscordBot.Services
                 }
                 for (int i = 0; i < reactMessage.RoleCount(); i++)
                 {
+                    // We check if emote exists
+                    var emote = serverGuild.Emotes.First(guildEmote => guildEmote.Id == reactMessage.Reactions[i].EmojiId);
+                    if (emote == null)
+                    {
+                        Console.WriteLine($"Could not add Emoji Name:\"{reactMessage.Reactions[i].Name}\" ID:`{reactMessage.Reactions[i].EmojiId}` as it does not appear to exist? Ignoring.");
+                        continue;
+                    }
+                    
                     // Add a Reference to our Roles to simplify lookup
                     if (!_guildRoles.ContainsKey(reactMessage.Reactions[i].EmojiId))
                     {
                         _guildRoles.Add(reactMessage.Reactions[i].EmojiId, serverGuild.GetRole(reactMessage.Reactions[i].RoleId));
                     }
+                    //TODO This appears to be bork?
                     // Same for the Emojis, saves look-arounds
                     if (!_guildEmotes.ContainsKey(reactMessage.Reactions[i].EmojiId))
                     {
-                        _guildEmotes.Add(reactMessage.Reactions[i].EmojiId, await serverGuild.GetEmoteAsync(reactMessage.Reactions[i].EmojiId));
+                        _guildEmotes.Add(reactMessage.Reactions[i].EmojiId, emote);
                     }
                     // If our message doesn't have the emote, we add it.
                     if (!_reactMessages[reactMessage.MessageId].Reactions.ContainsKey(_guildEmotes[reactMessage.Reactions[i].EmojiId]))
                     {
+                        Console.WriteLine($"Added Reaction to Message {reactMessage.MessageId} which was missing.");
                         // We could add these in bulk, but that'd require a bit more setup
-                        await _reactMessages[reactMessage.MessageId].AddReactionAsync(_guildEmotes[reactMessage.Reactions[i].EmojiId]);
+                        await _reactMessages[reactMessage.MessageId].AddReactionAsync((IEmote) emote);
                     }
                 }
             }
@@ -223,7 +242,7 @@ namespace DiscordBot.Services
             {
                 for (int i = userData.RolesToRemove.Count - 1; i >= 0; i--)
                 {
-                    if (user.RoleIds.Contains(userData.RolesToRemove[i].Id))
+                    if (!user.RoleIds.Contains(userData.RolesToRemove[i].Id))
                     {
                         userData.RolesToRemove.RemoveAt(i);
                     }
