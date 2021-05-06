@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.WebSocket;
 using DiscordBot.Settings.Deserialized;
 using Newtonsoft.Json;
@@ -212,7 +212,7 @@ namespace DiscordBot.Services
         /// Updates users roles in bulk, this prevents discord from crying.
         /// We check the last time they tried to change the role (if they've clicked multiple) to save API calls, Discord will quickly complain if we hit them with to many requests.
         /// </summary>
-        private async void UpdateUserRoles(IGuildUser user)
+        private async Task UpdateUserRoles(IGuildUser user)
         {
             //TODO Implement a watcher, prevent people from changing their roles every few minutes. Not super important.
             if (!_pendingUserUpdate.TryGetValue(user, out var userData)) return;
