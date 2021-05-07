@@ -80,7 +80,6 @@ namespace DiscordBot
                 .AddSingleton<PublisherService>()
                 .AddSingleton<FeedService>()
                 .AddSingleton<UpdateService>()
-                .AddSingleton<AudioService>()
                 .AddSingleton<CurrencyService>()
                 .AddSingleton<ReactRoleService>()
                 .BuildServiceProvider();
