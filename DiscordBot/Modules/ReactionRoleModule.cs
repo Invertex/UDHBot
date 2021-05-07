@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -116,7 +116,7 @@ namespace DiscordBot.Modules
                 await ReplyAsync("No message is being prepared, use NewMessage first!");
                 return;
             }
-            
+
             // If empty we check the message for the role passed in, if it exists we remove that role from the message.
             if (emoteString == string.Empty)
             {

@@ -10,7 +10,7 @@ namespace DiscordBot.Skin
         public override Drawables GetDrawables(ProfileData data)
         {
             PointD textPosition = new PointD(StartX, StartY);
-            
+
             // Reflection to convert stuff like {Level} to data.Level
             var reg = new Regex(@"(?<=\{)(.*?)(?=\})");
             var mc = reg.Matches(Text);
@@ -18,7 +18,7 @@ namespace DiscordBot.Skin
             {
                 var prop = typeof(ProfileData).GetProperty(match.ToString());
                 if (prop == null) continue;
-                var value = (dynamic) prop.GetValue(data, null);
+                var value = (dynamic)prop.GetValue(data, null);
                 Text = Text.Replace("{" + match + "}", value.ToString());
             }
             /* ALL properties of ProfileData.cs can be used!

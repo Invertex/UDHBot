@@ -13,7 +13,7 @@ namespace DiscordBot.Services
     public class CommandHandlingService
     {
         public static string CommandList;
-        
+
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commandService;
         private readonly IServiceProvider _services;
@@ -30,7 +30,7 @@ namespace DiscordBot.Services
             _commandService = commandService;
             _services = services;
             _settings = settings;
-            
+
             /*
              Event subscriptions
             */
@@ -49,17 +49,17 @@ namespace DiscordBot.Services
             {
                 commandList.Append($"**role {c.Name}** : {c.Summary}\n");
             }
-            
+
             commandList.Append("\n");
             commandList.Append("__General Commands__\n");
-            
+
             foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name))
             {
                 commandList.Append($"**{c.Name}** : {c.Summary}\n");
             }
 
             CommandList = commandList.ToString();
-            
+
             // Generates an individual command list for the Reaction Roles
             ReactionRoleModule.GenerateCommandList(_commandService);
         }

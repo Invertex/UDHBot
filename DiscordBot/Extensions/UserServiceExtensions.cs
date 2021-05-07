@@ -141,7 +141,7 @@ namespace DiscordBot.Extensions
                 return int.MinValue;
             }
 
-            return (int) val;
+            return (int)val;
         }
     }
 }

@@ -7,10 +7,12 @@ using DiscordBot.Extensions;
 // ReSharper disable all UnusedMember.Local
 namespace DiscordBot.Modules
 {
-    public class TicketModule : ModuleBase {
+    public class TicketModule : ModuleBase
+    {
         private Settings.Deserialized.Settings _settings;
 
-        public TicketModule (Settings.Deserialized.Settings settings) {
+        public TicketModule(Settings.Deserialized.Settings settings)
+        {
             _settings = settings;
         }
 
@@ -31,14 +33,15 @@ namespace DiscordBot.Modules
 
             var channels = await Context.Guild.GetChannelsAsync();
             // Check if channel with same name already exist in the Complaint Category (if it exists).
-            if (channels.Any(channel => channel.Name == channelName && (!categoryExist || ((INestedChannel) channel).CategoryId == _settings.ComplaintCategoryId)))
+            if (channels.Any(channel => channel.Name == channelName && (!categoryExist || ((INestedChannel)channel).CategoryId == _settings.ComplaintCategoryId)))
             {
                 await ReplyAsync($"{Context.User.Mention}, you already have an open complaint! Please use that channel!")
                     .DeleteAfterSeconds(15);
                 return;
             }
 
-            var newChannel = await Context.Guild.CreateTextChannelAsync(channelName, x => {
+            var newChannel = await Context.Guild.CreateTextChannelAsync(channelName, x =>
+            {
                 if (categoryExist) x.CategoryId = _settings.ComplaintCategoryId;
             });
 
@@ -74,14 +77,16 @@ namespace DiscordBot.Modules
             var currentChannel = await Context.Guild.GetChannelAsync(Context.Channel.Id);
 
             // Remove the override permissions for the user who opened the complaint.
-            foreach (var a in currentChannel.PermissionOverwrites) {
+            foreach (var a in currentChannel.PermissionOverwrites)
+            {
                 if (a.TargetType != PermissionTarget.User) continue;
 
                 var user = await Context.Guild.GetUserAsync(a.TargetId);
                 await currentChannel.RemovePermissionOverwriteAsync(user);
             }
 
-            await currentChannel.ModifyAsync(x => {
+            await currentChannel.ModifyAsync(x =>
+            {
                 if (categoryExist) x.CategoryId = _settings.ClosedComplaintCategoryId;
                 x.Name = _settings.ClosedComplaintChannelPrefix + x.Name;
             });

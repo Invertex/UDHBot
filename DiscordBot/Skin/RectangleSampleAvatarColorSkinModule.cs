@@ -31,11 +31,11 @@ namespace DiscordBot.Skin
             //basically we let magick to choose what the main color by resizing to 1x1
             MagickImage copy = new MagickImage(dataPicture);
             copy.Resize(1, 1);
-            MagickColor color = copy.GetPixels()[0, 0].ToColor();            
-            
+            MagickColor color = copy.GetPixels()[0, 0].ToColor();
+
             if (WhiteFix && color.R + color.G + color.B > 650)
-                            color = new MagickColor(DefaultColor);
-            
+                color = new MagickColor(DefaultColor);
+
             return color;
         }
     }

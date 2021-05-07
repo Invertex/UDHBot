@@ -164,7 +164,7 @@ namespace DiscordBot.Services
                     {
                         Console.WriteLine($"Added Reaction to Message {reactMessage.MessageId} which was missing.");
                         // We could add these in bulk, but that'd require a bit more setup
-                        await _reactMessages[reactMessage.MessageId].AddReactionAsync((IEmote) emote);
+                        await _reactMessages[reactMessage.MessageId].AddReactionAsync((IEmote)emote);
                     }
                 }
             }

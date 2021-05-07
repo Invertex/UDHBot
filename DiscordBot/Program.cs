@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
 using Discord;
@@ -18,7 +18,7 @@ namespace DiscordBot
         private CommandService _commandService;
         private IServiceProvider _services;
         private CommandHandlingService _commandHandlingService;
-      
+
         private static PayWork _payWork;
         private static Rules _rules;
         private static Settings.Deserialized.Settings _settings;
@@ -33,18 +33,21 @@ namespace DiscordBot
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Verbose, AlwaysDownloadUsers = true, MessageCacheSize = 50
+                LogLevel = LogSeverity.Verbose,
+                AlwaysDownloadUsers = true,
+                MessageCacheSize = 50
             });
-            
+
             _commandService = new CommandService(new CommandServiceConfig
             {
-                CaseSensitiveCommands = false, DefaultRunMode = RunMode.Async
+                CaseSensitiveCommands = false,
+                DefaultRunMode = RunMode.Async
             });
 
             _services = ConfigureServices();
             _commandHandlingService = _services.GetRequiredService<CommandHandlingService>();
             _services.GetRequiredService<ModerationService>();
-            
+
             await _commandHandlingService.Initialize();
 
             _client.Log += Logger;
@@ -61,7 +64,7 @@ namespace DiscordBot
 
             await Task.Delay(-1);
         }
-        
+
         private IServiceProvider ConfigureServices()
         {
             return new ServiceCollection()
@@ -110,7 +113,7 @@ namespace DiscordBot
             Console.ForegroundColor = cc;
             return Task.CompletedTask;
         }
-      
+
         private static void DeserializeSettings()
         {
             using (var file = File.OpenText(@"Settings/Settings.json"))

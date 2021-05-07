@@ -30,7 +30,7 @@ namespace DiscordBot
         {
             SocketGuildUser user = context.Message.Author as SocketGuildUser;
             Settings.Deserialized.Settings settings = services.GetRequiredService<Settings.Deserialized.Settings>();
-            
+
             if (user.Roles.Any(x => x.Id == settings.ModeratorRoleId))
             {
                 return Task.FromResult(PreconditionResult.FromSuccess());

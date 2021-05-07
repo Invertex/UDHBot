@@ -6,25 +6,25 @@ namespace DiscordBot.Settings.Deserialized
     {
         public string Token { get; set; }
         public string Invite { get; set; }
-        
+
         // Used for Asset Publisher
         public string Gmail { get; set; }
         public string GmailUsername { get; set; }
         public string GmailPassword { get; set; }
-        
+
         public string DbConnectionString { get; set; }
 
         public string ServerRootPath { get; set; }
 
         public char Prefix { get; set; }
         public ulong guildId { get; set; }
-        
+
         public UserAssignableRoles AllRoles { get; set; }
-        
+
         public GeneralChannel GeneralChannel { get; set; }
-        
+
         public BotAnnouncementChannel BotAnnouncementChannel { get; set; }
-        
+
         public AnnouncementsChannel AnnouncementsChannel { get; set; }
 
         public BotCommandsChannel BotCommandsChannel { get; set; }
@@ -37,7 +37,7 @@ namespace DiscordBot.Settings.Deserialized
         public WorkForHireChannel LookingToHire { get; set; }
         public WorkForHireChannel LookingForWork { get; set; }
         public CollaborationChannel CollaborationChannel { get; set; }
-        
+
         public ulong MutedRoleId { get; set; }
         public ulong SubsReleasesRoleId { get; set; }
         public ulong SubsNewsRoleId { get; set; }
@@ -61,10 +61,10 @@ namespace DiscordBot.Settings.Deserialized
         public string Desc { get; set; }
         public List<string> Roles { get; set; }
     }
-    
-    public class UserAssignableRoles : RoleGroup {};
+
+    public class UserAssignableRoles : RoleGroup { };
     #endregion
-    
+
     #region Channel Information
     // Channel Information. Description and Channel ID
     public class ChannelInfo
@@ -72,14 +72,14 @@ namespace DiscordBot.Settings.Deserialized
         public string Desc { get; set; }
         public ulong Id { get; set; }
     }
-    
-    public class GeneralChannel : ChannelInfo {};
-    public class BotAnnouncementChannel : ChannelInfo {};
-    public class AnnouncementsChannel : ChannelInfo {};
-    public class BotCommandsChannel : ChannelInfo {};
-    public class UnityNewsChannel : ChannelInfo {};
-    public class UnityReleasesChannel : ChannelInfo {};
-    public class WorkForHireChannel : ChannelInfo {};
-    public class CollaborationChannel : ChannelInfo {};
+
+    public class GeneralChannel : ChannelInfo { };
+    public class BotAnnouncementChannel : ChannelInfo { };
+    public class AnnouncementsChannel : ChannelInfo { };
+    public class BotCommandsChannel : ChannelInfo { };
+    public class UnityNewsChannel : ChannelInfo { };
+    public class UnityReleasesChannel : ChannelInfo { };
+    public class WorkForHireChannel : ChannelInfo { };
+    public class CollaborationChannel : ChannelInfo { };
     #endregion
 }

@@ -15,13 +15,13 @@ namespace DiscordBot.Data
     {
         public Page Page { get; set; }
     }
-    
+
     public class Page
     {
         public List<AiringSchedules> airingSchedules { get; set; }
         public List<Media> media { get; set; }
     }
-    
+
     public class AiringSchedules
     {
         public int? id { get; set; }
@@ -29,7 +29,7 @@ namespace DiscordBot.Data
         public int? episode { get; set; }
         public Media media { get; set; }
     }
-    
+
     public class Media
     {
         public int? id { get; set; }
@@ -58,7 +58,7 @@ namespace DiscordBot.Data
         public string large { get; set; }
         public string medium { get; set; }
     }
-    
+
     public class MediaTitle
     {
         public string romaji { get; set; }

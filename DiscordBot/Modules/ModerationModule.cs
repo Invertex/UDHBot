@@ -56,7 +56,7 @@ namespace DiscordBot.Modules
             await _logging.LogAction(
                 $"{Context.User.Username} has muted {u.Username} ({u.Id}) for {Utils.FormatTime(arg)} ({arg} seconds).");
 
-            MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
+            MutedUsers.AddCooldown(u.Id, seconds: (int)arg, ignoreExisting: true);
 
             await MutedUsers.AwaitCooldown(u.Id);
             await reply.DeleteAsync();
@@ -77,7 +77,7 @@ namespace DiscordBot.Modules
                     return;
                 }
 
-                await MuteUser(user, (uint) Math.Round((dt - DateTime.Now).TotalSeconds), messages);
+                await MuteUser(user, (uint)Math.Round((dt - DateTime.Now).TotalSeconds), messages);
             }
             catch (Exception)
             {
@@ -114,7 +114,7 @@ namespace DiscordBot.Modules
                 await dm.SendMessageAsync(
                     $"You have been muted from UDC for **{Utils.FormatTime(arg)}** for the following reason : **{message}**. " +
                     $"This is not appealable and any tentative to avoid it will result in your permanent ban.", false,
-                    null, new RequestOptions {RetryMode = RetryMode.RetryRatelimit, Timeout = 6000});
+                    null, new RequestOptions { RetryMode = RetryMode.RetryRatelimit, Timeout = 6000 });
             }
             catch (Discord.Net.HttpException)
             {
@@ -125,7 +125,7 @@ namespace DiscordBot.Modules
                 await _logging.LogAction($"User {user.Username} has DM blocked and the mute reason couldn't be sent.", true, false);
             }
 
-            MutedUsers.AddCooldown(u.Id, seconds: (int) arg, ignoreExisting: true);
+            MutedUsers.AddCooldown(u.Id, seconds: (int)arg, ignoreExisting: true);
             await MutedUsers.AwaitCooldown(u.Id);
 
             await UnmuteUser(user, true);
@@ -206,11 +206,11 @@ namespace DiscordBot.Modules
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");
-            var _ =Task.Delay(5000).ContinueWith(t =>
-            {
-                m.DeleteAsync();
-                _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
-            });
+            var _ = Task.Delay(5000).ContinueWith(t =>
+             {
+                 m.DeleteAsync();
+                 _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
+             });
         }
 
         [Command("clear"), Summary("Remove messages until the message at the specified id")]
@@ -254,7 +254,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task Debug(IUser user)
         {
-            var guildUser = (IGuildUser) user;
+            var guildUser = (IGuildUser)user;
             await ReplyAsync(guildUser.RoleIds.Count.ToString());
         }
 
@@ -369,7 +369,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task React(ulong msgId, params string[] emojis)
         {
-            IUserMessage msg = (IUserMessage) await Context.Channel.GetMessageAsync(msgId);
+            IUserMessage msg = (IUserMessage)await Context.Channel.GetMessageAsync(msgId);
             await Context.Message.DeleteAsync();
             foreach (string emoji in emojis)
             {
@@ -385,7 +385,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task React(params string[] emojis)
         {
-            IUserMessage msg = (IUserMessage) (await Context.Channel.GetMessagesAsync(2).FlattenAsync()).Last();
+            IUserMessage msg = (IUserMessage)(await Context.Channel.GetMessagesAsync(2).FlattenAsync()).Last();
 
             await Context.Message.DeleteAsync();
             foreach (string emoji in emojis)
@@ -403,7 +403,7 @@ namespace DiscordBot.Modules
         public async Task ClosePoll(IMessageChannel channel, ulong messageId, params string[] additionalNotes)
         {
             string additionalNote = String.Join(' ', additionalNotes);
-            var message = (IUserMessage) await channel.GetMessageAsync(messageId);
+            var message = (IUserMessage)await channel.GetMessageAsync(messageId);
             var reactions = message.Reactions;
 
             string reactionCount = "";
@@ -437,7 +437,7 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task DbSync(IUser user)
         {
-            await _database.AddNewUser((SocketGuildUser) user);
+            await _database.AddNewUser((SocketGuildUser)user);
         }
     }
 }

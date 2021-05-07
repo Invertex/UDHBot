@@ -212,7 +212,7 @@ namespace DiscordBot.Services
                     uint rand;
                     do
                     {
-                        rand = (uint) _random.Next((int) count);
+                        rand = (uint)_random.Next((int)count);
                         id = _databaseService.GetPublisherAd(rand).userId;
                     } while (_botData.LastPublisherId.Contains(id));
 
@@ -313,7 +313,7 @@ namespace DiscordBot.Services
                     foreach (string s in pagesInput.Split("],["))
                     {
                         string[] ps = s.Split(",");
-                        list.Add(new string[] {ps[0].Replace("\"", ""), ps[1].Replace("\"", "")});
+                        list.Add(new string[] { ps[0].Replace("\"", ""), ps[1].Replace("\"", "") });
                         //Console.WriteLine(ps[0].Replace("\"", "") + "," + ps[1].Replace("\"", ""));
                     }
 
@@ -396,7 +396,7 @@ namespace DiscordBot.Services
             {
                 JObject job = JObject.Parse(wikiSearchResponse.Text);
 
-                if(job.TryGetValue("query", out var query))
+                if (job.TryGetValue("query", out var query))
                 {
                     var pages = JsonConvert.DeserializeObject<List<WikiPage>>(job[query.Path]["pages"].ToString(), new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
 
@@ -408,7 +408,7 @@ namespace DiscordBot.Services
                         const string referToString = "may refer to:...";
                         int referToIndex = page.Extract.IndexOf(referToString);
                         //If a multi-refer result was given, reformat title to indicate this and strip the "may refer to" portion from the body
-                        if(referToIndex > 0)
+                        if (referToIndex > 0)
                         {
                             int splitIndex = referToIndex + referToString.Length;
                             page.Title = page.Extract.Substring(0, splitIndex - 4); //-4 to strip the useless characters since this will be a title

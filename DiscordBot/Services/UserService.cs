@@ -62,7 +62,7 @@ namespace DiscordBot.Services
 
         //TODO Add custom commands for user after (30karma ?/limited to 3 ?)
 
-        public UserService(DiscordSocketClient client,DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
+        public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
             Settings.Deserialized.Settings settings, UserSettings userSettings, Rules rules)
         {
             _client = client;
@@ -161,7 +161,9 @@ namespace DiscordBot.Services
         {
             UserData data = new UserData
             {
-                MutedUsers = _mutedUsers, ThanksReminderCooldown = _thanksReminderCooldown, CodeReminderCooldown = _codeReminderCooldown
+                MutedUsers = _mutedUsers,
+                ThanksReminderCooldown = _thanksReminderCooldown,
+                CodeReminderCooldown = _codeReminderCooldown
             };
             _updateService.SetUserData(data);
         }
@@ -192,7 +194,7 @@ namespace DiscordBot.Services
             bonusXp += baseXp * (1f + (karma / 100f));
 
             //Reduce XP for members with no role
-            if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
+            if (((IGuildUser)messageParam.Author).RoleIds.Count < 2)
                 baseXp *= .9f;
 
             //Lower xp for difference between level and karma
@@ -203,16 +205,16 @@ namespace DiscordBot.Services
                 reduceXp = 1 - Math.Min(.9f, (level - karma) * .05f);
             }
 
-            int xpGain = (int) Math.Round((baseXp + bonusXp) * reduceXp);
+            int xpGain = (int)Math.Round((baseXp + bonusXp) * reduceXp);
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
             if (!await _databaseService.UserExists(userId))
-                await _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
+                await _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
 
             _databaseService.AddUserXp(userId, xpGain);
-            _databaseService.AddUserUdc(userId, (int) Math.Round(xpGain * .15f));
+            _databaseService.AddUserUdc(userId, (int)Math.Round(xpGain * .15f));
 
             _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
@@ -229,7 +231,7 @@ namespace DiscordBot.Services
         /// <returns></returns>
         public async Task LevelUp(SocketMessage messageParam, ulong userId)
         {
-            int level = (int) (_databaseService.GetUserLevel(userId));
+            int level = (int)(_databaseService.GetUserLevel(userId));
             uint xp = _databaseService.GetUserXp(userId);
 
             double xpLow = GetXpLow(level);
@@ -278,13 +280,13 @@ namespace DiscordBot.Services
             int karma = _databaseService.GetUserKarma(userId);
             uint level = _databaseService.GetUserLevel(userId);
             uint karmaRank = _databaseService.GetUserKarmaRank(userId);
-            double xpLow = GetXpLow((int) level);
-            double xpHigh = GetXpHigh((int) level);
+            double xpLow = GetXpLow((int)level);
+            double xpHigh = GetXpHigh((int)level);
 
-            uint xpShown = (uint) (xpTotal - xpLow);
-            uint maxXpShown = (uint) (xpHigh - xpLow);
+            uint xpShown = (uint)(xpTotal - xpLow);
+            uint maxXpShown = (uint)(xpHigh - xpLow);
 
-            float percentage = (float) xpShown / maxXpShown;
+            float percentage = (float)xpShown / maxXpShown;
 
             var u = user as IGuildUser;
             IRole mainRole = null;
@@ -349,7 +351,7 @@ namespace DiscordBot.Services
                     }
                 }
 
-                profile.Picture.Resize((int) skin.AvatarSize, skin.AvatarSize);
+                profile.Picture.Resize((int)skin.AvatarSize, skin.AvatarSize);
                 profileCard.Add(background);
 
                 foreach (var layer in skin.Layers)
@@ -360,16 +362,16 @@ namespace DiscordBot.Services
                             ? profile.Picture
                             : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
 
-                        background.Composite(image, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
+                        background.Composite(image, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
                     }
 
-                    MagickImage l = new MagickImage(MagickColors.Transparent, (int) layer.Width, (int) layer.Height);
+                    MagickImage l = new MagickImage(MagickColors.Transparent, (int)layer.Width, (int)layer.Height);
                     foreach (var module in layer.Modules)
                     {
                         module.GetDrawables(profile).Draw(l);
                     }
 
-                    background.Composite(l, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
+                    background.Composite(l, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
                 }
 
                 using (IMagickImage result = profileCard.Mosaic())
@@ -420,7 +422,8 @@ namespace DiscordBot.Services
             ulong guildId = channel.Guild.Id;
 
             //Make sure its in the UDH server
-            if (guildId != _settings.guildId) {
+            if (guildId != _settings.guildId)
+            {
                 return;
             }
 
@@ -495,11 +498,11 @@ namespace DiscordBot.Services
 
                 _canEditThanks.Remove(messageParam.Id);
 
-//Don't give karma cooldown if user only mentioned himself or the bot or both
+                //Don't give karma cooldown if user only mentioned himself or the bot or both
                 if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2))
                     return;
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
-//Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
+                //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
@@ -527,12 +530,12 @@ namespace DiscordBot.Services
                 return;
             ulong userId = messageParam.Author.Id;
 
-//Simple check to cover most large code posting cases without being an issue for most non-code messages
-// TODO Perhaps work out a more advanced Regex based check at a later time
+            //Simple check to cover most large code posting cases without being an issue for most non-code messages
+            // TODO Perhaps work out a more advanced Regex based check at a later time
             if (!CodeReminderCooldown.HasUser(userId))
             {
                 string content = messageParam.Content;
-//Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
+                //Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
                 bool foundCodeTags = Regex.Match(content, ".*?`[^`].*?`", RegexOptions.Singleline).Success;
                 bool foundCurlyFries = (content.Contains("{") && content.Contains("}"));
                 if (!foundCodeTags && foundCurlyFries)
@@ -560,7 +563,7 @@ namespace DiscordBot.Services
 
         public async Task ScoldForAtEveryoneUsage(SocketMessage messageParam)
         {
-            if (messageParam.Author.IsBot || ((IGuildUser) messageParam.Author).GuildPermissions.MentionEveryone)
+            if (messageParam.Author.IsBot || ((IGuildUser)messageParam.Author).GuildPermissions.MentionEveryone)
                 return;
             ulong userId = messageParam.Author.Id;
             string content = messageParam.Content;
@@ -637,8 +640,8 @@ namespace DiscordBot.Services
             DateTime.TryParse(_databaseService.GetUserJoinDate(user.Id), out joinDate);
             TimeSpan timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
-                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +
-                $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double)timeStayed.Days).ToString() + " days" : " ")}" +
+                $" {Math.Floor((double)timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
             _databaseService.DeleteUser(user.Id);
         }
 
@@ -649,79 +652,79 @@ namespace DiscordBot.Services
             return _client.Latency;
         }
 
-// TODO Response to people asking if anyone is around to help.
-/*
-public async Task UselessAskingCheck(SocketMessage messageParam)
-{
-    if (messageParam.Author.IsBot)
-        return;
-
-    ulong userId = messageParam.Author.Id;
-    string content = messageParam.Content;
-}*/
-
-//TODO If Discord ever enables a hook that allows modifying a message during creation of it, then this could be put to use...
-// Disabled for now.
-/*
-public async Task EscapeMessage(SocketMessage messageParam)
-{
-    if (messageParam.Author.IsBot)
-        return;
-
-    ulong userId = messageParam.Author.Id;
-    string content = messageParam.Content;
-    //Escape all \, ~, _, ` and * character's so they don't trigger any Discord formatting.
-    content = content.EscapeDiscordMarkup();
-}*/
-       /* public async Task<string> SubtitleImage(IMessage message, string text)
+        // TODO Response to people asking if anyone is around to help.
+        /*
+        public async Task UselessAskingCheck(SocketMessage messageParam)
         {
-            var attachments = message.Attachments;
-            Attachment file = null;
-            Image<Rgba32> image = null;
-            foreach (var a in attachments)
-            {
-                if (Regex.Match(a.Filename, @"(.*?)\.(jpg|jpeg|png|gif)$").Success)
-                    file = (Attachment) a;
-            }
+            if (messageParam.Author.IsBot)
+                return;
 
-            if (file == null)
-                return "";
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    using (HttpResponseMessage response = await client.GetAsync(file.Url))
-                    {
-                        response.EnsureSuccessStatusCode();
-                        byte[] reader = await response.Content.ReadAsByteArrayAsync();
-                        image = ImageSharp.Image.Load(reader);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Failed to load image : " + e);
-                return "";
-            }
-
-            float beginHeight = image.Height - (image.Height * 0.3f);
-            float beginWidth = (image.Width * .10f);
-            float totalWidth = image.Width * .8f;
-
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center,});
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight - 4),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight + 4),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.White, new PointF(beginWidth, beginHeight),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-            string path = $"{_settings.ServerRootPath}/images/subtitles/{message.Author}-{message.Id}.png";
-
-            image.Save(path, new JpegEncoder {Quality = 95});
-            return path;
+            ulong userId = messageParam.Author.Id;
+            string content = messageParam.Content;
         }*/
+
+        //TODO If Discord ever enables a hook that allows modifying a message during creation of it, then this could be put to use...
+        // Disabled for now.
+        /*
+        public async Task EscapeMessage(SocketMessage messageParam)
+        {
+            if (messageParam.Author.IsBot)
+                return;
+
+            ulong userId = messageParam.Author.Id;
+            string content = messageParam.Content;
+            //Escape all \, ~, _, ` and * character's so they don't trigger any Discord formatting.
+            content = content.EscapeDiscordMarkup();
+        }*/
+        /* public async Task<string> SubtitleImage(IMessage message, string text)
+         {
+             var attachments = message.Attachments;
+             Attachment file = null;
+             Image<Rgba32> image = null;
+             foreach (var a in attachments)
+             {
+                 if (Regex.Match(a.Filename, @"(.*?)\.(jpg|jpeg|png|gif)$").Success)
+                     file = (Attachment) a;
+             }
+
+             if (file == null)
+                 return "";
+             try
+             {
+                 using (HttpClient client = new HttpClient())
+                 {
+                     using (HttpResponseMessage response = await client.GetAsync(file.Url))
+                     {
+                         response.EnsureSuccessStatusCode();
+                         byte[] reader = await response.Content.ReadAsByteArrayAsync();
+                         image = ImageSharp.Image.Load(reader);
+                     }
+                 }
+             }
+             catch (Exception e)
+             {
+                 Console.WriteLine("Failed to load image : " + e);
+                 return "";
+             }
+
+             float beginHeight = image.Height - (image.Height * 0.3f);
+             float beginWidth = (image.Width * .10f);
+             float totalWidth = image.Width * .8f;
+
+             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight),
+                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center,});
+             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight),
+                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
+             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight - 4),
+                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
+             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight + 4),
+                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
+             image.DrawText(text, _subtitlesWhiteFont, Rgba32.White, new PointF(beginWidth, beginHeight),
+                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
+             string path = $"{_settings.ServerRootPath}/images/subtitles/{message.Author}-{message.Id}.png";
+
+             image.Save(path, new JpegEncoder {Quality = 95});
+             return path;
+         }*/
     }
 }

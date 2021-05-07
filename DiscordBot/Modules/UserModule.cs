@@ -165,18 +165,18 @@ namespace DiscordBot.Modules
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.Title = "Top 10 Users";
             embedBuilder.Description = $"The best of the best, by {labelName}.";
-            
+
             StringBuilder rank = new StringBuilder();
             StringBuilder nick = new StringBuilder();
             StringBuilder level = new StringBuilder();
             for (int i = 0; i < data.Count; i++)
             {
-                rank.Append($"#{(i+1)}\n");
+                rank.Append($"#{(i + 1)}\n");
                 // rank.Append($"{(i+1)}{i switch { 0 => "st", 1 => "nd", 2 => "rd", _ => "th" }}\n");
                 nick.Append($"<@{data[i].userID}>\n");
                 level.Append($"{data[i].value.ToString()}\n");
             }
-            
+
             embedBuilder.AddField("Rank", $"**{rank}**", true);
             embedBuilder.AddField("User", nick, true);
             embedBuilder.AddField(labelName, $"**{level}**", true);
@@ -207,14 +207,17 @@ namespace DiscordBot.Modules
         [Command("profile"), Summary("Display profile card of mentionned user. Syntax : !profile @user")]
         public async Task DisplayProfile(IUser user)
         {
-            try {
-            IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
+            try
+            {
+                IUserMessage profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
 
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
-            await Task.Delay(TimeSpan.FromMinutes(3d));
-            await profile.DeleteAsync();
-            } catch (Exception e) {
+                await Task.Delay(1000);
+                await Context.Message.DeleteAsync();
+                await Task.Delay(TimeSpan.FromMinutes(3d));
+                await profile.DeleteAsync();
+            }
+            catch (Exception e)
+            {
                 Console.Error.WriteLine(e);
             }
         }
@@ -334,7 +337,7 @@ namespace DiscordBot.Modules
         {
             var codeComplete = Resources.PaizaCodeTemplate.Replace("{code}", string.Join(" ", code));
 
-            var parameters = new Dictionary<string, string> {{"source_code", codeComplete}, {"language", "csharp"}, {"api_key", "guest"}};
+            var parameters = new Dictionary<string, string> { { "source_code", codeComplete }, { "language", "csharp" }, { "api_key", "guest" } };
 
             var content = new FormUrlEncodedContent(parameters);
 
@@ -402,7 +405,7 @@ namespace DiscordBot.Modules
         public async Task SlapUser(params IUser[] users)
         {
             StringBuilder sb = new StringBuilder();
-            string[] slaps = {"trout", "duck", "truck"};
+            string[] slaps = { "trout", "duck", "truck" };
             var random = new Random();
 
             sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
@@ -424,7 +427,7 @@ namespace DiscordBot.Modules
         public async Task CoinFlip()
         {
             Random rand = new Random();
-            var coin = new[] {"Heads", "Tails"};
+            var coin = new[] { "Heads", "Tails" };
 
             await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}** !");
             await Task.Delay(1000);
@@ -511,7 +514,7 @@ namespace DiscordBot.Modules
         //x         await Context.Message.DeleteAsync();
         //x         return;
         //x     }
-        //x 
+        //x
         //x     (bool, string) verif = await _publisherService.VerifyPackage(packageId);
         //x     await ReplyAsync(verif.Item2);
         //x }
@@ -896,7 +899,7 @@ namespace DiscordBot.Modules
             {
                 string message =
                     $"**{searchName}**'s birthdate: __**{birthdate.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}**__ " +
-                    $"({(int) ((DateTime.Now - birthdate).TotalDays / 365)}yo)";
+                    $"({(int)((DateTime.Now - birthdate).TotalDays / 365)}yo)";
 
                 await ReplyAsync(message).DeleteAfterTime(minutes: 3);
             }
@@ -1093,19 +1096,21 @@ namespace DiscordBot.Modules
                     "```");
             }
         }
-        
+
         [Command("ChristmasCompleted"), Summary("Gives rewards to people who complete the christmas event.")]
         public async Task UserCompleted(String message)
         {
 
             //Make sure they're the santa bot
-            if (Context.Message.Author.Id != 514979161144557600L) {
+            if (Context.Message.Author.Id != 514979161144557600L)
+            {
                 return;
             }
 
             long userId = 0;
 
-            if (!long.TryParse(message, out userId)) {
+            if (!long.TryParse(message, out userId))
+            {
                 await ReplyAsync("Invalid user id");
                 return;
             }

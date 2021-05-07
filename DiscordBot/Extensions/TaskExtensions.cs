@@ -26,7 +26,7 @@ namespace DiscordBot.Extensions
         public static Task RemoveAfterSeconds<T>(this ICollection<T> list, T val, double seconds) => list.RemoveAfterTimeSpan(val, TimeSpan.FromSeconds(seconds));
         public static Task RemoveAfterTimeSpan<T>(this ICollection<T> list, T val, TimeSpan timeSpan)
         {
-            return Task.Delay(timeSpan).ContinueWith( _ => list.Remove(val));
+            return Task.Delay(timeSpan).ContinueWith(_ => list.Remove(val));
         }
     }
 }

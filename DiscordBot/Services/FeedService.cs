@@ -31,8 +31,8 @@ namespace DiscordBot.Services
         {
             try
             {
-                HttpWebRequest webRequest = (HttpWebRequest) WebRequest.Create(url);
-                HttpWebResponse webResponse = (HttpWebResponse) webRequest.GetResponse();
+                HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
+                HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
                 Stream dataStream = webResponse.GetResponseStream();
                 StreamReader streamReader = new StreamReader(dataStream, Encoding.UTF8);
                 string response = streamReader.ReadToEnd();
@@ -52,14 +52,15 @@ namespace DiscordBot.Services
 
                         var role = _client.GetGuild(_settings.guildId).GetRole(roleID ?? 0);
                         bool wasRoleMentionable = false;
-                        if (role != null) {
+                        if (role != null)
+                        {
                             wasRoleMentionable = role.IsMentionable;
                             await role.ModifyAsync(properties => { properties.Mentionable = true; });
                             messageToSend = $"{role.Mention} {messageToSend}";
                         }
 
                         var postedMessage = await channel.SendMessageAsync(messageToSend);
-                        if (channel is SocketNewsChannel)await postedMessage.CrosspostAsync();
+                        if (channel is SocketNewsChannel) await postedMessage.CrosspostAsync();
 
                         if (role != null) await role.ModifyAsync(properties => { properties.Mentionable = wasRoleMentionable; });
                     }

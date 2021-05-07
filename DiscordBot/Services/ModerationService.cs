@@ -15,7 +15,7 @@ namespace DiscordBot.Services
             _client = client;
             _settings = settings;
             _loggingService = loggingService;
-            
+
             _client.MessageDeleted += MessageDeleted;
         }
 

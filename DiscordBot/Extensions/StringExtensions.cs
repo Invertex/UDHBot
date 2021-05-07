@@ -94,7 +94,7 @@ namespace DiscordBot.Extensions
         {
             return Resources.DiscordCodeBlock.Replace("{code}", code).Replace("{language}", language);
         }
-        
+
         public static string GetSHA256(this string input)
         {
             var hash = new SHA256CryptoServiceProvider();
@@ -105,7 +105,7 @@ namespace DiscordBot.Extensions
             // and create a string.
             StringBuilder sb = new StringBuilder();
 
-            // Loop through each byte of the hashed data 
+            // Loop through each byte of the hashed data
             // and format each one as a hexadecimal string.
             for (int i = 0; i < data.Length; i++)
             {
