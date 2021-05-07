@@ -42,21 +42,15 @@ namespace DiscordBot.Services
             // Discover all of the commands in this assembly and load them.
             await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
-            StringBuilder commandList = new StringBuilder();
+            var commandList = new StringBuilder();
 
             commandList.Append("__Role Commands__\n");
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role").OrderBy(c => c.Name))
-            {
-                commandList.Append($"**role {c.Name}** : {c.Summary}\n");
-            }
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role").OrderBy(c => c.Name)) commandList.Append($"**role {c.Name}** : {c.Summary}\n");
 
             commandList.Append("\n");
             commandList.Append("__General Commands__\n");
 
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name))
-            {
-                commandList.Append($"**{c.Name}** : {c.Summary}\n");
-            }
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name)) commandList.Append($"**{c.Name}** : {c.Summary}\n");
 
             CommandList = commandList.ToString();
 
@@ -71,8 +65,8 @@ namespace DiscordBot.Services
                 return;
 
             // Create a number to track where the prefix ends and the command begins
-            int argPos = 0;
-            char prefix = _settings.Prefix;
+            var argPos = 0;
+            var prefix = _settings.Prefix;
             // Determine if the message is a command, based on if it starts with '!' or a mention prefix
             if (!(message.HasCharPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
                 return;
@@ -81,10 +75,7 @@ namespace DiscordBot.Services
             // Execute the command. (result does not indicate a return value,
             // rather an object stating if the command executed successfully)
             var result = await _commandService.ExecuteAsync(context, argPos, _services);
-            if (!result.IsSuccess)
-            {
-                await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
-            }
+            if (!result.IsSuccess) await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
         }
     }
 }

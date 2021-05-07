@@ -13,16 +13,15 @@ namespace DiscordBot
 {
     public class Program
     {
-        private DiscordSocketClient _client;
-
-        private CommandService _commandService;
-        private IServiceProvider _services;
-        private CommandHandlingService _commandHandlingService;
-
         private static PayWork _payWork;
         private static Rules _rules;
         private static Settings.Deserialized.Settings _settings;
         private static UserSettings _userSettings;
+        private DiscordSocketClient _client;
+        private CommandHandlingService _commandHandlingService;
+
+        private CommandService _commandService;
+        private IServiceProvider _services;
 
         public static void Main(string[] args) =>
             new Program().MainAsync().GetAwaiter().GetResult();
@@ -65,9 +64,8 @@ namespace DiscordBot
             await Task.Delay(-1);
         }
 
-        private IServiceProvider ConfigureServices()
-        {
-            return new ServiceCollection()
+        private IServiceProvider ConfigureServices() =>
+            new ServiceCollection()
                 .AddSingleton(_settings)
                 .AddSingleton(_rules)
                 .AddSingleton(_payWork)
@@ -86,11 +84,10 @@ namespace DiscordBot
                 .AddSingleton<CurrencyService>()
                 .AddSingleton<ReactRoleService>()
                 .BuildServiceProvider();
-        }
 
         private static Task Logger(LogMessage message)
         {
-            ConsoleColor cc = Console.ForegroundColor;
+            var cc = Console.ForegroundColor;
             switch (message.Severity)
             {
                 case LogSeverity.Critical:

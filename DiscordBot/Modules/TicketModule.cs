@@ -17,9 +17,8 @@ namespace DiscordBot.Modules
         }
 
         /// <summary>
-        /// Creates a private channel only accessable by the mods, admins, and the user who used the command.
-        ///
-        /// One command, no args, simple.
+        ///     Creates a private channel only accessable by the mods, admins, and the user who used the command.
+        ///     One command, no args, simple.
         /// </summary>
         [Command("complain"), Alias("complains", "complaint"), Summary("Opens a private channel to complain. Syntax : !complain")]
         public async Task Complaint()
@@ -28,12 +27,12 @@ namespace DiscordBot.Modules
 
             var categoryExist = (await Context.Guild.GetCategoriesAsync()).Any(category => category.Id == _settings.ComplaintCategoryId);
 
-            var hash = Context.User.Id.ToString().GetSHA256().Substring(0, 8);
+            var hash = Context.User.Id.ToString().GetSha256().Substring(0, 8);
             var channelName = ParseToDiscordChannel($"{_settings.ComplaintChannelPrefix}-{hash}");
 
             var channels = await Context.Guild.GetChannelsAsync();
             // Check if channel with same name already exist in the Complaint Category (if it exists).
-            if (channels.Any(channel => channel.Name == channelName && (!categoryExist || ((INestedChannel)channel).CategoryId == _settings.ComplaintCategoryId)))
+            if (channels.Any(channel => channel.Name == channelName && (!categoryExist || ((INestedChannel) channel).CategoryId == _settings.ComplaintCategoryId)))
             {
                 await ReplyAsync($"{Context.User.Mention}, you already have an open complaint! Please use that channel!")
                     .DeleteAfterSeconds(15);
@@ -62,7 +61,7 @@ namespace DiscordBot.Modules
         }
 
         /// <summary>
-        /// Archives the ticket.
+        ///     Archives the ticket.
         /// </summary>
         [Command("close"), Alias("end", "done", "bye", "archive"), Summary("Closes the ticket")]
         [RequireModerator]
@@ -90,11 +89,10 @@ namespace DiscordBot.Modules
                 if (categoryExist) x.CategoryId = _settings.ClosedComplaintCategoryId;
                 x.Name = _settings.ClosedComplaintChannelPrefix + x.Name;
             });
-
         }
 
         /// <summary>
-        /// Delete the ticket.
+        ///     Delete the ticket.
         /// </summary>
         [Command("delete"), Summary("Deletes the ticket")]
         [RequireAdmin]

@@ -6,10 +6,18 @@ namespace DiscordBot.Skin
 {
     public class CustomTextSkinModule : BaseTextSkinModule
     {
+        public CustomTextSkinModule()
+        {
+            StrokeWidth = 1;
+            FillColor = MagickColors.Black.ToString();
+            StrokeColor = MagickColors.Transparent.ToString();
+            Font = "Consolas";
+            FontPointSize = 15;
+        }
 
         public override Drawables GetDrawables(ProfileData data)
         {
-            PointD textPosition = new PointD(StartX, StartY);
+            var textPosition = new PointD(StartX, StartY);
 
             // Reflection to convert stuff like {Level} to data.Level
             var reg = new Regex(@"(?<=\{)(.*?)(?=\})");
@@ -18,7 +26,7 @@ namespace DiscordBot.Skin
             {
                 var prop = typeof(ProfileData).GetProperty(match.ToString());
                 if (prop == null) continue;
-                var value = (dynamic)prop.GetValue(data, null);
+                var value = (dynamic) prop.GetValue(data, null);
                 Text = Text.Replace("{" + match + "}", value.ToString());
             }
             /* ALL properties of ProfileData.cs can be used!
@@ -27,25 +35,16 @@ namespace DiscordBot.Skin
              */
 
             return new Drawables()
-                .FontPointSize(FontPointSize)
-                .Font(Font)
-                .StrokeColor(new MagickColor(StrokeColor))
-                .StrokeWidth(StrokeWidth)
-                .StrokeAntialias(StrokeAntiAlias)
-                .FillColor(new MagickColor(FillColor))
-                .TextAlignment(TextAlignment)
-                .TextAntialias(TextAntiAlias)
-                .TextKerning(TextKerning)
-                .Text(textPosition.X, textPosition.Y, $"{Text ?? Text}");
-        }
-
-        public CustomTextSkinModule()
-        {
-            StrokeWidth = 1;
-            FillColor = MagickColors.Black.ToString();
-            StrokeColor = MagickColors.Transparent.ToString();
-            Font = "Consolas";
-            FontPointSize = 15;
+                   .FontPointSize(FontPointSize)
+                   .Font(Font)
+                   .StrokeColor(new MagickColor(StrokeColor))
+                   .StrokeWidth(StrokeWidth)
+                   .StrokeAntialias(StrokeAntiAlias)
+                   .FillColor(new MagickColor(FillColor))
+                   .TextAlignment(TextAlignment)
+                   .TextAntialias(TextAntiAlias)
+                   .TextKerning(TextKerning)
+                   .Text(textPosition.X, textPosition.Y, $"{Text ?? Text}");
         }
     }
 }

@@ -8,25 +8,22 @@ namespace DiscordBot.Services
 {
     public class DatabaseService
     {
-        private string _connection { get; }
-
         private readonly ILoggingService _logging;
-
-        private readonly Settings.Deserialized.Settings _settings;
 
         public DatabaseService(ILoggingService logging, Settings.Deserialized.Settings settings)
         {
-            _settings = settings;
-            _connection = _settings.DbConnectionString;
+            Connection = settings.DbConnectionString;
             _logging = logging;
         }
+
+        private string Connection { get; }
 
         /*
         **Publisher Stuff
         */
         public uint GetPublisherAdCount()
         {
-            using (var connection = new MySqlConnection(_connection))
+            using (var connection = new MySqlConnection(Connection))
             {
                 var command = new MySqlCommand("SELECT COUNT(*) FROM advertisment", connection);
                 connection.Open();
@@ -36,31 +33,28 @@ namespace DiscordBot.Services
 
         public (uint pkgId, ulong userId) GetPublisherAd(uint id)
         {
-            using (var connection = new MySqlConnection(_connection))
+            using (var connection = new MySqlConnection(Connection))
             {
                 var command = new MySqlCommand($"Select username, userid, packageID FROM advertisment WHERE id='{id}'", connection);
                 connection.Open();
                 MySqlDataReader reader;
                 using (reader = command.ExecuteReader())
                 {
-                    while (reader.Read())
-                    {
-                        return (Convert.ToUInt32(reader["packageID"]), Convert.ToUInt64(reader["userid"]));
-                    }
+                    while (reader.Read()) return (Convert.ToUInt32(reader["packageID"]), Convert.ToUInt64(reader["userid"]));
                 }
             }
 
             return (0, 0);
         }
 
-        public async Task AddPublisherPackage(string username, string discriminator, string userid, uint packageID)
+        public async Task AddPublisherPackage(string username, string discriminator, string userid, uint packageId)
         {
             try
             {
-                using (var connection = new MySqlConnection(_connection))
+                using (var connection = new MySqlConnection(Connection))
                 {
                     var command = new MySqlCommand(
-                        $"INSERT INTO advertisment SET username='{username}', discriminator='{discriminator}', userid='{userid}', packageID='{packageID}', date='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'",
+                        $"INSERT INTO advertisment SET username='{username}', discriminator='{discriminator}', userid='{userid}', packageID='{packageId}', date='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'",
                         connection);
                     connection.Open();
                     command.ExecuteNonQuery();
@@ -68,7 +62,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                await _logging.LogAction($"Error when trying to add package {packageID} from {username}#{discriminator} - {userid} : {e}");
+                await _logging.LogAction($"Error when trying to add package {packageId} from {username}#{discriminator} - {userid} : {e}");
             }
         }
 
@@ -79,7 +73,7 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(_connection))
+                using (var connection = new MySqlConnection(Connection))
                 {
                     var command = new MySqlCommand(
                         "SET @prev_value = NULL; SET @rank_count = 0; " +
@@ -95,11 +89,10 @@ namespace DiscordBot.Services
             }
         }
 
-
         public async Task AddUserXpAsync(ulong id, int xp)
         {
             int oldXp;
-            string reader = GetAttributeFromUser(id, "exp");
+            var reader = GetAttributeFromUser(id, "exp");
 
             oldXp = Convert.ToInt32(reader);
             await UpdateAttributeFromUser(id, "exp", oldXp + xp);
@@ -108,7 +101,7 @@ namespace DiscordBot.Services
         public async Task AddUserLevelAsync(ulong id, uint level)
         {
             uint oldLevel;
-            string reader = GetAttributeFromUser(id, "level");
+            var reader = GetAttributeFromUser(id, "level");
 
             oldLevel = Convert.ToUInt32(reader);
             await UpdateAttributeFromUser(id, "level", oldLevel + level);
@@ -117,7 +110,7 @@ namespace DiscordBot.Services
         public async Task AddUserKarmaAsync(ulong id, int karma)
         {
             int oldKarma;
-            string reader = GetAttributeFromUser(id, "karma");
+            var reader = GetAttributeFromUser(id, "karma");
 
             oldKarma = Convert.ToInt32(reader);
             await UpdateAttributeFromUser(id, "karma", oldKarma + karma);
@@ -126,7 +119,7 @@ namespace DiscordBot.Services
         public uint GetUserXp(ulong id)
         {
             uint xp;
-            string reader = GetAttributeFromUser(id, "exp");
+            var reader = GetAttributeFromUser(id, "exp");
 
             xp = Convert.ToUInt32(reader);
 
@@ -136,7 +129,7 @@ namespace DiscordBot.Services
         public int GetUserKarma(ulong id)
         {
             int karma;
-            string reader = GetAttributeFromUser(id, "karma");
+            var reader = GetAttributeFromUser(id, "karma");
 
             karma = Convert.ToInt32(reader);
 
@@ -146,7 +139,7 @@ namespace DiscordBot.Services
         public uint GetUserRank(ulong id)
         {
             uint rank;
-            string reader = GetAttributeFromUser(id, "rank");
+            var reader = GetAttributeFromUser(id, "rank");
 
             rank = Convert.ToUInt32(reader);
 
@@ -156,17 +149,14 @@ namespace DiscordBot.Services
         public uint GetUserLevel(ulong id)
         {
             uint level;
-            string reader = GetAttributeFromUser(id, "level");
+            var reader = GetAttributeFromUser(id, "level");
 
             level = Convert.ToUInt32(reader);
 
             return level;
         }
 
-        public string GetUserJoinDate(ulong id)
-        {
-            return GetAttributeFromUser(id, "joinDate");
-        }
+        public string GetUserJoinDate(ulong id) => GetAttributeFromUser(id, "joinDate");
 
         public async Task UpdateUserNameAsync(ulong id, string name)
         {
@@ -181,22 +171,19 @@ namespace DiscordBot.Services
         public async Task AddUserUdcAsync(ulong id, int udc)
         {
             int oldUdc;
-            string reader = GetAttributeFromUser(id, "udc");
+            var reader = GetAttributeFromUser(id, "udc");
 
             oldUdc = Convert.ToInt32(reader);
             await UpdateAttributeFromUser(id, "udc", oldUdc + udc);
         }
 
-        public int GetUserUdc(ulong id)
-        {
-            return Convert.ToInt32(GetAttributeFromUser(id, "udc"));
-        }
+        public int GetUserUdc(ulong id) => Convert.ToInt32(GetAttributeFromUser(id, "udc"));
 
         public uint GetUserKarmaRank(ulong id)
         {
             //int karma;
 
-            using (var connection = new MySqlConnection(_connection))
+            using (var connection = new MySqlConnection(Connection))
             {
                 var command = new MySqlCommand(
                     $"SELECT COUNT(1)+1 as `rank` FROM `users` WHERE karma > (SELECT karma FROM users WHERE userid='{id}')", connection);
@@ -204,10 +191,7 @@ namespace DiscordBot.Services
                 MySqlDataReader reader;
                 using (reader = command.ExecuteReader())
                 {
-                    while (reader.Read())
-                    {
-                        return (uint)System.Convert.ToInt32(reader["rank"]);
-                    }
+                    while (reader.Read()) return (uint) Convert.ToInt32(reader["rank"]);
                 }
             }
 
@@ -216,36 +200,29 @@ namespace DiscordBot.Services
 
         public List<(ulong userId, int level)> GetTopLevel()
         {
-            List<(ulong userId, int level)> users = new List<(ulong userId, int level)>();
+            var users = new List<(ulong userId, int level)>();
 
-            using (var connection = new MySqlConnection(_connection))
+            using (var connection = new MySqlConnection(Connection))
             {
                 var command = new MySqlCommand("SELECT userid, level FROM `users` ORDER BY exp DESC LIMIT 10", connection);
                 connection.Open();
                 var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
-                }
+                while (reader.Read()) users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
             }
-
 
             return users;
         }
 
         public List<(ulong userId, int karma)> GetTopKarma()
         {
-            List<(ulong userId, int karma)> users = new List<(ulong userId, int karma)>();
+            var users = new List<(ulong userId, int karma)>();
 
-            using (var connection = new MySqlConnection(_connection))
+            using (var connection = new MySqlConnection(Connection))
             {
                 var command = new MySqlCommand("SELECT userid, karma FROM `users` ORDER BY karma DESC LIMIT 10", connection);
                 connection.Open();
                 var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
-                }
+                while (reader.Read()) users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
             }
 
             return users;
@@ -253,17 +230,14 @@ namespace DiscordBot.Services
 
         public List<(ulong userId, int udc)> GetTopUdc()
         {
-            List<(ulong userId, int udc)> users = new List<(ulong userId, int udc)>();
+            var users = new List<(ulong userId, int udc)>();
 
-            using (var connection = new MySqlConnection(_connection))
+            using (var connection = new MySqlConnection(Connection))
             {
                 var command = new MySqlCommand("SELECT userid, udc FROM `users` ORDER BY udc DESC LIMIT 10", connection);
                 connection.Open();
                 var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
-                }
+                while (reader.Read()) users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
             }
 
             return users;
@@ -273,7 +247,7 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(_connection))
+                using (var connection = new MySqlConnection(Connection))
                 {
                     var command = new MySqlCommand(
                         $"INSERT INTO users SET username=@Username, userid='{user.Id}', discriminator='{user.DiscriminatorValue}'," +
@@ -299,7 +273,7 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(_connection))
+                using (var connection = new MySqlConnection(Connection))
                 {
                     var command = new MySqlCommand($"DELETE FROM users WHERE userid='{id}'", connection);
                     var command2 = new MySqlCommand($"INSERT users_remove SELECT * FROM users WHERE userid='{id}'", connection);
@@ -318,7 +292,7 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(_connection))
+                using (var connection = new MySqlConnection(Connection))
                 {
                     var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
@@ -338,11 +312,11 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(_connection))
+                using (var connection = new MySqlConnection(Connection))
                 {
                     var command = new MySqlCommand($"SELECT * FROM users where userid='{id}'", connection);
                     connection.Open();
-                    return (command.ExecuteScalar() != null);
+                    return command.ExecuteScalar() != null;
                 }
             }
             catch (Exception e)
@@ -359,7 +333,7 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(_connection))
+                using (var connection = new MySqlConnection(Connection))
                 {
                     var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
@@ -380,7 +354,7 @@ namespace DiscordBot.Services
             try
             {
                 value = MySqlHelper.EscapeString(value);
-                using (var connection = new MySqlConnection(_connection))
+                using (var connection = new MySqlConnection(Connection))
                 {
                     var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
                     command.Parameters.AddWithValue("@Value", value);
@@ -400,17 +374,14 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(_connection))
+                using (var connection = new MySqlConnection(Connection))
                 {
                     var command = new MySqlCommand($"Select `{attribute}` FROM users WHERE userid='{id}'", connection);
                     connection.Open();
                     MySqlDataReader reader;
                     using (reader = command.ExecuteReader())
                     {
-                        while (reader.Read())
-                        {
-                            return reader[attribute].ToString();
-                        }
+                        while (reader.Read()) return reader[attribute].ToString();
                     }
                 }
             }

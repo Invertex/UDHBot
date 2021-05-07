@@ -17,7 +17,7 @@ namespace DiscordBot.Settings.Deserialized
         public string ServerRootPath { get; set; }
 
         public char Prefix { get; set; }
-        public ulong guildId { get; set; }
+        public ulong GuildId { get; set; }
 
         public UserAssignableRoles AllRoles { get; set; }
 
@@ -55,6 +55,7 @@ namespace DiscordBot.Settings.Deserialized
     }
 
     #region Role Group Collections
+
     // Classes used to hold information regarding a collection of role ids with a description.
     public class RoleGroup
     {
@@ -62,10 +63,14 @@ namespace DiscordBot.Settings.Deserialized
         public List<string> Roles { get; set; }
     }
 
-    public class UserAssignableRoles : RoleGroup { };
+    public class UserAssignableRoles : RoleGroup
+    {
+    }
+
     #endregion
 
     #region Channel Information
+
     // Channel Information. Description and Channel ID
     public class ChannelInfo
     {
@@ -73,13 +78,37 @@ namespace DiscordBot.Settings.Deserialized
         public ulong Id { get; set; }
     }
 
-    public class GeneralChannel : ChannelInfo { };
-    public class BotAnnouncementChannel : ChannelInfo { };
-    public class AnnouncementsChannel : ChannelInfo { };
-    public class BotCommandsChannel : ChannelInfo { };
-    public class UnityNewsChannel : ChannelInfo { };
-    public class UnityReleasesChannel : ChannelInfo { };
-    public class WorkForHireChannel : ChannelInfo { };
-    public class CollaborationChannel : ChannelInfo { };
+    public class GeneralChannel : ChannelInfo
+    {
+    }
+
+    public class BotAnnouncementChannel : ChannelInfo
+    {
+    }
+
+    public class AnnouncementsChannel : ChannelInfo
+    {
+    }
+
+    public class BotCommandsChannel : ChannelInfo
+    {
+    }
+
+    public class UnityNewsChannel : ChannelInfo
+    {
+    }
+
+    public class UnityReleasesChannel : ChannelInfo
+    {
+    }
+
+    public class WorkForHireChannel : ChannelInfo
+    {
+    }
+
+    public class CollaborationChannel : ChannelInfo
+    {
+    }
+
     #endregion
 }
