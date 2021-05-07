@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -29,7 +29,7 @@ namespace DiscordBot.Services
             _audioClient = await channel.ConnectAsync();
         }
 
-        public async void Music()
+        public async Task Music()
         {
             await ConnectAudioClient();
             if (_audioClient == null)

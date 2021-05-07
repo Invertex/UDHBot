@@ -718,11 +718,11 @@ namespace DiscordBot.Modules
             else
             {
                 // List all the FAQs available
-                ListFaqs(faqDataList);
+                await ListFaqs(faqDataList);
             }
         }
 
-        private async void ListFaqs(List<FaqData> faqs)
+        private async Task ListFaqs(List<FaqData> faqs)
         {
             StringBuilder sb = new StringBuilder(faqs.Count);
             int index = 1;
