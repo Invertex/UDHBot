@@ -1,17 +1,13 @@
-﻿using System;
+using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using DiscordBot.Extensions;
-using DiscordBot.Modules;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
-using IMessage = Discord.IMessage;
 
 namespace DiscordBot
 {

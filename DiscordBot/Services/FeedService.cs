@@ -5,7 +5,6 @@ using System.Net;
 using System.ServiceModel.Syndication;
 using System.Text;
 using System.Xml;
-using Discord;
 using Discord.WebSocket;
 
 namespace DiscordBot.Services
