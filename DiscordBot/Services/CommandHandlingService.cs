@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
-using DiscordBot.Modules;
 
 namespace DiscordBot.Services
 {
     public class CommandHandlingService
     {
-        public static string CommandList;
+        public bool IsInitialized { get; private set; } = false;
 
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commandService;
@@ -41,21 +40,31 @@ namespace DiscordBot.Services
         {
             // Discover all of the commands in this assembly and load them.
             await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            IsInitialized = true;
+        }
 
+        /// <summary> Generates a command list that can provide users with information. Commands require [Command][Summary] and [Priority](If not ordering by name)</summary>
+        public async Task<string> GetCommandList(string moduleName, bool orderByName = false, bool includeArgs = true)
+        {
+            // Simple wait.
+            while (!IsInitialized)
+                await Task.Delay(1000);
+            
             var commandList = new StringBuilder();
 
-            commandList.Append("__Role Commands__\n");
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role").OrderBy(c => c.Name)) commandList.Append($"**role {c.Name}** : {c.Summary}\n");
+            commandList.Append($"__{moduleName} Commands__\n");
+            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == moduleName)
+                .OrderBy(c => (!orderByName ? c.Priority.ToString() : c.Name)))
+            {
+                var args = "";
+                if (includeArgs)
+                    foreach (var info in c.Parameters) args += $"`{info.Name}`{(info.IsOptional ? "\\*" : string.Empty)} ";
+                if (args.Length > 0)
+                    args = $"- args: *( {args})*";
 
-            commandList.Append("\n");
-            commandList.Append("__General Commands__\n");
-
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name)) commandList.Append($"**{c.Name}** : {c.Summary}\n");
-
-            CommandList = commandList.ToString();
-
-            // Generates an individual command list for the Reaction Roles
-            ReactionRoleModule.GenerateCommandList(_commandService);
+                commandList.Append($"**{moduleName} {c.Name}** : {c.Summary} {args}\n");
+            }
+            return commandList.ToString();
         }
 
         private async Task HandleCommand(SocketMessage messageParam)

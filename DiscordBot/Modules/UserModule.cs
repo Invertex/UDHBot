@@ -19,6 +19,8 @@ namespace DiscordBot.Modules
 {
     public class UserModule : ModuleBase
     {
+        private string _commandList = string.Empty;
+        
         private static Settings.Deserialized.Settings _settings;
         private readonly CurrencyService _currencyService;
         private readonly DatabaseService _databaseService;
@@ -30,7 +32,7 @@ namespace DiscordBot.Modules
 
         public UserModule(DatabaseService databaseService, UserService userService,
                           PublisherService publisherService, UpdateService updateService, CurrencyService currencyService,
-                          Rules rules, Settings.Deserialized.Settings settings)
+                          Rules rules, Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
         {
             _databaseService = databaseService;
             _userService = userService;
@@ -39,6 +41,8 @@ namespace DiscordBot.Modules
             _currencyService = currencyService;
             _rules = rules;
             _settings = settings;
+            
+            Task.Run(async () => _commandList = await commandHandlingService.GetCommandList("UserModule", true, true));
         }
 
         [Command("help")]
@@ -49,15 +53,20 @@ namespace DiscordBot.Modules
             //TODO Be possible in DM
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
-                await Task.Delay(1000);
-                await Context.Message.DeleteAsync();
-                return;
+                try
+                {
+                    await Context.User.SendMessageAsync(_commandList);
+                }
+                catch (Exception e)
+                {
+                    await ReplyAsync($"Your direct messages are disabled, please use <#{_settings.BotCommandsChannel.Id}> instead!").DeleteAfterSeconds(10);
+                }
             }
-
-            var commands = CommandHandlingService.CommandList.MessageSplit();
-
-            foreach (var message in commands)
-                await ReplyAsync(message);
+            else
+            {
+                await ReplyAsync(_commandList);
+            }
+            await Context.Message.DeleteAsync();
         }
 
         [Command("disablethanksreminder")]
@@ -65,16 +74,16 @@ namespace DiscordBot.Modules
         public async Task DisableThanksReminder()
         {
             var userId = Context.User.Id;
-            var replyMessage = "You've already told me to stop reminding you, don't worry, I won't forget!";
-
-            if (!_userService.ThanksReminderCooldown.IsPermanent(userId))
+            if (_userService.ThanksReminderCooldown.IsPermanent(userId))
             {
-                replyMessage = "I will no longer remind you to mention the person you're thanking... (◕︿◕✿)";
-                _userService.ThanksReminderCooldown.SetPermanent(Context.User.Id, true);
+                await Context.Message.DeleteAsync();
+                return;
             }
-
+            
+            _userService.ThanksReminderCooldown.SetPermanent(Context.User.Id, true);
+            
             await Context.Message.DeleteAsync();
-            await ReplyAsync($"{Context.User.Username}, " + replyMessage).DeleteAfterTime(20);
+            await ReplyAsync($"{Context.User.Username}, you will no longer be reminded about mention thanking.").DeleteAfterTime(20);
         }
 
         [Command("quote")]
@@ -139,7 +148,7 @@ namespace DiscordBot.Modules
 
             using (var client = new HttpClient())
             {
-                var httpResponse = await client.PostAsync("http://api.paiza.io/runners/create", content);
+                var httpResponse = await client.PostAsync("https://api.paiza.io/runners/create", content);
                 var response = JsonConvert.DeserializeObject<Dictionary<string, string>>(await httpResponse.Content.ReadAsStringAsync());
 
                 var id = response["id"];

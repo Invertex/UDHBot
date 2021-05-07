@@ -15,17 +15,20 @@ namespace DiscordBot.Modules
     {
         // The Priority Attribute is used for !reactrole help ordering, there are no overloads.
 
-        private static string _commandList;
+        private string _commandList = string.Empty;
 
         private readonly ILoggingService _logging;
         private readonly ReactRoleService _reactRoleService;
 
         private readonly IEmote _thumbUpEmote = new Emoji("👍");
 
-        public ReactionRoleModule(ILoggingService loggingService, ReactRoleService reactRoleService)
+        public ReactionRoleModule(ILoggingService loggingService, ReactRoleService reactRoleService, CommandHandlingService commandService)
         {
             _logging = loggingService;
             _reactRoleService = reactRoleService;
+            
+            // Generates an individual command list for the Reaction Roles
+            Task.Run(async () => _commandList = await commandService.GetCommandList("ReactRole", false, true));
         }
 
         #region Config
@@ -280,7 +283,6 @@ namespace DiscordBot.Modules
         #endregion
 
         #region CommandList
-
         [RequireUserPermission(GuildPermission.Administrator)]
         [Summary("Does what you see now.")]
         [Command("Help")]
@@ -289,29 +291,6 @@ namespace DiscordBot.Modules
         {
             await ReplyAsync(_commandList);
         }
-
-        /// <summary>
-        ///     Generates a command list that attempts to give the user valuable information, also provides argument
-        ///     information.
-        /// </summary>
-        public static void GenerateCommandList(CommandService commandService)
-        {
-            var commandList = new StringBuilder();
-
-            commandList.Append("__ReactRole Commands__\n");
-            foreach (var c in commandService.Commands.Where(x => x.Module.Name == "ReactRole").OrderBy(c => c.Priority))
-            {
-                var args = "";
-                foreach (var info in c.Parameters) args += $"`{info.Name}`{(info.IsOptional ? "\\*" : string.Empty)} ";
-                if (args.Length > 0)
-                    args = $"- args: *( {args})*";
-
-                commandList.Append($"**ReactRole {c.Name}** : {c.Summary} {args}\n");
-            }
-
-            _commandList = commandList.ToString();
-        }
-
         #endregion
     }
 }

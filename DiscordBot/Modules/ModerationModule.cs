@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
@@ -11,11 +12,14 @@ using DiscordBot.Extensions;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
 using Pathoschild.NaturalTimeParser.Parser;
+using TaskExtensions = DiscordBot.Extensions.TaskExtensions;
 
 namespace DiscordBot.Modules
 {
     public class ModerationModule : ModuleBase
     {
+        private string _commandList = string.Empty;
+        
         private readonly DatabaseService _database;
         private readonly ILoggingService _logging;
         private readonly PublisherService _publisher;
@@ -25,7 +29,7 @@ namespace DiscordBot.Modules
         private readonly UserService _user;
 
         public ModerationModule(ILoggingService logging, PublisherService publisher, UpdateService update, UserService user,
-                                DatabaseService database, Rules rules, Settings.Deserialized.Settings settings)
+                                DatabaseService database, Rules rules, Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
         {
             _logging = logging;
             _publisher = publisher;
@@ -34,6 +38,7 @@ namespace DiscordBot.Modules
             _database = database;
             _rules = rules;
             _settings = settings;
+            Task.Run(async () => _commandList = await commandHandlingService.GetCommandList("ModerationModule", true, true));
         }
 
         private Dictionary<ulong, DateTime> MutedUsers => _user.MutedUsers;
@@ -424,24 +429,6 @@ namespace DiscordBot.Modules
             });
         }
 
-        [Command("ad")]
-        [Summary("Post ad with databaseid")]
-        [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task PostAd(uint dbId)
-        {
-            await _publisher.PostAd(dbId);
-            await ReplyAsync("Ad posted.");
-        }
-
-        [Command("forcead")]
-        [Summary("Force post ad")]
-        [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task ForcePostAd()
-        {
-            await _update.CheckDailyPublisher(true);
-            await ReplyAsync("New ad posted.");
-        }
-
         [Command("dbsync")]
         [Summary("Force add user to database")]
         [RequireUserPermission(GuildPermission.Administrator)]
@@ -449,5 +436,15 @@ namespace DiscordBot.Modules
         {
             await _database.AddNewUser((SocketGuildUser) user);
         }
+        
+        #region CommandList
+        [RequireModerator]
+        [Summary("Does what you see now.")]
+        [Command("Mod Help")]
+        public async Task ModerationHelp()
+        {
+            await ReplyAsync(_commandList);
+        }
+        #endregion
     }
 }
