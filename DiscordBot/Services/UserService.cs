@@ -140,7 +140,7 @@ namespace DiscordBot.Services
             UpdateLoop();
         }
 
-        private async void UpdateLoop()
+        private async Task UpdateLoop()
         {
             while (true)
             {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.ServiceModel.Syndication;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml;
 using Discord.WebSocket;
 
@@ -27,7 +28,7 @@ namespace DiscordBot.Services
             _client = client;
         }
 
-        public async void HandleFeed(FeedData feedData, string url, ulong channelID, ulong? roleID, string message)
+        public async Task HandleFeed(FeedData feedData, string url, ulong channelID, ulong? roleID, string message)
         {
             try
             {
@@ -72,19 +73,19 @@ namespace DiscordBot.Services
             }
         }
 
-        public void CheckUnityBetas(FeedData feedData)
+        public async Task CheckUnityBetasAsync(FeedData feedData)
         {
-            this.HandleFeed(feedData, BETA_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity **beta **release !** {0}** \n <{1}>");
+            await this.HandleFeed(feedData, BETA_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity **beta **release !** {0}** \n <{1}>");
         }
 
-        public void CheckUnityReleases(FeedData feedData)
+        public async Task CheckUnityReleasesAsync(FeedData feedData)
         {
-            this.HandleFeed(feedData, RELEASE_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity release ! **{0}** \n <{1}>");
+            await this.HandleFeed(feedData, RELEASE_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity release ! **{0}** \n <{1}>");
         }
 
-        public void CheckUnityBlog(FeedData feedData)
+        public async Task CheckUnityBlogAsync(FeedData feedData)
         {
-            this.HandleFeed(feedData, BLOG_URL, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId, "New unity blog post ! **{0}**\n{1}");
+            await this.HandleFeed(feedData, BLOG_URL, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId, "New unity blog post ! **{0}**\n{1}");
         }
     }
 }

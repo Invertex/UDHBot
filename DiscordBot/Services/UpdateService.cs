@@ -90,14 +90,14 @@ namespace DiscordBot.Services
             UpdateLoop();
         }
 
-        private void UpdateLoop()
+        private async Task UpdateLoop()
         {
             ReadDataFromFile();
-            SaveDataToFile();
+            await SaveDataToFile();
             //CheckDailyPublisher();
-            UpdateUserRanks();
-            UpdateDocDatabase();
-            UpdateRssFeeds();
+            await UpdateUserRanks();
+            await UpdateDocDatabase();
+            await UpdateRssFeeds();
         }
 
         private void ReadDataFromFile()
@@ -183,7 +183,7 @@ namespace DiscordBot.Services
         ** Save data to file every 20s
         */
 
-        private async void SaveDataToFile()
+        private async Task SaveDataToFile()
         {
             while (true)
             {
@@ -231,7 +231,7 @@ namespace DiscordBot.Services
             }
         }
 
-        private async void UpdateUserRanks()
+        private async Task UpdateUserRanks()
         {
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
@@ -326,7 +326,7 @@ namespace DiscordBot.Services
             }
         }
 
-        private async void UpdateDocDatabase()
+        private async Task UpdateDocDatabase()
         {
             while (true)
             {
@@ -337,7 +337,7 @@ namespace DiscordBot.Services
             }
         }
 
-        private async void UpdateRssFeeds()
+        private async Task UpdateRssFeeds()
         {
             await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             while (true)
@@ -348,15 +348,15 @@ namespace DiscordBot.Services
                     {
                         _feedData.LastUnityReleaseCheck = DateTime.Now;
 
-                        _feedService.CheckUnityBetas(_feedData);
-                        _feedService.CheckUnityReleases(_feedData);
+                        await _feedService.CheckUnityBetasAsync(_feedData);
+                        await _feedService.CheckUnityReleasesAsync(_feedData);
                     }
 
                     if (_feedData.LastUnityBlogCheck < DateTime.Now - TimeSpan.FromMinutes(10))
                     {
                         _feedData.LastUnityBlogCheck = DateTime.Now;
 
-                        _feedService.CheckUnityBlog(_feedData);
+                        await _feedService.CheckUnityBlogAsync(_feedData);
                     }
                 }
                 await Task.Delay(TimeSpan.FromSeconds(30d), _token);
