@@ -213,8 +213,8 @@ namespace DiscordBot.Services
             if (!await _databaseService.UserExists(userId))
                 await _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
 
-            _databaseService.AddUserXp(userId, xpGain);
-            _databaseService.AddUserUdc(userId, (int)Math.Round(xpGain * .15f));
+            await _databaseService.AddUserXpAsync(userId, xpGain);
+            await _databaseService.AddUserUdcAsync(userId, (int)Math.Round(xpGain * .15f));
 
             _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
@@ -240,8 +240,8 @@ namespace DiscordBot.Services
             if (xp < xpHigh)
                 return;
 
-            _databaseService.AddUserLevel(userId, 1);
-            _databaseService.AddUserUdc(userId, 1200);
+            await _databaseService.AddUserLevelAsync(userId, 1);
+            await _databaseService.AddUserUdcAsync(userId, 1200);
 
             await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(seconds: 60);
             //TODO investigate why this is not running async
@@ -476,8 +476,8 @@ namespace DiscordBot.Services
                         continue;
                     }
 
-                    _databaseService.AddUserKarma(user.Id, 1);
-                    _databaseService.AddUserUdc(user.Id, 350);
+                    await _databaseService.AddUserKarmaAsync(user.Id, 1);
+                    await _databaseService.AddUserUdcAsync(user.Id, 350);
                     sb.Append(user.Username).Append(" , ");
                 }
 
@@ -624,13 +624,13 @@ namespace DiscordBot.Services
                 await _loggingService.LogAction(
                     $"User {oldUser.Nickname ?? oldUser.Username}#{oldUser.DiscriminatorValue} changed his " +
                     $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
-                _databaseService.UpdateUserName(user.Id, user.Nickname);
+                await _databaseService.UpdateUserNameAsync(user.Id, user.Nickname);
             }
 
             if (oldUser.AvatarId != user.AvatarId)
             {
                 var avatar = user.GetAvatarUrl();
-                _databaseService.UpdateUserAvatar(user.Id, avatar);
+                await _databaseService.UpdateUserAvatarAsync(user.Id, avatar);
             }
         }
 
@@ -642,7 +642,7 @@ namespace DiscordBot.Services
             await _loggingService.LogAction(
                 $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double)timeStayed.Days).ToString() + " days" : " ")}" +
                 $" {Math.Floor((double)timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
-            _databaseService.DeleteUser(user.Id);
+            await _databaseService.DeleteUser(user.Id);
         }
 
         #endregion
@@ -651,80 +651,5 @@ namespace DiscordBot.Services
         {
             return _client.Latency;
         }
-
-        // TODO Response to people asking if anyone is around to help.
-        /*
-        public async Task UselessAskingCheck(SocketMessage messageParam)
-        {
-            if (messageParam.Author.IsBot)
-                return;
-
-            ulong userId = messageParam.Author.Id;
-            string content = messageParam.Content;
-        }*/
-
-        //TODO If Discord ever enables a hook that allows modifying a message during creation of it, then this could be put to use...
-        // Disabled for now.
-        /*
-        public async Task EscapeMessage(SocketMessage messageParam)
-        {
-            if (messageParam.Author.IsBot)
-                return;
-
-            ulong userId = messageParam.Author.Id;
-            string content = messageParam.Content;
-            //Escape all \, ~, _, ` and * character's so they don't trigger any Discord formatting.
-            content = content.EscapeDiscordMarkup();
-        }*/
-        /* public async Task<string> SubtitleImage(IMessage message, string text)
-         {
-             var attachments = message.Attachments;
-             Attachment file = null;
-             Image<Rgba32> image = null;
-             foreach (var a in attachments)
-             {
-                 if (Regex.Match(a.Filename, @"(.*?)\.(jpg|jpeg|png|gif)$").Success)
-                     file = (Attachment) a;
-             }
-
-             if (file == null)
-                 return "";
-             try
-             {
-                 using (HttpClient client = new HttpClient())
-                 {
-                     using (HttpResponseMessage response = await client.GetAsync(file.Url))
-                     {
-                         response.EnsureSuccessStatusCode();
-                         byte[] reader = await response.Content.ReadAsByteArrayAsync();
-                         image = ImageSharp.Image.Load(reader);
-                     }
-                 }
-             }
-             catch (Exception e)
-             {
-                 Console.WriteLine("Failed to load image : " + e);
-                 return "";
-             }
-
-             float beginHeight = image.Height - (image.Height * 0.3f);
-             float beginWidth = (image.Width * .10f);
-             float totalWidth = image.Width * .8f;
-
-             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight),
-                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center,});
-             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight),
-                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight - 4),
-                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-             image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight + 4),
-                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-             image.DrawText(text, _subtitlesWhiteFont, Rgba32.White, new PointF(beginWidth, beginHeight),
-                 new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-             string path = $"{_settings.ServerRootPath}/images/subtitles/{message.Author}-{message.Id}.png";
-
-             image.Save(path, new JpegEncoder {Quality = 95});
-             return path;
-         }*/
     }
 }

@@ -96,31 +96,31 @@ namespace DiscordBot.Services
         }
 
 
-        public void AddUserXp(ulong id, int xp)
+        public async Task AddUserXpAsync(ulong id, int xp)
         {
             int oldXp;
             string reader = GetAttributeFromUser(id, "exp");
 
             oldXp = Convert.ToInt32(reader);
-            UpdateAttributeFromUser(id, "exp", oldXp + xp);
+            await UpdateAttributeFromUser(id, "exp", oldXp + xp);
         }
 
-        public void AddUserLevel(ulong id, uint level)
+        public async Task AddUserLevelAsync(ulong id, uint level)
         {
             uint oldLevel;
             string reader = GetAttributeFromUser(id, "level");
 
             oldLevel = Convert.ToUInt32(reader);
-            UpdateAttributeFromUser(id, "level", oldLevel + level);
+            await UpdateAttributeFromUser(id, "level", oldLevel + level);
         }
 
-        public void AddUserKarma(ulong id, int karma)
+        public async Task AddUserKarmaAsync(ulong id, int karma)
         {
             int oldKarma;
             string reader = GetAttributeFromUser(id, "karma");
 
             oldKarma = Convert.ToInt32(reader);
-            UpdateAttributeFromUser(id, "karma", oldKarma + karma);
+            await UpdateAttributeFromUser(id, "karma", oldKarma + karma);
         }
 
         public uint GetUserXp(ulong id)
@@ -168,23 +168,23 @@ namespace DiscordBot.Services
             return GetAttributeFromUser(id, "joinDate");
         }
 
-        public void UpdateUserName(ulong id, string name)
+        public async Task UpdateUserNameAsync(ulong id, string name)
         {
-            UpdateAttributeFromUser(id, "username", name);
+            await UpdateAttributeFromUser(id, "username", name);
         }
 
-        public void UpdateUserAvatar(ulong id, string avatar)
+        public async Task UpdateUserAvatarAsync(ulong id, string avatar)
         {
-            UpdateAttributeFromUser(id, "avatarUrl", avatar);
+            await UpdateAttributeFromUser(id, "avatarUrl", avatar);
         }
 
-        public void AddUserUdc(ulong id, int udc)
+        public async Task AddUserUdcAsync(ulong id, int udc)
         {
             int oldUdc;
             string reader = GetAttributeFromUser(id, "udc");
 
             oldUdc = Convert.ToInt32(reader);
-            UpdateAttributeFromUser(id, "udc", oldUdc + udc);
+            await UpdateAttributeFromUser(id, "udc", oldUdc + udc);
         }
 
         public int GetUserUdc(ulong id)
@@ -295,7 +295,7 @@ namespace DiscordBot.Services
             }
         }
 
-        public async void DeleteUser(ulong id)
+        public async Task DeleteUser(ulong id)
         {
             try
             {
@@ -314,7 +314,7 @@ namespace DiscordBot.Services
             }
         }
 
-        private async void UpdateAttributeFromUser(ulong id, string attribute, int value)
+        private async Task UpdateAttributeFromUser(ulong id, string attribute, int value)
         {
             try
             {
@@ -355,7 +355,7 @@ namespace DiscordBot.Services
             return false;
         }
 
-        private async void UpdateAttributeFromUser(ulong id, string attribute, uint value)
+        private async Task UpdateAttributeFromUser(ulong id, string attribute, uint value)
         {
             try
             {
@@ -375,7 +375,7 @@ namespace DiscordBot.Services
             }
         }
 
-        private async void UpdateAttributeFromUser(ulong id, string attribute, string value)
+        private async Task UpdateAttributeFromUser(ulong id, string attribute, string value)
         {
             try
             {

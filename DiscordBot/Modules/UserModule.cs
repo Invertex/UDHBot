@@ -434,18 +434,6 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAsync();
         }
 
-        /* [Command("subtitle"), Summary("Add a subtitle to an image attached. Syntax : !subtitle \"Text to write\"")]
-         [Alias("subtitles", "sub", "subs")]
-         private async Task Subtitles(string text)
-         {
-             var msg = await _userService.SubtitleImage(Context.Message, text);
-             if (msg.Length < 6)
-                 await ReplyAsync("Sorry, there was an error processing your image.");
-             else
-                 await Context.Channel.SendFileAsync(msg, $"From {Context.Message.Author.Mention}");
-             await Context.Message.DeleteAsync();
-         }*/
-
         #endregion
 
         #region Publisher
@@ -1117,7 +1105,7 @@ namespace DiscordBot.Modules
 
             int xpGain = 5000;
 
-            _databaseService.AddUserXp((ulong)userId, xpGain);
+            await _databaseService.AddUserXpAsync((ulong)userId, xpGain);
 
             await Context.Message.DeleteAsync();
         }
