@@ -58,8 +58,8 @@ namespace DiscordBot.Services
 
     public class Rate
     {
-        public DateTime LastUpdated;
-        public double Value;
+        public DateTime LastUpdated { get; set; }
+        public double Value { get; set; }
 
         public Rate()
         {

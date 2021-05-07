@@ -53,8 +53,14 @@ namespace DiscordBot.Services
             var commandList = new StringBuilder();
 
             commandList.Append($"__{moduleName} Commands__\n");
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == moduleName)
-                .OrderBy(c => (!orderByName ? c.Priority.ToString() : c.Name)))
+            
+            var commands = _commandService.Commands.Where(x => x.Module.Name == moduleName);
+            if (!orderByName)
+                commands = commands.OrderBy(c => c.Name);
+            else
+                commands = commands.OrderBy(c => c.Priority);
+            
+            foreach (var c in commands)
             {
                 var args = "";
                 if (includeArgs)

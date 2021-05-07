@@ -50,7 +50,7 @@ namespace DiscordBot.Services
 
         private readonly Random _rand;
 
-        public Dictionary<ulong, DateTime> MutedUsers;
+        public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
 
         //TODO Add custom commands for user after (30karma ?/limited to 3 ?)
 
@@ -131,7 +131,7 @@ namespace DiscordBot.Services
 
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
 
-        private async Task UpdateLoop()
+        private async void UpdateLoop()
         {
             while (true)
             {

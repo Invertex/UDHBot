@@ -287,27 +287,7 @@ namespace DiscordBot.Services
                 await _logging.LogAction($"Error when trying to delete user {id} from the database : {e}", true, false);
             }
         }
-
-        private async Task UpdateAttributeFromUser(ulong id, string attribute, int value)
-        {
-            try
-            {
-                using (var connection = new MySqlConnection(Connection))
-                {
-                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
-                    command.Parameters.AddWithValue("@Value", value);
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (Exception e)
-            {
-                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}",
-                    true,
-                    false);
-            }
-        }
-
+        
         public async Task<bool> UserExists(ulong id)
         {
             try
@@ -329,6 +309,25 @@ namespace DiscordBot.Services
             return false;
         }
 
+        private async Task UpdateAttributeFromUser(ulong id, string attribute, int value)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(Connection))
+                {
+                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
+                    command.Parameters.AddWithValue("@Value", value);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception e)
+            {
+                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}",
+                    true,
+                    false);
+            }
+        }
         private async Task UpdateAttributeFromUser(ulong id, string attribute, uint value)
         {
             try

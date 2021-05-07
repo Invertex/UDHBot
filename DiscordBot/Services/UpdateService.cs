@@ -90,7 +90,7 @@ namespace DiscordBot.Services
             UpdateLoop();
         }
 
-        private async Task UpdateLoop()
+        private async void UpdateLoop()
         {
             ReadDataFromFile();
             await SaveDataToFile();
@@ -136,7 +136,7 @@ namespace DiscordBot.Services
                                 if (!user.RoleIds.Contains(_settings.MutedRoleId)) await user.AddRoleAsync(mutedRole);
 
                                 //Setup delay to remove role when time is up.
-                                var _ = Task.Run(async () =>
+                                await Task.Run(async () =>
                                 {
                                     await _userData.MutedUsers.AwaitCooldown(user.Id);
                                     await user.RemoveRoleAsync(mutedRole);

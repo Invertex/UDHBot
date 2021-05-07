@@ -30,6 +30,8 @@ namespace DiscordBot.Modules
         private readonly UpdateService _updateService;
         private readonly UserService _userService;
 
+        private string _compileCreate = "https://api.paiza.io/runners/create";
+        
         public UserModule(DatabaseService databaseService, UserService userService,
                           PublisherService publisherService, UpdateService updateService, CurrencyService currencyService,
                           Rules rules, Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
@@ -57,7 +59,7 @@ namespace DiscordBot.Modules
                 {
                     await Context.User.SendMessageAsync(_commandList);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     await ReplyAsync($"Your direct messages are disabled, please use <#{_settings.BotCommandsChannel.Id}> instead!").DeleteAfterSeconds(10);
                 }
@@ -688,7 +690,7 @@ namespace DiscordBot.Modules
             resNum = resNum <= 5 ? resNum : 5;
             var searchQuery = "https://duckduckgo.com/html/?q=" + query.Replace(' ', '+');
 
-            if (!site.Equals("")) searchQuery += "+site:" + site;
+            if (site != string.Empty) searchQuery += "+site:" + site;
 
             var doc = new HtmlWeb().Load(searchQuery);
             var counter = 1;

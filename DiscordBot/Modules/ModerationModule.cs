@@ -22,18 +22,14 @@ namespace DiscordBot.Modules
         
         private readonly DatabaseService _database;
         private readonly ILoggingService _logging;
-        private readonly PublisherService _publisher;
         private readonly Rules _rules;
         private readonly Settings.Deserialized.Settings _settings;
-        private readonly UpdateService _update;
         private readonly UserService _user;
 
-        public ModerationModule(ILoggingService logging, PublisherService publisher, UpdateService update, UserService user,
+        public ModerationModule(ILoggingService logging, UserService user,
                                 DatabaseService database, Rules rules, Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
         {
             _logging = logging;
-            _publisher = publisher;
-            _update = update;
             _user = user;
             _database = database;
             _rules = rules;
@@ -213,7 +209,7 @@ namespace DiscordBot.Modules
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");
-            var _ = Task.Delay(5000).ContinueWith(t =>
+            await Task.Delay(5000).ContinueWith(t =>
             {
                 m.DeleteAsync();
                 _logging.LogAction($"{Context.User.Username} has removed {count} messages from {Context.Channel.Name}");
@@ -232,7 +228,7 @@ namespace DiscordBot.Modules
             await channel.DeleteMessagesAsync(messages);
 
             var m = await ReplyAsync("Messages deleted.");
-            var _ = Task.Delay(5000).ContinueWith(t =>
+            await Task.Delay(5000).ContinueWith(t =>
             {
                 m.DeleteAsync();
                 _logging.LogAction($"{Context.User.Username} has removed {messages.Count()} messages from {Context.Channel.Name}");
