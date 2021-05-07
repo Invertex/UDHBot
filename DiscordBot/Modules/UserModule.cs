@@ -50,7 +50,7 @@ namespace DiscordBot.Modules
         [Alias("command", "commands")]
         public async Task DisplayHelp()
         {
-            //TODO: Be possible in DM
+            //TODO Be possible in DM
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
                 await Task.Delay(1000);

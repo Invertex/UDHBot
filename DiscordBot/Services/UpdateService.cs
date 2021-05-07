@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -55,7 +55,7 @@ namespace DiscordBot.Services
         }
     }
 
-    //TODO: Download all avatars to cache them
+    //TODO Download all avatars to cache them
 
     public class UpdateService
     {

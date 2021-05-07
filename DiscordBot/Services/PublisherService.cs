@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -120,7 +120,7 @@ namespace DiscordBot.Services
             sb.Append($"Unity Asset Store Link - https://www.assetstore.unity3d.com/en/#!/content/{package.content.link.id}?utm_source=udh&utm_medium=discord\n");
             sb.Append($"```{descStrippedHtml.Substring(0, 250)}[...]```\n");
             sb.Append("To be part of this kind of advertising use `!pInfo` for more informations.");
-            //TODO: add image
+            //TODO add image
 
             Stream image;
             using (var httpClient = new HttpClient())
@@ -211,7 +211,7 @@ namespace DiscordBot.Services
                 await client.DisconnectAsync(true);
             }
 
-            //TODO: Delete code after 30min
+            //TODO Delete code after 30min
         }
 
         public async Task<string> ValidatePackageWithCode(IUser user, uint packageId, string code)

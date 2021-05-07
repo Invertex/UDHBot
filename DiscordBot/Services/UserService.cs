@@ -60,7 +60,7 @@ namespace DiscordBot.Services
 
         private readonly List<ulong> _noXpChannels;
 
-        //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
+        //TODO Add custom commands for user after (30karma ?/limited to 3 ?)
 
         public UserService(DiscordSocketClient client,DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
             Settings.Deserialized.Settings settings, UserSettings userSettings, Rules rules)
@@ -218,7 +218,7 @@ namespace DiscordBot.Services
 
             await LevelUp(messageParam, userId);
 
-            //TODO: add xp gain on website
+            //TODO add xp gain on website
         }
 
         /// <summary>
@@ -242,11 +242,11 @@ namespace DiscordBot.Services
             _databaseService.AddUserUdc(userId, 1200);
 
             await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(seconds: 60);
-            //TODO: investigate why this is not running async
+            //TODO investigate why this is not running async
             //I believe it's because you didn't include async and await in the ContinueWith structure.
             // instead should be `ContinueWith(async _ => await message.DeleteAsync())`
             //await Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(async _ => await message.DeleteAsync()).Unwrap();
-            //TODO: Add level up card
+            //TODO Add level up card
         }
 
         private double GetXpLow(int level)
@@ -528,7 +528,7 @@ namespace DiscordBot.Services
             ulong userId = messageParam.Author.Id;
 
 //Simple check to cover most large code posting cases without being an issue for most non-code messages
-// TODO: Perhaps work out a more advanced Regex based check at a later time
+// TODO Perhaps work out a more advanced Regex based check at a later time
             if (!CodeReminderCooldown.HasUser(userId))
             {
                 string content = messageParam.Content;
@@ -611,7 +611,7 @@ namespace DiscordBot.Services
                 "You can get all the available commands on the server by typing !help in the **#bot-commands** channel.");
             await dm.SendMessageAsync(globalRules);
 
-            //TODO: add users when bot was offline
+            //TODO add users when bot was offline
         }
 
         private async Task UserUpdated(SocketGuildUser oldUser, SocketGuildUser user)
@@ -649,7 +649,7 @@ namespace DiscordBot.Services
             return _client.Latency;
         }
 
-// TODO: Response to people asking if anyone is around to help.
+// TODO Response to people asking if anyone is around to help.
 /*
 public async Task UselessAskingCheck(SocketMessage messageParam)
 {
@@ -660,7 +660,7 @@ public async Task UselessAskingCheck(SocketMessage messageParam)
     string content = messageParam.Content;
 }*/
 
-//TODO: If Discord ever enables a hook that allows modifying a message during creation of it, then this could be put to use...
+//TODO If Discord ever enables a hook that allows modifying a message during creation of it, then this could be put to use...
 // Disabled for now.
 /*
 public async Task EscapeMessage(SocketMessage messageParam)
