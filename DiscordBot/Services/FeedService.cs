@@ -37,7 +37,7 @@ namespace DiscordBot.Services
                 var streamReader = new StreamReader(dataStream, Encoding.UTF8);
                 var response = streamReader.ReadToEnd();
                 streamReader.Close();
-                response = Utils.SanitizeXml(response);
+                response = Utils.Utils.SanitizeXml(response);
                 XmlReader reader = new XmlTextReader(new StringReader(response));
 
                 var feed = SyndicationFeed.Load(reader);
