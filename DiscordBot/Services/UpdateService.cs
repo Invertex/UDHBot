@@ -15,8 +15,6 @@ namespace DiscordBot.Services
 {
     public class BotData
     {
-        public DateTime LastPublisherCheck { get; set; }
-        public List<ulong> LastPublisherId { get; set; }
         public DateTime LastUnityDocDatabaseUpdate { get; set; }
     }
 
@@ -54,13 +52,10 @@ namespace DiscordBot.Services
     }
 
     //TODO Download all avatars to cache them
-
     public class UpdateService
     {
         private readonly DatabaseService _databaseService;
         private readonly FeedService _feedService;
-        private readonly ILoggingService _loggingService;
-        private readonly PublisherService _publisherService;
         private readonly Settings.Deserialized.Settings _settings;
         private readonly CancellationToken _token;
         private string[][] _apiDatabase;
@@ -74,12 +69,10 @@ namespace DiscordBot.Services
         private readonly Random _random;
         private UserData _userData;
 
-        public UpdateService(DiscordSocketClient client, ILoggingService loggingService, PublisherService publisherService,
-                             DatabaseService databaseService, Settings.Deserialized.Settings settings, FeedService feedService)
+        public UpdateService(DiscordSocketClient client,
+            DatabaseService databaseService, Settings.Deserialized.Settings settings, FeedService feedService)
         {
             _client = client;
-            _loggingService = loggingService;
-            _publisherService = publisherService;
             _databaseService = databaseService;
             _feedService = feedService;
 
@@ -90,14 +83,13 @@ namespace DiscordBot.Services
             UpdateLoop();
         }
 
-        private async void UpdateLoop()
+        private void UpdateLoop()
         {
             ReadDataFromFile();
-            await SaveDataToFile();
-            //CheckDailyPublisher();
-            await UpdateUserRanks();
-            await UpdateDocDatabase();
-            await UpdateRssFeeds();
+            Task.Run(SaveDataToFile, _token);
+            Task.Run(UpdateUserRanks, _token);
+            Task.Run(UpdateDocDatabase, _token);
+            Task.Run(UpdateRssFeeds, _token);
         }
 
         private void ReadDataFromFile()
@@ -141,10 +133,7 @@ namespace DiscordBot.Services
             _feedData = SerializeUtil.DeserializeFile<FeedData>($"{_settings.ServerRootPath}/feeds.json", true);
         }
 
-        /*
-        ** Save data to file every 20s
-        */
-
+        // Saves data to file
         private async Task SaveDataToFile()
         {
             while (true)
@@ -159,37 +148,6 @@ namespace DiscordBot.Services
                 await File.WriteAllTextAsync($"{_settings.ServerRootPath}/feeds.json", json, _token);
                 //await _logging.LogAction("Data successfully saved to file", true, false);
                 await Task.Delay(TimeSpan.FromSeconds(20d), _token);
-            }
-        }
-
-        public async Task CheckDailyPublisher(bool force = false)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(10d), _token);
-            while (true)
-            {
-                if (_botData.LastPublisherCheck < DateTime.Now - TimeSpan.FromDays(1d) || force)
-                {
-                    var count = _databaseService.GetPublisherAdCount();
-                    ulong id;
-                    uint rand;
-                    do
-                    {
-                        rand = (uint) _random.Next((int) count);
-                        id = _databaseService.GetPublisherAd(rand).userId;
-                    } while (_botData.LastPublisherId.Contains(id));
-
-                    await _publisherService.PostAd(rand);
-                    await _loggingService.LogAction("Posted new daily publisher ad.", true, false);
-                    _botData.LastPublisherCheck = DateTime.Now;
-                    _botData.LastPublisherId.Add(id);
-                }
-
-                if (_botData.LastPublisherId.Count > 10)
-                    _botData.LastPublisherId.RemoveAt(0);
-
-                if (force)
-                    return;
-                await Task.Delay(TimeSpan.FromMinutes(5d), _token);
             }
         }
 
