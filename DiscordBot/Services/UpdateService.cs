@@ -102,66 +102,43 @@ namespace DiscordBot.Services
 
         private void ReadDataFromFile()
         {
-            if (File.Exists($"{_settings.ServerRootPath}/botdata.json"))
-            {
-                var json = File.ReadAllText($"{_settings.ServerRootPath}/botdata.json");
-                _botData = JsonConvert.DeserializeObject<BotData>(json);
-            }
-            else
-                _botData = new BotData();
-
-            if (File.Exists($"{_settings.ServerRootPath}/userdata.json"))
-            {
-                var json = File.ReadAllText($"{_settings.ServerRootPath}/userdata.json");
-                _userData = JsonConvert.DeserializeObject<UserData>(json);
-
-                Task.Run(
-                    async () =>
+            _botData = SerializeUtil.DeserializeFile<BotData>($"{_settings.ServerRootPath}/botdata.json", true);
+            
+            _userData = SerializeUtil.DeserializeFile<UserData>($"{_settings.ServerRootPath}/botdata.json", true);
+            Task.Run(
+                async () =>
+                {
+                    while (_client.ConnectionState != ConnectionState.Connected ||
+                           _client.LoginState != LoginState.LoggedIn)
+                        await Task.Delay(100, _token);
+                    
+                    await Task.Delay(10000, _token);
+                    //Check if there are users still muted
+                    foreach (var userId in _userData.MutedUsers)
                     {
-                        while (_client.ConnectionState != ConnectionState.Connected || _client.LoginState != LoginState.LoggedIn)
-                            await Task.Delay(100, _token);
-                        await Task.Delay(10000, _token);
-                        //Check if there are users still muted
-                        foreach (var userId in _userData.MutedUsers)
-                            if (_userData.MutedUsers.HasUser(userId.Key, true))
-                            {
-                                var guild = _client.Guilds.First(g => g.Id == _settings.GuildId);
-                                var sgu = guild.GetUser(userId.Key);
-                                if (sgu == null) continue;
+                        if (!_userData.MutedUsers.HasUser(userId.Key, true)) continue;
 
-                                IGuildUser user = sgu;
+                        var guild = _client.Guilds.First(g => g.Id == _settings.GuildId);
+                        var sgu = guild.GetUser(userId.Key);
+                        if (sgu == null) continue;
 
-                                var mutedRole = user.Guild.GetRole(_settings.MutedRoleId);
-                                //Make sure they have the muted role
-                                if (!user.RoleIds.Contains(_settings.MutedRoleId)) await user.AddRoleAsync(mutedRole);
+                        IGuildUser user = sgu;
 
-                                //Setup delay to remove role when time is up.
-                                await Task.Run(async () =>
-                                {
-                                    await _userData.MutedUsers.AwaitCooldown(user.Id);
-                                    await user.RemoveRoleAsync(mutedRole);
-                                }, _token);
-                            }
-                    }, _token);
-            }
-            else
-                _userData = new UserData();
+                        var mutedRole = user.Guild.GetRole(_settings.MutedRoleId);
+                        //Make sure they have the muted role
+                        if (!user.RoleIds.Contains(_settings.MutedRoleId)) await user.AddRoleAsync(mutedRole);
 
-            if (File.Exists($"{_settings.ServerRootPath}/FAQs.json"))
-            {
-                var json = File.ReadAllText($"{_settings.ServerRootPath}/FAQs.json");
-                _faqData = JsonConvert.DeserializeObject<List<FaqData>>(json);
-            }
-            else
-                _faqData = new List<FaqData>();
-
-            if (File.Exists($"{_settings.ServerRootPath}/feeds.json"))
-            {
-                var json = File.ReadAllText($"{_settings.ServerRootPath}/feeds.json");
-                _feedData = JsonConvert.DeserializeObject<FeedData>(json);
-            }
-            else
-                _feedData = new FeedData();
+                        //Setup delay to remove role when time is up.
+                        await Task.Run(async () =>
+                        {
+                            await _userData.MutedUsers.AwaitCooldown(user.Id);
+                            await user.RemoveRoleAsync(mutedRole);
+                        }, _token);
+                    }
+                }, _token);
+            
+            _faqData = SerializeUtil.DeserializeFile<List<FaqData>>($"{_settings.ServerRootPath}/FAQs.json", true);
+            _feedData = SerializeUtil.DeserializeFile<FeedData>($"{_settings.ServerRootPath}/feeds.json", true);
         }
 
         /*
@@ -271,9 +248,13 @@ namespace DiscordBot.Services
 
                 _manualDatabase = ConvertJsToArray(manualInput, true);
                 _apiDatabase = ConvertJsToArray(apiInput, false);
-
-                File.WriteAllText($"{_settings.ServerRootPath}/unitymanual.json", JsonConvert.SerializeObject(_manualDatabase));
-                File.WriteAllText($"{_settings.ServerRootPath}/unityapi.json", JsonConvert.SerializeObject(_apiDatabase));
+                
+                if (!SerializeUtil.SerializeFile($"{_settings.ServerRootPath}/unitymanual.json",
+                    JsonConvert.SerializeObject(_manualDatabase)))
+                    ConsoleLogger.Log("Failed to save unitymanual.json", Severity.Warning);
+                if (!SerializeUtil.SerializeFile($"{_settings.ServerRootPath}/unityapi.json",
+                    JsonConvert.SerializeObject(_apiDatabase)))
+                    ConsoleLogger.Log("Failed to save unityapi.json", Severity.Warning);
 
                 string[][] ConvertJsToArray(string data, bool isManual)
                 {
