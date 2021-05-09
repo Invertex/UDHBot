@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
@@ -12,7 +11,6 @@ using DiscordBot.Extensions;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
 using Pathoschild.NaturalTimeParser.Parser;
-using TaskExtensions = DiscordBot.Extensions.TaskExtensions;
 
 namespace DiscordBot.Modules
 {
@@ -52,9 +50,9 @@ namespace DiscordBot.Modules
 
             await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
-            var reply = await ReplyAsync($"User {user} has been muted for {Utils.FormatTime(arg)} ({arg} seconds).");
+            var reply = await ReplyAsync($"User {user} has been muted for {Utils.Utils.FormatTime(arg)} ({arg} seconds).");
             await _logging.LogAction(
-                $"{Context.User.Username} has muted {u.Username} ({u.Id}) for {Utils.FormatTime(arg)} ({arg} seconds).");
+                $"{Context.User.Username} has muted {u.Username} ({u.Id}) for {Utils.Utils.FormatTime(arg)} ({arg} seconds).");
 
             MutedUsers.AddCooldown(u.Id, (int) arg, ignoreExisting: true);
 
@@ -103,15 +101,15 @@ namespace DiscordBot.Modules
             await u.AddRoleAsync(Context.Guild.GetRole(_settings.MutedRoleId));
 
             var reply =
-                await ReplyAsync($"User {user} has been muted for {Utils.FormatTime(arg)} ({arg} seconds). Reason : {message}");
+                await ReplyAsync($"User {user} has been muted for {Utils.Utils.FormatTime(arg)} ({arg} seconds). Reason : {message}");
             await _logging.LogAction(
-                $"{Context.User.Username} has muted {u.Username} ({u.Id}) for {Utils.FormatTime(arg)} ({arg} seconds). Reason : {message}");
+                $"{Context.User.Username} has muted {u.Username} ({u.Id}) for {Utils.Utils.FormatTime(arg)} ({arg} seconds). Reason : {message}");
             var dm = await user.GetOrCreateDMChannelAsync(new RequestOptions());
 
             try
             {
                 await dm.SendMessageAsync(
-                    $"You have been muted from UDC for **{Utils.FormatTime(arg)}** for the following reason : **{message}**. " +
+                    $"You have been muted from UDC for **{Utils.Utils.FormatTime(arg)}** for the following reason : **{message}**. " +
                     "This is not appealable and any tentative to avoid it will result in your permanent ban.", false,
                     null, new RequestOptions {RetryMode = RetryMode.RetryRatelimit, Timeout = 6000});
             }
@@ -119,7 +117,7 @@ namespace DiscordBot.Modules
             {
                 await ReplyAsync($"Sorry {user.Mention}, seems I couldn't DM you because you blocked me !\n" +
                                  "I'll have to send your mute reason in public :wink:\n" +
-                                 $"You have been muted from UDC for **{Utils.FormatTime(arg)}** for the following reason : **{message}**. " +
+                                 $"You have been muted from UDC for **{Utils.Utils.FormatTime(arg)}** for the following reason : **{message}**. " +
                                  "This is not appealable and any tentative to avoid it will result in your permanent ban.");
                 await _logging.LogAction($"User {user.Username} has DM blocked and the mute reason couldn't be sent.", true, false);
             }
