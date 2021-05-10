@@ -67,7 +67,6 @@ namespace DiscordBot.Services
         private FeedData _feedData;
 
         private string[][] _manualDatabase;
-        private readonly Random _random;
         private UserData _userData;
 
         public UpdateService(DiscordSocketClient client,
@@ -79,7 +78,6 @@ namespace DiscordBot.Services
 
             _settings = settings;
             _token = new CancellationToken();
-            _random = new Random();
 
             UpdateLoop();
         }
