@@ -44,7 +44,7 @@ namespace DiscordBot.Services
         }
 
         /// <summary> Generates a command list that can provide users with information. Commands require [Command][Summary] and [Priority](If not ordering by name)</summary>
-        public async Task<string> GetCommandList(string moduleName, bool orderByName = false, bool includeArgs = true)
+        public async Task<string> GetCommandList(string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true)
         {
             // Simple wait.
             while (!IsInitialized)
@@ -68,7 +68,7 @@ namespace DiscordBot.Services
                 if (args.Length > 0)
                     args = $"- args: *( {args})*";
 
-                commandList.Append($"**{moduleName} {c.Name}** : {c.Summary} {args}\n");
+                commandList.Append($"**{(includeModuleName ? moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {args}\n");
             }
             return commandList.ToString();
         }
