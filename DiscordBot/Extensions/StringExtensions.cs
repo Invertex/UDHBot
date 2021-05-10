@@ -69,13 +69,15 @@ namespace DiscordBot.Extensions
 
             // Calculate rows and collumns distances
             for (var i = 1; i <= source1Length; i++)
-            for (var j = 1; j <= source2Length; j++)
             {
-                var cost = source2[j - 1] == source1[i - 1] ? 0 : 1;
+                for (var j = 1; j <= source2Length; j++)
+                {
+                    var cost = source2[j - 1] == source1[i - 1] ? 0 : 1;
 
-                matrix[i, j] = Math.Min(
-                    Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
-                    matrix[i - 1, j - 1] + cost);
+                    matrix[i, j] = Math.Min(
+                        Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
+                        matrix[i - 1, j - 1] + cost);
+                }
             }
 
             // return result

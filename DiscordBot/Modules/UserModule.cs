@@ -784,13 +784,15 @@ namespace DiscordBot.Modules
             var i = 0;
 
             foreach (var q in s1.Split(' '))
-            foreach (var x in s2.Split(' '))
             {
-                i++;
-                if (x.Equals(q))
-                    curScore -= 50;
-                else
-                    curScore += x.CalculateLevenshteinDistance(q);
+                foreach (var x in s2.Split(' '))
+                {
+                    i++;
+                    if (x.Equals(q))
+                        curScore -= 50;
+                    else
+                        curScore += x.CalculateLevenshteinDistance(q);
+                }
             }
 
             curScore /= i;
