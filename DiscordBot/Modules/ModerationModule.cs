@@ -166,7 +166,7 @@ namespace DiscordBot.Modules
             var contextUser = Context.User as SocketGuildUser;
             await Context.Message.DeleteAsync();
 
-            if (_settings.AllRoles.Roles.Contains(role.Name))
+            if (_settings.UserAssignableRoles.Roles.Contains(role.Name))
             {
                 var u = user as IGuildUser;
                 await u.AddRoleAsync(role);
@@ -187,7 +187,7 @@ namespace DiscordBot.Modules
             var contextUser = Context.User as SocketGuildUser;
             await Context.Message.DeleteAsync();
 
-            if (_settings.AllRoles.Roles.Contains(role.Name))
+            if (_settings.UserAssignableRoles.Roles.Contains(role.Name))
             {
                 var u = user as IGuildUser;
 
