@@ -6,6 +6,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
+using DiscordBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 
@@ -112,25 +113,10 @@ namespace DiscordBot
 
         private static void DeserializeSettings()
         {
-            using (var file = File.OpenText(@"Settings/Settings.json"))
-            {
-                _settings = JsonConvert.DeserializeObject<Settings.Deserialized.Settings>(file.ReadToEnd());
-            }
-
-            using (var file = File.OpenText(@"Settings/PayWork.json"))
-            {
-                _payWork = JsonConvert.DeserializeObject<PayWork>(file.ReadToEnd());
-            }
-
-            using (var file = File.OpenText(@"Settings/Rules.json"))
-            {
-                _rules = JsonConvert.DeserializeObject<Rules>(file.ReadToEnd());
-            }
-
-            using (var file = File.OpenText(@"Settings/UserSettings.json"))
-            {
-                _userSettings = JsonConvert.DeserializeObject<UserSettings>(file.ReadToEnd());
-            }
+            _settings = SerializeUtil.DeserializeFile<Settings.Deserialized.Settings>(@"Settings/Settings.json");
+            _payWork = SerializeUtil.DeserializeFile<PayWork>(@"Settings/PayWork.json");
+            _rules = SerializeUtil.DeserializeFile<Rules>(@"Settings/Rules.json");
+            _userSettings = SerializeUtil.DeserializeFile<UserSettings>(@"Settings/UserSettings.json");
         }
     }
 }
