@@ -17,55 +17,7 @@ namespace DiscordBot.Services
         }
 
         private string Connection { get; }
-
-        /*
-        **Publisher Stuff
-        */
-        public uint GetPublisherAdCount()
-        {
-            using (var connection = new MySqlConnection(Connection))
-            {
-                var command = new MySqlCommand("SELECT COUNT(*) FROM advertisment", connection);
-                connection.Open();
-                return Convert.ToUInt32(command.ExecuteScalar());
-            }
-        }
-
-        public (uint pkgId, ulong userId) GetPublisherAd(uint id)
-        {
-            using (var connection = new MySqlConnection(Connection))
-            {
-                var command = new MySqlCommand($"Select username, userid, packageID FROM advertisment WHERE id='{id}'", connection);
-                connection.Open();
-                MySqlDataReader reader;
-                using (reader = command.ExecuteReader())
-                {
-                    while (reader.Read()) return (Convert.ToUInt32(reader["packageID"]), Convert.ToUInt64(reader["userid"]));
-                }
-            }
-
-            return (0, 0);
-        }
-
-        public async Task AddPublisherPackage(string username, string discriminator, string userid, uint packageId)
-        {
-            try
-            {
-                using (var connection = new MySqlConnection(Connection))
-                {
-                    var command = new MySqlCommand(
-                        $"INSERT INTO advertisment SET username='{username}', discriminator='{discriminator}', userid='{userid}', packageID='{packageId}', date='{DateTime.Now:yyyy-MM-dd HH:mm:ss}'",
-                        connection);
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (Exception e)
-            {
-                await _logging.LogAction($"Error when trying to add package {packageId} from {username}#{discriminator} - {userid} : {e}");
-            }
-        }
-
+        
         /*
         Update Service
         */
@@ -181,21 +133,13 @@ namespace DiscordBot.Services
 
         public uint GetUserKarmaRank(ulong id)
         {
-            //int karma;
-
-            using (var connection = new MySqlConnection(Connection))
-            {
-                var command = new MySqlCommand(
-                    $"SELECT COUNT(1)+1 as `rank` FROM `users` WHERE karma > (SELECT karma FROM users WHERE userid='{id}')", connection);
-                connection.Open();
-                MySqlDataReader reader;
-                using (reader = command.ExecuteReader())
-                {
-                    while (reader.Read()) return (uint) Convert.ToInt32(reader["rank"]);
-                }
-            }
-
-            return 0;
+            using var connection = new MySqlConnection(Connection);
+            var command = new MySqlCommand(
+                $"SELECT COUNT(1)+1 as `rank` FROM `users` WHERE karma > (SELECT karma FROM users WHERE userid='{id}')", connection);
+            connection.Open();
+            using var reader = command.ExecuteReader();
+            if (!reader.Read()) return 0;
+            return (uint) Convert.ToInt32(reader["rank"]);
         }
 
         public List<(ulong userId, int level)> GetTopLevel()
@@ -373,16 +317,13 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(Connection))
-                {
-                    var command = new MySqlCommand($"Select `{attribute}` FROM users WHERE userid='{id}'", connection);
-                    connection.Open();
-                    MySqlDataReader reader;
-                    using (reader = command.ExecuteReader())
-                    {
-                        while (reader.Read()) return reader[attribute].ToString();
-                    }
-                }
+                using var connection = new MySqlConnection(Connection);
+                var command = new MySqlCommand($"Select `{attribute}` FROM users WHERE userid='{id}'", connection);
+                connection.Open();
+
+                using var reader = command.ExecuteReader();
+                reader.Read();
+                return reader[attribute].ToString();
             }
             catch (Exception e)
             {
