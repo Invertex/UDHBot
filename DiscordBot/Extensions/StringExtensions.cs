@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using DiscordBot.Data;
 using DiscordBot.Properties;
 
 namespace DiscordBot.Extensions
@@ -35,6 +37,29 @@ namespace DiscordBot.Extensions
                 ret.Add(currentString);
 
             return ret;
+        }
+
+        public static List<string> MessageSplitToSize(this string str,
+            int maxLength = Constants.MaxLengthChannelMessage)
+        {
+            var container = new List<string>();
+            if (str.Length < Constants.MaxLengthChannelMessage)
+            {
+                container.Add(str);
+                return container;
+            }
+
+            var cuts = (str.Length / Constants.MaxLengthChannelMessage) + 1;
+            var indexOfLine = 0;
+            for (var cut = 1; cut <= cuts; cut++)
+            {
+                string page;
+                page = cut == cuts ? str.Substring(indexOfLine) : str.Substring(indexOfLine, Constants.MaxLengthChannelMessage);
+
+                indexOfLine = page.LastIndexOf("\n") + 1;
+                container.Add(cut == cuts ? page : page.Remove(indexOfLine - 1));
+            }
+            return container;
         }
 
         /// <summary>

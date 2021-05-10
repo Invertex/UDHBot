@@ -19,7 +19,7 @@ namespace DiscordBot.Modules
 {
     public class UserModule : ModuleBase
     {
-        private string _commandList = string.Empty;
+        private List<string> _commandList = new List<string>();
         
         private static Settings.Deserialized.Settings _settings;
         private readonly CurrencyService _currencyService;
@@ -42,7 +42,12 @@ namespace DiscordBot.Modules
             _rules = rules;
             _settings = settings;
             
-            Task.Run(async () => _commandList = await commandHandlingService.GetCommandList("UserModule", true, true));
+            Task.Run(async () =>
+            {
+                var commands = await commandHandlingService.GetCommandList("UserModule", true, true, false);
+                //TODO Work out a decent way to remove duplicates?
+                _commandList = commands.MessageSplitToSize();
+            });
         }
 
         [Command("help")]
@@ -55,7 +60,10 @@ namespace DiscordBot.Modules
             {
                 try
                 {
-                    await Context.User.SendMessageAsync(_commandList);
+                    foreach (var message in _commandList)
+                    {
+                        await Context.User.SendMessageAsync(message);
+                    }
                 }
                 catch (Exception)
                 {
@@ -64,7 +72,10 @@ namespace DiscordBot.Modules
             }
             else
             {
-                await ReplyAsync(_commandList);
+                foreach (var message in _commandList)
+                {
+                    await ReplyAsync(message);
+                }
             }
             await Context.Message.DeleteAsync();
         }

@@ -16,7 +16,7 @@ namespace DiscordBot.Modules
 {
     public class ModerationModule : ModuleBase
     {
-        private string _commandList = string.Empty;
+        private List<string> _commandList = new List<string>();
         
         private readonly DatabaseService _database;
         private readonly ILoggingService _logging;
@@ -32,7 +32,12 @@ namespace DiscordBot.Modules
             _database = database;
             _rules = rules;
             _settings = settings;
-            Task.Run(async () => _commandList = await commandHandlingService.GetCommandList("ModerationModule", true, true));
+            Task.Run(async () =>
+            {
+                var commands =
+                        await commandHandlingService.GetCommandList("ModerationModule", true, true, false);
+                _commandList = commands.MessageSplitToSize();
+            });
         }
 
         private Dictionary<ulong, DateTime> MutedUsers => _user.MutedUsers;
@@ -437,7 +442,10 @@ namespace DiscordBot.Modules
         [Command("Mod Help")]
         public async Task ModerationHelp()
         {
-            await ReplyAsync(_commandList);
+            foreach (var message in _commandList)
+            {
+                await ReplyAsync(message);
+            }
         }
         #endregion
     }
