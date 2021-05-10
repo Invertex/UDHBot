@@ -851,14 +851,20 @@ namespace DiscordBot.Modules
         {
             var sb = new StringBuilder(faqs.Count);
             var index = 1;
+            var keywordSb = new StringBuilder();
             foreach (var faq in faqs)
             {
                 sb.Append(FormatFaq(index, faq) + "\n");
-                var keywords = "[";
-                for (var i = 0; i < faq.Keywords.Length; i++) keywords += faq.Keywords[i] + (i < faq.Keywords.Length - 1 ? ", " : "]\n\n");
+                keywordSb.Append("[");
+                for (var i = 0; i < faq.Keywords.Length; i++)
+                {
+                    keywordSb.Append(faq.Keywords[i]);
+                    keywordSb.Append(i < faq.Keywords.Length - 1 ? ", " : "]\n\n");
+                }
 
                 index++;
-                sb.Append(keywords);
+                sb.Append(keywordSb);
+                keywordSb.Clear();
             }
 
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
