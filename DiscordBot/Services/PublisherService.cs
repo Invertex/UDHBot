@@ -19,25 +19,23 @@ namespace DiscordBot.Services
     public class PublisherService
     {
         private readonly DiscordSocketClient _client;
-        private readonly DatabaseService _databaseService;
 
         private readonly Settings.Deserialized.Settings _settings;
 
         private readonly Dictionary<uint, string> _verificationCodes;
 
-        public PublisherService(DiscordSocketClient client, DatabaseService databaseService, Settings.Deserialized.Settings settings)
+        public PublisherService(DiscordSocketClient client, Settings.Deserialized.Settings settings)
         {
             _client = client;
-            _databaseService = databaseService;
             _verificationCodes = new Dictionary<uint, string>();
             _settings = settings;
         }
         
         /*
-        DailyObject => https://www.assetstore.unity3d.com/api/en-US/sale/results/10.json
-        PackageOBject => https://www.assetstore.unity3d.com/api/en-US/content/overview/[PACKAGEID].json
-        PriceObject (€) => https://www.assetstore.unity3d.com/api/en-US/content/price/[PACKAGEID].json
-        PackageHead => https://www.assetstore.unity3d.com/api/en-US/head/package/[PACKAGEID].json
+        (No longer works) DailyObject => https://www.assetstore.unity3d.com/api/en-US/sale/results/10.json
+        (No longer works) PackageOBject => https://www.assetstore.unity3d.com/api/en-US/content/overview/[PACKAGEID].json
+        (No longer works) PriceObject (€) => https://www.assetstore.unity3d.com/api/en-US/content/price/[PACKAGEID].json
+        (No longer works) PackageHead => https://www.assetstore.unity3d.com/api/en-US/head/package/[PACKAGEID].json
         blogfeed (xml) => https://blogs.unity3d.com/feed/
         */
 
