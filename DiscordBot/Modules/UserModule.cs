@@ -29,8 +29,6 @@ namespace DiscordBot.Modules
         private readonly Rules _rules;
         private readonly UpdateService _updateService;
         private readonly UserService _userService;
-
-        private string _compileCreate = "https://api.paiza.io/runners/create";
         
         public UserModule(DatabaseService databaseService, UserService userService,
                           PublisherService publisherService, UpdateService updateService, CurrencyService currencyService,
