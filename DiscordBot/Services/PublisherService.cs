@@ -32,27 +32,7 @@ namespace DiscordBot.Services
             _verificationCodes = new Dictionary<uint, string>();
             _settings = settings;
         }
-
-        public async Task PostAd(uint id)
-        {
-            (uint, ulong) ad = _databaseService.GetPublisherAd(id);
-            await PublisherAdvertising(ad.Item1, ad.Item2);
-        }
-
-        public async Task PublisherAdvertising(uint packageId, ulong userid)
-        {
-            Console.WriteLine("pub1 " + packageId);
-            var package = await GetPackage(packageId);
-            var packageHead = await GetPackageHead(packageId);
-            var packagePrice = await GetPackagePrice(packageId);
-            Console.WriteLine("pub2");
-            var r = await GetPublisherAdvertisting(userid, package, packageHead, packagePrice);
-            Console.WriteLine("pub3");
-
-            var channel = _client.GetChannel(_settings.UnityNewsChannel.Id) as ISocketMessageChannel;
-            await channel.SendFileAsync(r.Item2, "image.jpg", r.Item1);
-        }
-
+        
         /*
         DailyObject => https://www.assetstore.unity3d.com/api/en-US/sale/results/10.json
         PackageOBject => https://www.assetstore.unity3d.com/api/en-US/content/overview/[PACKAGEID].json
@@ -226,8 +206,7 @@ namespace DiscordBot.Services
             var u = user as SocketGuildUser;
             IRole publisher = u.Guild.GetRole(_settings.PublisherRoleId);
             await u.AddRoleAsync(publisher);
-            await _databaseService.AddPublisherPackage(user.Username, user.DiscriminatorValue.ToString(), user.Id.ToString(), packageId);
-
+            
             return "Your package has been verified and added to the daily advertisement list.";
         }
     }
