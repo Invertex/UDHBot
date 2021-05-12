@@ -4,7 +4,7 @@ namespace DiscordBot.Settings.Deserialized
 {
     public class UserSettings
     {
-        public List<string> Thanks { get; set; } = new() {"thanks", "ty", "thx", "thnx", "thanx", "thankyou", "thank you", "cheers"};
+        public List<string> Thanks { get; set; } = new List<string> {"thanks", "ty", "thx", "thnx", "thanx", "thankyou", "thank you", "cheers"};
         public int ThanksCooldown { get; set; } = 60;
         public int ThanksReminderCooldown { get; set; } = 86400;
         public int ThanksMinJoinTime { get; set; } = 600;
