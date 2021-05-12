@@ -1,7 +1,6 @@
 using System.IO;
 using Newtonsoft.Json;
 
-//TODO async?
 namespace DiscordBot.Utils
 {
     public static class SerializeUtil

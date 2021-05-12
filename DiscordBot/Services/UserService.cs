@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -51,9 +52,7 @@ namespace DiscordBot.Services
         private readonly Random _rand;
 
         public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
-
-        //TODO Add custom commands for user after (30karma ?/limited to 3 ?)
-
+        
         public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
                            Settings.Deserialized.Settings settings, UserSettings userSettings, Rules rules)
         {
@@ -138,6 +137,7 @@ namespace DiscordBot.Services
                 await Task.Delay(10000);
                 SaveData();
             }
+            // ReSharper disable once FunctionNeverReturns
         }
 
         private void LoadData()
@@ -205,12 +205,10 @@ namespace DiscordBot.Services
             _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
             await LevelUp(messageParam, userId);
-
-            //TODO add xp gain on website
         }
 
         /// <summary>
-        ///     Show level up emssage
+        /// Show level up message
         /// </summary>
         /// <param name="messageParam"></param>
         /// <param name="userId"></param>
@@ -229,10 +227,6 @@ namespace DiscordBot.Services
             await _databaseService.AddUserUdcAsync(userId, 1200);
 
             await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(60);
-            //TODO investigate why this is not running async
-            //I believe it's because you didn't include async and await in the ContinueWith structure.
-            // instead should be `ContinueWith(async _ => await message.DeleteAsync())`
-            //await Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(async _ => await message.DeleteAsync()).Unwrap();
             //TODO Add level up card
         }
 
@@ -265,7 +259,7 @@ namespace DiscordBot.Services
 
             var percentage = (float) xpShown / maxXpShown;
 
-            var u = user as IGuildUser;
+            var u = (IGuildUser)user;
             IRole mainRole = null;
             foreach (var id in u.RoleIds)
             {
@@ -274,75 +268,74 @@ namespace DiscordBot.Services
                     mainRole = u.Guild.GetRole(id);
                 else if (role.Position > mainRole.Position) mainRole = role;
             }
+            mainRole ??= u.Guild.EveryoneRole;
 
-            using (var profileCard = new MagickImageCollection())
+            using var profileCard = new MagickImageCollection();
+            var skin = GetSkinData();
+            var profile = new ProfileData
             {
-                var skin = GetSkinData();
-                var profile = new ProfileData
+                Karma = karma,
+                KarmaRank = karmaRank,
+                Level = level,
+                MainRoleColor = mainRole.Color,
+                MaxXpShown = maxXpShown,
+                Nickname = ((IGuildUser) user).Nickname,
+                UserId = userId,
+                Username = user.Username,
+                XpHigh = xpHigh,
+                XpLow = xpLow,
+                XpPercentage = percentage,
+                XpRank = xpRank,
+                XpShown = xpShown,
+                XpTotal = xpTotal
+            };
+
+            var background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
+
+            var avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
+            if (string.IsNullOrEmpty(avatarUrl))
+                profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
+            else
+                try
                 {
-                    Karma = karma,
-                    KarmaRank = karmaRank,
-                    Level = level,
-                    MainRoleColor = mainRole.Color,
-                    MaxXpShown = maxXpShown,
-                    Nickname = (user as IGuildUser)?.Nickname,
-                    UserId = userId,
-                    Username = user.Username,
-                    XpHigh = xpHigh,
-                    XpLow = xpLow,
-                    XpPercentage = percentage,
-                    XpRank = xpRank,
-                    XpShown = xpShown,
-                    XpTotal = xpTotal
-                };
+                    Stream stream;
 
-                var background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
+                    using (var http = new HttpClient())
+                    {
+                        stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                    }
 
-                var avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
-                if (string.IsNullOrEmpty(avatarUrl))
+                    profile.Picture = new MagickImage(stream);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
                     profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
-                else
-                    try
-                    {
-                        Stream stream;
-
-                        using (var http = new HttpClient())
-                        {
-                            stream = await http.GetStreamAsync(new Uri(avatarUrl));
-                        }
-
-                        profile.Picture = new MagickImage(stream);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
-                    }
-
-                profile.Picture.Resize(skin.AvatarSize, skin.AvatarSize);
-                profileCard.Add(background);
-
-                foreach (var layer in skin.Layers)
-                {
-                    if (layer.Image != null)
-                    {
-                        var image = layer.Image.ToLower() == "avatar"
-                            ? profile.Picture
-                            : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
-
-                        background.Composite(image, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
-                    }
-
-                    var l = new MagickImage(MagickColors.Transparent, (int) layer.Width, (int) layer.Height);
-                    foreach (var module in layer.Modules) module.GetDrawables(profile).Draw(l);
-
-                    background.Composite(l, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
                 }
 
-                using (var result = profileCard.Mosaic())
+            profile.Picture.Resize(skin.AvatarSize, skin.AvatarSize);
+            profileCard.Add(background);
+
+            foreach (var layer in skin.Layers)
+            {
+                if (layer.Image != null)
                 {
-                    result.Write($"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png");
+                    var image = layer.Image.ToLower() == "avatar"
+                        ? profile.Picture
+                        : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
+
+                    background.Composite(image, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
                 }
+
+                var l = new MagickImage(MagickColors.Transparent, (int) layer.Width, (int) layer.Height);
+                foreach (var module in layer.Modules) module.GetDrawables(profile).Draw(l);
+
+                background.Composite(l, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
+            }
+
+            using (var result = profileCard.Mosaic())
+            {
+                result.Write($"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png");
             }
 
             return $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
@@ -380,7 +373,7 @@ namespace DiscordBot.Services
         public async Task Thanks(SocketMessage messageParam)
         {
             //Get guild id
-            var channel = messageParam.Channel as SocketGuildChannel;
+            var channel = (SocketGuildChannel)messageParam.Channel;
             var guildId = channel.Guild.Id;
 
             //Make sure its in the UDH server
@@ -541,8 +534,9 @@ namespace DiscordBot.Services
                 await user.AddRoleAsync(socketTextChannel?.Guild.GetRole(_settings.MutedRoleId));
                 await _loggingService.LogAction(
                     $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
-                await socketTextChannel.SendMessageAsync(
-                    $"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
+                if (socketTextChannel != null)
+                    await socketTextChannel.SendMessageAsync(
+                        $"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
                 MutedUsers.AddCooldown(user.Id, hours: 72);
                 return;
             }
@@ -589,7 +583,7 @@ namespace DiscordBot.Services
             var timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
                 $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days) + " days" : " ")}" +
-                $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                $" {Math.Floor((double) timeStayed.Hours).ToString(CultureInfo.InvariantCulture)} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
             await _databaseService.DeleteUser(user.Id);
         }
 

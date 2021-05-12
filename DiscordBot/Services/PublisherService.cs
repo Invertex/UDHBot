@@ -201,7 +201,7 @@ namespace DiscordBot.Services
             if (c != code)
                 return "The verification code is not valid. Please verify it and try again.";
 
-            var u = user as SocketGuildUser;
+            var u = (SocketGuildUser)user;
             IRole publisher = u.Guild.GetRole(_settings.PublisherRoleId);
             await u.AddRoleAsync(publisher);
             

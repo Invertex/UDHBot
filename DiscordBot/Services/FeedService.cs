@@ -12,11 +12,11 @@ namespace DiscordBot.Services
 {
     public class FeedService
     {
-        private const string BETA_URL = "https://unity3d.com/unity/beta/latest.xml";
-        private const string RELEASE_URL = "https://unity3d.com/unity/releases.xml";
-        private const string BLOG_URL = "https://blogs.unity3d.com/feed/";
+        private const string BetaUrl = "https://unity3d.com/unity/beta/latest.xml";
+        private const string ReleaseUrl = "https://unity3d.com/unity/releases.xml";
+        private const string BlogUrl = "https://blogs.unity3d.com/feed/";
 
-        private const int MAXIMUM_CHECK = 3;
+        private const int MaximumCheck = 3;
         private readonly DiscordSocketClient _client;
 
         private readonly Settings.Deserialized.Settings _settings;
@@ -42,7 +42,7 @@ namespace DiscordBot.Services
 
                 var feed = SyndicationFeed.Load(reader);
                 var channel = _client.GetChannel(channelId) as ISocketMessageChannel;
-                foreach (var item in feed.Items.Take(MAXIMUM_CHECK))
+                foreach (var item in feed.Items.Take(MaximumCheck))
                     if (!feedData.PostedIds.Contains(item.Id))
                     {
                         feedData.PostedIds.Add(item.Id);
@@ -72,17 +72,17 @@ namespace DiscordBot.Services
 
         public async Task CheckUnityBetasAsync(FeedData feedData)
         {
-            await HandleFeed(feedData, BETA_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity **beta **release !** {0}** \n <{1}>");
+            await HandleFeed(feedData, BetaUrl, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity **beta **release !** {0}** \n <{1}>");
         }
 
         public async Task CheckUnityReleasesAsync(FeedData feedData)
         {
-            await HandleFeed(feedData, RELEASE_URL, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity release ! **{0}** \n <{1}>");
+            await HandleFeed(feedData, ReleaseUrl, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity release ! **{0}** \n <{1}>");
         }
 
         public async Task CheckUnityBlogAsync(FeedData feedData)
         {
-            await HandleFeed(feedData, BLOG_URL, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId, "New unity blog post ! **{0}**\n{1}");
+            await HandleFeed(feedData, BlogUrl, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId, "New unity blog post ! **{0}**\n{1}");
         }
     }
 }

@@ -11,6 +11,7 @@ using DiscordBot.Extensions;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
 using HtmlAgilityPack;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot.Modules
 {
@@ -27,18 +28,17 @@ namespace DiscordBot.Modules
         private readonly UpdateService _updateService;
         private readonly UserService _userService;
         
-        public UserModule(DatabaseService databaseService, UserService userService,
-                          PublisherService publisherService, UpdateService updateService, CurrencyService currencyService,
-                          Rules rules, Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
+        public UserModule(IServiceProvider serviceProvider, Settings.Deserialized.Settings settings, Rules rules)
         {
-            _databaseService = databaseService;
-            _userService = userService;
-            _publisherService = publisherService;
-            _updateService = updateService;
-            _currencyService = currencyService;
+            _databaseService = serviceProvider.GetRequiredService<DatabaseService>();
+            _userService = serviceProvider.GetRequiredService<UserService>();
+            _publisherService =  serviceProvider.GetRequiredService<PublisherService>();
+            _updateService = serviceProvider.GetRequiredService<UpdateService>();
+            _currencyService = serviceProvider.GetRequiredService<CurrencyService>();
             _rules = rules;
             _settings = settings;
-            
+
+            var commandHandlingService = serviceProvider.GetRequiredService<CommandHandlingService>();
             Task.Run(async () =>
             {
                 var commands = await commandHandlingService.GetCommandList("UserModule", true, true, false);
@@ -52,7 +52,6 @@ namespace DiscordBot.Modules
         [Alias("command", "commands")]
         public async Task DisplayHelp()
         {
-            //TODO Be possible in DM
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
                 try
@@ -255,18 +254,14 @@ namespace DiscordBot.Modules
             //Make sure they're the santa bot
             if (Context.Message.Author.Id != 514979161144557600L) return;
 
-            long userId = 0;
-
-            if (!long.TryParse(message, out userId))
+            if (!long.TryParse(message, out var userId))
             {
                 await ReplyAsync("Invalid user id");
                 return;
             }
 
             var xpGain = 5000;
-
             await _databaseService.AddUserXpAsync((ulong) userId, xpGain);
-
             await Context.Message.DeleteAsync();
         }
 
@@ -1075,7 +1070,7 @@ namespace DiscordBot.Modules
             // Get USD to toCurrency rate
             var toRate = await _currencyService.GetRate(to);
 
-            if (!await CurrencyFailedResponse((from, fromRate == -1), (from, fromRate == -1)))
+            if (!await CurrencyFailedResponse((from, fromRate.Equals(-1)), (from, fromRate.Equals(-1))))
             {
                 await Context.Message.DeleteAfterSeconds(seconds: 1);
                 return;

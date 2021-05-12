@@ -11,7 +11,7 @@ namespace DiscordBot.Services
 {
     public class CommandHandlingService
     {
-        public bool IsInitialized { get; private set; } = false;
+        public bool IsInitialized { get; private set; }
 
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commandService;

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -8,7 +7,6 @@ using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 
 namespace DiscordBot
 {

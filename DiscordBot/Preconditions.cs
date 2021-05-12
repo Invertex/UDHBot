@@ -12,7 +12,7 @@ namespace DiscordBot
     {
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            var user = context.Message.Author as SocketGuildUser;
+            var user = (SocketGuildUser)context.Message.Author;
 
             if (user.Roles.Any(x => x.Permissions.Administrator)) return Task.FromResult(PreconditionResult.FromSuccess());
             return Task.FromResult(PreconditionResult.FromError(user + " attempted to use admin only command!"));
@@ -24,9 +24,9 @@ namespace DiscordBot
     {
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            var user = context.Message.Author as SocketGuildUser;
+            var user = (SocketGuildUser)context.Message.Author;
             var settings = services.GetRequiredService<Settings.Deserialized.Settings>();
-
+            
             if (user.Roles.Any(x => x.Id == settings.ModeratorRoleId)) return Task.FromResult(PreconditionResult.FromSuccess());
             return Task.FromResult(PreconditionResult.FromError(user + " attempted to use a moderator command!"));
         }
