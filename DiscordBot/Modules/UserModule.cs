@@ -498,7 +498,7 @@ namespace DiscordBot.Modules
         }
 
         [Command("Profile")]
-        [Summary("Display profile card of mentionned user. Syntax : !profile @user")]
+        [Summary("Display profile card of mentioned user. Syntax : !profile @user")]
         public async Task DisplayProfile(IUser user)
         {
             try
