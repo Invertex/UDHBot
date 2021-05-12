@@ -12,7 +12,6 @@ namespace DiscordBot
 {
     public class Program
     {
-        private static PayWork _payWork;
         private static Rules _rules;
         private static Settings.Deserialized.Settings _settings;
         private static UserSettings _userSettings;
@@ -67,7 +66,6 @@ namespace DiscordBot
             new ServiceCollection()
                 .AddSingleton(_settings)
                 .AddSingleton(_rules)
-                .AddSingleton(_payWork)
                 .AddSingleton(_userSettings)
                 .AddSingleton(_client)
                 .AddSingleton(_commandService)
@@ -112,7 +110,6 @@ namespace DiscordBot
         private static void DeserializeSettings()
         {
             _settings = SerializeUtil.DeserializeFile<Settings.Deserialized.Settings>(@"Settings/Settings.json");
-            _payWork = SerializeUtil.DeserializeFile<PayWork>(@"Settings/PayWork.json");
             _rules = SerializeUtil.DeserializeFile<Rules>(@"Settings/Rules.json");
             _userSettings = SerializeUtil.DeserializeFile<UserSettings>(@"Settings/UserSettings.json");
         }

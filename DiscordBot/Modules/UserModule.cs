@@ -376,11 +376,8 @@ namespace DiscordBot.Modules
             var rule = _rules.Channel.First(x => x.Id == channel.Id);
             var dm = await Context.User.GetOrCreateDMChannelAsync();
             bool sentMessage = false;
-            if (rule == null)
-                sentMessage = await dm.TrySendMessage($"There is no special rule for {channel.Name} channel.\nPlease follow global rules (you can get them by typing `!globalrules`)");
-            else
-                sentMessage = await dm.TrySendMessage($"{rule.Header}{(rule.Content.Length > 0 ? rule.Content : $"There is no special rule for {channel.Name} channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
-
+            
+            sentMessage = await dm.TrySendMessage($"{rule.Header}{(rule.Content.Length > 0 ? rule.Content : $"There is no special rule for {channel.Name} channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
             if (!sentMessage)
                 await ReplyAsync($"Could not send rules, your DMs are disabled.").DeleteAfterSeconds(seconds: 10);
         }

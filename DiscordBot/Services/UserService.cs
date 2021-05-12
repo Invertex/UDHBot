@@ -404,9 +404,6 @@ namespace DiscordBot.Services
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
                 if (j > DateTime.Now)
                 {
-                    await messageParam.Channel.SendMessageAsync(
-                                          $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.")
-                                      .DeleteAfterTime(140);
                     return;
                 }
 
