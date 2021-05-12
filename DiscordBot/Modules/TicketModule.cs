@@ -1,26 +1,36 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
+using DiscordBot.Services;
 
 // ReSharper disable all UnusedMember.Local
 namespace DiscordBot.Modules
 {
     public class TicketModule : ModuleBase
     {
+        private List<string> _commandList = new List<string>();
+        
         private Settings.Deserialized.Settings _settings;
 
-        public TicketModule(Settings.Deserialized.Settings settings)
+        public TicketModule(Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
         {
             _settings = settings;
+            
+            Task.Run(async () =>
+            {
+                var commands = await commandHandlingService.GetCommandList("TicketModule", true, true, false);
+                _commandList = commands.MessageSplitToSize();
+            });
         }
 
         /// <summary>
         ///     Creates a private channel only accessable by the mods, admins, and the user who used the command.
         ///     One command, no args, simple.
         /// </summary>
-        [Command("complain"), Alias("complains", "complaint"), Summary("Opens a private channel to complain. Syntax : !complain")]
+        [Command("Complain"), Alias("complains", "complaint"), Summary("Opens a private channel to complain.")]
         public async Task Complaint()
         {
             await Context.Message.DeleteAsync();
@@ -63,7 +73,7 @@ namespace DiscordBot.Modules
         /// <summary>
         ///     Archives the ticket.
         /// </summary>
-        [Command("close"), Alias("end", "done", "bye", "archive"), Summary("Closes the ticket")]
+        [Command("Close"), Alias("end", "done", "bye", "archive"), Summary("Closes the ticket.")]
         [RequireModerator]
         public async Task Close()
         {
@@ -94,7 +104,7 @@ namespace DiscordBot.Modules
         /// <summary>
         ///     Delete the ticket.
         /// </summary>
-        [Command("delete"), Summary("Deletes the ticket")]
+        [Command("Delete"), Summary("Deletes the ticket.")]
         [RequireAdmin]
         private async Task Delete()
         {
@@ -108,5 +118,18 @@ namespace DiscordBot.Modules
         }
 
         private string ParseToDiscordChannel(string channelName) => channelName.ToLower().Replace(" ", "-");
+        
+        #region CommandList
+        [RequireModerator]
+        [Summary("Does what you see now.")]
+        [Command("Ticket Help")]
+        public async Task TicketHelp()
+        {
+            foreach (var message in _commandList)
+            {
+                await ReplyAsync(message);
+            }
+        }
+        #endregion
     }
 }
