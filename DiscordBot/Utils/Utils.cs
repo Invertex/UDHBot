@@ -20,7 +20,7 @@ namespace DiscordBot.Utils
 
             if (span.Seconds > 0) parts.Add($"{span.Seconds} second{(span.Seconds > 1 ? "s" : "")}");
 
-            var finishedTime = "";
+            var finishedTime = string.Empty;
             for (var i = 0; i < parts.Count; i++)
             {
                 if (i > 0)

@@ -21,7 +21,7 @@ namespace DiscordBot.Extensions
             var list = str.Split('\n').ToList();
             var ret = new List<string>();
 
-            var currentString = "";
+            var currentString = string.Empty;
             foreach (var s in list)
                 if (currentString.Length + s.Length < maxLength)
                     currentString += s + "\n";

@@ -123,7 +123,7 @@ namespace DiscordBot.Services
                 var content = await webClient.DownloadStringTaskAsync($"https://assetstore.unity.com/publishers/{publisherId}");
                 if (!content.Contains("Error 404"))
                 {
-                    var email = "";
+                    var email = string.Empty;
                     var emailMatch = new Regex("mailto:([^\"]+)").Match(content);
                     if (emailMatch.Success)
                         email = emailMatch.Groups[1].Value;

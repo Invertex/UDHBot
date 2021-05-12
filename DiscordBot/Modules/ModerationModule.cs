@@ -391,7 +391,7 @@ namespace DiscordBot.Modules
             var message = (IUserMessage) await channel.GetMessageAsync(messageId);
             var reactions = message.Reactions;
 
-            var reactionCount = "";
+            var reactionCount = string.Empty;
             foreach (var reaction in reactions)
                 reactionCount += $" {reaction.Key.Name} ({reaction.Value.ReactionCount})";
 

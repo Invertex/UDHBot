@@ -25,15 +25,13 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(Connection))
-                {
-                    var command = new MySqlCommand(
-                        "SET @prev_value = NULL; SET @rank_count = 0; " +
-                        "UPDATE users SET `rank` = @rank_count := IF(@prev_value = `rank`, @rank_count, @rank_count + 1) " +
-                        "ORDER BY exp DESC", connection);
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
+                using var connection = new MySqlConnection(Connection);
+                var command = new MySqlCommand(
+                    "SET @prev_value = NULL; SET @rank_count = 0; " +
+                    "UPDATE users SET `rank` = @rank_count := IF(@prev_value = `rank`, @rank_count, @rank_count + 1) " +
+                    "ORDER BY exp DESC", connection);
+                connection.Open();
+                command.ExecuteNonQuery();
             }
             catch (Exception e)
             {
@@ -43,68 +41,57 @@ namespace DiscordBot.Services
 
         public async Task AddUserXpAsync(ulong id, int xp)
         {
-            int oldXp;
             var reader = GetAttributeFromUser(id, "exp");
 
-            oldXp = Convert.ToInt32(reader);
+            var oldXp = Convert.ToInt32(reader);
             await UpdateAttributeFromUser(id, "exp", oldXp + xp);
         }
 
         public async Task AddUserLevelAsync(ulong id, uint level)
         {
-            uint oldLevel;
             var reader = GetAttributeFromUser(id, "level");
 
-            oldLevel = Convert.ToUInt32(reader);
+            var oldLevel = Convert.ToUInt32(reader);
             await UpdateAttributeFromUser(id, "level", oldLevel + level);
         }
 
         public async Task AddUserKarmaAsync(ulong id, int karma)
         {
-            int oldKarma;
             var reader = GetAttributeFromUser(id, "karma");
 
-            oldKarma = Convert.ToInt32(reader);
+            var oldKarma = Convert.ToInt32(reader);
             await UpdateAttributeFromUser(id, "karma", oldKarma + karma);
         }
 
         public uint GetUserXp(ulong id)
         {
-            uint xp;
             var reader = GetAttributeFromUser(id, "exp");
 
-            xp = Convert.ToUInt32(reader);
-
+            var xp = Convert.ToUInt32(reader);
             return xp;
         }
 
         public int GetUserKarma(ulong id)
         {
-            int karma;
             var reader = GetAttributeFromUser(id, "karma");
 
-            karma = Convert.ToInt32(reader);
-
+            var karma = Convert.ToInt32(reader);
             return karma;
         }
 
         public uint GetUserRank(ulong id)
         {
-            uint rank;
             var reader = GetAttributeFromUser(id, "rank");
 
-            rank = Convert.ToUInt32(reader);
-
+            var rank = Convert.ToUInt32(reader);
             return rank;
         }
 
         public uint GetUserLevel(ulong id)
         {
-            uint level;
             var reader = GetAttributeFromUser(id, "level");
 
-            level = Convert.ToUInt32(reader);
-
+            var level = Convert.ToUInt32(reader);
             return level;
         }
 
@@ -122,10 +109,9 @@ namespace DiscordBot.Services
 
         public async Task AddUserUdcAsync(ulong id, int udc)
         {
-            int oldUdc;
             var reader = GetAttributeFromUser(id, "udc");
 
-            oldUdc = Convert.ToInt32(reader);
+            var oldUdc = Convert.ToInt32(reader);
             await UpdateAttributeFromUser(id, "udc", oldUdc + udc);
         }
 

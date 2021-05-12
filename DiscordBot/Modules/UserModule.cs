@@ -689,7 +689,7 @@ namespace DiscordBot.Modules
                 {
                     var title = WebUtility.UrlDecode(row.InnerText);
                     var url = WebUtility.UrlDecode(row.Attributes["href"].Value.Replace("/l/?kh=-1&amp;uddg=", ""));
-                    var msg = "";
+                    var msg = string.Empty;
 
                     // Added line for pretty output
                     if (counter > 1) msg += "──────────────────────────────────────────\n";
