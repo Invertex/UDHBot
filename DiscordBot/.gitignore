@@ -5,11 +5,8 @@
 
 SERVER/logXP.txt
 SERVER/scrap.py
-SERVER/animedata.json
 SERVER/botdata.json
-SERVER/casinodata.json
 SERVER/unityapi.json
 SERVER/unitymanual.json
 SERVER/userdata.json
-SERVER/casino
 SERVER/feeds.json
