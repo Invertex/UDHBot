@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -15,7 +13,7 @@ namespace DiscordBot.Modules
     {
         // The Priority Attribute is used for !reactrole help ordering, there are no overloads.
 
-        private string _commandList = string.Empty;
+        private static string _commandList = string.Empty;
 
         private readonly ILoggingService _logging;
         private readonly ReactRoleService _reactRoleService;
@@ -28,7 +26,7 @@ namespace DiscordBot.Modules
             _reactRoleService = reactRoleService;
             
             // Generates an individual command list for the Reaction Roles
-            Task.Run(async () => _commandList = await commandService.GetCommandList("ReactRole", false, true));
+            Task.Run(async () => _commandList = await commandService.GetCommandList("ReactRole"));
         }
 
         #region Config

@@ -3,23 +3,21 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
-using DiscordBot.Properties;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
 using HtmlAgilityPack;
-using Newtonsoft.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot.Modules
 {
     public class UserModule : ModuleBase
     {
-        private string _commandList = string.Empty;
+        private static List<string> _commandList;
         
         private static Settings.Deserialized.Settings _settings;
         private readonly CurrencyService _currencyService;
@@ -29,35 +27,39 @@ namespace DiscordBot.Modules
         private readonly Rules _rules;
         private readonly UpdateService _updateService;
         private readonly UserService _userService;
-
-        private string _compileCreate = "https://api.paiza.io/runners/create";
         
-        public UserModule(DatabaseService databaseService, UserService userService,
-                          PublisherService publisherService, UpdateService updateService, CurrencyService currencyService,
-                          Rules rules, Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
+        public UserModule(IServiceProvider serviceProvider, Settings.Deserialized.Settings settings, Rules rules)
         {
-            _databaseService = databaseService;
-            _userService = userService;
-            _publisherService = publisherService;
-            _updateService = updateService;
-            _currencyService = currencyService;
+            _databaseService = serviceProvider.GetService<DatabaseService>();
+            _userService = serviceProvider.GetService<UserService>();
+            _publisherService =  serviceProvider.GetService<PublisherService>();
+            _updateService = serviceProvider.GetService<UpdateService>();
+            _currencyService = serviceProvider.GetService<CurrencyService>();
             _rules = rules;
             _settings = settings;
-            
-            Task.Run(async () => _commandList = await commandHandlingService.GetCommandList("UserModule", true, true));
+
+            var commandHandlingService = serviceProvider.GetService<CommandHandlingService>();
+            Task.Run(async () =>
+            {
+                var commands = await commandHandlingService.GetCommandList("UserModule", true, true, false);
+                //TODO Work out a decent way to remove duplicates?
+                _commandList = commands.MessageSplitToSize();
+            });
         }
 
-        [Command("help")]
-        [Summary("Display available commands (this). Syntax : !help")]
+        [Command("Help")]
+        [Summary("Show available commands.")]
         [Alias("command", "commands")]
         public async Task DisplayHelp()
         {
-            //TODO Be possible in DM
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
                 try
                 {
-                    await Context.User.SendMessageAsync(_commandList);
+                    foreach (var message in _commandList)
+                    {
+                        await Context.User.SendMessageAsync(message);
+                    }
                 }
                 catch (Exception)
                 {
@@ -66,13 +68,16 @@ namespace DiscordBot.Modules
             }
             else
             {
-                await ReplyAsync(_commandList);
+                foreach (var message in _commandList)
+                {
+                    await ReplyAsync(message);
+                }
             }
             await Context.Message.DeleteAsync();
         }
 
-        [Command("disablethanksreminder")]
-        [Summary("Prevents being reminded to mention the person you are thanking. Syntax : !disablethanksreminder")]
+        [Command("DisableThanksReminder")]
+        [Summary("Stops thank mention reminders.")]
         public async Task DisableThanksReminder()
         {
             var userId = Context.User.Id;
@@ -88,18 +93,32 @@ namespace DiscordBot.Modules
             await ReplyAsync($"{Context.User.Username}, you will no longer be reminded about mention thanking.").DeleteAfterTime(20);
         }
 
-        [Command("quote")]
+        [Command("Quote")]
         [Summary("Quote a message. Syntax : !quote messageid (#channelname) (optionalSubtitle)")]
-        public async Task QuoteMessage(ulong id, IMessageChannel channel = null, string subtitle = null)
+        public async Task QuoteMessage(ulong messageId, IMessageChannel channel = null, string subtitle = null)
         {
-            if (subtitle != null && (subtitle.Contains("@everyone") || subtitle.Contains("@here"))) return;
+            if (subtitle != null && (subtitle.Contains("@everyone") || subtitle.Contains("@here")))
+            {
+                await Context.Message.DeleteAfterSeconds(seconds: 2);
+                return;
+            }
+
             // If channel is null use Context.Channel, else use the provided channel
             channel ??= Context.Channel;
-            var message = await channel.GetMessageAsync(id);
-            // Can't imagine we need to quote the bots
-            if (message.Author.IsBot)
+            var message = await channel.GetMessageAsync(messageId);
+            if (message == null)
+            {
+                await Context.Message.DeleteAfterSeconds(seconds: 1);
+                await ReplyAsync("No message with that id found.").DeleteAfterSeconds(seconds: 4);
                 return;
-            var messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + channel.Id + "/" + id;
+            }
+            if (message.Author.IsBot) // Can't imagine we need to quote the bots
+            {
+                await Context.Message.DeleteAfterSeconds(seconds: 2);
+                return;
+            }
+
+            var messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + channel.Id + "/" + messageId;
             var msgContent = message.Content == string.Empty ? "" : message.Content.Truncate(1020);
 
             var msgAttachment = string.Empty;
@@ -134,6 +153,7 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAfterSeconds(1.0);
         }
 
+        /* Not really a required feature of the bot?
         [Command("compile")]
         [Summary("Try to compile a snippet of C# code. Be sure to escape your strings. Syntax : !compile \"Your code\"")]
         [Alias("code", "compute", "assert")]
@@ -201,24 +221,25 @@ namespace DiscordBot.Modules
                 newMessage = ($"\nFull result : https://hastebin.com/{response["key"]}\n" + fullMessage).Truncate(1990) + "```";
                 await message.ModifyAsync(m => m.Content = newMessage);
             }
-        }
+        } 
+        */
 
-        [Command("ping")]
-        [Summary("Display bot ping. Syntax : !ping")]
+        [Command("Ping")]
+        [Summary("Bot latency.")]
         [Alias("pong")]
         public async Task Ping()
         {
-            var message = await ReplyAsync("Pong :blush:");
+            var message = await ReplyAsync("Pong");
             var time = message.CreatedAt.Subtract(Context.Message.Timestamp);
             await message.ModifyAsync(m =>
-                m.Content = $"Pong :blush: (**{time.TotalMilliseconds}** *ms* / gateway **{_userService.GetGatewayPing()}** *ms*)");
-            await message.DeleteAfterTime(minutes: 3);
+                m.Content = $"Pong (**{time.TotalMilliseconds}** *ms* / gateway **{_userService.GetGatewayPing()}** *ms*)");
+            await message.DeleteAfterTime(seconds: 10);
 
-            await Context.Message.DeleteAfterTime(minutes: 3);
+            await Context.Message.DeleteAfterTime(seconds: 5);
         }
 
-        [Command("members")]
-        [Summary("Displays number of members Syntax : !members")]
+        [Command("Members")]
+        [Summary("Current member count.")]
         [Alias("MemberCount")]
         public async Task MemberCount()
         {
@@ -227,28 +248,24 @@ namespace DiscordBot.Modules
         }
 
         [Command("ChristmasCompleted")]
-        [Summary("Gives rewards to people who complete the christmas event.")]
+        [Summary("Reward for christmas event.")]
         public async Task UserCompleted(string message)
         {
             //Make sure they're the santa bot
             if (Context.Message.Author.Id != 514979161144557600L) return;
 
-            long userId = 0;
-
-            if (!long.TryParse(message, out userId))
+            if (!long.TryParse(message, out var userId))
             {
                 await ReplyAsync("Invalid user id");
                 return;
             }
 
             var xpGain = 5000;
-
             await _databaseService.AddUserXpAsync((ulong) userId, xpGain);
-
             await Context.Message.DeleteAsync();
         }
 
-        [Group("role")]
+        [Group("Role")]
         public class RoleModule : ModuleBase
         {
             private readonly ILoggingService _logging;
@@ -258,43 +275,41 @@ namespace DiscordBot.Modules
                 _logging = logging;
             }
 
-            [Command("add")]
+            [Command("Add")]
             [Summary("Add a role to yourself. Syntax : !role add role")]
             public async Task AddRoleUser(IRole role)
             {
                 if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
                 {
-                    await Task.Delay(1000);
-                    await Context.Message.DeleteAsync();
+                    await Context.Message.DeleteAfterSeconds(seconds: 1);
                     return;
                 }
 
-                if (!_settings.AllRoles.Roles.Contains(role.Name))
+                if (!_settings.UserAssignableRoles.Roles.Contains(role.Name))
                 {
-                    await ReplyAsync("This role is not assigneable");
+                    await ReplyAsync("This role is not assignable");
                     return;
                 }
 
                 var u = Context.User as IGuildUser;
 
                 await u.AddRoleAsync(role);
-                await ReplyAsync($"{u.Username} you now have the role of `{role.Name}`");
-                await _logging.LogAction($"{Context.User.Username} has added role {role} to himself in {Context.Channel.Name}");
+                await ReplyAsync($"{u.Username} you now have the `{role.Name}` role.");
+                await _logging.LogAction($"{Context.User.Username} has added {role} to themself.");
             }
 
-            [Command("remove")]
+            [Command("Remove")]
             [Summary("Remove a role from yourself. Syntax : !role remove role")]
             [Alias("delete")]
             public async Task RemoveRoleUser(IRole role)
             {
                 if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
                 {
-                    await Task.Delay(1000);
-                    await Context.Message.DeleteAsync();
+                    await Context.Message.DeleteAfterSeconds(seconds: 1);
                     return;
                 }
 
-                if (!_settings.AllRoles.Roles.Contains(role.Name))
+                if (!_settings.UserAssignableRoles.Roles.Contains(role.Name))
                 {
                     await ReplyAsync("Role is not assigneable");
                     return;
@@ -303,28 +318,23 @@ namespace DiscordBot.Modules
                 var u = Context.User as IGuildUser;
 
                 await u.RemoveRoleAsync(role);
-                await ReplyAsync($"{u.Username} your role of `{role.Name}` has been removed");
-                await _logging.LogAction($"{Context.User.Username} has removed role {role} from himself in {Context.Channel.Name}");
+                await ReplyAsync($"{u.Username} your `{role.Name}` role has been removed");
+                await _logging.LogAction($"{Context.User.Username} has removed role {role} from themself.");
             }
 
-            [Command("list")]
-            [Summary("Display the list of roles. Syntax : !role list")]
+            [Command("List")]
+            [Summary("List of available roles. Syntax : !role list")]
             public async Task ListRole()
             {
                 if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
                 {
-                    await Task.Delay(1000);
-                    await Context.Message.DeleteAsync();
+                    await Context.Message.DeleteAfterSeconds(seconds: 1);
                     return;
                 }
 
                 await ReplyAsync("**The following roles are available on this server** :\n" +
-                                 "\n" +
                                  "We offer multiple roles to show what you specialize in, whether it's professionally or as a hobby, so if there's something you're good at, assign the corresponding role! \n" +
-                                 "You can assign as much roles as you want, but try to keep them for what you're good at :) \n" +
-                                 "\n" +
-                                 "```To get the publisher role type **!pinfo** and follow the instructions." +
-                                 "https://www.assetstore.unity3d.com/en/#!/search/page=1/sortby=popularity/query=publisher:1 <= Example Digits```\n");
+                                 "You can assign as much roles as you want, but try to keep them for what you're good at :) \n");
                 await ReplyAsync(
                     "```!role add/remove 2D-Artists - If you're good at drawing, painting, digital art, concept art or anything else that's flat. \n" +
                     "!role add/remove 3D-Artists - If you are a wizard with vertices or like to forge your models from mud. \n" +
@@ -335,59 +345,58 @@ namespace DiscordBot.Modules
                     "!role add/remove Audio-Engineers - If you live life to the rhythm of your own music and sounds.\n" +
                     "!role add/remove Generalists - If you like to dabble in everything.\n" +
                     "!role add/remove Hobbyists - If you're using Unity as a hobby.\n" +
-                    "!role add/remove Students - If you're currently studying in a gamedev related field. \n" +
+                    "!role add/remove Students - If you're currently studying in a game-dev related field. \n" +
                     "!role add/remove XR-Developers - If you're a VR, AR or MR sorcerer. \n" +
-                    "!role add/remove Writers - If you like writing lore, scenarii, characters and stories. \n" +
+                    "!role add/remove Writers - If you like writing lore, scenarios, characters and stories. \n" +
                     "======Below are special roles that will get pinged for specific reasons====== \n" +
-                    "!role add/remove Subs-Gamejam - Will be pinged when there is UDC gamejam related news. \n" +
+                    "!role add/remove Subs-Gamejam - Will be pinged when there is UDC Game-Jam related news. \n" +
                     "!role add/remove Subs-Poll - Will be pinged when there is new public polls. \n" +
                     "!role add/remove Subs-Releases - Will be pinged when there is new unity releases (beta and stable versions). \n" +
                     "!role add/remove Subs-News - Will be pinged when there is new unity news (mainly blog posts). \n" +
                     "```");
+                await ReplyAsync("```To get the publisher role type **!pinfo** and follow the instructions.```\n");
             }
         }
 
         #region Rules
 
-        [Command("rules")]
-        [Summary("Get the of the current channel by DM. Syntax : !rules")]
+        [Command("Rules")]
+        [Summary("Rules of current channel by DM.")]
         public async Task Rules()
         {
             await Rules(Context.Channel);
             await Context.Message.DeleteAsync();
         }
 
-        [Command("rules")]
-        [Summary("Get the rules of the mentionned channel by DM. !rules #channel")]
+        [Command("Rules")]
+        [Summary("Rules of the mentioned channel by DM. !rules #channel")]
         [Alias("rule")]
         public async Task Rules(IMessageChannel channel)
         {
             var rule = _rules.Channel.First(x => x.Id == channel.Id);
-            //IUserMessage m; //Unused, plan to be used in future?
             var dm = await Context.User.GetOrCreateDMChannelAsync();
-            if (rule == null)
-                await dm.SendMessageAsync(
-                    "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)");
-            else
-                await dm.SendMessageAsync(
-                    $"{rule.Header}{(rule.Content.Length > 0 ? rule.Content : "There is no special rule for this channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
-
-            var deleteAsync = Context.Message?.DeleteAsync();
-            if (deleteAsync != null) await deleteAsync;
+            bool sentMessage = false;
+            
+            sentMessage = await dm.TrySendMessage($"{rule.Header}{(rule.Content.Length > 0 ? rule.Content : $"There is no special rule for {channel.Name} channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
+            if (!sentMessage)
+                await ReplyAsync($"Could not send rules, your DMs are disabled.").DeleteAfterSeconds(seconds: 10);
         }
 
-        [Command("globalrules")]
-        [Summary("Get the Global Rules by DM. Syntax : !globalrules")]
+        [Command("GlobalRules")]
+        [Summary("Global Rules by DM.")]
         public async Task GlobalRules(int seconds = 60)
         {
             var globalRules = _rules.Channel.First(x => x.Id == 0).Content;
             var dm = await Context.User.GetOrCreateDMChannelAsync();
-            await dm.SendMessageAsync(globalRules);
             await Context.Message.DeleteAsync();
+            if (!await dm.TrySendMessage(globalRules))
+            {
+                await ReplyAsync($"Could not send rules, your DMs are disabled.").DeleteAfterSeconds(seconds: 10);
+            }
         }
 
-        [Command("channels")]
-        [Summary("Get description of the channels by DM. Syntax : !channels")]
+        [Command("Channels")]
+        [Summary("Description of the channels by DM.")]
         public async Task ChannelsDescription()
         {
             //Display rules of this channel for x seconds
@@ -395,55 +404,51 @@ namespace DiscordBot.Modules
             var sb = new StringBuilder();
             foreach (var c in channelData)
                 sb.Append((await Context.Guild.GetTextChannelAsync(c.Id))?.Mention).Append(" - ").Append(c.Header).Append("\n");
-            var text = sb.ToString();
 
             var dm = await Context.User.GetOrCreateDMChannelAsync();
-
-            if (sb.ToString().Length > 2000)
-            {
-                await dm.SendMessageAsync(text.Substring(0, 2000));
-                await dm.SendMessageAsync(text.Substring(2000, text.Length));
-            }
-            else
-                await dm.SendMessageAsync(text);
-
+            
+            var messages = sb.ToString().MessageSplitToSize();
             await Context.Message.DeleteAsync();
+            foreach (var message in messages)
+            {
+                if (!await dm.TrySendMessage(message))
+                {
+                    await ReplyAsync($"Could not send channel descriptions, your DMs are disabled.").DeleteAfterSeconds(seconds: 10);
+                    break;
+                }
+            }
         }
 
         #endregion
 
         #region XP & Karma
 
-        [Command("karma")]
-        [Summary("Display description of what Karma is for. Syntax : !karma")]
+        [Command("Karma")]
+        [Summary("Description of what Karma is.")]
         public async Task KarmaDescription(int seconds = 60)
         {
-            await ReplyAsync($"{Context.User.Username}, " +
-                             $"Karma is tracked on your !profile, helping indicate how much you've helped others.{Environment.NewLine}" +
-                             "You also earn slightly more EXP from things the higher your Karma level is. Karma may be used for more features in the future.");
-
-            await Task.Delay(TimeSpan.FromSeconds(seconds));
-            await Context.Message.DeleteAsync();
+            await ReplyAsync($"{Context.User.Username}, Karma is tracked on your !profile which helps indicate how much you've helped others and provides a small increase in EXP gain.");
+            await Context.Message.DeleteAfterSeconds(seconds: seconds);
         }
 
-        [Command("top")]
-        [Summary("Display top 10 users by level. Syntax : !top")]
+        [Command("Top")]
+        [Summary("Display top 10 users by level.")]
         [Alias("toplevel", "ranking")]
         public async Task TopLevel()
         {
             var users = _databaseService.GetTopLevel();
             var embed = GenerateRankEmbedFromList(users, "Level");
-            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 3);
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
-        [Command("topkarma")]
-        [Summary("Display top 10 users by karma. Syntax : !topkarma")]
+        [Command("TopKarma")]
+        [Summary("Display top 10 users by karma.")]
         [Alias("karmarank", "rankingkarma")]
         public async Task TopKarma()
         {
             var users = _databaseService.GetTopKarma();
             var embed = GenerateRankEmbedFromList(users, "Karma");
-            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 3);
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
         private Embed GenerateRankEmbedFromList(List<(ulong userID, int value)> data, string labelName)
@@ -470,8 +475,8 @@ namespace DiscordBot.Modules
             return embedBuilder.Build();
         }
 
-        [Command("topudc")]
-        [Summary("Display top 10 users by UDC. Syntax : !topudc")]
+        [Command("TopUDC")]
+        [Summary("Display top 10 users by UDC.")]
         [Alias("udcrank")]
         public async Task TopUdc()
         {
@@ -485,25 +490,23 @@ namespace DiscordBot.Modules
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
         }
 
-        [Command("profile")]
-        [Summary("Display current user profile card. Syntax : !profile")]
+        [Command("Profile")]
+        [Summary("Display your profile card.")]
         public async Task DisplayProfile()
         {
             await DisplayProfile(Context.Message.Author);
         }
 
-        [Command("profile")]
+        [Command("Profile")]
         [Summary("Display profile card of mentionned user. Syntax : !profile @user")]
         public async Task DisplayProfile(IUser user)
         {
             try
             {
                 var profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
-
-                await Task.Delay(1000);
-                await Context.Message.DeleteAsync();
-                await Task.Delay(TimeSpan.FromMinutes(3d));
-                await profile.DeleteAsync();
+                
+                await Context.Message.DeleteAfterSeconds(seconds: 1);
+                await profile.DeleteAfterTime(minutes: 3);
             }
             catch (Exception e)
             {
@@ -511,8 +514,8 @@ namespace DiscordBot.Modules
             }
         }
 
-        [Command("joindate")]
-        [Summary("Display your join date. Syntax : !joindate")]
+        [Command("JoinDate")]
+        [Summary("Display date you joined the server.")]
         public async Task JoinDate()
         {
             var userId = Context.User.Id;
@@ -525,114 +528,99 @@ namespace DiscordBot.Modules
 
         #region Codetips
 
-        [Command("codetip")]
+        [Command("CodeTip")]
         [Summary("Show code formatting example. Syntax : !codetip userToPing(optional)")]
         [Alias("codetips")]
         public async Task CodeTip(IUser user = null)
         {
             var message = user != null ? user.Mention + ", " : "";
-            message += "When posting code, format it like this to display it properly:" + Environment.NewLine;
+            message += "When posting code, format it like so:" + Environment.NewLine;
             message += _userService.CodeFormattingExample;
             await Context.Message.DeleteAsync();
-            await ReplyAsync(message).DeleteAfterSeconds(240);
+            await ReplyAsync(message).DeleteAfterSeconds(seconds: 60);
         }
 
-        [Command("disablecodetips")]
-        [Summary("Prevents being reminded about using proper code formatting when code is detected. Syntax : !disablecodetips")]
+        [Command("DisableCodeTips")]
+        [Summary("Stops code formatting reminders.")]
         public async Task DisableCodeTips()
         {
-            var userId = Context.User.Id;
-            var replyMessage = "You've already told me to stop reminding you, don't worry, I won't forget!";
-
-            if (!_userService.CodeReminderCooldown.IsPermanent(userId))
+            await Context.Message.DeleteAsync();
+            if (!_userService.CodeReminderCooldown.IsPermanent(Context.User.Id))
             {
-                replyMessage = "I will no longer remind you about using proper code formatting.";
                 _userService.CodeReminderCooldown.SetPermanent(Context.User.Id, true);
+                await ReplyAsync($"{Context.User.Username}, " + "You will no longer be reminded about correct code formatting.").DeleteAfterTime(20);
             }
-
-            await ReplyAsync($"{Context.User.Username}, " + replyMessage).DeleteAfterTime(20);
         }
 
         #endregion
 
         #region Fun
 
-        [Command("slap")]
+        private readonly string[] _slapObjects = { "trout", "duck", "truck", "paddle", "magikarp", "sausage", "student loan" };
+        [Command("Slap")]
         [Summary("Slap the specified user(s). Syntax : !slap @user1 [@user2 @user3...]")]
         public async Task SlapUser(params IUser[] users)
         {
             var sb = new StringBuilder();
-            string[] slaps = {"trout", "duck", "truck"};
             var random = new Random();
 
             sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
             foreach (var user in users) sb.Append(user.Mention).Append(" ");
 
-            sb.Append("around a bit with a large ").Append(slaps[random.Next() % 3]);
+            sb.Append("around a bit with a large ").Append(_slapObjects[random.Next() % _slapObjects.Length]).Append(".");
 
             await Context.Channel.SendMessageAsync(sb.ToString());
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
+            await Context.Message.DeleteAfterSeconds(seconds: 1);
         }
 
-        [Command("coinflip")]
-        [Summary("Flip a coin and see the result. Syntax : !coinflip")]
+        [Command("CoinFlip")]
+        [Summary("Flip a coin and see the result.")]
         [Alias("flipcoin")]
         public async Task CoinFlip()
         {
             var rand = new Random();
             var coin = new[] {"Heads", "Tails"};
 
-            await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}** !");
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
+            await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}**!");
+            await Context.Message.DeleteAfterSeconds(seconds: 1);
         }
 
         #endregion
 
         #region Publisher
 
-        [Command("pinfo")]
-        [Summary("Information on how to get the publisher role. Syntax : !pinfo")]
+        [Command("PInfo")]
+        [Summary("Information on how to get publisher role.")]
         [Alias("publisherinfo")]
         public async Task PublisherInfo()
         {
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
-                await Task.Delay(1000);
-                await Context.Message.DeleteAsync();
+                await Context.Message.DeleteAfterSeconds(seconds: 1);
                 return;
             }
-
             await ReplyAsync("\n" +
                              "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
                              "``!publisher ID`` - Your Publisher ID, assetstore.unity.com/publishers/yourID.\n" +
                              "``!verify publisherID verifCode`` - Verify your ID with the code sent to your email.");
-
-            //x await ReplyAsync($"\n" +
-            //x                  "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
-            //x                  "``!pkg ID`` - To add your package to Publisher everyday Advertising , ID means the digits on your package link.\n" +
-            //x                  "``!verify packageId verifCode`` - Verify your package with the code send to your email.");
-
-            await Task.Delay(10000);
-            await Context.Message.DeleteAsync();
+            await Context.Message.DeleteAfterSeconds(seconds: 30);
         }
 
-        [Command("publisher")]
+        [Command("Publisher")]
         [Summary("Get the Asset-Publisher role by verifying who you are. Syntax: !publisher publisherID")]
         public async Task Publisher(uint publisherId)
         {
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
                 await ReplyAsync($"Please use the <#{_settings.BotCommandsChannel.Id}> channel!")
-                    .DeleteAfterSeconds(2.0f);
-                await Context.Message.DeleteAfterSeconds(1.0f);
+                    .DeleteAfterSeconds(seconds: 4);
+                await Context.Message.DeleteAfterSeconds(seconds: 1);
                 return;
             }
 
             if (_settings.Gmail == string.Empty)
             {
-                await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(5f);
+                await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(seconds: 5);
                 return;
             }
 
@@ -641,8 +629,8 @@ namespace DiscordBot.Modules
                 await ReplyAsync(verify.Item2);
             else
             {
-                await ReplyAsync(verify.Item2).DeleteAfterSeconds(2.0f);
-                await Context.Message.DeleteAfterSeconds(1.0f);
+                await ReplyAsync(verify.Item2).DeleteAfterSeconds(seconds: 2);
+                await Context.Message.DeleteAfterSeconds(seconds: 1);
             }
         }
 
@@ -662,17 +650,15 @@ namespace DiscordBot.Modules
         //x     await ReplyAsync(verif.Item2);
         //x }
 
-        [Command("verify")]
+        [Command("Verify")]
         [Summary("Verify a publisher with the code received by email. Syntax : !verify publisherId code")]
         public async Task VerifyPackage(uint packageId, string code)
         {
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
-                await Task.Delay(1000);
-                await Context.Message.DeleteAsync();
+                await Context.Message.DeleteAfterSeconds(seconds: 1);
                 return;
             }
-
             var verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
             await ReplyAsync(verif);
         }
@@ -681,8 +667,8 @@ namespace DiscordBot.Modules
 
         #region Search
 
-        [Command("search")]
-        [Summary("Searches on DuckDuckGo for web results. Syntax : !search \"query\" resNum site")]
+        [Command("Search")]
+        [Summary("Searches DuckDuckGo for web results. Syntax : !search \"query\" resNum site")]
         [Alias("s", "ddg")]
         public async Task SearchResults(string query, uint resNum = 3, string site = "")
         {
@@ -703,7 +689,7 @@ namespace DiscordBot.Modules
                 {
                     var title = WebUtility.UrlDecode(row.InnerText);
                     var url = WebUtility.UrlDecode(row.Attributes["href"].Value.Replace("/l/?kh=-1&amp;uddg=", ""));
-                    var msg = "";
+                    var msg = string.Empty;
 
                     // Added line for pretty output
                     if (counter > 1) msg += "──────────────────────────────────────────\n";
@@ -722,8 +708,8 @@ namespace DiscordBot.Modules
                 !node.Attributes["href"].Value.Contains("duck.co");
         }
 
-        [Command("manual")]
-        [Summary("Searches on Unity3D manual results. Syntax : !manual \"query\"")]
+        [Command("Manual")]
+        [Summary("Searches Unity3D manual for results. Syntax : !manual \"query\"")]
         public async Task SearchManual(params string[] queries)
         {
             // Download Unity3D Documentation Database (lol)
@@ -747,11 +733,11 @@ namespace DiscordBot.Modules
             if (mostSimilarPage != null)
                 await ReplyAsync($"** {mostSimilarPage[1]} **\nRead More: https://docs.unity3d.com/Manual/{mostSimilarPage[0]}.html");
             else
-                await ReplyAsync("No Results Found.");
+                await ReplyAsync("No Results Found.").DeleteAfterSeconds(seconds: 10);
         }
 
-        [Command("doc")]
-        [Summary("Searches on Unity3D API results. Syntax : !api \"query\"")]
+        [Command("Doc")]
+        [Summary("Searches Unity3D API for results. Syntax : !api \"query\"")]
         [Alias("ref", "reference", "api", "docs")]
         public async Task SearchApi(params string[] queries)
         {
@@ -777,7 +763,7 @@ namespace DiscordBot.Modules
                 await ReplyAsync(
                     $"** {mostSimilarPage[1]} **\nRead More: https://docs.unity3d.com/ScriptReference/{mostSimilarPage[0]}.html");
             else
-                await ReplyAsync("No Results Found.");
+                await ReplyAsync("No Results Found.").DeleteAfterSeconds(seconds: 10);
         }
 
         private double CalculateScore(string s1, string s2)
@@ -786,21 +772,23 @@ namespace DiscordBot.Modules
             var i = 0;
 
             foreach (var q in s1.Split(' '))
-            foreach (var x in s2.Split(' '))
             {
-                i++;
-                if (x.Equals(q))
-                    curScore -= 50;
-                else
-                    curScore += x.CalculateLevenshteinDistance(q);
+                foreach (var x in s2.Split(' '))
+                {
+                    i++;
+                    if (x.Equals(q))
+                        curScore -= 50;
+                    else
+                        curScore += x.CalculateLevenshteinDistance(q);
+                }
             }
 
             curScore /= i;
             return curScore;
         }
 
-        [Command("faq")]
-        [Summary("Searches UDH FAQs. Syntax : !faq \"query\"")]
+        [Command("FAQ")]
+        [Summary("Searches UDC FAQs. Syntax : !faq \"query\"")]
         public async Task SearchFaqs(params string[] queries)
         {
             var faqDataList = _updateService.GetFaqData();
@@ -851,14 +839,20 @@ namespace DiscordBot.Modules
         {
             var sb = new StringBuilder(faqs.Count);
             var index = 1;
+            var keywordSb = new StringBuilder();
             foreach (var faq in faqs)
             {
                 sb.Append(FormatFaq(index, faq) + "\n");
-                var keywords = "[";
-                for (var i = 0; i < faq.Keywords.Length; i++) keywords += faq.Keywords[i] + (i < faq.Keywords.Length - 1 ? ", " : "]\n\n");
+                keywordSb.Append("[");
+                for (var i = 0; i < faq.Keywords.Length; i++)
+                {
+                    keywordSb.Append(faq.Keywords[i]);
+                    keywordSb.Append(i < faq.Keywords.Length - 1 ? ", " : "]\n\n");
+                }
 
                 index++;
-                sb.Append(keywords);
+                sb.Append(keywordSb);
+                keywordSb.Clear();
             }
 
             await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
@@ -875,7 +869,7 @@ namespace DiscordBot.Modules
 
         private string FormatFaq(int id, FaqData faq) => $"{id}. **{faq.Question}** - {faq.Answer}";
 
-        [Command("wiki")]
+        [Command("Wiki")]
         [Summary("Searches Wikipedia. Syntax : !wiki \"query\"")]
         [Alias("wikipedia")]
         public async Task SearchWikipedia([Remainder] string query)
@@ -914,8 +908,8 @@ namespace DiscordBot.Modules
 
         #region Birthday
 
-        [Command("birthday")]
-        [Summary("Display next member birthday. Syntax : !birthday")]
+        [Command("Birthday")]
+        [Summary("Display next member birthday.")]
         [Alias("bday")]
         public async Task Birthday()
         {
@@ -933,7 +927,7 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAfterTime(minutes: 3);
         }
 
-        [Command("birthday")]
+        [Command("Birthday")]
         [Summary("Display birthday of mentioned user. Syntax : !birthday @user")]
         [Alias("bday")]
         public async Task Birthday(IUser user)
@@ -1014,14 +1008,14 @@ namespace DiscordBot.Modules
 
         #region temperatures
 
-        [Command("ftoc")]
+        [Command("FtoC")]
         [Summary("Converts a temperature in fahrenheit to celsius. Syntax : !ftoc temperature")]
         public async Task FahrenheitToCelsius(float f)
         {
             await ReplyAsync($"{Context.User.Mention} {f}°F is {Math.Round((f - 32) * 0.555555f, 2)}°C.");
         }
 
-        [Command("ctof")]
+        [Command("CtoF")]
         [Summary("Converts a temperature in celsius to fahrenheit. Syntax : !ftoc temperature")]
         public async Task CelsiusToFahrenheit(float c)
         {
@@ -1032,27 +1026,27 @@ namespace DiscordBot.Modules
 
         #region Translate
 
-        [Command("translate")]
+        [Command("Translate")]
         [Summary("Translate a message. Syntax : !translate messageId language")]
-        public async Task Translate(ulong id, string language = "en")
+        public async Task Translate(ulong messageId, string language = "en")
         {
-            await Translate((await Context.Channel.GetMessageAsync(id)).Content, language);
+            await Translate((await Context.Channel.GetMessageAsync(messageId)).Content, language);
         }
 
-        [Command("translate")]
+        [Command("Translate")]
         [Summary("Translate a message. Syntax : !translate text language")]
-        public async Task Translate(string message, string language = "en")
+        public async Task Translate(string text, string language = "en")
         {
-            await ReplyAsync($"Here: https://translate.google.com/#auto/{language}/{message.Replace(" ", "%20")}");
-            await Task.Delay(1000);
-            await Context.Message.DeleteAsync();
+            var msg = await ReplyAsync($"Here: <https://translate.google.com/#auto/{language}/{text.Replace(" ", "%20")}>");
+            await Context.Message.DeleteAfterSeconds(seconds: 1);
+            await msg.DeleteAfterSeconds(seconds: 20);
         }
 
         #endregion
 
         #region Currency
 
-        [Command("currency")]
+        [Command("Currency")]
         [Summary("Converts a currency. Syntax : !currency fromCurrency toCurrency")]
         [Alias("curr")]
         public async Task ConvertCurrency(string from, string to)
@@ -1060,7 +1054,7 @@ namespace DiscordBot.Modules
             await ConvertCurrency(1, from, to);
         }
 
-        [Command("currency")]
+        [Command("Currency")]
         [Summary("Converts a currency. Syntax : !currency amount fromCurrency toCurrency")]
         [Alias("curr")]
         public async Task ConvertCurrency(double amount, string from, string to)
@@ -1073,17 +1067,34 @@ namespace DiscordBot.Modules
             // Get USD to toCurrency rate
             var toRate = await _currencyService.GetRate(to);
 
-            if (fromRate == -1 || toRate == -1)
+            if (!await CurrencyFailedResponse((from, fromRate.Equals(-1)), (from, fromRate.Equals(-1))))
             {
-                await ReplyAsync(
-                    $"{Context.User.Mention}, {from} or {to} are invalid currencies or I can't understand them.\nPlease use international currency code (example : **USD** for $, **EUR** for €, **PKR** for pakistani rupee).");
+                await Context.Message.DeleteAfterSeconds(seconds: 1);
                 return;
             }
-
             // Convert fromCurrency amount to USD to toCurrency
             var value = Math.Round(toRate / fromRate * amount, 2);
-
             await ReplyAsync($"{Context.User.Mention}  **{amount} {from}** = **{value} {to}**");
+        }
+
+        private async Task<bool> CurrencyFailedResponse((string name, bool invalid) from, (string name, bool invalid) to)
+        {
+            if (from.invalid && to.invalid)
+            {
+                await ReplyAsync($"{Context.User.Mention}, {from.name} and {to.name} are invalid currencies or I can't understand them.\nPlease use international currency code (example : **USD** for $, **EUR** for €, **PKR** for pakistani rupee).");
+                return false;
+            }
+            if (from.invalid)
+            {
+                await ReplyAsync($"{Context.User.Mention}, {from.name} is an invalid currency.");
+                return false;
+            }
+            if (to.invalid)
+            {
+                await ReplyAsync($"{Context.User.Mention}, {to.name} is an invalid currency.");
+                return false;
+            }
+            return true;
         }
 
         #endregion

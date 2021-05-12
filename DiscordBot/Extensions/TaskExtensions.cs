@@ -12,7 +12,10 @@ namespace DiscordBot.Extensions
 
         public static Task DeleteAfterTimeSpan(this IDeletable message, TimeSpan timeSpan)
         {
-            return Task.Delay(timeSpan).ContinueWith(async _ => await message?.DeleteAsync());
+            return Task.Delay(timeSpan).ContinueWith(async _ =>
+            {
+                if (message != null) await message?.DeleteAsync();
+            });
         }
 
         public static Task DeleteAfterTime<T>(this Task<T> task, int seconds = 0, int minutes = 0, int hours = 0, int days = 0, bool awaitDeletion = false) where T : IDeletable => task?.DeleteAfterTimeSpan(new TimeSpan(days, hours, minutes, seconds), awaitDeletion);

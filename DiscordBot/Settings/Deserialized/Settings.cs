@@ -19,7 +19,7 @@ namespace DiscordBot.Settings.Deserialized
         public char Prefix { get; set; }
         public ulong GuildId { get; set; }
 
-        public UserAssignableRoles AllRoles { get; set; }
+        public UserAssignableRoles UserAssignableRoles { get; set; }
 
         public GeneralChannel GeneralChannel { get; set; }
 

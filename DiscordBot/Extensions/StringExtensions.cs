@@ -21,7 +21,7 @@ namespace DiscordBot.Extensions
             var list = str.Split('\n').ToList();
             var ret = new List<string>();
 
-            var currentString = "";
+            var currentString = string.Empty;
             foreach (var s in list)
                 if (currentString.Length + s.Length < maxLength)
                     currentString += s + "\n";
@@ -35,6 +35,29 @@ namespace DiscordBot.Extensions
                 ret.Add(currentString);
 
             return ret;
+        }
+
+        public static List<string> MessageSplitToSize(this string str,
+            int maxLength = Constants.MaxLengthChannelMessage)
+        {
+            var container = new List<string>();
+            if (str.Length < Constants.MaxLengthChannelMessage)
+            {
+                container.Add(str);
+                return container;
+            }
+
+            var cuts = (str.Length / Constants.MaxLengthChannelMessage) + 1;
+            var indexOfLine = 0;
+            for (var cut = 1; cut <= cuts; cut++)
+            {
+                string page;
+                page = cut == cuts ? str.Substring(indexOfLine) : str.Substring(indexOfLine, Constants.MaxLengthChannelMessage);
+
+                indexOfLine = page.LastIndexOf("\n", StringComparison.Ordinal) + 1;
+                container.Add(cut == cuts ? page : page.Remove(indexOfLine - 1));
+            }
+            return container;
         }
 
         /// <summary>
@@ -69,13 +92,15 @@ namespace DiscordBot.Extensions
 
             // Calculate rows and collumns distances
             for (var i = 1; i <= source1Length; i++)
-            for (var j = 1; j <= source2Length; j++)
             {
-                var cost = source2[j - 1] == source1[i - 1] ? 0 : 1;
+                for (var j = 1; j <= source2Length; j++)
+                {
+                    var cost = source2[j - 1] == source1[i - 1] ? 0 : 1;
 
-                matrix[i, j] = Math.Min(
-                    Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
-                    matrix[i - 1, j - 1] + cost);
+                    matrix[i, j] = Math.Min(
+                        Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
+                        matrix[i - 1, j - 1] + cost);
+                }
             }
 
             // return result

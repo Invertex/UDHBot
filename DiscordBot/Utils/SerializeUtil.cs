@@ -1,14 +1,12 @@
 using System.IO;
 using Newtonsoft.Json;
 
-//TODO async?
 namespace DiscordBot.Utils
 {
-    public class SerializeUtil
+    public static class SerializeUtil
     {
         public static T DeserializeFile<T>(string path, bool newFileIfNotExists = true) where T : new()
         {
-            T deserializedItem;
             // Check if file exists,
             if (!File.Exists(path))
             {
@@ -17,7 +15,7 @@ namespace DiscordBot.Utils
                     ConsoleLogger.Log(
                         $@"Deserialized File at '{path}' does not exist, attempting to generate new file.",
                         Severity.Warning);
-                    deserializedItem = new T();
+                    var deserializedItem = new T();
                     File.WriteAllText(path, JsonConvert.SerializeObject(deserializedItem));
                 }
                 else

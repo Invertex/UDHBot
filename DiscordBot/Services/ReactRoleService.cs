@@ -12,7 +12,7 @@ namespace DiscordBot.Services
 {
     public class ReactRoleService
     {
-        private const string REACTION_SETTINGS_PATH = @"Settings/ReactionRoles.json";
+        private const string ReactionSettingsPath = @"Settings/ReactionRoles.json";
         private readonly DiscordSocketClient _client;
         private readonly Dictionary<ulong, GuildEmote> _guildEmotes = new Dictionary<ulong, GuildEmote>();
         // GuildRoles uses EmojiID as Key
@@ -56,15 +56,15 @@ namespace DiscordBot.Services
             try
             {
                 // If file doesn't exist, we make an empty file with the default values.
-                if (!File.Exists(REACTION_SETTINGS_PATH))
+                if (!File.Exists(ReactionSettingsPath))
                 {
                     var reactSettings = new ReactRoleSettings();
                     var settingsContent = JsonConvert.SerializeObject(reactSettings, Formatting.Indented);
-                    File.WriteAllText(REACTION_SETTINGS_PATH, settingsContent);
+                    File.WriteAllText(ReactionSettingsPath, settingsContent);
                 }
                 else
                 {
-                    using var file = File.OpenText(REACTION_SETTINGS_PATH);
+                    using var file = File.OpenText(ReactionSettingsPath);
                     ReactSettings = JsonConvert.DeserializeObject<ReactRoleSettings>(file.ReadToEnd());
                 }
             }
@@ -80,7 +80,7 @@ namespace DiscordBot.Services
             try
             {
                 var settingsContent = JsonConvert.SerializeObject(ReactSettings, Formatting.Indented);
-                File.WriteAllText(REACTION_SETTINGS_PATH, settingsContent);
+                File.WriteAllText(ReactionSettingsPath, settingsContent);
             }
             catch (Exception ex)
             {
@@ -126,15 +126,14 @@ namespace DiscordBot.Services
                 {
                     // We check if emote exists
                     var emote = serverGuild.Emotes.First(guildEmote => guildEmote.Id == reactMessage.Reactions[i].EmojiId);
-                    if (emote == null)
-                    {
-                        Console.WriteLine($"Could not add Emoji Name:\"{reactMessage.Reactions[i].Name}\" ID:`{reactMessage.Reactions[i].EmojiId}` as it does not appear to exist? Ignoring.");
-                        continue;
-                    }
+                    // if (emote == null)
+                    // {
+                    //     Console.WriteLine($"Could not add Emoji Name:\"{reactMessage.Reactions[i].Name}\" ID:`{reactMessage.Reactions[i].EmojiId}` as it does not appear to exist? Ignoring.");
+                    //     continue;
+                    // }
 
                     // Add a Reference to our Roles to simplify lookup
                     if (!_guildRoles.ContainsKey(reactMessage.Reactions[i].EmojiId)) _guildRoles.Add(reactMessage.Reactions[i].EmojiId, serverGuild.GetRole(reactMessage.Reactions[i].RoleId));
-                    //TODO This appears to be bork?
                     // Same for the Emojis, saves look-arounds
                     if (!_guildEmotes.ContainsKey(reactMessage.Reactions[i].EmojiId)) _guildEmotes.Add(reactMessage.Reactions[i].EmojiId, emote);
                     // If our message doesn't have the emote, we add it.
@@ -227,7 +226,7 @@ namespace DiscordBot.Services
             // We check if the user has pending updates, if they don't we add them
             if (!_pendingUserUpdate.ContainsKey(user))
             {
-                _pendingUserUpdate.Add(user, new ReactRoleUserData(user));
+                _pendingUserUpdate.Add(user, new ReactRoleUserData());
                 await UpdateUserRoles(user);
             }
 
@@ -246,19 +245,13 @@ namespace DiscordBot.Services
             }
         }
 
-        private bool IsUserValid(IGuildUser user) => !user.IsBot;
+        private bool IsUserValid(IUser user) => !user.IsBot;
 
         private class ReactRoleUserData
         {
             public readonly List<IRole> RolesToAdd = new List<IRole>();
             public readonly List<IRole> RolesToRemove = new List<IRole>();
             public DateTime LastChange = DateTime.Now;
-            public IGuildUser User;
-
-            public ReactRoleUserData(IGuildUser id)
-            {
-                User = id;
-            }
         }
 
         #region ModuleCommands
@@ -302,7 +295,7 @@ namespace DiscordBot.Services
             _reactMessages.Clear();
             _guildRoles.Clear();
             _guildEmotes.Clear();
-            //TODO Maybe add a warning? or check the new changes to make sure emotes still exist?
+            //TODO This may have users in it, we could push changes before the restart?
             _pendingUserUpdate.Clear();
 
             await StartService();

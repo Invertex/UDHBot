@@ -67,7 +67,6 @@ namespace DiscordBot.Services
         private FeedData _feedData;
 
         private string[][] _manualDatabase;
-        private readonly Random _random;
         private UserData _userData;
 
         public UpdateService(DiscordSocketClient client,
@@ -79,7 +78,6 @@ namespace DiscordBot.Services
 
             _settings = settings;
             _token = new CancellationToken();
-            _random = new Random();
 
             UpdateLoop();
         }
@@ -95,9 +93,9 @@ namespace DiscordBot.Services
 
         private void ReadDataFromFile()
         {
-            _botData = SerializeUtil.DeserializeFile<BotData>($"{_settings.ServerRootPath}/botdata.json", true);
+            _botData = SerializeUtil.DeserializeFile<BotData>($"{_settings.ServerRootPath}/botdata.json");
             
-            _userData = SerializeUtil.DeserializeFile<UserData>($"{_settings.ServerRootPath}/botdata.json", true);
+            _userData = SerializeUtil.DeserializeFile<UserData>($"{_settings.ServerRootPath}/botdata.json");
             Task.Run(
                 async () =>
                 {
@@ -130,8 +128,8 @@ namespace DiscordBot.Services
                     }
                 }, _token);
             
-            _faqData = SerializeUtil.DeserializeFile<List<FaqData>>($"{_settings.ServerRootPath}/FAQs.json", true);
-            _feedData = SerializeUtil.DeserializeFile<FeedData>($"{_settings.ServerRootPath}/feeds.json", true);
+            _faqData = SerializeUtil.DeserializeFile<List<FaqData>>($"{_settings.ServerRootPath}/FAQs.json");
+            _feedData = SerializeUtil.DeserializeFile<FeedData>($"{_settings.ServerRootPath}/feeds.json");
         }
 
         // Saves data to file
@@ -150,6 +148,7 @@ namespace DiscordBot.Services
                 //await _logging.LogAction("Data successfully saved to file", true, false);
                 await Task.Delay(TimeSpan.FromSeconds(20d), _token);
             }
+            // ReSharper disable once FunctionNeverReturns
         }
 
         private async Task UpdateUserRanks()
@@ -160,6 +159,7 @@ namespace DiscordBot.Services
                 _databaseService.UpdateUserRanks();
                 await Task.Delay(TimeSpan.FromMinutes(1d), _token);
             }
+            // ReSharper disable once FunctionNeverReturns
         }
 
         public async Task<string[][]> GetManualDatabase()
@@ -255,6 +255,7 @@ namespace DiscordBot.Services
 
                 await Task.Delay(TimeSpan.FromHours(1), _token);
             }
+            // ReSharper disable once FunctionNeverReturns
         }
 
         private async Task UpdateRssFeeds()
@@ -282,6 +283,7 @@ namespace DiscordBot.Services
 
                 await Task.Delay(TimeSpan.FromSeconds(30d), _token);
             }
+            // ReSharper disable once FunctionNeverReturns
         }
 
         public async Task<(string name, string extract, string url)> DownloadWikipediaArticle(string searchQuery)
@@ -314,14 +316,14 @@ namespace DiscordBot.Services
                         var page = pages[0];
 
                         const string referToString = "may refer to:...";
-                        var referToIndex = page.Extract.IndexOf(referToString);
+                        var referToIndex = page.Extract.IndexOf(referToString, StringComparison.Ordinal);
                         //If a multi-refer result was given, reformat title to indicate this and strip the "may refer to" portion from the body
                         if (referToIndex > 0)
                         {
                             var splitIndex = referToIndex + referToString.Length;
                             page.Title = page.Extract.Substring(0, splitIndex - 4); //-4 to strip the useless characters since this will be a title
                             page.Extract = page.Extract.Substring(splitIndex);
-                            page.Extract.Replace("\n", Environment.NewLine + "-");
+                            page.Extract = page.Extract.Replace("\n", Environment.NewLine + "-");
                         }
                         else
                             page.Extract = page.Extract.Replace("\n", Environment.NewLine);
