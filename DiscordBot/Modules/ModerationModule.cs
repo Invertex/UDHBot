@@ -15,7 +15,7 @@ namespace DiscordBot.Modules
 {
     public class ModerationModule : ModuleBase
     {
-        private List<string> _commandList = new List<string>();
+        private static List<string> _commandList = new List<string>();
         
         private readonly DatabaseService _database;
         private readonly ILoggingService _logging;
@@ -222,7 +222,7 @@ namespace DiscordBot.Modules
             await channel.DeleteMessagesAsync(enumerable);
 
             await ReplyAsync("Messages deleted.").DeleteAfterSeconds(seconds: 5);
-            await _logging.LogAction($"{Context.User.Username} has removed {enumerable.Count()} messages from {Context.Channel.Name}");
+            await _logging.LogAction($"{Context.User.Username} has removed {enumerable.Count} messages from {Context.Channel.Name}");
         }
 
         [Command("Kick")]

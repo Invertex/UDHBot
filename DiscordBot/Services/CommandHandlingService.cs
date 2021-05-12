@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
+using ParameterInfo = Discord.Commands.ParameterInfo;
 
 namespace DiscordBot.Services
 {
@@ -62,15 +64,23 @@ namespace DiscordBot.Services
             
             foreach (var c in commands)
             {
-                var args = "";
-                if (includeArgs)
-                    foreach (var info in c.Parameters) args += $"`{info.Name}`{(info.IsOptional ? "\\*" : string.Empty)} ";
-                if (args.Length > 0)
-                    args = $"- args: *( {args})*";
-
-                commandList.Append($"**{(includeModuleName ? moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {args}\n");
+                commandList.Append($"**{(includeModuleName ? moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {GetArguments(includeArgs, c.Parameters)}\n");
             }
             return commandList.ToString();
+        }
+
+        private string GetArguments(bool getArgs, IReadOnlyList<ParameterInfo> arguments)
+        {
+            if (!getArgs) return string.Empty;
+            
+            var args = string.Empty;
+            foreach (var info in arguments)
+            {
+                args += $"`{info.Name}`{(info.IsOptional ? "\\*" : string.Empty)} ";
+            }
+            if (args.Length > 0)
+                args = $"- args: *( {args})*";
+            return args;
         }
 
         private async Task HandleCommand(SocketMessage messageParam)

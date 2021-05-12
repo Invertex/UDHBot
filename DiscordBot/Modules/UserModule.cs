@@ -17,7 +17,7 @@ namespace DiscordBot.Modules
 {
     public class UserModule : ModuleBase
     {
-        private List<string> _commandList = new List<string>();
+        private static List<string> _commandList;
         
         private static Settings.Deserialized.Settings _settings;
         private readonly CurrencyService _currencyService;
@@ -30,15 +30,15 @@ namespace DiscordBot.Modules
         
         public UserModule(IServiceProvider serviceProvider, Settings.Deserialized.Settings settings, Rules rules)
         {
-            _databaseService = serviceProvider.GetRequiredService<DatabaseService>();
-            _userService = serviceProvider.GetRequiredService<UserService>();
-            _publisherService =  serviceProvider.GetRequiredService<PublisherService>();
-            _updateService = serviceProvider.GetRequiredService<UpdateService>();
-            _currencyService = serviceProvider.GetRequiredService<CurrencyService>();
+            _databaseService = serviceProvider.GetService<DatabaseService>();
+            _userService = serviceProvider.GetService<UserService>();
+            _publisherService =  serviceProvider.GetService<PublisherService>();
+            _updateService = serviceProvider.GetService<UpdateService>();
+            _currencyService = serviceProvider.GetService<CurrencyService>();
             _rules = rules;
             _settings = settings;
 
-            var commandHandlingService = serviceProvider.GetRequiredService<CommandHandlingService>();
+            var commandHandlingService = serviceProvider.GetService<CommandHandlingService>();
             Task.Run(async () =>
             {
                 var commands = await commandHandlingService.GetCommandList("UserModule", true, true, false);
