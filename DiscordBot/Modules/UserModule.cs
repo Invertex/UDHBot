@@ -682,30 +682,55 @@ namespace DiscordBot.Modules
             var counter = 1;
             var results = new List<string>();
 
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.Title = $"Q: {WebUtility.UrlDecode(query)}";
+            string resultNum = string.Empty, resultTitle = string.Empty, resultLink = string.Empty;
+            
             // XPath for DuckDuckGo as of 10/05/2018, if results stop showing up, check this first!
+            // Still working (13/05/21)
             foreach (var row in doc.DocumentNode.SelectNodes("/html/body/div[1]/div[3]/div/div/div[*]/div/h2/a"))
+            {
+                if (counter > resNum) break;
+                
+                // Seems to be some weird additional data attached to links. Fix added (13/05/21)
+                row.Attributes["href"].Value = row.Attributes["href"].Value.Replace("//duckduckgo.com/l/?uddg=", string.Empty);
+                
                 // Check if we are within the allowed number of results and if the result is valid (i.e. no evil ads)
-                if (counter <= resNum && IsValidResult(row))
+                if (counter <= resNum && IsValidResult(row)) // && IsValidResult(row))
                 {
-                    var title = WebUtility.UrlDecode(row.InnerText);
-                    var url = WebUtility.UrlDecode(row.Attributes["href"].Value.Replace("/l/?kh=-1&amp;uddg=", ""));
-                    var msg = string.Empty;
+                    resultNum += $"#{counter}\n";
+                    resultTitle += $"{row.InnerText}\n";
+                    
+                    var url = WebUtility.UrlDecode(row.Attributes["href"].Value); // .Replace("/l/?kh=-1&amp;uddg=", "")); <- no longer works (14/05/21)
+                    
+                    // We count how many & there are, as links with multiple may be broken, so we include a ~ just to try give a bit more info if there is more than 1.
+                    int andCount = url.Count(c => c == '&');
+                    url = url.Substring(0, url.LastIndexOf('&'));
+                    resultLink += $"[__More__{(andCount > 1 ? "~" : string.Empty)}]({url})\n";
 
-                    // Added line for pretty output
-                    if (counter > 1) msg += "──────────────────────────────────────────\n";
-
-                    msg += counter + ". **" + title + "**\nRead More: " + url;
-                    results.Add(msg);
                     counter++;
                 }
+            }
 
-            // Send each result as separate message for embedding
-            foreach (var msg in results) await ReplyAsync(msg);
+            embedBuilder.AddField("Search Query", searchQuery);
+            
+            embedBuilder.AddField("Result", resultNum, inline: true);
+            embedBuilder.AddField("Title", resultTitle, inline: true);
+            embedBuilder.AddField("\u200b", resultLink, inline: true);
+            
+            embedBuilder.Color = new Color(81, 50, 169);
+            embedBuilder.Footer = new EmbedFooterBuilder().WithText("Results sourced from DuckDuckGo.");
 
-            // Utility function for avoiding evil ads from DuckDuckGo
-            bool IsValidResult(HtmlNode node) =>
-                !node.Attributes["href"].Value.Contains("duckduckgo.com") &&
-                !node.Attributes["href"].Value.Contains("duck.co");
+            var embed = embedBuilder.Build();
+
+            await ReplyAsync(embed: embed);
+        }
+        
+        // Utility function for avoiding evil ads from DuckDuckGo
+        bool IsValidResult(HtmlNode node)
+        {
+            return (!node.Attributes["href"].Value.Contains("duckduckgo.com") &&
+                    !node.Attributes["href"].Value.Contains("duck.co"));
         }
 
         [Command("Manual")]
