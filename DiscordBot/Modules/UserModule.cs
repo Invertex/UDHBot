@@ -680,7 +680,6 @@ namespace DiscordBot.Modules
 
             var doc = new HtmlWeb().Load(searchQuery);
             var counter = 1;
-            var results = new List<string>();
 
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.Title = $"Q: {WebUtility.UrlDecode(query)}";
