@@ -126,12 +126,7 @@ namespace DiscordBot.Services
                 {
                     // We check if emote exists
                     var emote = serverGuild.Emotes.First(guildEmote => guildEmote.Id == reactMessage.Reactions[i].EmojiId);
-                    // if (emote == null)
-                    // {
-                    //     Console.WriteLine($"Could not add Emoji Name:\"{reactMessage.Reactions[i].Name}\" ID:`{reactMessage.Reactions[i].EmojiId}` as it does not appear to exist? Ignoring.");
-                    //     continue;
-                    // }
-
+                    
                     // Add a Reference to our Roles to simplify lookup
                     if (!_guildRoles.ContainsKey(reactMessage.Reactions[i].EmojiId)) _guildRoles.Add(reactMessage.Reactions[i].EmojiId, serverGuild.GetRole(reactMessage.Reactions[i].RoleId));
                     // Same for the Emojis, saves look-arounds
