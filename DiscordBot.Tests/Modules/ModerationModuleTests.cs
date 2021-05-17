@@ -1,5 +1,4 @@
-﻿using System.Reflection.Metadata;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Modules;
@@ -22,7 +21,7 @@ namespace DiscordBot.Tests.Modules
 
             contextMock.Setup(c => c.User).Returns(moderatorMock.Object);
 
-            var modModule = new ModerationModule(loggingMock.Object, null, null, null, null, null, null);
+            var modModule = new ModerationModule(loggingMock.Object, null, null, null, null, null);
             modModule.SetContext(contextMock.Object);
 
             await modModule.KickUser(userMock.Object);
@@ -43,7 +42,7 @@ namespace DiscordBot.Tests.Modules
             moderatorMock.Setup(mod => mod.Username).Returns(expectedModerator);
             contextMock.Setup(c => c.User).Returns(moderatorMock.Object);
 
-            var modModule = new ModerationModule(loggingMock.Object, null, null, null, null, null, null);
+            var modModule = new ModerationModule(loggingMock.Object, null,null, null, null, null);
             modModule.SetContext(contextMock.Object);
 
             await modModule.KickUser(userMock.Object);

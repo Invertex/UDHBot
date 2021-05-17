@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -6,14 +7,14 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
-using DiscordBot.Modules;
+using ParameterInfo = Discord.Commands.ParameterInfo;
 
 namespace DiscordBot.Services
 {
     public class CommandHandlingService
     {
-        public static string CommandList;
-        
+        public bool IsInitialized { get; private set; }
+
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commandService;
         private readonly IServiceProvider _services;
@@ -30,7 +31,7 @@ namespace DiscordBot.Services
             _commandService = commandService;
             _services = services;
             _settings = settings;
-            
+
             /*
              Event subscriptions
             */
@@ -41,27 +42,45 @@ namespace DiscordBot.Services
         {
             // Discover all of the commands in this assembly and load them.
             await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            IsInitialized = true;
+        }
 
-            StringBuilder commandList = new StringBuilder();
+        /// <summary> Generates a command list that can provide users with information. Commands require [Command][Summary] and [Priority](If not ordering by name)</summary>
+        public async Task<string> GetCommandList(string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true)
+        {
+            // Simple wait.
+            while (!IsInitialized)
+                await Task.Delay(1000);
+            
+            var commandList = new StringBuilder();
 
-            commandList.Append("__Role Commands__\n");
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "role").OrderBy(c => c.Name))
+            commandList.Append($"__{moduleName} Commands__\n");
+            
+            var commands = _commandService.Commands.Where(x => x.Module.Name == moduleName);
+            if (!orderByName)
+                commands = commands.OrderBy(c => c.Name);
+            else
+                commands = commands.OrderBy(c => c.Priority);
+            
+            foreach (var c in commands)
             {
-                commandList.Append($"**role {c.Name}** : {c.Summary}\n");
+                commandList.Append($"**{(includeModuleName ? moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {GetArguments(includeArgs, c.Parameters)}\n");
             }
-            
-            commandList.Append("\n");
-            commandList.Append("__General Commands__\n");
-            
-            foreach (var c in _commandService.Commands.Where(x => x.Module.Name == "UserModule").OrderBy(c => c.Name))
-            {
-                commandList.Append($"**{c.Name}** : {c.Summary}\n");
-            }
+            return commandList.ToString();
+        }
 
-            CommandList = commandList.ToString();
+        private string GetArguments(bool getArgs, IReadOnlyList<ParameterInfo> arguments)
+        {
+            if (!getArgs) return string.Empty;
             
-            // Generates an individual command list for the Reaction Roles
-            ReactionRoleModule.GenerateCommandList(_commandService);
+            var args = string.Empty;
+            foreach (var info in arguments)
+            {
+                args += $"`{info.Name}`{(info.IsOptional ? "\\*" : string.Empty)} ";
+            }
+            if (args.Length > 0)
+                args = $"- args: *( {args})*";
+            return args;
         }
 
         private async Task HandleCommand(SocketMessage messageParam)
@@ -71,8 +90,8 @@ namespace DiscordBot.Services
                 return;
 
             // Create a number to track where the prefix ends and the command begins
-            int argPos = 0;
-            char prefix = _settings.Prefix;
+            var argPos = 0;
+            var prefix = _settings.Prefix;
             // Determine if the message is a command, based on if it starts with '!' or a mention prefix
             if (!(message.HasCharPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
                 return;
@@ -81,10 +100,7 @@ namespace DiscordBot.Services
             // Execute the command. (result does not indicate a return value,
             // rather an object stating if the command executed successfully)
             var result = await _commandService.ExecuteAsync(context, argPos, _services);
-            if (!result.IsSuccess)
-            {
-                await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
-            }
+            if (!result.IsSuccess) await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
         }
     }
 }

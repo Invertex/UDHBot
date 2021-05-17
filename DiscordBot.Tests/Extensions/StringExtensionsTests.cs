@@ -16,7 +16,7 @@ namespace DiscordBot.Tests.Extensions
         }
 
         [Theory]
-        [InlineData("Line1\nLine2\nLine3", "Line1\n", "Line2\n","Line3\n")]
+        [InlineData("Line1\nLine2\nLine3", "Line1\n", "Line2\n", "Line3\n")]
         public void MessageSplitMultipleMessages(string input, params string[] expected)
         {
             var actual = input.MessageSplit(6).ToArray();

@@ -5,12 +5,6 @@ namespace DiscordBot.Skin
 {
     public class LevelSkinModule : BaseTextSkinModule
     {
-        public override Drawables GetDrawables(ProfileData data)
-        {
-            Text = data.Level.ToString();
-            return base.GetDrawables(data);
-        }
-
         public LevelSkinModule()
         {
             StartX = 220;
@@ -18,6 +12,12 @@ namespace DiscordBot.Skin
             StrokeColor = MagickColors.IndianRed.ToString();
             FillColor = MagickColors.IndianRed.ToString();
             FontPointSize = 50;
+        }
+
+        public override Drawables GetDrawables(ProfileData data)
+        {
+            Text = data.Level.ToString();
+            return base.GetDrawables(data);
         }
     }
 }

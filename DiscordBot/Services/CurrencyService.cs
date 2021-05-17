@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace DiscordBot.Services
 {
     public class CurrencyService
     {
-        private Dictionary<string, Rate> _rates;
+        private readonly Dictionary<string, Rate> _rates;
 
         public CurrencyService()
         {
@@ -22,20 +20,18 @@ namespace DiscordBot.Services
             if (!HasValidRate(currency))
             {
                 var rate = await GetNewRate(currency);
-                if (rate == null)
-                {
-                    return -1;
-                }
+                if (rate == null) return -1;
                 _rates[currency] = rate;
             }
-            return _rates[currency].value;
+
+            return _rates[currency].Value;
         }
 
         private static async Task<Rate> GetNewRate(string currency)
         {
             // Url to exchange rate from USD
-            string apiKey = "5d733a03e0274dff3e7f";
-            string rateUrl = $"https://free.currencyconverterapi.com/api/v6/convert?q=USD_{currency}&compact=ultra&apiKey={apiKey}";
+            var apiKey = "5d733a03e0274dff3e7f";
+            var rateUrl = $"https://free.currencyconverterapi.com/api/v6/convert?q=USD_{currency}&compact=ultra&apiKey={apiKey}";
 
             string rateJson;
             using (var wc = new WebClient())
@@ -44,41 +40,31 @@ namespace DiscordBot.Services
                 rateJson = await wc.DownloadStringTaskAsync(rateUrl);
             }
 
-            if (string.IsNullOrEmpty(rateJson) || rateJson.Equals("{}"))
-            {
-                return null;
-            }
+            if (string.IsNullOrEmpty(rateJson) || rateJson.Equals("{}")) return null;
 
-            Rate rate = new Rate
+            var rate = new Rate
             {
-                value = (double)JObject.Parse(rateJson)[$"USD_{currency}"],
-                lastUpdated = DateTime.Today
+                Value = (double) JObject.Parse(rateJson)[$"USD_{currency}"],
+                LastUpdated = DateTime.Today
             };
 
             return rate;
         }
 
+        private bool HasValidRate(string currency) => _rates.ContainsKey(currency) && !IsExpired(_rates[currency]);
 
-        private bool HasValidRate(string currency)
-        {
-            return _rates.ContainsKey(currency) && !IsExpired(_rates[currency]);
-        }
-
-        private bool IsExpired(Rate rate)
-        {
-            return rate.lastUpdated.Date != DateTime.Today;
-        }
+        private bool IsExpired(Rate rate) => rate.LastUpdated.Date != DateTime.Today;
     }
 
     public class Rate
     {
-        public double value = -1;
-        public DateTime lastUpdated;
+        public DateTime LastUpdated { get; set; }
+        public double Value { get; set; }
 
         public Rate()
         {
-            value = -1;
-            lastUpdated = DateTime.MinValue;
+            Value = -1;
+            LastUpdated = DateTime.MinValue;
         }
     }
 }

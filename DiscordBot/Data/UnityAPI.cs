@@ -4,49 +4,49 @@ namespace DiscordBot.Data
 {
     public class Rating
     {
-        public object count { get; set; }
-        public int average { get; set; }
+        public object Count { get; set; }
+        public int Average { get; set; }
     }
 
     public class Kategory
     {
-        public string slug { get; set; }
-        public string name { get; set; }
-        public string id { get; set; }
+        public string Slug { get; set; }
+        public string Name { get; set; }
+        public string Id { get; set; }
     }
 
     public class Category
     {
-        public string tree_id { get; set; }
-        public string label_english { get; set; }
-        public string label { get; set; }
-        public string id { get; set; }
-        public string multiple { get; set; }
+        public string TreeId { get; set; }
+        public string LabelEnglish { get; set; }
+        public string Label { get; set; }
+        public string Id { get; set; }
+        public string Multiple { get; set; }
     }
 
     public class Publisher
     {
-        public string label_english { get; set; }
-        public string url { get; set; }
-        public string slug { get; set; }
-        public string label { get; set; }
-        public string id { get; set; }
-        public string support_email { get; set; }
-        public object support_url { get; set; }
+        public string LabelEnglish { get; set; }
+        public string Url { get; set; }
+        public string Slug { get; set; }
+        public string Label { get; set; }
+        public string Id { get; set; }
+        public string SupportEmail { get; set; }
+        public object SupportUrl { get; set; }
     }
 
     public class Link
     {
-        public string type { get; set; }
-        public string id { get; set; }
+        public string Type { get; set; }
+        public string Id { get; set; }
     }
 
     public class List
     {
-        public string slug { get; set; }
-        public string slug_v2 { get; set; }
-        public string name { get; set; }
-        public object overlay { get; set; }
+        public string Slug { get; set; }
+        public string SlugV2 { get; set; }
+        public string Name { get; set; }
+        public object Overlay { get; set; }
     }
 
     public class Flags
@@ -55,116 +55,114 @@ namespace DiscordBot.Data
 
     public class Image
     {
-        public string link { get; set; }
-        public string width { get; set; }
-        public string name { get; set; }
-        public string type { get; set; }
-        public string height { get; set; }
-        public string thumb { get; set; }
+        public string Link { get; set; }
+        public string Width { get; set; }
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public string Height { get; set; }
+        public string Thumb { get; set; }
     }
-
 
     public class Keyimage
     {
-        public string small { get; set; }
-        public string big { get; set; }
-        public object small_legacy { get; set; }
-        public object facebook { get; set; }
-        public object big_legacy { get; set; }
-        public string icon { get; set; }
-        public string icon75 { get; set; }
-        public string icon25 { get; set; }
+        public string Small { get; set; }
+        public string Big { get; set; }
+        public object SmallLegacy { get; set; }
+        public object Facebook { get; set; }
+        public object BigLegacy { get; set; }
+        public string Icon { get; set; }
+        public string Icon75 { get; set; }
+        public string Icon25 { get; set; }
     }
 
     public class Daily
     {
-        public string icon { get; set; }
-        public Rating rating { get; set; }
-        public int remaining { get; set; }
-        public Kategory kategory { get; set; }
-        public string package_version_id { get; set; }
-        public string slug { get; set; }
-        public Category category { get; set; }
-        public string hotness { get; set; }
-        public string id { get; set; }
-        public Publisher publisher { get; set; }
-        public List<object> list { get; set; }
-        public Link link { get; set; }
-        public Flags flags { get; set; }
-        public Keyimage keyimage { get; set; }
-        public string description { get; set; }
-        public string title_english { get; set; }
-        public string title { get; set; }
+        public string Icon { get; set; }
+        public Rating Rating { get; set; }
+        public int Remaining { get; set; }
+        public Kategory Kategory { get; set; }
+        public string PackageVersionId { get; set; }
+        public string Slug { get; set; }
+        public Category Category { get; set; }
+        public string Hotness { get; set; }
+        public string Id { get; set; }
+        public Publisher Publisher { get; set; }
+        public List<object> List { get; set; }
+        public Link Link { get; set; }
+        public Flags Flags { get; set; }
+        public Keyimage Keyimage { get; set; }
+        public string Description { get; set; }
+        public string TitleEnglish { get; set; }
+        public string Title { get; set; }
     }
 
     public class Content
     {
-        public string pubdate { get; set; }
-        public string min_unity_version { get; set; }
-        public Rating rating { get; set; }
-        public Kategory kategory { get; set; }
-        public List<string> unity_versions { get; set; }
-        public string url { get; set; }
-        public string package_version_id { get; set; }
-        public string slug { get; set; }
-        public Category category { get; set; }
-        public string id { get; set; }
-        public Publisher publisher { get; set; }
-        public string sizetext { get; set; }
-        public List<object> list { get; set; }
-        public Link link { get; set; }
-        public List<Image> images { get; set; }
-        public Flags flags { get; set; }
-        public string version { get; set; }
-        public string first_published_at { get; set; }
-        public Keyimage keyimage { get; set; }
-        public int license { get; set; }
-        public string description { get; set; }
-        public List<object> upgrades { get; set; }
-        public string publishnotes { get; set; }
-        public string title { get; set; }
-        public string short_url { get; set; }
-        public List<object> upgradables { get; set; }
+        public string Pubdate { get; set; }
+        public string MinUnityVersion { get; set; }
+        public Rating Rating { get; set; }
+        public Kategory Kategory { get; set; }
+        public List<string> UnityVersions { get; set; }
+        public string Url { get; set; }
+        public string PackageVersionId { get; set; }
+        public string Slug { get; set; }
+        public Category Category { get; set; }
+        public string Id { get; set; }
+        public Publisher Publisher { get; set; }
+        public string Sizetext { get; set; }
+        public List<object> List { get; set; }
+        public Link Link { get; set; }
+        public List<Image> Images { get; set; }
+        public Flags Flags { get; set; }
+        public string Version { get; set; }
+        public string FirstPublishedAt { get; set; }
+        public Keyimage Keyimage { get; set; }
+        public int License { get; set; }
+        public string Description { get; set; }
+        public List<object> Upgrades { get; set; }
+        public string Publishnotes { get; set; }
+        public string Title { get; set; }
+        public string ShortUrl { get; set; }
+        public List<object> Upgradables { get; set; }
     }
-
 
     public class DailyObject
     {
-        public string banner { get; set; }
-        public string feed { get; set; }
-        public string status { get; set; }
-        public int days_left { get; set; }
-        public int total { get; set; }
-        public Daily daily { get; set; }
-        public int remaining { get; set; }
-        public string badge { get; set; }
-        public string title { get; set; }
-        public bool countdown { get; set; }
-        public List<object> results { get; set; }
+        public string Banner { get; set; }
+        public string Feed { get; set; }
+        public string Status { get; set; }
+        public int DaysLeft { get; set; }
+        public int Total { get; set; }
+        public Daily Daily { get; set; }
+        public int Remaining { get; set; }
+        public string Badge { get; set; }
+        public string Title { get; set; }
+        public bool Countdown { get; set; }
+        public List<object> Results { get; set; }
     }
 
     public class PackageObject
     {
-        public Content content { get; set; }
+        public Content Content { get; set; }
     }
 
     public class PriceObject
     {
-        public string vat { get; set; }
-        public string price_exvat { get; set; }
-        public string price { get; set; }
-        public bool is_free { get; set; }
+        public string Vat { get; set; }
+        public string PriceExvat { get; set; }
+        public string Price { get; set; }
+        public bool IsFree { get; set; }
     }
 
     public class Result
     {
-        public string category { get; set; }
-        public string title { get; set; }
-        public string publisher { get; set; }
+        public string Category { get; set; }
+        public string Title { get; set; }
+        public string Publisher { get; set; }
     }
 
     public class PackageHeadObject
     {
-        public Result result { get; set; }
+        public Result Result { get; set; }
     }
 }
