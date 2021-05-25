@@ -683,7 +683,7 @@ namespace DiscordBot.Modules
 
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.Title = $"Q: {WebUtility.UrlDecode(query)}";
-            string resultNum = string.Empty, resultTitle = string.Empty, resultLink = string.Empty;
+            string resultTitle = string.Empty;
             
             // XPath for DuckDuckGo as of 10/05/2018, if results stop showing up, check this first!
             // Still working (13/05/21)
@@ -697,31 +697,25 @@ namespace DiscordBot.Modules
                 // Check if we are within the allowed number of results and if the result is valid (i.e. no evil ads)
                 if (counter <= resNum && IsValidResult(row)) // && IsValidResult(row))
                 {
-                    resultNum += $"#{counter}\n";
-                    resultTitle += $"{row.InnerText}\n";
-                    
                     var url = WebUtility.UrlDecode(row.Attributes["href"].Value); // .Replace("/l/?kh=-1&amp;uddg=", "")); <- no longer works (14/05/21)
                     
                     // We count how many & there are, as links with multiple may be broken, so we include a ~ just to try give a bit more info if there is more than 1.
                     int andCount = url.Count(c => c == '&');
                     url = url.Substring(0, url.LastIndexOf('&'));
-                    resultLink += $"[__More__{(andCount > 1 ? "~" : string.Empty)}]({url})\n";
-
+                    
+                    resultTitle += $"{counter}. {(row.InnerText.Length > 60 ? $"{row.InnerText[..60]}.." : row.InnerText)}" + $" [__Read More..__{(andCount > 1 ? "~" : string.Empty)}]({url})\n";
+                    
                     counter++;
                 }
             }
 
             embedBuilder.AddField("Search Query", searchQuery);
-            
-            embedBuilder.AddField("Result", resultNum, inline: true);
-            embedBuilder.AddField("Title", resultTitle, inline: true);
-            embedBuilder.AddField("\u200b", resultLink, inline: true);
-            
+            embedBuilder.AddField("Results", resultTitle, inline: false);
+
             embedBuilder.Color = new Color(81, 50, 169);
             embedBuilder.Footer = new EmbedFooterBuilder().WithText("Results sourced from DuckDuckGo.");
 
             var embed = embedBuilder.Build();
-
             await ReplyAsync(embed: embed);
         }
         
