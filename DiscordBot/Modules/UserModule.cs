@@ -261,7 +261,8 @@ namespace DiscordBot.Modules
             }
 
             var xpGain = 5000;
-            await _databaseService.AddUserXpAsync((ulong) userId, xpGain);
+            var userXp = await _databaseService.Query().GetXp(userId.ToString());
+            await _databaseService.Query().UpdateXp(userId.ToString(), userXp + xpGain);
             await Context.Message.DeleteAsync();
         }
 
@@ -436,8 +437,10 @@ namespace DiscordBot.Modules
         [Alias("toplevel", "ranking")]
         public async Task TopLevel()
         {
-            var users = _databaseService.GetTopLevel();
-            var embed = GenerateRankEmbedFromList(users, "Level");
+            var users = await _databaseService.Query().GetTop10Level();
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.Level)).ToList();
+            
+            var embed = GenerateRankEmbedFromList(userList, "Level");
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
@@ -446,8 +449,10 @@ namespace DiscordBot.Modules
         [Alias("karmarank", "rankingkarma")]
         public async Task TopKarma()
         {
-            var users = _databaseService.GetTopKarma();
-            var embed = GenerateRankEmbedFromList(users, "Karma");
+            var users = await _databaseService.Query().GetTop10Karma();
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.Karma)).ToList();
+            
+            var embed = GenerateRankEmbedFromList(userList, "Karma");
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
@@ -504,7 +509,7 @@ namespace DiscordBot.Modules
         public async Task JoinDate()
         {
             var userId = Context.User.Id;
-            DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out var joinDate);
+            var joinDate = await _databaseService.Query().GetJoinDate(userId.ToString());
             await ReplyAsync($"{Context.User.Mention} you joined **{joinDate:dddd dd/MM/yyy HH:mm:ss}**");
             await Context.Message.DeleteAsync();
         }
