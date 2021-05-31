@@ -22,6 +22,7 @@ namespace DiscordBot.Modules
         private readonly Rules _rules;
         private readonly Settings.Deserialized.Settings _settings;
         private readonly UserService _user;
+        private IMessageChannel botAnnouncementChannel = null;
 
         public ModerationModule(ILoggingService logging, UserService user,
                                 DatabaseService database, Rules rules, Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
@@ -38,8 +39,20 @@ namespace DiscordBot.Modules
                 _commandList = commands.MessageSplitToSize();
             });
         }
-
         private Dictionary<ulong, DateTime> MutedUsers => _user.MutedUsers;
+
+        private async Task<bool> IsModerationEnabled()
+        {
+            if (_settings.ModeratorCommandsEnabled) return true;
+
+            if (botAnnouncementChannel == null) 
+                botAnnouncementChannel = (IMessageChannel) await Context.Client.GetChannelAsync(_settings.BotAnnouncementChannel.Id);
+            
+            var sentMessage = await botAnnouncementChannel.SendMessageAsync($"{Context.User.Mention} some moderation commands are disabled, try using Wick.");
+            await Context.Message.DeleteAsync();
+            await sentMessage.DeleteAfterSeconds(seconds: 60);
+            return false;
+        }
 
         [Command("Mute")]
         [Summary("Mute a user for a fixed duration.")]
@@ -47,6 +60,8 @@ namespace DiscordBot.Modules
         [RequireModerator]
         public async Task MuteUser(IUser user, uint arg)
         {
+            if (!await IsModerationEnabled()) return;
+            
             await Context.Message.DeleteAsync();
 
             var u = user as IGuildUser;
@@ -71,6 +86,7 @@ namespace DiscordBot.Modules
         [RequireModerator]
         public async Task MuteUser(IUser user, string duration, params string[] messages)
         {
+            if (!await IsModerationEnabled()) return;
             try
             {
                 var dt = DateTime.Now.Offset(duration);
@@ -95,6 +111,7 @@ namespace DiscordBot.Modules
         [RequireModerator]
         public async Task MuteUser(IUser user, uint seconds, params string[] messages)
         {
+            if (!await IsModerationEnabled()) return;
             var message = string.Join(' ', messages);
 
             await Context.Message.DeleteAsync();
@@ -230,6 +247,8 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.KickMembers)]
         internal async Task KickUser(IUser user)
         {
+            if (!await IsModerationEnabled()) return;
+            
             var u = user as IGuildUser;
 
             await u.KickAsync();
@@ -241,6 +260,8 @@ namespace DiscordBot.Modules
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task BanUser(IUser user, params string[] reasons)
         {
+            if (!await IsModerationEnabled()) return;
+            
             var reason = string.Join(' ', reasons);
             await Context.Guild.AddBanAsync(user, 7, reason, RequestOptions.Default);
             await _logging.LogAction($"{Context.User.Username} has banned {user.Username} with the reason \"{reasons}\"");
