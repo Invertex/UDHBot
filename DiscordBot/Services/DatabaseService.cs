@@ -23,15 +23,29 @@ namespace DiscordBot.Services
             ConnectionString = settings.DbConnectionString;
             _logging = logging;
             
+            DbConnection c = null;
             try
             {
-                DbConnection c = new MySqlConnection(ConnectionString);
+                c = new MySqlConnection(ConnectionString);
                 _connection = c.As<IServerUserRepo>();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
                 throw;
+            }
+            
+            try
+            {
+                _connection.TestConnection();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Table 'users' does not exist, attempting to generate..");
+                c.ExecuteSql(
+                    $"CREATE TABLE `users` (`ID` int(11) NOT NULL,`Username` varchar(62) COLLATE utf8mb4_unicode_ci NOT NULL, `Discriminator` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL, `UserID` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL, `Avatar` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL, `AvatarUrl` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL, `JoinDate` datetime NOT NULL DEFAULT current_timestamp(), `Karma` int(11) NOT NULL DEFAULT 0, `KarmaGiven` int(11) NOT NULL DEFAULT 0, `Exp` bigint(11) NOT NULL DEFAULT 0, `Level` int(11) NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                c.ExecuteSql($"ALTER TABLE `users` ADD PRIMARY KEY (`ID`,`UserID`), ADD UNIQUE KEY `UserID` (`UserID`)");
+                c.ExecuteSql($"ALTER TABLE `users` MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1");
             }
         }
 

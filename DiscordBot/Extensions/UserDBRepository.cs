@@ -85,5 +85,9 @@ namespace DiscordBot.Extensions
         Task<long> GetXp(string userId);
         [Sql("SELECT Level FROM users WHERE UserID = @userId")] 
         Task<int> GetLevel(string userId);
+
+        /// <summary>Returns a count of users in the Table, otherwise it fails. </summary>
+        [Sql("SELECT COUNT(*) FROM users")]
+        long TestConnection();
     }
 }
