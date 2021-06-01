@@ -55,6 +55,11 @@ namespace DiscordBot
             _client.Ready += () =>
             {
                 Console.WriteLine("Bot is connected");
+
+                _client.GetGuild(_settings.GuildId)
+                    ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
+                    ?.SendMessageAsync($"Bot Started.");
+                
                 //_audio.Music();
                 return Task.CompletedTask;
             };
