@@ -247,12 +247,11 @@ namespace DiscordBot.Services
         {
             var userData = await _databaseService.Query().GetUser(user.Id.ToString());
             
-            var userId = user.Id;
             var xpTotal = userData.Exp;
-            var xpRank = await _databaseService.Query().GetKarmaRank(userId.ToString(), userData.Karma);
+            var xpRank = await _databaseService.Query().GetKarmaRank(userData.UserID, userData.Karma);
             var karma = userData.Karma;
             var level = userData.Level;
-            var karmaRank = await  _databaseService.Query().GetLevelRank(userId.ToString(), userData.Level);
+            var karmaRank = await  _databaseService.Query().GetLevelRank(userData.UserID, userData.Level);
             var xpLow = GetXpLow((int) level);
             var xpHigh = GetXpHigh((int) level);
 
@@ -282,7 +281,7 @@ namespace DiscordBot.Services
                 MainRoleColor = mainRole.Color,
                 MaxXpShown = maxXpShown,
                 Nickname = ((IGuildUser) user).Nickname,
-                UserId = userId,
+                UserId = ulong.Parse(userData.UserID),
                 Username = user.Username,
                 XpHigh = xpHigh,
                 XpLow = xpLow,
