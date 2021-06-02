@@ -40,10 +40,10 @@ namespace DiscordBot.Extensions
         Task<ServerUser> GetUser(string userId);
         
         // Rank Stuff
-        [Sql("SELECT Username, UserID, Karma, Level, Exp FROM users ORDER BY Level DESC LIMIT 10")] 
-        Task<IList<ServerUser>> GetTop10Level();
-        [Sql("SELECT Username, UserID, Karma, KarmaGiven FROM users ORDER BY Karma ASC LIMIT 10")] 
-        Task<IList<ServerUser>> GetTop10Karma();
+        [Sql("SELECT Username, UserID, Karma, Level, Exp FROM users ORDER BY Level DESC LIMIT @n")] 
+        Task<IList<ServerUser>> GetTopLevel(int n);
+        [Sql("SELECT Username, UserID, Karma, KarmaGiven FROM users ORDER BY Karma DESC LIMIT @n")] 
+        Task<IList<ServerUser>> GetTopKarma(int n);
         [Sql("SELECT COUNT(UserID)+1 FROM users WHERE Level > @level")] 
         Task<long> GetLevelRank(string userId, int level);
         [Sql("SELECT COUNT(UserID)+1 FROM users WHERE Karma > @karma")] 

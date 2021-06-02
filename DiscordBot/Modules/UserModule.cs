@@ -437,7 +437,7 @@ namespace DiscordBot.Modules
         [Alias("toplevel", "ranking")]
         public async Task TopLevel()
         {
-            var users = await _databaseService.Query().GetTop10Level();
+            var users = await _databaseService.Query().GetTopLevel(10);
             var userList = users.Select(user => (ulong.Parse(user.UserID), user.Level)).ToList();
             
             var embed = GenerateRankEmbedFromList(userList, "Level");
@@ -449,7 +449,7 @@ namespace DiscordBot.Modules
         [Alias("karmarank", "rankingkarma")]
         public async Task TopKarma()
         {
-            var users = await _databaseService.Query().GetTop10Karma();
+            var users = await _databaseService.Query().GetTopKarma(10);
             var userList = users.Select(user => (ulong.Parse(user.UserID), user.Karma)).ToList();
             
             var embed = GenerateRankEmbedFromList(userList, "Karma");
