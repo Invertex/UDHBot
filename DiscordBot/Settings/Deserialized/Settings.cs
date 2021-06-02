@@ -43,6 +43,7 @@ namespace DiscordBot.Settings.Deserialized
         public ulong SubsNewsRoleId { get; set; }
         public ulong PublisherRoleId { get; set; }
         public ulong ModeratorRoleId { get; set; }
+        public bool ModeratorCommandsEnabled { get; set; }
 
         public string AssetStoreFrontPage { get; set; }
 
