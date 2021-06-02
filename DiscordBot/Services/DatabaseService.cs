@@ -1,201 +1,143 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Data.Common;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
+using DiscordBot.Extensions;
+using Insight.Database;
 using MySql.Data.MySqlClient;
+
 
 namespace DiscordBot.Services
 {
     public class DatabaseService
     {
         private readonly ILoggingService _logging;
+        private string ConnectionString { get; }
 
+        public IServerUserRepo Query() => _connection;
+        private readonly IServerUserRepo _connection;
+        
         public DatabaseService(ILoggingService logging, Settings.Deserialized.Settings settings)
         {
-            Connection = settings.DbConnectionString;
+            ConnectionString = settings.DbConnectionString;
             _logging = logging;
-        }
-
-        private string Connection { get; }
-        
-        /*
-        Update Service
-        */
-        public void UpdateUserRanks()
-        {
+            
+            DbConnection c = null;
             try
             {
-                using var connection = new MySqlConnection(Connection);
-                var command = new MySqlCommand(
-                    "SET @prev_value = NULL; SET @rank_count = 0; " +
-                    "UPDATE users SET `rank` = @rank_count := IF(@prev_value = `rank`, @rank_count, @rank_count + 1) " +
-                    "ORDER BY exp DESC", connection);
-                connection.Open();
-                command.ExecuteNonQuery();
+                c = new MySqlConnection(ConnectionString);
+                _connection = c.As<IServerUserRepo>();
             }
             catch (Exception e)
             {
-                _logging.LogAction($"Error when trying to update ranks : {e}", true, false);
+                Console.WriteLine(e);
+                throw;
             }
-        }
-
-        public async Task AddUserXpAsync(ulong id, int xp)
-        {
-            var reader = GetAttributeFromUser(id, "exp");
-
-            var oldXp = Convert.ToInt32(reader);
-            await UpdateAttributeFromUser(id, "exp", oldXp + xp);
-        }
-
-        public async Task AddUserLevelAsync(ulong id, uint level)
-        {
-            var reader = GetAttributeFromUser(id, "level");
-
-            var oldLevel = Convert.ToUInt32(reader);
-            await UpdateAttributeFromUser(id, "level", oldLevel + level);
-        }
-
-        public async Task AddUserKarmaAsync(ulong id, int karma)
-        {
-            var reader = GetAttributeFromUser(id, "karma");
-
-            var oldKarma = Convert.ToInt32(reader);
-            await UpdateAttributeFromUser(id, "karma", oldKarma + karma);
-        }
-
-        public uint GetUserXp(ulong id)
-        {
-            var reader = GetAttributeFromUser(id, "exp");
-
-            var xp = Convert.ToUInt32(reader);
-            return xp;
-        }
-
-        public int GetUserKarma(ulong id)
-        {
-            var reader = GetAttributeFromUser(id, "karma");
-
-            var karma = Convert.ToInt32(reader);
-            return karma;
-        }
-
-        public uint GetUserRank(ulong id)
-        {
-            var reader = GetAttributeFromUser(id, "rank");
-
-            var rank = Convert.ToUInt32(reader);
-            return rank;
-        }
-
-        public uint GetUserLevel(ulong id)
-        {
-            var reader = GetAttributeFromUser(id, "level");
-
-            var level = Convert.ToUInt32(reader);
-            return level;
-        }
-
-        public string GetUserJoinDate(ulong id) => GetAttributeFromUser(id, "joinDate");
-
-        public async Task UpdateUserNameAsync(ulong id, string name)
-        {
-            await UpdateAttributeFromUser(id, "username", name);
-        }
-
-        public async Task UpdateUserAvatarAsync(ulong id, string avatar)
-        {
-            await UpdateAttributeFromUser(id, "avatarUrl", avatar);
-        }
-
-        public async Task AddUserUdcAsync(ulong id, int udc)
-        {
-            var reader = GetAttributeFromUser(id, "udc");
-
-            var oldUdc = Convert.ToInt32(reader);
-            await UpdateAttributeFromUser(id, "udc", oldUdc + udc);
-        }
-
-        public int GetUserUdc(ulong id) => Convert.ToInt32(GetAttributeFromUser(id, "udc"));
-
-        public uint GetUserKarmaRank(ulong id)
-        {
-            using var connection = new MySqlConnection(Connection);
-            var command = new MySqlCommand(
-                $"SELECT COUNT(1)+1 as `rank` FROM `users` WHERE karma > (SELECT karma FROM users WHERE userid='{id}')", connection);
-            connection.Open();
-            using var reader = command.ExecuteReader();
-            if (!reader.Read()) return 0;
-            return (uint) Convert.ToInt32(reader["rank"]);
-        }
-
-        public List<(ulong userId, int level)> GetTopLevel()
-        {
-            var users = new List<(ulong userId, int level)>();
-
-            using (var connection = new MySqlConnection(Connection))
-            {
-                var command = new MySqlCommand("SELECT userid, level FROM `users` ORDER BY exp DESC LIMIT 10", connection);
-                connection.Open();
-                var reader = command.ExecuteReader();
-                while (reader.Read()) users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
-            }
-
-            return users;
-        }
-
-        public List<(ulong userId, int karma)> GetTopKarma()
-        {
-            var users = new List<(ulong userId, int karma)>();
-
-            using (var connection = new MySqlConnection(Connection))
-            {
-                var command = new MySqlCommand("SELECT userid, karma FROM `users` ORDER BY karma DESC LIMIT 10", connection);
-                connection.Open();
-                var reader = command.ExecuteReader();
-                while (reader.Read()) users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
-            }
-
-            return users;
-        }
-
-        public List<(ulong userId, int udc)> GetTopUdc()
-        {
-            var users = new List<(ulong userId, int udc)>();
-
-            using (var connection = new MySqlConnection(Connection))
-            {
-                var command = new MySqlCommand("SELECT userid, udc FROM `users` ORDER BY udc DESC LIMIT 10", connection);
-                connection.Open();
-                var reader = command.ExecuteReader();
-                while (reader.Read()) users.Add((reader.GetUInt64(0), reader.GetInt32(1)));
-            }
-
-            return users;
-        }
-
-        public async Task AddNewUser(SocketGuildUser user)
-        {
+            
             try
             {
-                using (var connection = new MySqlConnection(Connection))
+                _connection.TestConnection();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Table 'users' does not exist, attempting to generate..");
+                c.ExecuteSql(
+                    $"CREATE TABLE `users` (`ID` int(11) NOT NULL,`Username` varchar(62) COLLATE utf8mb4_unicode_ci NOT NULL, `Discriminator` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL, `UserID` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL, `Avatar` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL, `AvatarUrl` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL, `JoinDate` datetime NOT NULL DEFAULT current_timestamp(), `Karma` int(11) NOT NULL DEFAULT 0, `KarmaGiven` int(11) NOT NULL DEFAULT 0, `Exp` bigint(11) NOT NULL DEFAULT 0, `Level` int(11) NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                c.ExecuteSql($"ALTER TABLE `users` ADD PRIMARY KEY (`ID`,`UserID`), ADD UNIQUE KEY `UserID` (`UserID`)");
+                c.ExecuteSql($"ALTER TABLE `users` MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1");
+            }
+        }
+
+        public async Task FullDbSync(IGuild guild, IUserMessage message)
+        {
+            string messageContent = message.Content + " ";
+            var userList = await guild.GetUsersAsync(CacheMode.AllowDownload, RequestOptions.Default);
+            await message.ModifyAsync(msg =>
+            {
+                if (msg != null) msg.Content = $"{messageContent}0/{userList.Count.ToString()}";
+            });
+
+            int counter = 0, newAdd = 0, updated = 0;
+            var updater = Task.Run(function: async () =>
+            {
+                foreach (var user in userList)
                 {
-                    var command = new MySqlCommand(
-                        $"INSERT INTO users SET username=@Username, userid='{user.Id}', discriminator='{user.DiscriminatorValue}'," +
-                        $"avatar='{user.AvatarId}', " +
-                        $"avatarURL='{user.GetAvatarUrl()}'," +
-                        $"bot='{(user.IsBot ? 1 : 0)}', status=@Status, joinDate='{DateTime.Now:yyyy-MM-dd HH:mm:ss}', udc=0", connection);
-                    command.Parameters.AddWithValue("@Username", user.Username);
-                    command.Parameters.AddWithValue("@Status", user.Status);
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                    await _logging.LogAction($"User {user.Username}#{user.DiscriminatorValue} succesfully added to the databse.",
-                        true,
-                        false);
+                    var member = await guild.GetUserAsync(user.Id);
+                    if (!user.IsBot)
+                    {
+                        var userIdString = user.Id.ToString();
+                        var serverUser = await Query().GetUser(userIdString);
+                        if (serverUser == null)
+                        {
+                            await AddNewUser(user as SocketGuildUser);
+                            newAdd++;
+                        }
+                        else
+                        {
+                            if (member.Username != string.Empty && serverUser.Username != member.Username)
+                            {
+                                await Query().UpdateUserName(userIdString, member.Username);
+                                updated++;
+                            }
+                            if (member.Discriminator != string.Empty && serverUser.Discriminator != member.Discriminator)
+                            {
+                                await Query().UpdateDiscriminator(userIdString, member.Discriminator);
+                                updated++;
+                            }
+                            if (member.AvatarId != string.Empty && member.GetAvatarUrl() != string.Empty && serverUser.Avatar != member.AvatarId)
+                            {
+                                await Query().UpdateAvatar(userIdString, member.AvatarId, member.GetAvatarUrl());
+                                updated++;
+                            }
+                        }
+                    }
+                    counter++;
                 }
+            });
+
+            while (!updater.IsCompleted && !updater.IsCanceled)
+            {
+                await Task.Delay(1000);
+                await message.ModifyAsync(properties =>
+                {
+                    if (properties != null)
+                        properties.Content = $"{messageContent}{counter.ToString()}/{userList.Count.ToString()}";
+                });
+            }
+
+            await _logging.LogAction(
+                $"Database Synchronized {counter.ToString()} Users Successfully.\n{newAdd.ToString()} missing users added.\n{updated.ToString()} incorrect values updated.");
+        }
+        
+        public async Task AddNewUser(SocketGuildUser socketUser)
+        {
+            try
+            {
+                var user = await Query().GetUser(socketUser.Id.ToString());
+                if (user != null)
+                    return;
+
+                user = new ServerUser
+                {
+                    Username = socketUser.Username,
+                    UserID = socketUser.Id.ToString(),
+                    Discriminator = socketUser.Discriminator,
+                    Avatar = socketUser.AvatarId,
+                    AvatarUrl = socketUser.GetAvatarUrl(),
+                };
+
+                await _connection.InsertUser(user);
+
+                await _logging.LogAction(
+                    $"User {socketUser.Username}#{socketUser.DiscriminatorValue.ToString()} succesfully added to the databse.",
+                    true,
+                    false);
             }
             catch (Exception e)
             {
-                await _logging.LogAction($"Error when trying to add user {user.Id} to the database : {e}", true, false);
+                await _logging.LogAction(
+                    $"Error when trying to add user {socketUser.Id.ToString()} to the database : {e}", true, false);
             }
         }
 
@@ -203,14 +145,9 @@ namespace DiscordBot.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(Connection))
-                {
-                    var command = new MySqlCommand($"DELETE FROM users WHERE userid='{id}'", connection);
-                    var command2 = new MySqlCommand($"INSERT users_remove SELECT * FROM users WHERE userid='{id}'", connection);
-                    connection.Open();
-                    command2.ExecuteNonQuery();
-                    command.ExecuteNonQuery();
-                }
+                var user = await _connection.GetUser(id.ToString());
+                if (user != null)
+                    await _connection.RemoveUser(user.UserID);
             }
             catch (Exception e)
             {
@@ -220,104 +157,7 @@ namespace DiscordBot.Services
         
         public async Task<bool> UserExists(ulong id)
         {
-            try
-            {
-                using (var connection = new MySqlConnection(Connection))
-                {
-                    var command = new MySqlCommand($"SELECT * FROM users where userid='{id}'", connection);
-                    connection.Open();
-                    return command.ExecuteScalar() != null;
-                }
-            }
-            catch (Exception e)
-            {
-                await _logging.LogAction($"Error when trying to retrieve user {id} : {e}",
-                    true,
-                    false);
-            }
-
-            return false;
-        }
-
-        private async Task UpdateAttributeFromUser(ulong id, string attribute, int value)
-        {
-            try
-            {
-                using (var connection = new MySqlConnection(Connection))
-                {
-                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
-                    command.Parameters.AddWithValue("@Value", value);
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (Exception e)
-            {
-                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}",
-                    true,
-                    false);
-            }
-        }
-        private async Task UpdateAttributeFromUser(ulong id, string attribute, uint value)
-        {
-            try
-            {
-                using (var connection = new MySqlConnection(Connection))
-                {
-                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
-                    command.Parameters.AddWithValue("@Value", value);
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (Exception e)
-            {
-                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}",
-                    true,
-                    false);
-            }
-        }
-
-        private async Task UpdateAttributeFromUser(ulong id, string attribute, string value)
-        {
-            try
-            {
-                value = MySqlHelper.EscapeString(value);
-                using (var connection = new MySqlConnection(Connection))
-                {
-                    var command = new MySqlCommand($"UPDATE users SET `{attribute}`=@Value WHERE userid='{id}'", connection);
-                    command.Parameters.AddWithValue("@Value", value);
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (Exception e)
-            {
-                await _logging.LogAction($"Error when trying to edit attribute {attribute} from user {id} with value {value} : {e}",
-                    true,
-                    false);
-            }
-        }
-
-        private string GetAttributeFromUser(ulong id, string attribute)
-        {
-            try
-            {
-                using var connection = new MySqlConnection(Connection);
-                var command = new MySqlCommand($"Select `{attribute}` FROM users WHERE userid='{id}'", connection);
-                connection.Open();
-
-                using var reader = command.ExecuteReader();
-                reader.Read();
-                return reader[attribute].ToString();
-            }
-            catch (Exception e)
-            {
-                _logging.LogAction($"Error when trying to get attribute {attribute} from user {id} : {e}", true,
-                    false);
-            }
-
-            return null;
+            return (await Query().GetUser(id.ToString()) != null);
         }
     }
 }

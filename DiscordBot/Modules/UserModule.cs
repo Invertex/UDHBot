@@ -261,7 +261,8 @@ namespace DiscordBot.Modules
             }
 
             var xpGain = 5000;
-            await _databaseService.AddUserXpAsync((ulong) userId, xpGain);
+            var userXp = await _databaseService.Query().GetXp(userId.ToString());
+            await _databaseService.Query().UpdateXp(userId.ToString(), userXp + xpGain);
             await Context.Message.DeleteAsync();
         }
 
@@ -436,8 +437,10 @@ namespace DiscordBot.Modules
         [Alias("toplevel", "ranking")]
         public async Task TopLevel()
         {
-            var users = _databaseService.GetTopLevel();
-            var embed = GenerateRankEmbedFromList(users, "Level");
+            var users = await _databaseService.Query().GetTopLevel(10);
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.Level)).ToList();
+            
+            var embed = GenerateRankEmbedFromList(userList, "Level");
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
@@ -446,8 +449,10 @@ namespace DiscordBot.Modules
         [Alias("karmarank", "rankingkarma")]
         public async Task TopKarma()
         {
-            var users = _databaseService.GetTopKarma();
-            var embed = GenerateRankEmbedFromList(users, "Karma");
+            var users = await _databaseService.Query().GetTopKarma(10);
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.Karma)).ToList();
+            
+            var embed = GenerateRankEmbedFromList(userList, "Karma");
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
@@ -474,22 +479,7 @@ namespace DiscordBot.Modules
 
             return embedBuilder.Build();
         }
-
-        [Command("TopUDC")]
-        [Summary("Display top 10 users by UDC.")]
-        [Alias("udcrank")]
-        public async Task TopUdc()
-        {
-            var users = _databaseService.GetTopUdc();
-
-            var sb = new StringBuilder();
-            sb.Append("Here's the top 10 of users by UDC :");
-            for (var i = 0; i < users.Count; i++)
-                sb.Append($"\n#{i + 1} - **{(await Context.Guild.GetUserAsync(users[i].userId))?.Username}** ~ **{users[i].udc}** *UDC*");
-
-            await ReplyAsync(sb.ToString()).DeleteAfterTime(minutes: 3);
-        }
-
+        
         [Command("Profile")]
         [Summary("Display your profile card.")]
         public async Task DisplayProfile()
@@ -519,7 +509,7 @@ namespace DiscordBot.Modules
         public async Task JoinDate()
         {
             var userId = Context.User.Id;
-            DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out var joinDate);
+            var joinDate = await _databaseService.Query().GetJoinDate(userId.ToString());
             await ReplyAsync($"{Context.User.Mention} you joined **{joinDate:dddd dd/MM/yyy HH:mm:ss}**");
             await Context.Message.DeleteAsync();
         }

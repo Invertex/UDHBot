@@ -431,6 +431,16 @@ namespace DiscordBot.Modules
             await _database.AddNewUser((SocketGuildUser) user);
         }
         
+        [Command("DBFullSync")]
+        [Summary("Inserts all missing users, and updates any tracked data.")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task FullSync()
+        {
+            await Context.Message.DeleteAsync();
+            var tracker = await ReplyAsync("Updating user data: ");
+            await _database.FullDbSync(Context.Guild, tracker);
+        }
+        
         #region CommandList
         [RequireModerator]
         [Summary("Does what you see now.")]
