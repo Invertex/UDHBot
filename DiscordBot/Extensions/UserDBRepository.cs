@@ -11,11 +11,8 @@ namespace DiscordBot.Extensions
         // ReSharper disable once InconsistentNaming
         public int ID { get; private set; }
         public string Username { get; set; }
-        public string Discriminator { get; set; }
         // ReSharper disable once InconsistentNaming
         public string UserID { get; set; }
-        public string Avatar { get; set; }
-        public string AvatarUrl { get; set; }
         public DateTime JoinDate { get; set; }
         public int Karma { get; set; }
         public int KarmaGiven { get; set; }
@@ -25,7 +22,7 @@ namespace DiscordBot.Extensions
     
     public interface IServerUserRepo
     {
-        [Sql("INSERT INTO users (Username, Discriminator, UserID, Avatar, AvatarUrl) VALUES (@Username, @Discriminator, @UserID, @Avatar, @AvatarUrl)")]
+        [Sql("INSERT INTO users (Username, UserID) VALUES (@Username, @UserID)")]
         Task InsertUser(ServerUser user);
         [Sql("DELETE FROM users WHERE UserID = @userId")]
         Task RemoveUser(string userId);
@@ -46,11 +43,7 @@ namespace DiscordBot.Extensions
         // Update Values
         [Sql("UPDATE users SET Username = @username WHERE UserID = @userId")] 
         Task UpdateUserName(string userId, string username);
-        [Sql("UPDATE users SET Discriminator = @discriminator WHERE UserID = @userId")] 
-        Task UpdateDiscriminator(string userId, string discriminator);
-        [Sql("UPDATE users SET Avatar = @avatar, AvatarUrl = @avatarUrl WHERE UserID = @userId")] 
-        Task UpdateAvatar(string userId, string avatar, string avatarUrl);
-        
+
         [Sql("UPDATE users SET Karma = @karma WHERE UserID = @userId")] 
         Task UpdateKarma(string userId, int karma);
         [Sql("UPDATE users SET KarmaGiven = @karmaGiven WHERE UserID = @userId")] 
@@ -63,12 +56,6 @@ namespace DiscordBot.Extensions
         // Get Single Values
         [Sql("SELECT Username FROM users WHERE UserID = @userId")] 
         Task<string> GetUsername(string userId);
-        [Sql("SELECT Discriminator FROM users WHERE UserID = @userId")] 
-        Task<string> GetDiscriminator(string userId);
-        [Sql("SELECT Avatar FROM users WHERE UserID = @userId")] 
-        Task<string> GetAvatar(string userId);
-        [Sql("SELECT AvatarUrl FROM users WHERE UserID = @userId")] 
-        Task<string> GetAvatarUrl(string userId);
         [Sql("SELECT JoinDate FROM users WHERE UserID = @userId")] 
         Task<DateTime> GetJoinDate(string userId);
         [Sql("SELECT Karma FROM users WHERE UserID = @userId")] 
