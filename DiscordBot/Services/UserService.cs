@@ -342,17 +342,18 @@ namespace DiscordBot.Services
             return $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
         }
 
-        public Embed WelcomeMessage(string icon, string name, ushort discriminator)
+        public Embed WelcomeMessage(SocketGuildUser user)
         {
+            string icon = user.GetAvatarUrl();
             icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
 
             var builder = new EmbedBuilder()
-                          .WithDescription($"Welcome to Unity Developer Community **{name}#{discriminator}** !")
+                          .WithDescription($"Welcome to Unity Developer Community **{user.Mention}**!")
                           .WithColor(new Color(0x12D687))
                           .WithAuthor(author =>
                           {
                               author
-                                  .WithName(name)
+                                  .WithName(user.Username)
                                   .WithIconUrl(icon);
                           });
 
@@ -525,8 +526,7 @@ namespace DiscordBot.Services
 
         private async Task UserJoined(SocketGuildUser user)
         {
-            var general = _settings.GeneralChannel.Id;
-            var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
+            var socketTextChannel = _client.GetChannel(_settings.GeneralChannel.Id) as SocketTextChannel;
 
             await _databaseService.AddNewUser(user);
 
@@ -546,7 +546,7 @@ namespace DiscordBot.Services
             await _loggingService.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
-            var em = WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+            var em = WelcomeMessage(user);
 
             if (socketTextChannel != null) await socketTextChannel.SendMessageAsync(string.Empty, false, em);
 
