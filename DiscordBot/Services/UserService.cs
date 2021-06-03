@@ -30,7 +30,6 @@ namespace DiscordBot.Services
         private readonly ILoggingService _loggingService;
 
         private readonly List<ulong> _noXpChannels;
-        private readonly Rules _rules;
 
         private readonly Settings.Deserialized.Settings _settings;
         private readonly Dictionary<ulong, DateTime> _thanksCooldown;
@@ -54,7 +53,7 @@ namespace DiscordBot.Services
         public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
         
         public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
-                           Settings.Deserialized.Settings settings, UserSettings userSettings, Rules rules)
+                           Settings.Deserialized.Settings settings, UserSettings userSettings)
         {
             _client = client;
             _rand = new Random();
@@ -63,7 +62,6 @@ namespace DiscordBot.Services
             _updateService = updateService;
             _settings = settings;
             var userSettings1 = userSettings;
-            _rules = rules;
             MutedUsers = new Dictionary<ulong, DateTime>();
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _canEditThanks = new HashSet<ulong>(32);
