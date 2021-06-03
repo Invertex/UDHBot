@@ -571,12 +571,6 @@ namespace DiscordBot.Services
 
                 await _databaseService.Query().UpdateUserName(user.Id.ToString(), user.Nickname);
             }
-
-            if (oldUser.AvatarId != user.AvatarId)
-            {
-                var avatar = user.GetAvatarUrl();
-                await _databaseService.Query().UpdateAvatar(user.Id.ToString(), user.AvatarId, avatar);
-            }
         }
 
         private async Task UserLeft(SocketGuildUser user)

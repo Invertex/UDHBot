@@ -80,16 +80,6 @@ namespace DiscordBot.Services
                                 await Query().UpdateUserName(userIdString, member.Username);
                                 updated++;
                             }
-                            if (member.Discriminator != string.Empty && serverUser.Discriminator != member.Discriminator)
-                            {
-                                await Query().UpdateDiscriminator(userIdString, member.Discriminator);
-                                updated++;
-                            }
-                            if (member.AvatarId != string.Empty && member.GetAvatarUrl() != string.Empty && serverUser.Avatar != member.AvatarId)
-                            {
-                                await Query().UpdateAvatar(userIdString, member.AvatarId, member.GetAvatarUrl());
-                                updated++;
-                            }
                         }
                     }
                     counter++;
@@ -122,9 +112,6 @@ namespace DiscordBot.Services
                 {
                     Username = socketUser.Username,
                     UserID = socketUser.Id.ToString(),
-                    Discriminator = socketUser.Discriminator,
-                    Avatar = socketUser.AvatarId,
-                    AvatarUrl = socketUser.GetAvatarUrl(),
                 };
 
                 await _connection.InsertUser(user);
