@@ -7,9 +7,6 @@ namespace DiscordBot.Extensions
 {
     public class ServerUser
     {
-        /// <summary> This is internal Database ID, remember to use UserID</summary>
-        // ReSharper disable once InconsistentNaming
-        public int ID { get; private set; }
         // ReSharper disable once InconsistentNaming
         public string UserID { get; set; }
         public uint Karma { get; set; }
