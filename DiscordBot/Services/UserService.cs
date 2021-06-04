@@ -199,7 +199,7 @@ namespace DiscordBot.Services
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
-            await _databaseService.Query().UpdateXp(userId.ToString(), user.Exp + xpGain);
+            await _databaseService.Query().UpdateXp(userId.ToString(), user.Exp + (uint) xpGain);
             
             _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
@@ -228,9 +228,9 @@ namespace DiscordBot.Services
             //TODO Add level up card
         }
 
-        private double GetXpLow(int level) => 70d - 139.5d * (level + 1d) + 69.5 * Math.Pow(level + 1d, 2d);
+        private double GetXpLow(uint level) => 70d - 139.5d * (level + 1d) + 69.5 * Math.Pow(level + 1d, 2d);
 
-        private double GetXpHigh(int level) => 70d - 139.5d * (level + 2d) + 69.5 * Math.Pow(level + 2d, 2d);
+        private double GetXpHigh(uint level) => 70d - 139.5d * (level + 2d) + 69.5 * Math.Pow(level + 2d, 2d);
 
         private SkinData GetSkinData() =>
             JsonConvert.DeserializeObject<SkinData>(File.ReadAllText($"{_settings.ServerRootPath}/skins/skin.json"),
@@ -250,8 +250,8 @@ namespace DiscordBot.Services
             var karma = userData.Karma;
             var level = userData.Level;
             var karmaRank = await  _databaseService.Query().GetLevelRank(userData.UserID, userData.Level);
-            var xpLow = GetXpLow((int) level);
-            var xpHigh = GetXpHigh((int) level);
+            var xpLow = GetXpLow(level);
+            var xpHigh = GetXpHigh(level);
 
             var xpShown = (uint) (xpTotal - xpLow);
             var maxXpShown = (uint) (xpHigh - xpLow);
@@ -400,7 +400,7 @@ namespace DiscordBot.Services
                     return;
                 }
 
-                var joinDate = await _databaseService.Query().GetJoinDate(userId.ToString());
+                var joinDate = ((IGuildUser) messageParam.Author).JoinedAt;
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
                 if (j > DateTime.Now)
                 {
@@ -597,20 +597,13 @@ namespace DiscordBot.Services
                 await _loggingService.LogAction(
                     $"User {oldUser.Nickname ?? oldUser.Username}#{oldUser.DiscriminatorValue} changed his " +
                     $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
-
-                await _databaseService.Query().UpdateUserName(user.Id.ToString(), user.Nickname);
-            }
-
-            if (oldUser.AvatarId != user.AvatarId)
-            {
-                var avatar = user.GetAvatarUrl();
-                await _databaseService.Query().UpdateAvatar(user.Id.ToString(), user.AvatarId, avatar);
             }
         }
 
         private async Task UserLeft(SocketGuildUser user)
         {
-            DateTime joinDate = await _databaseService.Query().GetJoinDate(user.Id.ToString());
+            DateTime joinDate = user.JoinedAt.Value.Date;
+            
             var timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
                 $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days) + " days" : " ")}" +

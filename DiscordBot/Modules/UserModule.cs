@@ -261,7 +261,7 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            var xpGain = 5000;
+            const uint xpGain = 5000;
             var userXp = await _databaseService.Query().GetXp(userId.ToString());
             await _databaseService.Query().UpdateXp(userId.ToString(), userXp + xpGain);
             await Context.Message.DeleteAsync();
@@ -468,7 +468,7 @@ namespace DiscordBot.Modules
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
-        private Embed GenerateRankEmbedFromList(List<(ulong userID, int value)> data, string labelName)
+        private Embed GenerateRankEmbedFromList(List<(ulong userID, uint value)> data, string labelName)
         {
             var embedBuilder = new EmbedBuilder();
             embedBuilder.Title = "Top 10 Users";
@@ -521,7 +521,7 @@ namespace DiscordBot.Modules
         public async Task JoinDate()
         {
             var userId = Context.User.Id;
-            var joinDate = await _databaseService.Query().GetJoinDate(userId.ToString());
+            var joinDate = ((IGuildUser) Context.User).JoinedAt;
             await ReplyAsync($"{Context.User.Mention} you joined **{joinDate:dddd dd/MM/yyy HH:mm:ss}**");
             await Context.Message.DeleteAsync();
         }
