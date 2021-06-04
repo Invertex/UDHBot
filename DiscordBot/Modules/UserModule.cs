@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using DiscordBot.Extensions;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
@@ -394,6 +395,17 @@ namespace DiscordBot.Modules
             {
                 await ReplyAsync($"Could not send rules, your DMs are disabled.").DeleteAfterSeconds(seconds: 10);
             }
+        }
+
+        [Command("Welcome")]
+        [Summary("Condensed version of the rules and links to quality resources.")]
+        public async Task ServerWelcome()
+        {
+            if (!await _userService.DMFormattedWelcome(Context.User as SocketGuildUser))
+            {
+                await ReplyAsync("Could not send welcome, your DM's are disabled.").DeleteAfterSeconds(seconds: 2);
+            }
+            await Context.Message.DeleteAfterSeconds(seconds: 4);
         }
 
         [Command("Channels")]

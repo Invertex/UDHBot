@@ -30,7 +30,6 @@ namespace DiscordBot.Services
         private readonly ILoggingService _loggingService;
 
         private readonly List<ulong> _noXpChannels;
-        private readonly Rules _rules;
 
         private readonly Settings.Deserialized.Settings _settings;
         private readonly Dictionary<ulong, DateTime> _thanksCooldown;
@@ -54,7 +53,7 @@ namespace DiscordBot.Services
         public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
         
         public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
-                           Settings.Deserialized.Settings settings, UserSettings userSettings, Rules rules)
+                           Settings.Deserialized.Settings settings, UserSettings userSettings)
         {
             _client = client;
             _rand = new Random();
@@ -63,7 +62,6 @@ namespace DiscordBot.Services
             _updateService = updateService;
             _settings = settings;
             var userSettings1 = userSettings;
-            _rules = rules;
             MutedUsers = new Dictionary<ulong, DateTime>();
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _canEditThanks = new HashSet<ulong>(32);
@@ -342,17 +340,18 @@ namespace DiscordBot.Services
             return $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
         }
 
-        public Embed WelcomeMessage(string icon, string name, ushort discriminator)
+        public Embed WelcomeMessage(SocketGuildUser user)
         {
+            string icon = user.GetAvatarUrl();
             icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
 
             var builder = new EmbedBuilder()
-                          .WithDescription($"Welcome to Unity Developer Community **{name}#{discriminator}** !")
+                          .WithDescription($"Welcome to Unity Developer Community **{user.Mention}**!")
                           .WithColor(new Color(0x12D687))
                           .WithAuthor(author =>
                           {
                               author
-                                  .WithName(name)
+                                  .WithName(user.Username)
                                   .WithIconUrl(icon);
                           });
 
@@ -525,8 +524,7 @@ namespace DiscordBot.Services
 
         private async Task UserJoined(SocketGuildUser user)
         {
-            var general = _settings.GeneralChannel.Id;
-            var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
+            var socketTextChannel = _client.GetChannel(_settings.GeneralChannel.Id) as SocketTextChannel;
 
             await _databaseService.AddNewUser(user);
 
@@ -546,19 +544,50 @@ namespace DiscordBot.Services
             await _loggingService.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
-            var em = WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+            var em = WelcomeMessage(user);
 
             if (socketTextChannel != null) await socketTextChannel.SendMessageAsync(string.Empty, false, em);
 
-            var globalRules = _rules.Channel.First(x => x.Id == 0).Content;
-            var dm = await user.GetOrCreateDMChannelAsync();
-            await dm.SendMessageAsync(
-                "Hello and welcome to Unity Developer Community !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
-                "Please also read the additional informations in the **#welcome** channel." +
-                "You can get all the available commands on the server by typing !help in the **#bot-commands** channel.");
-            await dm.SendMessageAsync(globalRules);
+            await DMFormattedWelcome(user);
+        }
 
-            //TODO add users when bot was offline
+        public async Task<bool> DMFormattedWelcome(SocketGuildUser user)
+        {
+            var dm = await user.GetOrCreateDMChannelAsync();
+            return await dm.TrySendMessage(embed: GetWelcomeEmbed(user.Username));
+        }
+
+        public Embed GetWelcomeEmbed(string username = "")
+        {
+            //TODO Generate this using Settings or some other config, hardcoded isn't ideal.
+            var em = new EmbedBuilder()
+                .WithColor(new Color(0x12D687))
+                .AddField("Hello " + username,
+                    "Welcome to Unity Developer Community!\nPlease read and respect the rules to keep the community friendly!")
+                .AddField("__RULES__",
+                    ":white_small_square: Be polite and respectful.\n" +
+                    ":white_small_square: No Direct Messages to users without permission.\n" +
+                    ":white_small_square: Do not post the same question in multiple channels.\n" +
+                    ":white_small_square: Only post links to your games in the appropriate channels.\n" +
+                    ":white_small_square: Some channels have additional rules, please check pinned messages.\n" +
+                    $":white_small_square: A more inclusive list of rules can be found in <#{_settings.RulesChannel.Id.ToString()}>"
+                )
+                .AddField("__PROGRAMMING RESOURCES__",
+                    ":white_small_square: Good for New Devs [Official Unity Tutorials](https://unity3d.com/learn/tutorials)\n" +
+                    ":white_small_square: Official Unity [Manual](https://docs.unity3d.com/Manual/index.html)\n" +
+                    ":white_small_square: Official Unity [Script API](https://docs.unity3d.com/ScriptReference/index.html)\n" +
+                    ":white_small_square: Introductory Tutorials [Brackeys](https://brackeys.com/)\n" +
+                    ":white_small_square: Intermediate Tutorials: [CatLikeCoding](https://catlikecoding.com/unity/tutorials/)\n"
+                )
+                .AddField("__ART RESOURCES__",
+                    ":white_small_square: Blender Beginner Tutorial [Blender Guru Donut](https://www.youtube.com/watch?v=TPrnSACiTJ4&list=PLjEaoINr3zgEq0u2MzVgAaHEBt--xLB6U&index=2)\n" +
+                    ":white_small_square: Free Simple Assets [Kenney](https://www.kenney.nl/assets)\n" +
+                    ":white_small_square: Game Assets [itch.io](https://itch.io/game-assets/free)"
+                )
+                .AddField("__GAME DESIGN RESOURCES__",
+                    ":white_small_square: How to write a Game Design Document (GDD) [Gamasutra](https://www.gamasutra.com/blogs/LeandroGonzalez/20160726/277928/How_to_Write_a_Game_Design_Document.php)"
+                );
+            return (em.Build());
         }
 
         private async Task UserUpdated(SocketGuildUser oldUser, SocketGuildUser user)
