@@ -58,7 +58,7 @@ namespace DiscordBot.Services
                 if (msg != null) msg.Content = $"{messageContent}0/{userList.Count.ToString()}";
             });
 
-            int counter = 0, newAdd = 0, updated = 0;
+            int counter = 0, newAdd = 0;
             var updater = Task.Run(function: async () =>
             {
                 foreach (var user in userList)
@@ -72,14 +72,6 @@ namespace DiscordBot.Services
                         {
                             await AddNewUser(user as SocketGuildUser);
                             newAdd++;
-                        }
-                        else
-                        {
-                            if (member.Username != string.Empty && serverUser.Username != member.Username)
-                            {
-                                await Query().UpdateUserName(userIdString, member.Username);
-                                updated++;
-                            }
                         }
                     }
                     counter++;
@@ -97,7 +89,7 @@ namespace DiscordBot.Services
             }
 
             await _logging.LogAction(
-                $"Database Synchronized {counter.ToString()} Users Successfully.\n{newAdd.ToString()} missing users added.\n{updated.ToString()} incorrect values updated.");
+                $"Database Synchronized {counter.ToString()} Users Successfully.\n{newAdd.ToString()} missing users added.");
         }
         
         public async Task AddNewUser(SocketGuildUser socketUser)
@@ -110,7 +102,6 @@ namespace DiscordBot.Services
 
                 user = new ServerUser
                 {
-                    Username = socketUser.Username,
                     UserID = socketUser.Id.ToString(),
                 };
 

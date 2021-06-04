@@ -509,7 +509,7 @@ namespace DiscordBot.Modules
         public async Task JoinDate()
         {
             var userId = Context.User.Id;
-            var joinDate = await _databaseService.Query().GetJoinDate(userId.ToString());
+            var joinDate = ((IGuildUser) Context.User).JoinedAt;
             await ReplyAsync($"{Context.User.Mention} you joined **{joinDate:dddd dd/MM/yyy HH:mm:ss}**");
             await Context.Message.DeleteAsync();
         }

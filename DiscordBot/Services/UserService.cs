@@ -401,7 +401,7 @@ namespace DiscordBot.Services
                     return;
                 }
 
-                var joinDate = await _databaseService.Query().GetJoinDate(userId.ToString());
+                var joinDate = ((IGuildUser) messageParam.Author).JoinedAt;
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
                 if (j > DateTime.Now)
                 {
@@ -568,14 +568,13 @@ namespace DiscordBot.Services
                 await _loggingService.LogAction(
                     $"User {oldUser.Nickname ?? oldUser.Username}#{oldUser.DiscriminatorValue} changed his " +
                     $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
-
-                await _databaseService.Query().UpdateUserName(user.Id.ToString(), user.Nickname);
             }
         }
 
         private async Task UserLeft(SocketGuildUser user)
         {
-            DateTime joinDate = await _databaseService.Query().GetJoinDate(user.Id.ToString());
+            DateTime joinDate = user.JoinedAt.Value.Date;
+            
             var timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
                 $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days) + " days" : " ")}" +

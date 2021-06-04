@@ -10,10 +10,8 @@ namespace DiscordBot.Extensions
         /// <summary> This is internal Database ID, remember to use UserID</summary>
         // ReSharper disable once InconsistentNaming
         public int ID { get; private set; }
-        public string Username { get; set; }
         // ReSharper disable once InconsistentNaming
         public string UserID { get; set; }
-        public DateTime JoinDate { get; set; }
         public int Karma { get; set; }
         public int KarmaGiven { get; set; }
         public long Exp { get; set; }
@@ -22,7 +20,7 @@ namespace DiscordBot.Extensions
     
     public interface IServerUserRepo
     {
-        [Sql("INSERT INTO users (Username, UserID) VALUES (@Username, @UserID)")]
+        [Sql("INSERT INTO users (UserID) VALUES (@UserID)")]
         Task InsertUser(ServerUser user);
         [Sql("DELETE FROM users WHERE UserID = @userId")]
         Task RemoveUser(string userId);
@@ -31,9 +29,9 @@ namespace DiscordBot.Extensions
         Task<ServerUser> GetUser(string userId);
         
         // Rank Stuff
-        [Sql("SELECT Username, UserID, Karma, Level, Exp FROM users ORDER BY Level DESC LIMIT @n")] 
+        [Sql("SELECT UserID, Karma, Level, Exp FROM users ORDER BY Level DESC LIMIT @n")] 
         Task<IList<ServerUser>> GetTopLevel(int n);
-        [Sql("SELECT Username, UserID, Karma, KarmaGiven FROM users ORDER BY Karma DESC LIMIT @n")] 
+        [Sql("SELECT UserID, Karma, KarmaGiven FROM users ORDER BY Karma DESC LIMIT @n")] 
         Task<IList<ServerUser>> GetTopKarma(int n);
         [Sql("SELECT COUNT(UserID)+1 FROM users WHERE Level > @level")] 
         Task<long> GetLevelRank(string userId, int level);
@@ -41,9 +39,6 @@ namespace DiscordBot.Extensions
         Task<long> GetKarmaRank(string userId, int karma);
         
         // Update Values
-        [Sql("UPDATE users SET Username = @username WHERE UserID = @userId")] 
-        Task UpdateUserName(string userId, string username);
-
         [Sql("UPDATE users SET Karma = @karma WHERE UserID = @userId")] 
         Task UpdateKarma(string userId, int karma);
         [Sql("UPDATE users SET KarmaGiven = @karmaGiven WHERE UserID = @userId")] 
@@ -54,10 +49,6 @@ namespace DiscordBot.Extensions
         Task UpdateLevel(string userId, int level);
         
         // Get Single Values
-        [Sql("SELECT Username FROM users WHERE UserID = @userId")] 
-        Task<string> GetUsername(string userId);
-        [Sql("SELECT JoinDate FROM users WHERE UserID = @userId")] 
-        Task<DateTime> GetJoinDate(string userId);
         [Sql("SELECT Karma FROM users WHERE UserID = @userId")] 
         Task<int> GetKarma(string userId);
         [Sql("SELECT KarmaGiven FROM users WHERE UserID = @userId")] 
