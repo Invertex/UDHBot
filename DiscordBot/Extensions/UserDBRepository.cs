@@ -12,10 +12,10 @@ namespace DiscordBot.Extensions
         public int ID { get; private set; }
         // ReSharper disable once InconsistentNaming
         public string UserID { get; set; }
-        public int Karma { get; set; }
-        public int KarmaGiven { get; set; }
-        public long Exp { get; set; }
-        public int Level { get; set; }
+        public uint Karma { get; set; }
+        public uint KarmaGiven { get; set; }
+        public ulong Exp { get; set; }
+        public uint Level { get; set; }
     }
     
     public interface IServerUserRepo
@@ -30,33 +30,33 @@ namespace DiscordBot.Extensions
         
         // Rank Stuff
         [Sql("SELECT UserID, Karma, Level, Exp FROM users ORDER BY Level DESC LIMIT @n")] 
-        Task<IList<ServerUser>> GetTopLevel(int n);
+        Task<IList<ServerUser>> GetTopLevel(uint n);
         [Sql("SELECT UserID, Karma, KarmaGiven FROM users ORDER BY Karma DESC LIMIT @n")] 
-        Task<IList<ServerUser>> GetTopKarma(int n);
+        Task<IList<ServerUser>> GetTopKarma(uint n);
         [Sql("SELECT COUNT(UserID)+1 FROM users WHERE Level > @level")] 
-        Task<long> GetLevelRank(string userId, int level);
+        Task<long> GetLevelRank(string userId, uint level);
         [Sql("SELECT COUNT(UserID)+1 FROM users WHERE Karma > @karma")] 
-        Task<long> GetKarmaRank(string userId, int karma);
+        Task<long> GetKarmaRank(string userId, uint karma);
         
         // Update Values
         [Sql("UPDATE users SET Karma = @karma WHERE UserID = @userId")] 
-        Task UpdateKarma(string userId, int karma);
+        Task UpdateKarma(string userId, uint karma);
         [Sql("UPDATE users SET KarmaGiven = @karmaGiven WHERE UserID = @userId")] 
-        Task UpdateKarmaGiven(string userId, int karmaGiven);
+        Task UpdateKarmaGiven(string userId, uint karmaGiven);
         [Sql("UPDATE users SET Exp = @xp WHERE UserID = @userId")] 
-        Task UpdateXp(string userId, long xp);
+        Task UpdateXp(string userId, ulong xp);
         [Sql("UPDATE users SET Level = @level WHERE UserID = @userId")] 
-        Task UpdateLevel(string userId, int level);
+        Task UpdateLevel(string userId, uint level);
         
         // Get Single Values
         [Sql("SELECT Karma FROM users WHERE UserID = @userId")] 
-        Task<int> GetKarma(string userId);
+        Task<uint> GetKarma(string userId);
         [Sql("SELECT KarmaGiven FROM users WHERE UserID = @userId")] 
-        Task<int> GetKarmaGiven(string userId);
+        Task<uint> GetKarmaGiven(string userId);
         [Sql("SELECT Exp FROM users WHERE UserID = @userId")] 
-        Task<long> GetXp(string userId);
+        Task<ulong> GetXp(string userId);
         [Sql("SELECT Level FROM users WHERE UserID = @userId")] 
-        Task<int> GetLevel(string userId);
+        Task<uint> GetLevel(string userId);
 
         /// <summary>Returns a count of users in the Table, otherwise it fails. </summary>
         [Sql("SELECT COUNT(*) FROM users")]

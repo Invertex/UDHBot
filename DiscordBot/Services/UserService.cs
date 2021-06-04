@@ -201,7 +201,7 @@ namespace DiscordBot.Services
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
-            await _databaseService.Query().UpdateXp(userId.ToString(), user.Exp + xpGain);
+            await _databaseService.Query().UpdateXp(userId.ToString(), user.Exp + (uint) xpGain);
             
             _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
@@ -230,9 +230,9 @@ namespace DiscordBot.Services
             //TODO Add level up card
         }
 
-        private double GetXpLow(int level) => 70d - 139.5d * (level + 1d) + 69.5 * Math.Pow(level + 1d, 2d);
+        private double GetXpLow(uint level) => 70d - 139.5d * (level + 1d) + 69.5 * Math.Pow(level + 1d, 2d);
 
-        private double GetXpHigh(int level) => 70d - 139.5d * (level + 2d) + 69.5 * Math.Pow(level + 2d, 2d);
+        private double GetXpHigh(uint level) => 70d - 139.5d * (level + 2d) + 69.5 * Math.Pow(level + 2d, 2d);
 
         private SkinData GetSkinData() =>
             JsonConvert.DeserializeObject<SkinData>(File.ReadAllText($"{_settings.ServerRootPath}/skins/skin.json"),
@@ -252,8 +252,8 @@ namespace DiscordBot.Services
             var karma = userData.Karma;
             var level = userData.Level;
             var karmaRank = await  _databaseService.Query().GetLevelRank(userData.UserID, userData.Level);
-            var xpLow = GetXpLow((int) level);
-            var xpHigh = GetXpHigh((int) level);
+            var xpLow = GetXpLow(level);
+            var xpHigh = GetXpHigh(level);
 
             var xpShown = (uint) (xpTotal - xpLow);
             var maxXpShown = (uint) (xpHigh - xpLow);
