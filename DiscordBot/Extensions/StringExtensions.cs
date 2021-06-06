@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using DiscordBot.Properties;
 
 namespace DiscordBot.Extensions
@@ -17,38 +18,54 @@ namespace DiscordBot.Extensions
 
         public static List<string> MessageSplit(this string str, int maxLength = 1990)
         {
-            List<string> list = str.Split('\n').ToList();
-            List<string> ret = new List<string>();
+            var list = str.Split('\n').ToList();
+            var ret = new List<string>();
 
-            string currentString = "";
+            var currentString = string.Empty;
             foreach (var s in list)
-            {
                 if (currentString.Length + s.Length < maxLength)
-                {
                     currentString += s + "\n";
-                }
                 else
                 {
                     ret.Add(currentString);
                     currentString = s + "\n";
                 }
-            }
 
-            if (!String.IsNullOrEmpty(currentString))
+            if (!string.IsNullOrEmpty(currentString))
                 ret.Add(currentString);
 
             return ret;
         }
 
+        public static List<string> MessageSplitToSize(this string str,
+            int maxLength = Constants.MaxLengthChannelMessage)
+        {
+            var container = new List<string>();
+            if (str.Length < Constants.MaxLengthChannelMessage)
+            {
+                container.Add(str);
+                return container;
+            }
+
+            var cuts = (str.Length / Constants.MaxLengthChannelMessage) + 1;
+            var indexOfLine = 0;
+            for (var cut = 1; cut <= cuts; cut++)
+            {
+                string page;
+                page = cut == cuts ? str.Substring(indexOfLine) : str.Substring(indexOfLine, Constants.MaxLengthChannelMessage);
+
+                indexOfLine = page.LastIndexOf("\n", StringComparison.Ordinal) + 1;
+                container.Add(cut == cuts ? page : page.Remove(indexOfLine - 1));
+            }
+            return container;
+        }
+
         /// <summary>
-        /// Adds a backslash behind each special character used by Discord to make a message appear plain-text.
+        ///     Adds a backslash behind each special character used by Discord to make a message appear plain-text.
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
-        public static string EscapeDiscordMarkup(this string content)
-        {
-            return System.Text.RegularExpressions.Regex.Replace(content, @"([\\~\\_\`\*\`])", "\\$1");
-        }
+        public static string EscapeDiscordMarkup(this string content) => Regex.Replace(content, @"([\\~\\_\`\*\`])", "\\$1");
 
         public static int CalculateLevenshteinDistance(this string source1, string source2) //O(n*m)
         {
@@ -78,7 +95,7 @@ namespace DiscordBot.Extensions
             {
                 for (var j = 1; j <= source2Length; j++)
                 {
-                    var cost = (source2[j - 1] == source1[i - 1]) ? 0 : 1;
+                    var cost = source2[j - 1] == source1[i - 1] ? 0 : 1;
 
                     matrix[i, j] = Math.Min(
                         Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
@@ -90,31 +107,24 @@ namespace DiscordBot.Extensions
             return matrix[source1Length, source2Length];
         }
 
-        public static string AsCodeBlock(this string code, string language = "cs")
-        {
-            return Resources.DiscordCodeBlock.Replace("{code}", code).Replace("{language}", language);
-        }
-        
-        public static string GetSHA256(this string input)
+        public static string AsCodeBlock(this string code, string language = "cs") => Resources.DiscordCodeBlock.Replace("{code}", code).Replace("{language}", language);
+
+        public static string GetSha256(this string input)
         {
             var hash = new SHA256CryptoServiceProvider();
             // Convert the input string to a byte array and compute the hash.
-            byte[] data = hash.ComputeHash(Encoding.UTF8.GetBytes(input));
+            var data = hash.ComputeHash(Encoding.UTF8.GetBytes(input));
 
             // Create a new Stringbuilder to collect the bytes
             // and create a string.
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
-            // Loop through each byte of the hashed data 
+            // Loop through each byte of the hashed data
             // and format each one as a hexadecimal string.
-            for (int i = 0; i < data.Length; i++)
-            {
-                sb.Append(data[i].ToString("x2"));
-            }
+            for (var i = 0; i < data.Length; i++) sb.Append(data[i].ToString("x2"));
 
             // Return the hexadecimal string.
             return sb.ToString();
         }
-
     }
 }

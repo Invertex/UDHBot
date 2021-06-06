@@ -5,12 +5,6 @@ namespace DiscordBot.Skin
 {
     public class KarmaRankSkinModule : BaseTextSkinModule
     {
-        public override Drawables GetDrawables(ProfileData data)
-        {
-            Text = $"#{data.KarmaRank}";
-            return base.GetDrawables(data);
-        }
-
         public KarmaRankSkinModule()
         {
             StartX = 535;
@@ -18,6 +12,12 @@ namespace DiscordBot.Skin
             StrokeColor = MagickColors.Transparent.ToString();
             FillColor = MagickColors.Black.ToString();
             FontPointSize = 17;
+        }
+
+        public override Drawables GetDrawables(ProfileData data)
+        {
+            Text = $"#{data.KarmaRank}";
+            return base.GetDrawables(data);
         }
     }
 }

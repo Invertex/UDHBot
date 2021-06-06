@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -19,111 +20,94 @@ namespace DiscordBot.Services
 {
     public class UserService
     {
-        private readonly DiscordSocketClient _client;
-        private readonly DatabaseService _databaseService;
-        private readonly ILoggingService _loggingService;
-        private readonly UpdateService _updateService;
-
-        private readonly Settings.Deserialized.Settings _settings;
-        private readonly UserSettings _userSettings;
-        private readonly Rules _rules;
-
-        public Dictionary<ulong, DateTime> _mutedUsers;
-
-        private readonly Dictionary<ulong, DateTime> _xpCooldown;
         private readonly HashSet<ulong> _canEditThanks; //Doesn't need to be saved
-        private readonly Dictionary<ulong, DateTime> _thanksCooldown;
-        private Dictionary<ulong, DateTime> _thanksReminderCooldown;
-
-        public Dictionary<ulong, DateTime> ThanksReminderCooldown => _thanksReminderCooldown;
-
-        private Dictionary<ulong, DateTime> _codeReminderCooldown;
-
-        public Dictionary<ulong, DateTime> CodeReminderCooldown => _codeReminderCooldown;
-
-        private readonly Random rand;
-
-        private readonly string _thanksRegex;
-
-        private readonly int _thanksCooldownTime;
-        private readonly int _thanksReminderCooldownTime;
-        private readonly int _thanksMinJoinTime;
-
-        private readonly int _xpMinPerMessage;
-        private readonly int _xpMaxPerMessage;
-        private readonly int _xpMinCooldown;
-        private readonly int _xpMaxCooldown;
+        private readonly DiscordSocketClient _client;
+        public readonly string CodeFormattingExample;
 
         private readonly int _codeReminderCooldownTime;
-        public readonly string _codeFormattingExample;
-        public readonly string _codeReminderFormattingExample;
+        public readonly string CodeReminderFormattingExample;
+        private readonly DatabaseService _databaseService;
+        private readonly ILoggingService _loggingService;
 
         private readonly List<ulong> _noXpChannels;
 
-        //TODO: Add custom commands for user after (30karma ?/limited to 3 ?)
+        private readonly Settings.Deserialized.Settings _settings;
+        private readonly Dictionary<ulong, DateTime> _thanksCooldown;
 
-        public UserService(DiscordSocketClient client,DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
-            Settings.Deserialized.Settings settings, UserSettings userSettings, Rules rules)
+        private readonly int _thanksCooldownTime;
+        private readonly int _thanksMinJoinTime;
+
+        private readonly string _thanksRegex;
+        private readonly int _thanksReminderCooldownTime;
+        private readonly UpdateService _updateService;
+
+        private readonly Dictionary<ulong, DateTime> _xpCooldown;
+        private readonly int _xpMaxCooldown;
+        private readonly int _xpMaxPerMessage;
+        private readonly int _xpMinCooldown;
+
+        private readonly int _xpMinPerMessage;
+
+        private readonly Random _rand;
+
+        public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
+        
+        public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
+                           Settings.Deserialized.Settings settings, UserSettings userSettings)
         {
             _client = client;
-            rand = new Random();
+            _rand = new Random();
             _databaseService = databaseService;
             _loggingService = loggingService;
             _updateService = updateService;
             _settings = settings;
-            _userSettings = userSettings;
-            _rules = rules;
-            _mutedUsers = new Dictionary<ulong, DateTime>();
+            var userSettings1 = userSettings;
+            MutedUsers = new Dictionary<ulong, DateTime>();
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _canEditThanks = new HashSet<ulong>(32);
             _thanksCooldown = new Dictionary<ulong, DateTime>();
-            _thanksReminderCooldown = new Dictionary<ulong, DateTime>();
-            _codeReminderCooldown = new Dictionary<ulong, DateTime>();
+            ThanksReminderCooldown = new Dictionary<ulong, DateTime>();
+            CodeReminderCooldown = new Dictionary<ulong, DateTime>();
 
             //TODO We should make this into a config file that we can confiure during runtime.
             _noXpChannels = new List<ulong>
             {
                 _settings.BotCommandsChannel.Id
-            }; 
+            };
 
             /*
             Init XP
             */
-            _xpMinPerMessage = _userSettings.XpMinPerMessage;
-            _xpMaxPerMessage = _userSettings.XpMaxPerMessage;
-            _xpMinCooldown = _userSettings.XpMinCooldown;
-            _xpMaxCooldown = _userSettings.XpMaxCooldown;
+            _xpMinPerMessage = userSettings1.XpMinPerMessage;
+            _xpMaxPerMessage = userSettings1.XpMaxPerMessage;
+            _xpMinCooldown = userSettings1.XpMinCooldown;
+            _xpMaxCooldown = userSettings1.XpMaxCooldown;
 
             /*
             Init thanks
             */
-            StringBuilder sbThanks = new StringBuilder();
-            var thx = _userSettings.Thanks;
+            var sbThanks = new StringBuilder();
+            var thx = userSettings1.Thanks;
             sbThanks.Append("(?i)\\b(");
-            foreach (var t in thx)
-            {
-                sbThanks.Append(t).Append("|");
-            }
+            foreach (var t in thx) sbThanks.Append(t).Append("|");
 
             sbThanks.Length--; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
             sbThanks.Append(")\\b");
             _thanksRegex = sbThanks.ToString();
-            _thanksCooldownTime = _userSettings.ThanksCooldown;
-            _thanksReminderCooldownTime = _userSettings.ThanksReminderCooldown;
-            _thanksMinJoinTime = _userSettings.ThanksMinJoinTime;
+            _thanksCooldownTime = userSettings1.ThanksCooldown;
+            _thanksReminderCooldownTime = userSettings1.ThanksReminderCooldown;
+            _thanksMinJoinTime = userSettings1.ThanksMinJoinTime;
 
             /*
              Init Code analysis
             */
-            _codeReminderCooldownTime = _userSettings.CodeReminderCooldown;
-            _codeFormattingExample = (
-                @"\`\`\`cs" + Environment.NewLine +
-                "Write your code on new line here." + Environment.NewLine +
-                @"\`\`\`" + Environment.NewLine);
-            _codeReminderFormattingExample = (
-                _codeFormattingExample + Environment.NewLine +
-                "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"");
-            
+            _codeReminderCooldownTime = userSettings1.CodeReminderCooldown;
+            CodeFormattingExample = @"\`\`\`cs" + Environment.NewLine +
+                                     "Write your code on new line here." + Environment.NewLine +
+                                     @"\`\`\`" + Environment.NewLine;
+            CodeReminderFormattingExample = CodeFormattingExample + Environment.NewLine +
+                                             "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"";
+
             /*
              Event subscriptions
             */
@@ -140,6 +124,10 @@ namespace DiscordBot.Services
             UpdateLoop();
         }
 
+        public Dictionary<ulong, DateTime> ThanksReminderCooldown { get; private set; }
+
+        public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
+
         private async void UpdateLoop()
         {
             while (true)
@@ -147,21 +135,24 @@ namespace DiscordBot.Services
                 await Task.Delay(10000);
                 SaveData();
             }
+            // ReSharper disable once FunctionNeverReturns
         }
 
         private void LoadData()
         {
             var data = _updateService.GetUserData();
-            _mutedUsers = data.MutedUsers ?? new Dictionary<ulong, DateTime>();
-            _thanksReminderCooldown = data.ThanksReminderCooldown ?? new Dictionary<ulong, DateTime>();
-            _codeReminderCooldown = data.CodeReminderCooldown ?? new Dictionary<ulong, DateTime>();
+            MutedUsers = data.MutedUsers ?? new Dictionary<ulong, DateTime>();
+            ThanksReminderCooldown = data.ThanksReminderCooldown ?? new Dictionary<ulong, DateTime>();
+            CodeReminderCooldown = data.CodeReminderCooldown ?? new Dictionary<ulong, DateTime>();
         }
 
         private void SaveData()
         {
-            UserData data = new UserData
+            var data = new UserData
             {
-                MutedUsers = _mutedUsers, ThanksReminderCooldown = _thanksReminderCooldown, CodeReminderCooldown = _codeReminderCooldown
+                MutedUsers = MutedUsers,
+                ThanksReminderCooldown = ThanksReminderCooldown,
+                CodeReminderCooldown = CodeReminderCooldown
             };
             _updateService.SetUserData(data);
         }
@@ -174,264 +165,228 @@ namespace DiscordBot.Services
             if (_noXpChannels.Contains(messageParam.Channel.Id))
                 return;
 
-            ulong userId = messageParam.Author.Id;
-            int waitTime = rand.Next(_xpMinCooldown, _xpMaxCooldown);
-            float baseXp = rand.Next(_xpMinPerMessage, _xpMaxPerMessage);
+            var userId = messageParam.Author.Id;
+            var waitTime = _rand.Next(_xpMinCooldown, _xpMaxCooldown);
+            float baseXp = _rand.Next(_xpMinPerMessage, _xpMaxPerMessage);
             float bonusXp = 0;
 
             if (_xpCooldown.HasUser(userId))
                 return;
 
-            int karma = _databaseService.GetUserKarma(userId);
-            if (messageParam.Author.Activity != null)
+            var user = await _databaseService.Query().GetUser(userId.ToString());
+            if (user == null)
             {
-                if (Regex.Match(messageParam.Author.Activity.Name, "(Unity.+)").Length > 0)
-                    bonusXp += baseXp / 4;
+                await _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
+                user = await _databaseService.Query().GetUser(userId.ToString());
             }
 
-            bonusXp += baseXp * (1f + (karma / 100f));
+            if (messageParam.Author.Activity != null)
+                if (Regex.Match(messageParam.Author.Activity.Name, "(Unity.+)").Length > 0)
+                    bonusXp += baseXp / 4;
+
+            bonusXp += baseXp * (1f + user.Karma / 100f);
 
             //Reduce XP for members with no role
             if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
                 baseXp *= .9f;
 
             //Lower xp for difference between level and karma
-            uint level = _databaseService.GetUserLevel(userId);
-            float reduceXp = 1f;
-            if (karma < level)
-            {
-                reduceXp = 1 - Math.Min(.9f, (level - karma) * .05f);
-            }
+            var reduceXp = 1f;
+            if (user.Karma < user.Level) reduceXp = 1 - Math.Min(.9f, (user.Level - user.Karma) * .05f);
 
-            int xpGain = (int) Math.Round((baseXp + bonusXp) * reduceXp);
+            var xpGain = (int) Math.Round((baseXp + bonusXp) * reduceXp);
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
-            if (!await _databaseService.UserExists(userId))
-                _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
-
-            _databaseService.AddUserXp(userId, xpGain);
-            _databaseService.AddUserUdc(userId, (int) Math.Round(xpGain * .15f));
-
+            await _databaseService.Query().UpdateXp(userId.ToString(), user.Exp + (uint) xpGain);
+            
             _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
             await LevelUp(messageParam, userId);
-
-            //TODO: add xp gain on website
         }
 
         /// <summary>
-        /// Show level up emssage
+        /// Show level up message
         /// </summary>
         /// <param name="messageParam"></param>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public async Task LevelUp(SocketMessage messageParam, ulong userId)
+        private async Task LevelUp(SocketMessage messageParam, ulong userId)
         {
-            int level = (int) (_databaseService.GetUserLevel(userId));
-            uint xp = _databaseService.GetUserXp(userId);
+            var level = await _databaseService.Query().GetLevel(userId.ToString());
+            var xp = await _databaseService.Query().GetXp(userId.ToString());
 
-            double xpLow = GetXpLow(level);
-            double xpHigh = GetXpHigh(level);
+            var xpHigh = GetXpHigh(level);
 
             if (xp < xpHigh)
                 return;
 
-            _databaseService.AddUserLevel(userId, 1);
-            _databaseService.AddUserUdc(userId, 1200);
-
-            await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(seconds: 60);
-            //TODO: investigate why this is not running async
-            //I believe it's because you didn't include async and await in the ContinueWith structure.
-            // instead should be `ContinueWith(async _ => await message.DeleteAsync())`
-            //await Task.Delay(TimeSpan.FromSeconds(60d)).ContinueWith(async _ => await message.DeleteAsync()).Unwrap();
-            //TODO: Add level up card
+            await _databaseService.Query().UpdateLevel(userId.ToString(), level + 1);
+            
+            await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(60);
+            //TODO Add level up card
         }
 
-        private double GetXpLow(int level)
-        {
-            return 70d - (139.5d * (level + 1d)) + (69.5 * Math.Pow(level + 1d, 2d));
-        }
+        private double GetXpLow(uint level) => 70d - 139.5d * (level + 1d) + 69.5 * Math.Pow(level + 1d, 2d);
 
-        private double GetXpHigh(int level)
-        {
-            return 70d - (139.5d * (level + 2d)) + (69.5 * Math.Pow(level + 2d, 2d));
-        }
+        private double GetXpHigh(uint level) => 70d - 139.5d * (level + 2d) + 69.5 * Math.Pow(level + 2d, 2d);
 
-        private SkinData GetSkinData()
-        {
-            return JsonConvert.DeserializeObject<SkinData>(File.ReadAllText($"{_settings.ServerRootPath}/skins/skin.json"),
+        private SkinData GetSkinData() =>
+            JsonConvert.DeserializeObject<SkinData>(File.ReadAllText($"{_settings.ServerRootPath}/skins/skin.json"),
                 new SkinModuleJsonConverter());
-        }
 
         /// <summary>
-        /// Generate the profile card for a given user and returns the generated image path
+        ///     Generate the profile card for a given user and returns the generated image path
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
         public async Task<string> GenerateProfileCard(IUser user)
         {
-            ulong userId = user.Id;
-            uint xpTotal = _databaseService.GetUserXp(userId);
-            uint xpRank = _databaseService.GetUserRank(userId);
-            int karma = _databaseService.GetUserKarma(userId);
-            uint level = _databaseService.GetUserLevel(userId);
-            uint karmaRank = _databaseService.GetUserKarmaRank(userId);
-            double xpLow = GetXpLow((int) level);
-            double xpHigh = GetXpHigh((int) level);
+            var userData = await _databaseService.Query().GetUser(user.Id.ToString());
+            
+            var xpTotal = userData.Exp;
+            var xpRank = await _databaseService.Query().GetKarmaRank(userData.UserID, userData.Karma);
+            var karma = userData.Karma;
+            var level = userData.Level;
+            var karmaRank = await  _databaseService.Query().GetLevelRank(userData.UserID, userData.Level);
+            var xpLow = GetXpLow(level);
+            var xpHigh = GetXpHigh(level);
 
-            uint xpShown = (uint) (xpTotal - xpLow);
-            uint maxXpShown = (uint) (xpHigh - xpLow);
+            var xpShown = (uint) (xpTotal - xpLow);
+            var maxXpShown = (uint) (xpHigh - xpLow);
 
-            float percentage = (float) xpShown / maxXpShown;
+            var percentage = (float) xpShown / maxXpShown;
 
-            var u = user as IGuildUser;
+            var u = (IGuildUser)user;
             IRole mainRole = null;
-            foreach (ulong id in u.RoleIds)
+            foreach (var id in u.RoleIds)
             {
-                IRole role = u.Guild.GetRole(id);
+                var role = u.Guild.GetRole(id);
                 if (mainRole == null)
-                {
                     mainRole = u.Guild.GetRole(id);
-                }
-                else if (role.Position > mainRole.Position)
-                {
-                    mainRole = role;
-                }
+                else if (role.Position > mainRole.Position) mainRole = role;
             }
+            mainRole ??= u.Guild.EveryoneRole;
 
-            using (MagickImageCollection profileCard = new MagickImageCollection())
+            using var profileCard = new MagickImageCollection();
+            var skin = GetSkinData();
+            var profile = new ProfileData
             {
-                SkinData skin = GetSkinData();
-                ProfileData profile = new ProfileData
-                {
-                    Karma = karma,
-                    KarmaRank = karmaRank,
-                    Level = level,
-                    MainRoleColor = mainRole.Color,
-                    MaxXpShown = maxXpShown,
-                    Nickname = (user as IGuildUser).Nickname,
-                    UserId = userId,
-                    Username = user.Username,
-                    XpHigh = xpHigh,
-                    XpLow = xpLow,
-                    XpPercentage = percentage,
-                    XpRank = xpRank,
-                    XpShown = xpShown,
-                    XpTotal = xpTotal
-                };
+                Karma = karma,
+                KarmaRank = (uint)karmaRank,
+                Level = (uint)level,
+                MainRoleColor = mainRole.Color,
+                MaxXpShown = maxXpShown,
+                Nickname = ((IGuildUser) user).Nickname,
+                UserId = ulong.Parse(userData.UserID),
+                Username = user.Username,
+                XpHigh = xpHigh,
+                XpLow = xpLow,
+                XpPercentage = percentage,
+                XpRank = (uint)xpRank,
+                XpShown = xpShown,
+                XpTotal = (uint)xpTotal
+            };
 
-                MagickImage background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
+            var background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
 
-                string avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
-                if (string.IsNullOrEmpty(avatarUrl))
+            var avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
+            if (string.IsNullOrEmpty(avatarUrl))
+                profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
+            else
+                try
                 {
+                    Stream stream;
+
+                    using (var http = new HttpClient())
+                    {
+                        stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                    }
+
+                    profile.Picture = new MagickImage(stream);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
                     profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
                 }
-                else
+
+            profile.Picture.Resize(skin.AvatarSize, skin.AvatarSize);
+            profileCard.Add(background);
+
+            foreach (var layer in skin.Layers)
+            {
+                if (layer.Image != null)
                 {
-                    try
-                    {
-                        Stream stream;
+                    var image = layer.Image.ToLower() == "avatar"
+                        ? profile.Picture
+                        : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
 
-                        using (var http = new HttpClient())
-                        {
-                            stream = await http.GetStreamAsync(new Uri(avatarUrl));
-                        }
-
-                        profile.Picture = new MagickImage(stream);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
-                    }
+                    background.Composite(image, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
                 }
 
-                profile.Picture.Resize((int) skin.AvatarSize, skin.AvatarSize);
-                profileCard.Add(background);
+                var l = new MagickImage(MagickColors.Transparent, (int) layer.Width, (int) layer.Height);
+                foreach (var module in layer.Modules) module.GetDrawables(profile).Draw(l);
 
-                foreach (var layer in skin.Layers)
-                {
-                    if (layer.Image != null)
-                    {
-                        MagickImage image = layer.Image.ToLower() == "avatar"
-                            ? profile.Picture
-                            : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
+                background.Composite(l, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
+            }
 
-                        background.Composite(image, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
-                    }
-
-                    MagickImage l = new MagickImage(MagickColors.Transparent, (int) layer.Width, (int) layer.Height);
-                    foreach (var module in layer.Modules)
-                    {
-                        module.GetDrawables(profile).Draw(l);
-                    }
-
-                    background.Composite(l, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
-                }
-
-                using (IMagickImage result = profileCard.Mosaic())
-                {
-                    result.Write($"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png");
-                }
+            using (var result = profileCard.Mosaic())
+            {
+                result.Write($"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png");
             }
 
             return $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
         }
 
-
-        public Embed WelcomeMessage(string icon, string name, ushort discriminator)
+        public Embed WelcomeMessage(SocketGuildUser user)
         {
+            string icon = user.GetAvatarUrl();
             icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
 
-            EmbedBuilder builder = new EmbedBuilder()
-                .WithDescription($"Welcome to Unity Developer Community **{name}#{discriminator}** !")
-                .WithColor(new Color(0x12D687))
-                .WithAuthor(author =>
-                {
-                    author
-                        .WithName(name)
-                        .WithIconUrl(icon);
-                });
+            var builder = new EmbedBuilder()
+                          .WithDescription($"Welcome to Unity Developer Community **{user.Mention}**!")
+                          .WithColor(new Color(0x12D687))
+                          .WithAuthor(author =>
+                          {
+                              author
+                                  .WithName(user.Username)
+                                  .WithIconUrl(icon);
+                          });
 
-            Embed embed = builder.Build();
+            var embed = builder.Build();
             return embed;
         }
+
+        public int GetGatewayPing() => _client.Latency;
 
         #region Events
 
         // Message Edited Thanks
         public async Task ThanksEdited(Cacheable<IMessage, ulong> cachedMessage, SocketMessage messageParam,
-            ISocketMessageChannel socketMessageChannel)
+                                       ISocketMessageChannel socketMessageChannel)
         {
-            if (_canEditThanks.Contains(messageParam.Id))
-            {
-                await Thanks(messageParam);
-            }
+            if (_canEditThanks.Contains(messageParam.Id)) await Thanks(messageParam);
         }
-
 
         public async Task Thanks(SocketMessage messageParam)
         {
             //Get guild id
-            SocketGuildChannel channel = messageParam.Channel as SocketGuildChannel;
-            ulong guildId = channel.Guild.Id;
+            var channel = (SocketGuildChannel)messageParam.Channel;
+            var guildId = channel.Guild.Id;
 
             //Make sure its in the UDH server
-            if (guildId != _settings.guildId) {
-                return;
-            }
+            if (guildId != _settings.GuildId) return;
 
             if (messageParam.Author.IsBot)
                 return;
-            Match match = Regex.Match(messageParam.Content, _thanksRegex);
+            var match = Regex.Match(messageParam.Content, _thanksRegex);
             if (!match.Success)
                 return;
-            IReadOnlyCollection<SocketUser> mentions = messageParam.MentionedUsers;
+            var mentions = messageParam.MentionedUsers;
             mentions = mentions.Distinct().ToList();
-            ulong userId = messageParam.Author.Id;
+            var userId = messageParam.Author.Id;
             const int defaultDelTime = 120;
             if (mentions.Count > 0)
             {
@@ -441,25 +396,22 @@ namespace DiscordBot.Services
                         $"{messageParam.Author.Mention} you must wait " +
                         $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
                         "seconds before giving another karma point." + Environment.NewLine +
-                        "(In the future, if you are trying to thank multiple people, include all their names in the thanks message)").DeleteAfterTime(seconds: defaultDelTime);
+                        "(In the future, if you are trying to thank multiple people, include all their names in the thanks message)").DeleteAfterTime(defaultDelTime);
                     return;
                 }
 
-                DateTime.TryParse(_databaseService.GetUserJoinDate(userId), out DateTime joinDate);
+                var joinDate = ((IGuildUser) messageParam.Author).JoinedAt;
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
                 if (j > DateTime.Now)
                 {
-                    await messageParam.Channel.SendMessageAsync(
-                            $"{messageParam.Author.Mention} you must have been a member for at least 10 minutes to give karma points.")
-                        .DeleteAfterTime(seconds: 140);
                     return;
                 }
 
-                bool mentionedSelf = false;
-                bool mentionedBot = false;
-                StringBuilder sb = new StringBuilder();
+                var mentionedSelf = false;
+                var mentionedBot = false;
+                var sb = new StringBuilder();
                 sb.Append("**").Append(messageParam.Author.Username).Append("** gave karma to **");
-                foreach (SocketUser user in mentions)
+                foreach (var user in mentions)
                 {
                     if (user.IsBot)
                     {
@@ -473,33 +425,33 @@ namespace DiscordBot.Services
                         continue;
                     }
 
-                    _databaseService.AddUserKarma(user.Id, 1);
-                    _databaseService.AddUserUdc(user.Id, 350);
+                    var userKarma = await _databaseService.Query().GetKarma(user.Id.ToString());
+                    await _databaseService.Query().UpdateKarma(user.Id.ToString(), userKarma + 1);
                     sb.Append(user.Username).Append(" , ");
                 }
+                
+                // Even if a user gives multiple karma in one message, we only add one.
+                var authorKarmaGiven = await _databaseService.Query().GetKarmaGiven(messageParam.Author.Id.ToString());
+                await _databaseService.Query().UpdateKarmaGiven(messageParam.Author.Id.ToString(), authorKarmaGiven + 1);
 
                 sb.Length -= 2; //Removes last instance of appended comma without convoluted tracking
                 sb.Append("**");
                 if (mentionedSelf)
-                {
                     await messageParam.Channel.SendMessageAsync(
-                        $"{messageParam.Author.Mention} you can't give karma to yourself.").DeleteAfterTime(seconds: defaultDelTime);
-                }
+                        $"{messageParam.Author.Mention} you can't give karma to yourself.").DeleteAfterTime(defaultDelTime);
 
                 if (mentionedBot)
-                {
                     await messageParam.Channel.SendMessageAsync(
                         $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:{Environment.NewLine}" +
-                        "If you'd like to know what Karma is about, type !karma").DeleteAfterTime(seconds: defaultDelTime);
-                }
+                        "If you'd like to know what Karma is about, type !karma").DeleteAfterTime(defaultDelTime);
 
                 _canEditThanks.Remove(messageParam.Id);
 
-//Don't give karma cooldown if user only mentioned himself or the bot or both
-                if (((mentionedSelf || mentionedBot) && mentions.Count == 1) || (mentionedBot && mentionedSelf && mentions.Count == 2))
+                //Don't give karma cooldown if user only mentioned himself or the bot or both
+                if ((mentionedSelf || mentionedBot) && mentions.Count == 1 || mentionedBot && mentionedSelf && mentions.Count == 2)
                     return;
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
-//Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
+                //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
@@ -509,15 +461,15 @@ namespace DiscordBot.Services
             {
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 await messageParam.Channel.SendMessageAsync(
-                        $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." +
-                        Environment.NewLine +
-                        "If you want me to stop reminding you about this, please type \"!disablethanksreminder\".")
-                    .DeleteAfterTime(seconds: defaultDelTime);
+                                      $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." +
+                                      Environment.NewLine +
+                                      "If you want me to stop reminding you about this, please type \"!disablethanksreminder\".")
+                                  .DeleteAfterTime(defaultDelTime);
             }
 
             if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
             {
-                _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
+                await _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
             }
         }
 
@@ -525,93 +477,117 @@ namespace DiscordBot.Services
         {
             if (messageParam.Author.IsBot)
                 return;
-            ulong userId = messageParam.Author.Id;
+            var userId = messageParam.Author.Id;
 
-//Simple check to cover most large code posting cases without being an issue for most non-code messages
-// TODO: Perhaps work out a more advanced Regex based check at a later time
+            //Simple check to cover most large code posting cases without being an issue for most non-code messages
+            // TODO Perhaps work out a more advanced Regex based check at a later time
             if (!CodeReminderCooldown.HasUser(userId))
             {
-                string content = messageParam.Content;
-//Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
-                bool foundCodeTags = Regex.Match(content, ".*?`[^`].*?`", RegexOptions.Singleline).Success;
-                bool foundCurlyFries = (content.Contains("{") && content.Contains("}"));
+                var content = messageParam.Content;
+                //Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
+                var foundCodeTags = Regex.Match(content, ".*?`[^`].*?`", RegexOptions.Singleline).Success;
+                var foundCurlyFries = content.Contains("{") && content.Contains("}");
                 if (!foundCodeTags && foundCurlyFries)
                 {
                     CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
-                    StringBuilder sb = new StringBuilder();
+                    var sb = new StringBuilder();
                     sb.Append(messageParam.Author.Mention)
-                        .AppendLine(
-                            " are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
-                    sb.AppendLine(_codeReminderFormattingExample);
+                      .AppendLine(
+                          " are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
+                    sb.AppendLine(CodeReminderFormattingExample);
                     await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 10);
                 }
                 else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.ToLower().Contains("```cs"))
                 {
-                    StringBuilder sb = new StringBuilder();
+                    var sb = new StringBuilder();
                     sb.Append(messageParam.Author.Mention)
-                        .AppendLine(
-                            " Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
-                    sb.AppendLine(_codeReminderFormattingExample);
+                      .AppendLine(
+                          " Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
+                    sb.AppendLine(CodeReminderFormattingExample);
                     await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 8);
                     CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
                 }
             }
         }
 
-        public async Task ScoldForAtEveryoneUsage(SocketMessage messageParam)
+        private async Task ScoldForAtEveryoneUsage(SocketMessage messageParam)
         {
             if (messageParam.Author.IsBot || ((IGuildUser) messageParam.Author).GuildPermissions.MentionEveryone)
                 return;
-            ulong userId = messageParam.Author.Id;
-            string content = messageParam.Content;
+            var content = messageParam.Content;
             if (content.Contains("@everyone") || content.Contains("@here"))
-            {
                 await messageParam.Channel.SendMessageAsync(
-                        $"That is very rude of you to try and alert **everyone** on the server {messageParam.Author.Mention}!{Environment.NewLine}" +
-                        "Thankfully, you do not have permission to do so. If you are asking a question, people will help you when they have time.")
-                    .DeleteAfterTime(minutes: 5);
-            }
+                                      $"That is very rude of you to try and alert **everyone** on the server {messageParam.Author.Mention}!{Environment.NewLine}" +
+                                      "Thankfully, you do not have permission to do so. If you are asking a question, people will help you when they have time.")
+                                  .DeleteAfterTime(minutes: 5);
         }
-        
+
         private async Task UserJoined(SocketGuildUser user)
         {
-            ulong general = _settings.GeneralChannel.Id;
-            var socketTextChannel = _client.GetChannel(general) as SocketTextChannel;
+            var socketTextChannel = _client.GetChannel(_settings.GeneralChannel.Id) as SocketTextChannel;
 
-            _databaseService.AddNewUser(user);
+            await _databaseService.AddNewUser(user);
 
             //Check for existing mute
-            if (_mutedUsers.HasUser(user.Id))
+            if (MutedUsers.HasUser(user.Id))
             {
                 await user.AddRoleAsync(socketTextChannel?.Guild.GetRole(_settings.MutedRoleId));
                 await _loggingService.LogAction(
                     $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
-                await socketTextChannel.SendMessageAsync(
-                    $"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
-                _mutedUsers.AddCooldown(user.Id, hours: 72);
+                if (socketTextChannel != null)
+                    await socketTextChannel.SendMessageAsync(
+                        $"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
+                MutedUsers.AddCooldown(user.Id, hours: 72);
                 return;
             }
-
 
             await _loggingService.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
-            Embed em = WelcomeMessage(user.GetAvatarUrl(), user.Username, user.DiscriminatorValue);
+            var em = WelcomeMessage(user);
 
-            if (socketTextChannel != null)
-            {
-                await socketTextChannel.SendMessageAsync(string.Empty, false, em);
-            }
+            if (socketTextChannel != null) await socketTextChannel.SendMessageAsync(string.Empty, false, em);
 
-            string globalRules = _rules.Channel.First(x => x.Id == 0).Content;
-            IDMChannel dm = await user.GetOrCreateDMChannelAsync();
-            await dm.SendMessageAsync(
-                "Hello and welcome to Unity Developer Community !\nHope you enjoy your stay.\nHere are some rules to respect to keep the community friendly, please read them carefully.\n" +
-                "Please also read the additional informations in the **#welcome** channel." +
-                "You can get all the available commands on the server by typing !help in the **#bot-commands** channel.");
-            await dm.SendMessageAsync(globalRules);
+            await DMFormattedWelcome(user);
+        }
 
-            //TODO: add users when bot was offline
+        public async Task<bool> DMFormattedWelcome(SocketGuildUser user)
+        {
+            var dm = await user.GetOrCreateDMChannelAsync();
+            return await dm.TrySendMessage(embed: GetWelcomeEmbed(user.Username));
+        }
+
+        public Embed GetWelcomeEmbed(string username = "")
+        {
+            //TODO Generate this using Settings or some other config, hardcoded isn't ideal.
+            var em = new EmbedBuilder()
+                .WithColor(new Color(0x12D687))
+                .AddField("Hello " + username,
+                    "Welcome to Unity Developer Community!\nPlease read and respect the rules to keep the community friendly!")
+                .AddField("__RULES__",
+                    ":white_small_square: Be polite and respectful.\n" +
+                    ":white_small_square: No Direct Messages to users without permission.\n" +
+                    ":white_small_square: Do not post the same question in multiple channels.\n" +
+                    ":white_small_square: Only post links to your games in the appropriate channels.\n" +
+                    ":white_small_square: Some channels have additional rules, please check pinned messages.\n" +
+                    $":white_small_square: A more inclusive list of rules can be found in <#{_settings.RulesChannel.Id.ToString()}>"
+                )
+                .AddField("__PROGRAMMING RESOURCES__",
+                    ":white_small_square: Good for New Devs [Official Unity Tutorials](https://unity3d.com/learn/tutorials)\n" +
+                    ":white_small_square: Official Unity [Manual](https://docs.unity3d.com/Manual/index.html)\n" +
+                    ":white_small_square: Official Unity [Script API](https://docs.unity3d.com/ScriptReference/index.html)\n" +
+                    ":white_small_square: Introductory Tutorials [Brackeys](https://brackeys.com/)\n" +
+                    ":white_small_square: Intermediate Tutorials: [CatLikeCoding](https://catlikecoding.com/unity/tutorials/)\n"
+                )
+                .AddField("__ART RESOURCES__",
+                    ":white_small_square: Blender Beginner Tutorial [Blender Guru Donut](https://www.youtube.com/watch?v=TPrnSACiTJ4&list=PLjEaoINr3zgEq0u2MzVgAaHEBt--xLB6U&index=2)\n" +
+                    ":white_small_square: Free Simple Assets [Kenney](https://www.kenney.nl/assets)\n" +
+                    ":white_small_square: Game Assets [itch.io](https://itch.io/game-assets/free)"
+                )
+                .AddField("__GAME DESIGN RESOURCES__",
+                    ":white_small_square: How to write a Game Design Document (GDD) [Gamasutra](https://www.gamasutra.com/blogs/LeandroGonzalez/20160726/277928/How_to_Write_a_Game_Design_Document.php)"
+                );
+            return (em.Build());
         }
 
         private async Task UserUpdated(SocketGuildUser oldUser, SocketGuildUser user)
@@ -621,107 +597,20 @@ namespace DiscordBot.Services
                 await _loggingService.LogAction(
                     $"User {oldUser.Nickname ?? oldUser.Username}#{oldUser.DiscriminatorValue} changed his " +
                     $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
-                _databaseService.UpdateUserName(user.Id, user.Nickname);
-            }
-
-            if (oldUser.AvatarId != user.AvatarId)
-            {
-                var avatar = user.GetAvatarUrl();
-                _databaseService.UpdateUserAvatar(user.Id, avatar);
             }
         }
 
         private async Task UserLeft(SocketGuildUser user)
         {
-            DateTime joinDate;
-            DateTime.TryParse(_databaseService.GetUserJoinDate(user.Id), out joinDate);
-            TimeSpan timeStayed = DateTime.Now - joinDate;
+            DateTime joinDate = user.JoinedAt.Value.Date;
+            
+            var timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
-                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days).ToString() + " days" : " ")}" +
-                $" {Math.Floor((double) timeStayed.Hours).ToString()} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
-            _databaseService.DeleteUser(user.Id);
+                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days) + " days" : " ")}" +
+                $" {Math.Floor((double) timeStayed.Hours).ToString(CultureInfo.InvariantCulture)} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+            await _databaseService.DeleteUser(user.Id);
         }
 
         #endregion
-
-        public int GetGatewayPing()
-        {
-            return _client.Latency;
-        }
-
-// TODO: Response to people asking if anyone is around to help.
-/*
-public async Task UselessAskingCheck(SocketMessage messageParam)
-{
-    if (messageParam.Author.IsBot)
-        return;
-
-    ulong userId = messageParam.Author.Id;
-    string content = messageParam.Content;
-}*/
-
-//TODO: If Discord ever enables a hook that allows modifying a message during creation of it, then this could be put to use...
-// Disabled for now.
-/*
-public async Task EscapeMessage(SocketMessage messageParam)
-{
-    if (messageParam.Author.IsBot)
-        return;
-
-    ulong userId = messageParam.Author.Id;
-    string content = messageParam.Content;
-    //Escape all \, ~, _, ` and * character's so they don't trigger any Discord formatting.
-    content = content.EscapeDiscordMarkup();
-}*/
-       /* public async Task<string> SubtitleImage(IMessage message, string text)
-        {
-            var attachments = message.Attachments;
-            Attachment file = null;
-            Image<Rgba32> image = null;
-            foreach (var a in attachments)
-            {
-                if (Regex.Match(a.Filename, @"(.*?)\.(jpg|jpeg|png|gif)$").Success)
-                    file = (Attachment) a;
-            }
-
-            if (file == null)
-                return "";
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    using (HttpResponseMessage response = await client.GetAsync(file.Url))
-                    {
-                        response.EnsureSuccessStatusCode();
-                        byte[] reader = await response.Content.ReadAsByteArrayAsync();
-                        image = ImageSharp.Image.Load(reader);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Failed to load image : " + e);
-                return "";
-            }
-
-            float beginHeight = image.Height - (image.Height * 0.3f);
-            float beginWidth = (image.Width * .10f);
-            float totalWidth = image.Width * .8f;
-
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth - 4, beginHeight),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center,});
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth + 4, beginHeight),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight - 4),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.Black, new PointF(beginWidth, beginHeight + 4),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-            image.DrawText(text, _subtitlesWhiteFont, Rgba32.White, new PointF(beginWidth, beginHeight),
-                new TextGraphicsOptions(true) {WrapTextWidth = totalWidth, HorizontalAlignment = HorizontalAlignment.Center});
-            string path = $"{_settings.ServerRootPath}/images/subtitles/{message.Author}-{message.Id}.png";
-
-            image.Save(path, new JpegEncoder {Quality = 95});
-            return path;
-        }*/
     }
 }

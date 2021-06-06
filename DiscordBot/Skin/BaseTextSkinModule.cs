@@ -7,6 +7,15 @@ namespace DiscordBot.Skin
 {
     public abstract class BaseTextSkinModule : ISkinModule
     {
+        public BaseTextSkinModule()
+        {
+            StrokeWidth = 1;
+            Font = "Consolas";
+            TextAntiAlias = true;
+            StrokeAntiAlias = true;
+            TextKerning = 0;
+        }
+
         public double StartX { get; set; }
         public double StartY { get; set; }
 
@@ -26,28 +35,19 @@ namespace DiscordBot.Skin
 
         public virtual Drawables GetDrawables(ProfileData data)
         {
-            PointD position = new PointD(StartX, StartY);
+            var position = new PointD(StartX, StartY);
 
             return new Drawables()
-                .FontPointSize(FontPointSize)
-                .Font(Font)
-                .StrokeColor(new MagickColor(StrokeColor))
-                .StrokeWidth(StrokeWidth)
-                .StrokeAntialias(StrokeAntiAlias)
-                .FillColor(new MagickColor(FillColor))
-                .TextAntialias(TextAntiAlias)
-                .TextAlignment(TextAlignment)
-                .TextKerning(TextKerning)
-                .Text(position.X, position.Y, Text);
-        }
-
-        public BaseTextSkinModule()
-        {
-            StrokeWidth = 1;
-            Font = "Consolas";
-            TextAntiAlias = true;
-            StrokeAntiAlias = true;
-            TextKerning = 0;
+                   .FontPointSize(FontPointSize)
+                   .Font(Font)
+                   .StrokeColor(new MagickColor(StrokeColor))
+                   .StrokeWidth(StrokeWidth)
+                   .StrokeAntialias(StrokeAntiAlias)
+                   .FillColor(new MagickColor(FillColor))
+                   .TextAntialias(TextAntiAlias)
+                   .TextAlignment(TextAlignment)
+                   .TextKerning(TextKerning)
+                   .Text(position.X, position.Y, Text);
         }
     }
 }

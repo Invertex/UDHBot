@@ -11,7 +11,7 @@ namespace DiscordBot.Domain
         public uint XpTotal { get; set; }
         public uint XpRank { get; set; }
         public uint KarmaRank { get; set; }
-        public int Karma { get; set; }
+        public uint Karma { get; set; }
         public uint Level { get; set; }
         public double XpLow { get; set; }
         public double XpHigh { get; set; }

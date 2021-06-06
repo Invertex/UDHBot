@@ -1,99 +1,70 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-public static class Utils
+namespace DiscordBot.Utils
 {
-    public static string FormatTime(uint seconds)
+    public static class Utils
     {
-        System.TimeSpan span = System.TimeSpan.FromSeconds(seconds);
-        if (span.TotalSeconds == 0)
+        public static string FormatTime(uint seconds)
         {
-            return "0 seconds";
-        }
+            var span = TimeSpan.FromSeconds(seconds);
+            if (span.TotalSeconds == 0) return "0 seconds";
 
-        List<string> parts = new List<string>();
-        if (span.Days > 0)
-        {
-            parts.Add($"{span.Days} day{(span.Days > 1 ? "s" : "")}");
-        }
+            var parts = new List<string>();
+            if (span.Days > 0) parts.Add($"{span.Days} day{(span.Days > 1 ? "s" : "")}");
 
-        if (span.Hours > 0)
-        {
-            parts.Add($"{span.Hours} hour{(span.Hours > 1 ? "s" : "")}");
-        }
+            if (span.Hours > 0) parts.Add($"{span.Hours} hour{(span.Hours > 1 ? "s" : "")}");
 
-        if (span.Minutes > 0)
-        {
-            parts.Add($"{span.Minutes} minute{(span.Minutes > 1 ? "s" : "")}");
-        }
+            if (span.Minutes > 0) parts.Add($"{span.Minutes} minute{(span.Minutes > 1 ? "s" : "")}");
 
-        if (span.Seconds > 0)
-        {
-            parts.Add($"{span.Seconds} second{(span.Seconds > 1 ? "s" : "")}");
-        }
+            if (span.Seconds > 0) parts.Add($"{span.Seconds} second{(span.Seconds > 1 ? "s" : "")}");
 
-        string finishedTime = "";
-        for (int i = 0; i < parts.Count; i++)
-        {
-            if (i > 0)
+            var finishedTime = string.Empty;
+            for (var i = 0; i < parts.Count; i++)
             {
-                if (i == parts.Count - 1)
+                if (i > 0)
                 {
-                    finishedTime += " and ";
+                    if (i == parts.Count - 1)
+                        finishedTime += " and ";
+                    else
+                        finishedTime += ", ";
                 }
-                else
-                {
-                    finishedTime += ", ";
-                }
+
+                finishedTime += parts[i];
             }
 
-            finishedTime += parts[i];
+            return finishedTime;
         }
 
-        return finishedTime;
-    }
-
-    /// <summary>
-    /// Sanitize XML, from https://seattlesoftware.wordpress.com/2008/09/11/hexadecimal-value-0-is-an-invalid-character/
-    /// </summary>
-    /// <param name="xml"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static string SanitizeXml(string xml)
-    {
-        if (xml == null)
+        /// <summary>
+        ///     Sanitize XML, from https://seattlesoftware.wordpress.com/2008/09/11/hexadecimal-value-0-is-an-invalid-character/
+        /// </summary>
+        /// <param name="xml"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static string SanitizeXml(string xml)
         {
-            throw new ArgumentNullException("xml");
+            if (xml == null) throw new ArgumentNullException("xml");
+
+            var buffer = new StringBuilder(xml.Length);
+
+            foreach (var c in xml)
+                if (IsLegalXmlChar(c))
+                    buffer.Append(c);
+
+            return buffer.ToString();
         }
 
-        StringBuilder buffer = new StringBuilder(xml.Length);
-
-        foreach (char c in xml)
-        {
-            if (IsLegalXmlChar(c))
-            {
-                buffer.Append(c);
-            }
-        }
-
-        return buffer.ToString();
-    }
-
-    /// <summary>
-    /// Whether a given character is allowed by XML 1.0.
-    /// </summary>
-    public static bool IsLegalXmlChar(int character)
-    {
-        return
-        (
+        /// <summary>
+        ///     Whether a given character is allowed by XML 1.0.
+        /// </summary>
+        public static bool IsLegalXmlChar(int character) =>
             character == 0x9 /* == '\t' == 9   */ ||
             character == 0xA /* == '\n' == 10  */ ||
             character == 0xD /* == '\r' == 13  */ ||
-            (character >= 0x20 && character <= 0xD7FF) ||
-            (character >= 0xE000 && character <= 0xFFFD) ||
-            (character >= 0x10000 && character <= 0x10FFFF)
-        );
+            character >= 0x20 && character <= 0xD7FF ||
+            character >= 0xE000 && character <= 0xFFFD ||
+            character >= 0x10000 && character <= 0x10FFFF;
     }
 }
