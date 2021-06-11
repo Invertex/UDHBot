@@ -1,7 +1,7 @@
 name: Publish Docker image
 on:
   push:
-    branches: [feature/docker-image]
+    branches: [dev, feature/docker-image]
 
 jobs:
   push_to_registry:
