@@ -95,7 +95,7 @@ namespace DiscordBot.Services
         {
             _botData = SerializeUtil.DeserializeFile<BotData>($"{_settings.ServerRootPath}/botdata.json");
             
-            _userData = SerializeUtil.DeserializeFile<UserData>($"{_settings.ServerRootPath}/botdata.json");
+            _userData = SerializeUtil.DeserializeFile<UserData>($"{_settings.ServerRootPath}/userdata.json");
             Task.Run(
                 async () =>
                 {
