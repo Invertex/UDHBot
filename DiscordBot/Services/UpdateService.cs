@@ -145,17 +145,6 @@ namespace DiscordBot.Services
             // ReSharper disable once FunctionNeverReturns
         }
 
-        // private async Task UpdateUserRanks()
-        // {
-        //     await Task.Delay(TimeSpan.FromSeconds(30d), _token);
-        //     while (true)
-        //     {
-        //         _databaseService.UpdateUserRanks();
-        //         await Task.Delay(TimeSpan.FromMinutes(1d), _token);
-        //     }
-        //     // ReSharper disable once FunctionNeverReturns
-        // }
-
         public async Task<string[][]> GetManualDatabase()
         {
             if (_manualDatabase == null)
