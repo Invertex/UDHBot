@@ -26,7 +26,7 @@ jobs:
 
   restart:
     name: Restart Bot
-    needs: upload
+    needs: push_to_registry
     runs-on: ubuntu-latest
 
     environment:
