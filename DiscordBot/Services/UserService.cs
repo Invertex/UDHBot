@@ -108,6 +108,12 @@ namespace DiscordBot.Services
             CodeReminderFormattingExample = CodeFormattingExample + Environment.NewLine +
                                              "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"";
 
+            /* Make sure folders we require exist */
+            if (!Directory.Exists($"{_settings.ServerRootPath}/images/profiles/"))
+            {
+                Directory.CreateDirectory($"{_settings.ServerRootPath}/images/profiles/");
+            }
+            
             /*
              Event subscriptions
             */
