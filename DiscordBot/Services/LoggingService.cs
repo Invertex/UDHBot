@@ -27,10 +27,8 @@ namespace DiscordBot.Services
             }
 
             if (logToFile)
-            {
                 File.AppendAllText(_settings.ServerRootPath + @"/log.txt",
                     $"[{DateTime.Now:d/M/yy HH:mm:ss}] {action} {Environment.NewLine}");
-            }
         }
 
         public void LogXp(string channel, string user, float baseXp, float bonusXp, float xpReduce, int totalXp)

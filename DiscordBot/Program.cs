@@ -1,31 +1,25 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using DiscordBot.Extensions;
 using DiscordBot.Services;
 using DiscordBot.Settings.Deserialized;
+using DiscordBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
-using IMessage = Discord.IMessage;
 
 namespace DiscordBot
 {
     public class Program
     {
-        private DiscordSocketClient _client;
-
-        private CommandService _commandService;
-        private IServiceProvider _services;
-        private CommandHandlingService _commandHandlingService;
-
-        private static PayWork _payWork;
         private static Rules _rules;
         private static Settings.Deserialized.Settings _settings;
         private static UserSettings _userSettings;
+        private DiscordSocketClient _client;
+        private CommandHandlingService _commandHandlingService;
+
+        private CommandService _commandService;
+        private IServiceProvider _services;
 
         public static void Main(string[] args) =>
             new Program().MainAsync().GetAwaiter().GetResult();
@@ -36,18 +30,21 @@ namespace DiscordBot
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Verbose, AlwaysDownloadUsers = true, MessageCacheSize = 50
+                LogLevel = LogSeverity.Verbose,
+                AlwaysDownloadUsers = true,
+                MessageCacheSize = 50
             });
-            
+
             _commandService = new CommandService(new CommandServiceConfig
             {
-                CaseSensitiveCommands = false, DefaultRunMode = RunMode.Async
+                CaseSensitiveCommands = false,
+                DefaultRunMode = RunMode.Async
             });
 
             _services = ConfigureServices();
             _commandHandlingService = _services.GetRequiredService<CommandHandlingService>();
             _services.GetRequiredService<ModerationService>();
-            
+
             await _commandHandlingService.Initialize();
 
             _client.Log += Logger;
@@ -58,19 +55,22 @@ namespace DiscordBot
             _client.Ready += () =>
             {
                 Console.WriteLine("Bot is connected");
+
+                _client.GetGuild(_settings.GuildId)
+                    ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
+                    ?.SendMessageAsync($"Bot Started.");
+                
                 //_audio.Music();
                 return Task.CompletedTask;
             };
 
             await Task.Delay(-1);
         }
-        
-        private IServiceProvider ConfigureServices()
-        {
-            return new ServiceCollection()
+
+        private IServiceProvider ConfigureServices() =>
+            new ServiceCollection()
                 .AddSingleton(_settings)
                 .AddSingleton(_rules)
-                .AddSingleton(_payWork)
                 .AddSingleton(_userSettings)
                 .AddSingleton(_client)
                 .AddSingleton(_commandService)
@@ -82,15 +82,13 @@ namespace DiscordBot
                 .AddSingleton<PublisherService>()
                 .AddSingleton<FeedService>()
                 .AddSingleton<UpdateService>()
-                .AddSingleton<AudioService>()
-                .AddSingleton<AnimeService>()
                 .AddSingleton<CurrencyService>()
+                .AddSingleton<ReactRoleService>()
                 .BuildServiceProvider();
-        }
 
         private static Task Logger(LogMessage message)
         {
-            ConsoleColor cc = Console.ForegroundColor;
+            var cc = Console.ForegroundColor;
             switch (message.Severity)
             {
                 case LogSeverity.Critical:
@@ -116,25 +114,9 @@ namespace DiscordBot
 
         private static void DeserializeSettings()
         {
-            using (var file = File.OpenText(@"Settings/Settings.json"))
-            {
-                _settings = JsonConvert.DeserializeObject<Settings.Deserialized.Settings>(file.ReadToEnd());
-            }
-
-            using (var file = File.OpenText(@"Settings/PayWork.json"))
-            {
-                _payWork = JsonConvert.DeserializeObject<PayWork>(file.ReadToEnd());
-            }
-
-            using (var file = File.OpenText(@"Settings/Rules.json"))
-            {
-                _rules = JsonConvert.DeserializeObject<Rules>(file.ReadToEnd());
-            }
-
-            using (var file = File.OpenText(@"Settings/UserSettings.json"))
-            {
-                _userSettings = JsonConvert.DeserializeObject<UserSettings>(file.ReadToEnd());
-            }
+            _settings = SerializeUtil.DeserializeFile<Settings.Deserialized.Settings>(@"Settings/Settings.json");
+            _rules = SerializeUtil.DeserializeFile<Rules>(@"Settings/Rules.json");
+            _userSettings = SerializeUtil.DeserializeFile<UserSettings>(@"Settings/UserSettings.json");
         }
     }
 }

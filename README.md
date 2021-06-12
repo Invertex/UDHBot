@@ -41,6 +41,8 @@ If you run the bot now, it will attempt to generate the table for the database. 
 
 *Once you have imported the database, be sure to create a user in phpmyadmin which can access the database, and the details match your **DbConnectionString**.*
 
+On Linux you might need `sudo apt install ttf-mscorefonts-installer` for ImageMagick.
+
 ## Notes
 
 I'll re-introduce some of this later.
