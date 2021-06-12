@@ -2,7 +2,7 @@ name: Deploy to Test Server
 
 on:
   push:
-    branches: [dev, feature/docker-image]
+    branches: [dev]
   workflow_dispatch:
 
 jobs:
