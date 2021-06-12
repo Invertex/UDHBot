@@ -37,6 +37,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           script: |
+            cd ${{ secrets.SERVER_BUILD_DIR }}
             docker-compose pull
             docker-compose up -d
           host: ${{ secrets.SERVER_IP }}
