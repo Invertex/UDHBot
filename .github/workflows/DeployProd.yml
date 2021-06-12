@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: dev
+      name: prod
 
     steps:
       - name: Run commands in SSH
