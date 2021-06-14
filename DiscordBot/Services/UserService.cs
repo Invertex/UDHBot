@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -252,10 +252,10 @@ namespace DiscordBot.Services
             var userData = await _databaseService.Query().GetUser(user.Id.ToString());
             
             var xpTotal = userData.Exp;
-            var xpRank = await _databaseService.Query().GetKarmaRank(userData.UserID, userData.Karma);
+            var xpRank = await _databaseService.Query().GetLevelRank(userData.UserID, userData.Level);
+            var karmaRank = await _databaseService.Query().GetKarmaRank(userData.UserID, userData.Karma);
             var karma = userData.Karma;
             var level = userData.Level;
-            var karmaRank = await  _databaseService.Query().GetLevelRank(userData.UserID, userData.Level);
             var xpLow = GetXpLow(level);
             var xpHigh = GetXpHigh(level);
 
