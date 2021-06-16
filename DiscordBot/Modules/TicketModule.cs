@@ -54,8 +54,6 @@ namespace DiscordBot.Modules
                 if (categoryExist) x.CategoryId = _settings.ComplaintCategoryId;
             });
 
-            await Task.Delay(1000);
-
             var userPerms = new OverwritePermissions(viewChannel: PermValue.Allow);
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
             await newChannel.AddPermissionOverwriteAsync(Context.User, userPerms);
