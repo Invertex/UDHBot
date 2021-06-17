@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -94,10 +94,11 @@ namespace DiscordBot.Modules
                 await currentChannel.RemovePermissionOverwriteAsync(user);
             }
 
+            var newName = _settings.ClosedComplaintChannelPrefix + currentChannel.Name;
             await currentChannel.ModifyAsync(x =>
             {
                 if (categoryExist) x.CategoryId = _settings.ClosedComplaintCategoryId;
-                x.Name = _settings.ClosedComplaintChannelPrefix + x.Name;
+                x.Name = newName;
             });
         }
 
