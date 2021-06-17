@@ -352,7 +352,7 @@ namespace DiscordBot.Services
             icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
 
             var builder = new EmbedBuilder()
-                          .WithDescription($"Welcome to Unity Developer Community **{user.Username}{user.Discriminator}**!")
+                          .WithDescription($"Welcome to Unity Developer Community **{user.Username}#{user.Discriminator}**!")
                           .WithColor(new Color(0x12D687))
                           .WithAuthor(author =>
                           {
