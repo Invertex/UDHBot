@@ -668,6 +668,16 @@ namespace DiscordBot.Modules
         #endregion
 
         #region Search
+        [Command("Search")]
+        [Summary("Searches DuckDuckGo for results. Syntax: !search c# lambda help")]
+        [Alias("s", "ddg")]
+        public async Task SearchResults(params string[] messages)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var msg in messages)
+                sb.Append(msg).Append(" ");
+            await SearchResults(sb.ToString());
+        }
 
         [Command("Search")]
         [Summary("Searches DuckDuckGo for web results. Syntax : !search \"query\" resNum site")]
@@ -718,7 +728,8 @@ namespace DiscordBot.Modules
             embedBuilder.Footer = new EmbedFooterBuilder().WithText("Results sourced from DuckDuckGo.");
 
             var embed = embedBuilder.Build();
-            await ReplyAsync(embed: embed);
+            await ReplyAsync(embed: embed).DeleteAfterSeconds(seconds: 30);
+            await Context.Message.DeleteAfterSeconds(seconds: 4);
         }
         
         // Utility function for avoiding evil ads from DuckDuckGo
