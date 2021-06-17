@@ -62,6 +62,8 @@ namespace DiscordBot.Services
             
             foreach (var c in commands)
             {
+                if (c.Priority == -1)
+                    continue;
                 commandList.Append($"**{(includeModuleName ? moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {GetArguments(includeArgs, c.Parameters)}\n");
             }
             return commandList.ToString();
