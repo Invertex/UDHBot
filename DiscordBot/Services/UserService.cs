@@ -576,7 +576,7 @@ namespace DiscordBot.Services
                     ":white_small_square: Do not post the same question in multiple channels.\n" +
                     ":white_small_square: Only post links to your games in the appropriate channels.\n" +
                     ":white_small_square: Some channels have additional rules, please check pinned messages.\n" +
-                    $":white_small_square: A more inclusive list of rules can be found in <#{_settings.RulesChannel.Id.ToString()}>"
+                    $":white_small_square: A more inclusive list of rules can be found in {(_settings.RulesChannel is null || _settings.RulesChannel.Id == 0 ? "#rules" : $"<#{_settings.RulesChannel.Id.ToString()}>")}"
                 )
                 .AddField("__PROGRAMMING RESOURCES__",
                     ":white_small_square: Good for New Devs [Official Unity Tutorials](https://unity3d.com/learn/tutorials)\n" +
