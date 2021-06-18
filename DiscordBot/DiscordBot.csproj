@@ -10,7 +10,7 @@
     <PackageReference Include="Insight.Database" Version="6.3.6" />
     <PackageReference Include="Magick.NET-Q8-x64" Version="7.5.0.1" />
     <PackageReference Include="MySql.Data" Version="8.0.25" />
-    <PackageReference Include="NETCore.MailKit" Version="2.0.2" />
+    <PackageReference Include="NETCore.MailKit" Version="2.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="Pathoschild.NaturalTimeParser" Version="0.2.0-alpha" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="5.0.0" />
