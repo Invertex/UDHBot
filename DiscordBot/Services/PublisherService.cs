@@ -132,7 +132,7 @@ namespace DiscordBot.Services
                     {
                         // No easy way to take their name, so we pass their discord name in.
                         await SendVerificationCode(name, email, publisherId);
-                        return (true, "An email with a validation code was sent. Please type !verify *publisherID* *code* to validate your package.\nThis code will be valid for 30 minutes.");
+                        return (true, "An email with a validation code was sent.\nPlease type `!verify <ID> <code>` to verify your publisher account.\nThis code will be valid for 30 minutes.");
                     }
                 }
 
@@ -197,15 +197,15 @@ namespace DiscordBot.Services
         {
             string c;
             if (!_verificationCodes.TryGetValue(packageId, out c))
-                return "An error occured while trying to validate your package. Please verify your packageId is valid";
+                return "An error occured while trying to veriry your publisher account. Please check your ID is valid.";
             if (c != code)
-                return "The verification code is not valid. Please verify it and try again.";
+                return "The verification code is not valid. Please check and try again.";
 
             var u = (SocketGuildUser)user;
             IRole publisher = u.Guild.GetRole(_settings.PublisherRoleId);
             await u.AddRoleAsync(publisher);
 
-            return "Your package has been verified and you know have the Asset Publisher role!";
+            return "Your publisher account has been verified and you know have the `Asset-Publisher` role!";
         }
     }
 }

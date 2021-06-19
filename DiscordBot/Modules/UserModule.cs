@@ -605,8 +605,8 @@ namespace DiscordBot.Modules
             var builder = new EmbedBuilder()
                 .WithTitle("Publisher Commands")
                 .WithDescription("Use these commands to get the **Asset-Publisher** role.")
-                .AddField("1️⃣  `!publisher <ID>`", "Receive a code on the email associated with your publisher account.\nTo get your ID: assetstore.unity.com/publishers/**YourID**.")
-                .AddField("2️⃣  `!verify <ID> <code>`", "Verify your ID with the code sent to your email.");
+                .AddField("1️⃣  `!publisher <ID>`", "Example: `!publisher 12345`.\nReceive a code on the email associated with your publisher account.\nTo get your ID: assetstore.unity.com/publishers/**YourID**.")
+                .AddField("2️⃣  `!verify <ID> <code>`", "Example: `!publisher 12345 6789`.\nVerify your ID with the code sent to your email.");
             var embed = builder.Build();
 
             await ReplyAsync(embed: embed);
@@ -619,57 +619,32 @@ namespace DiscordBot.Modules
         {
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
-                await ReplyAsync($"Please use the <#{_settings.BotCommandsChannel.Id}> channel!")
-                    .DeleteAfterSeconds(seconds: 4);
-                await Context.Message.DeleteAfterSeconds(seconds: 1);
-                return;
+                await ReplyAsync($"{Context.Message.Author.Mention} please use the <#{_settings.BotCommandsChannel.Id}> channel!").DeleteAfterSeconds(seconds:10);
             }
-
-            if (((SocketGuildUser)Context.Message.Author).Roles.Any(x => x.Id == _settings.PublisherRoleId))
+            else if (((SocketGuildUser)Context.Message.Author).Roles.Any(x => x.Id == _settings.PublisherRoleId))
             {
-                await ReplyAsync("You already have the Asset Publisher role.").DeleteAfterSeconds(seconds: 5);
-                return;
+                await ReplyAsync($"{Context.Message.Author.Mention} you already have the `Asset-Publisher` role.");
             }
-
-            if (_settings.Email == string.Empty)
+            else if (_settings.Email == string.Empty)
             {
-                await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(seconds: 5);
-                return;
+                await ReplyAsync("The `Asset-Publisher` role is currently disabled.");
             }
-
-            var verify = await _publisherService.VerifyPublisher(publisherId, Context.User.Username);
-            if (verify.Item1)
-                await ReplyAsync(verify.Item2);
             else
             {
-                await ReplyAsync(verify.Item2).DeleteAfterSeconds(seconds: 2);
-                await Context.Message.DeleteAfterSeconds(seconds: 1);
+                var verify = await _publisherService.VerifyPublisher(publisherId, Context.User.Username);
+                await ReplyAsync(verify.Item2);
             }
+            await Context.Message.DeleteAfterSeconds(seconds: 1);
         }
-
-        // No longer works due to change in Unity Store API
-        //x [Command("pkg"), Summary("Add your published package to the daily advertising. Syntax : !pkg packageId")]
-        //x [Alias("package")]
-        //x private async Task Package(uint packageId)
-        //x {
-        //x     if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
-        //x     {
-        //x         await Task.Delay(1000);
-        //x         await Context.Message.DeleteAsync();
-        //x         return;
-        //x     }
-        //x
-        //x     (bool, string) verif = await _publisherService.VerifyPackage(packageId);
-        //x     await ReplyAsync(verif.Item2);
-        //x }
 
         [Command("Verify")]
         [Summary("Verify a publisher with the code received by email. Syntax : !verify publisherId code")]
         public async Task VerifyPackage(uint packageId, string code)
         {
+            await Context.Message.DeleteAfterSeconds(seconds: 0);
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
-                await Context.Message.DeleteAfterSeconds(seconds: 1);
+                await ReplyAsync($"{Context.Message.Author.Mention} please use the <#{_settings.BotCommandsChannel.Id}> channel!").DeleteAfterSeconds(seconds:10);
                 return;
             }
             var verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
