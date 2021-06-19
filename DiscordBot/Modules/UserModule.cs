@@ -605,8 +605,8 @@ namespace DiscordBot.Modules
             var builder = new EmbedBuilder()
                 .WithTitle("Publisher Commands")
                 .WithDescription("Use these commands to get the **Asset-Publisher** role.")
-                .AddField("1️⃣  `!publisher <ID>`", "Receive a code on the email associated with your publisher account.\nTo get your ID: assetstore.unity.com/publishers/**YourID**.")
-                .AddField("2️⃣  `!verify <ID> <code>`", "Verify your ID with the code sent to your email.");
+                .AddField("1️⃣  `!publisher <ID>`", "Example: `!publisher 12345`.\nReceive a code on the email associated with your publisher account.\nTo get your ID: assetstore.unity.com/publishers/**YourID**.")
+                .AddField("2️⃣  `!verify <ID> <code>`", "Example: `!publisher 12345 6789`.\nVerify your ID with the code sent to your email.");
             var embed = builder.Build();
 
             await ReplyAsync(embed: embed);
