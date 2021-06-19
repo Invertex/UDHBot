@@ -147,7 +147,7 @@ namespace DiscordBot.Modules
             }
 
             builder.AddField(messageTitle, $"{msgContent}\n" +
-                                           $"**Linkback**\t[__Message__]({messageLink})" +
+                                           $"[**Linkback**]({messageLink})" +
                                            $"{msgAttachment}");
             var embed = builder.Build();
             await ReplyAsync(subtitle == null ? "" : $"`{Context.User.Username}:` {subtitle}", false, embed);

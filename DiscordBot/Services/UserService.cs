@@ -475,7 +475,7 @@ namespace DiscordBot.Services
 
             if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
             {
-                await _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
+                var _ = _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
             }
         }
 
