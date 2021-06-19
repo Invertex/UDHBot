@@ -204,8 +204,8 @@ namespace DiscordBot.Services
             var u = (SocketGuildUser)user;
             IRole publisher = u.Guild.GetRole(_settings.PublisherRoleId);
             await u.AddRoleAsync(publisher);
-            
-            return "Your package has been verified and added to the daily advertisement list.";
+
+            return "Your package has been verified and you know have the Asset Publisher role!";
         }
     }
 }
