@@ -620,7 +620,7 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            if (_settings.Gmail == string.Empty)
+            if (_settings.Email == string.Empty)
             {
                 await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(seconds: 5);
                 return;

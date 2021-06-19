@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -171,7 +171,7 @@ namespace DiscordBot.Services
 
             _verificationCodes[packageId] = code;
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Unity Developer Community", _settings.Gmail));
+            message.From.Add(new MailboxAddress("Unity Developer Community", _settings.Email));
             message.To.Add(new MailboxAddress(name, email));
             message.Subject = "Unity Developer Community Package Validation";
             message.Body = new TextPart("plain")
@@ -181,10 +181,11 @@ namespace DiscordBot.Services
 
             using (var client = new SmtpClient())
             {
-                await client.ConnectAsync("smtp.gmail.com", 587);
+                client.CheckCertificateRevocation = false;
+                await client.ConnectAsync(_settings.EmailSMTPServer, _settings.EmailSMTPPort, MailKit.Security.SecureSocketOptions.SslOnConnect);
 
                 client.AuthenticationMechanisms.Remove("XOAUTH2");
-                await client.AuthenticateAsync(_settings.GmailUsername, _settings.GmailPassword);
+                await client.AuthenticateAsync(_settings.EmailUsername, _settings.EmailPassword);
 
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
