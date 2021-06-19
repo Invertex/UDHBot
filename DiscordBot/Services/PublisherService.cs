@@ -162,7 +162,6 @@ namespace DiscordBot.Services
 
         public async Task SendVerificationCode(string name, string email, uint packageId)
         {
-            Console.WriteLine("mail");
             var random = new byte[9];
             var rand = RandomNumberGenerator.Create();
             rand.GetBytes(random);
