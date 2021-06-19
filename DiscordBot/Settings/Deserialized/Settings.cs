@@ -34,7 +34,7 @@ namespace DiscordBot.Settings.Deserialized
         public UnityNewsChannel UnityNewsChannel { get; set; }
 
         public UnityReleasesChannel UnityReleasesChannel { get; set; }
-        
+
         public RulesChannel RulesChannel { get; set; }
 
         // Recruitment Channels
@@ -114,7 +114,7 @@ namespace DiscordBot.Settings.Deserialized
     public class CollaborationChannel : ChannelInfo
     {
     }
-    
+
     public class RulesChannel : ChannelInfo
     {
     }

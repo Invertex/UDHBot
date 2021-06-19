@@ -26,7 +26,7 @@ namespace DiscordBot
         {
             var user = (SocketGuildUser)context.Message.Author;
             var settings = services.GetRequiredService<Settings.Deserialized.Settings>();
-            
+
             if (user.Roles.Any(x => x.Id == settings.ModeratorRoleId)) return Task.FromResult(PreconditionResult.FromSuccess());
             return Task.FromResult(PreconditionResult.FromError(user + " attempted to use a moderator command!"));
         }

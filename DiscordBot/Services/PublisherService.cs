@@ -30,7 +30,7 @@ namespace DiscordBot.Services
             _verificationCodes = new Dictionary<uint, string>();
             _settings = settings;
         }
-        
+
         /*
         (No longer works) DailyObject => https://www.assetstore.unity3d.com/api/en-US/sale/results/10.json
         (No longer works) PackageOBject => https://www.assetstore.unity3d.com/api/en-US/content/overview/[PACKAGEID].json
