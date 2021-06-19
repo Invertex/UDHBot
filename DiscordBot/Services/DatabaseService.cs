@@ -39,7 +39,7 @@ namespace DiscordBot.Services
             {
                 _connection.TestConnection();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine("Table 'users' does not exist, attempting to generate..");
                 c.ExecuteSql(
