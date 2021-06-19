@@ -620,6 +620,12 @@ namespace DiscordBot.Modules
                 return;
             }
 
+            if (((SocketGuildUser)Context.Message.Author).Roles.Any(x => x.Id == _settings.PublisherRoleId))
+            {
+                await ReplyAsync("You already have the Asset Publisher role.").DeleteAfterSeconds(seconds: 5);
+                return;
+            }
+
             if (_settings.Email == string.Empty)
             {
                 await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(seconds: 5);
