@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -162,7 +162,6 @@ namespace DiscordBot.Services
 
         public async Task SendVerificationCode(string name, string email, uint packageId)
         {
-            Console.WriteLine("mail");
             var random = new byte[9];
             var rand = RandomNumberGenerator.Create();
             rand.GetBytes(random);
@@ -171,7 +170,7 @@ namespace DiscordBot.Services
 
             _verificationCodes[packageId] = code;
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Unity Developer Community", _settings.Gmail));
+            message.From.Add(new MailboxAddress("Unity Developer Community", _settings.Email));
             message.To.Add(new MailboxAddress(name, email));
             message.Subject = "Unity Developer Community Package Validation";
             message.Body = new TextPart("plain")
@@ -181,10 +180,11 @@ namespace DiscordBot.Services
 
             using (var client = new SmtpClient())
             {
-                await client.ConnectAsync("smtp.gmail.com", 587);
+                client.CheckCertificateRevocation = false;
+                await client.ConnectAsync(_settings.EmailSMTPServer, _settings.EmailSMTPPort, MailKit.Security.SecureSocketOptions.SslOnConnect);
 
                 client.AuthenticationMechanisms.Remove("XOAUTH2");
-                await client.AuthenticateAsync(_settings.GmailUsername, _settings.GmailPassword);
+                await client.AuthenticateAsync(_settings.EmailUsername, _settings.EmailPassword);
 
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
@@ -204,8 +204,8 @@ namespace DiscordBot.Services
             var u = (SocketGuildUser)user;
             IRole publisher = u.Guild.GetRole(_settings.PublisherRoleId);
             await u.AddRoleAsync(publisher);
-            
-            return "Your package has been verified and added to the daily advertisement list.";
+
+            return "Your package has been verified and you know have the Asset Publisher role!";
         }
     }
 }

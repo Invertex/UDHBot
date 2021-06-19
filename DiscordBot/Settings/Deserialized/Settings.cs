@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace DiscordBot.Settings.Deserialized
 {
@@ -8,9 +8,11 @@ namespace DiscordBot.Settings.Deserialized
         public string Invite { get; set; }
 
         // Used for Asset Publisher
-        public string Gmail { get; set; }
-        public string GmailUsername { get; set; }
-        public string GmailPassword { get; set; }
+        public string Email { get; set; }
+        public string EmailUsername { get; set; }
+        public string EmailPassword { get; set; }
+        public string EmailSMTPServer { get; set; }
+        public int EmailSMTPPort { get; set; }
 
         public string DbConnectionString { get; set; }
 

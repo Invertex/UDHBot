@@ -601,11 +601,16 @@ namespace DiscordBot.Modules
                 await Context.Message.DeleteAfterSeconds(seconds: 1);
                 return;
             }
-            await ReplyAsync("\n" +
-                             "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
-                             "``!publisher ID`` - Your Publisher ID, assetstore.unity.com/publishers/yourID.\n" +
-                             "``!verify publisherID verifCode`` - Verify your ID with the code sent to your email.");
-            await Context.Message.DeleteAfterSeconds(seconds: 30);
+
+            var builder = new EmbedBuilder()
+                .WithTitle("Publisher Commands")
+                .WithDescription("Use these commands to get the **Asset-Publisher** role.")
+                .AddField("1️⃣  `!publisher <ID>`", "Receive a code on the email associated with your publisher account.\nTo get your ID: assetstore.unity.com/publishers/**YourID**.")
+                .AddField("2️⃣  `!verify <ID> <code>`", "Verify your ID with the code sent to your email.");
+            var embed = builder.Build();
+
+            await ReplyAsync(embed: embed);
+            await Context.Message.DeleteAfterSeconds(seconds: 2);
         }
 
         [Command("Publisher")]
@@ -620,7 +625,13 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            if (_settings.Gmail == string.Empty)
+            if (((SocketGuildUser)Context.Message.Author).Roles.Any(x => x.Id == _settings.PublisherRoleId))
+            {
+                await ReplyAsync("You already have the Asset Publisher role.").DeleteAfterSeconds(seconds: 5);
+                return;
+            }
+
+            if (_settings.Email == string.Empty)
             {
                 await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(seconds: 5);
                 return;
