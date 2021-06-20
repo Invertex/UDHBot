@@ -61,7 +61,6 @@ namespace DiscordBot.Services
             _loggingService = loggingService;
             _updateService = updateService;
             _settings = settings;
-            var userSettings1 = userSettings;
             MutedUsers = new Dictionary<ulong, DateTime>();
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _canEditThanks = new HashSet<ulong>(32);
@@ -78,30 +77,30 @@ namespace DiscordBot.Services
             /*
             Init XP
             */
-            _xpMinPerMessage = userSettings1.XpMinPerMessage;
-            _xpMaxPerMessage = userSettings1.XpMaxPerMessage;
-            _xpMinCooldown = userSettings1.XpMinCooldown;
-            _xpMaxCooldown = userSettings1.XpMaxCooldown;
+            _xpMinPerMessage = userSettings.XpMinPerMessage;
+            _xpMaxPerMessage = userSettings.XpMaxPerMessage;
+            _xpMinCooldown = userSettings.XpMinCooldown;
+            _xpMaxCooldown = userSettings.XpMaxCooldown;
 
             /*
             Init thanks
             */
             var sbThanks = new StringBuilder();
-            var thx = userSettings1.Thanks;
+            var thx = userSettings.Thanks;
             sbThanks.Append("(?i)\\b(");
             foreach (var t in thx) sbThanks.Append(t).Append("|");
 
             sbThanks.Length--; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
             sbThanks.Append(")\\b");
             _thanksRegex = sbThanks.ToString();
-            _thanksCooldownTime = userSettings1.ThanksCooldown;
-            _thanksReminderCooldownTime = userSettings1.ThanksReminderCooldown;
-            _thanksMinJoinTime = userSettings1.ThanksMinJoinTime;
+            _thanksCooldownTime = userSettings.ThanksCooldown;
+            _thanksReminderCooldownTime = userSettings.ThanksReminderCooldown;
+            _thanksMinJoinTime = userSettings.ThanksMinJoinTime;
 
             /*
              Init Code analysis
             */
-            _codeReminderCooldownTime = userSettings1.CodeReminderCooldown;
+            _codeReminderCooldownTime = userSettings.CodeReminderCooldown;
             CodeFormattingExample = @"\`\`\`cs" + Environment.NewLine +
                                      "Write your code on new line here." + Environment.NewLine +
                                      @"\`\`\`" + Environment.NewLine;
@@ -461,16 +460,6 @@ namespace DiscordBot.Services
                 ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
-            }
-            else if (messageParam.Channel.Name != "general-chat" && !ThanksReminderCooldown.IsPermanent(userId) &&
-                     !ThanksReminderCooldown.HasUser(userId) && !_thanksCooldown.HasUser(userId))
-            {
-                ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
-                await messageParam.Channel.SendMessageAsync(
-                                      $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." +
-                                      Environment.NewLine +
-                                      "If you want me to stop reminding you about this, please type \"!disablethanksreminder\".")
-                                  .DeleteAfterTime(defaultDelTime);
             }
 
             if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
