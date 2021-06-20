@@ -48,7 +48,7 @@ namespace DiscordBot.Modules
             });
         }
 
-        [Command("Help")]
+        [Command("Help"), Priority(100)]
         [Summary("Show available commands.")]
         [Alias("command", "commands")]
         public async Task DisplayHelp()
@@ -94,16 +94,36 @@ namespace DiscordBot.Modules
             await ReplyAsync($"{Context.User.Username}, you will no longer be reminded about mention thanking.").DeleteAfterTime(20);
         }
 
-        [Command("Quote")]
-        [Summary("Quote a message. Syntax : !quote messageid (#channelname) (optionalSubtitle)")]
-        public async Task QuoteMessage(ulong messageId, IMessageChannel channel = null, string subtitle = null)
+        #region Quote
+
+        [Command("Quote"), Priority(-1)]
+        public async Task QuoteMessageCommand(IMessageChannel channel, ulong messageId)
         {
-            if (subtitle != null && (subtitle.Contains("@everyone") || subtitle.Contains("@here")))
+            await QuoteMessage(messageId: messageId, channel: channel);
+        }
+
+        [Command("Quote"), Priority(-1)]
+        [Summary("Quote a message. Syntax : !quote messageid (#channel)")]
+        public async Task QuoteMessageCommand(ulong messageId, ulong channel)
+        {
+            // Get channel, if channel doesn't exist, we try get channel from messageID
+            IMessageChannel targetChannel = (IMessageChannel) await Context.Client.GetChannelAsync(channel) ?? (IMessageChannel) await Context.Client.GetChannelAsync(messageId);
+            if (targetChannel == null)
             {
-                await Context.Message.DeleteAfterSeconds(seconds: 2);
+                await ReplyAsync("Channel or MessageID does not exist").DeleteAfterSeconds(seconds: 5);
                 return;
             }
 
+            if (targetChannel.Id == channel)
+                await QuoteMessage(messageId, targetChannel);
+            else
+                await QuoteMessage(channel, targetChannel);
+        }
+        
+        [Command("Quote")]
+        [Summary("Quote a message. Syntax : !quote messageid (#channel)")]
+        public async Task QuoteMessage(ulong messageId, IMessageChannel channel = null)
+        {
             // If channel is null use Context.Channel, else use the provided channel
             channel ??= Context.Channel;
             var message = await channel.GetMessageAsync(messageId);
@@ -149,10 +169,11 @@ namespace DiscordBot.Modules
             builder.AddField(messageTitle, $"{msgContent}\n" +
                                            $"**Linkback**\t[__Message__]({messageLink})" +
                                            $"{msgAttachment}");
-            var embed = builder.Build();
-            await ReplyAsync(subtitle == null ? "" : $"`{Context.User.Username}:` {subtitle}", false, embed);
+            
+            await ReplyAsync(embed: builder.Build());
             await Context.Message.DeleteAfterSeconds(1.0);
         }
+        #endregion
 
         /* Not really a required feature of the bot?
         [Command("compile")]
@@ -729,7 +750,6 @@ namespace DiscordBot.Modules
 
             var embed = embedBuilder.Build();
             await ReplyAsync(embed: embed).DeleteAfterSeconds(seconds: 30);
-            await Context.Message.DeleteAfterSeconds(seconds: 4);
         }
         
         // Utility function for avoiding evil ads from DuckDuckGo
