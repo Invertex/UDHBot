@@ -19,7 +19,7 @@ namespace DiscordBot.Modules
     public class UserModule : ModuleBase
     {
         private static List<string> _commandList;
-        
+
         private static Settings.Deserialized.Settings _settings;
         private readonly CurrencyService _currencyService;
         private readonly DatabaseService _databaseService;
@@ -28,12 +28,12 @@ namespace DiscordBot.Modules
         private readonly Rules _rules;
         private readonly UpdateService _updateService;
         private readonly UserService _userService;
-        
+
         public UserModule(IServiceProvider serviceProvider, Settings.Deserialized.Settings settings, Rules rules)
         {
             _databaseService = serviceProvider.GetService<DatabaseService>();
             _userService = serviceProvider.GetService<UserService>();
-            _publisherService =  serviceProvider.GetService<PublisherService>();
+            _publisherService = serviceProvider.GetService<PublisherService>();
             _updateService = serviceProvider.GetService<UpdateService>();
             _currencyService = serviceProvider.GetService<CurrencyService>();
             _rules = rules;
@@ -87,9 +87,9 @@ namespace DiscordBot.Modules
                 await Context.Message.DeleteAsync();
                 return;
             }
-            
+
             _userService.ThanksReminderCooldown.SetPermanent(Context.User.Id, true);
-            
+
             await Context.Message.DeleteAsync();
             await ReplyAsync($"{Context.User.Username}, you will no longer be reminded about mention thanking.").DeleteAfterTime(20);
         }
@@ -167,7 +167,7 @@ namespace DiscordBot.Modules
             }
 
             builder.AddField(messageTitle, $"{msgContent}\n" +
-                                           $"**Linkback**\t[__Message__]({messageLink})" +
+                                           $"[**Linkback**]({messageLink})" +
                                            $"{msgAttachment}");
             
             await ReplyAsync(embed: builder.Build());
@@ -243,7 +243,7 @@ namespace DiscordBot.Modules
                 newMessage = ($"\nFull result : https://hastebin.com/{response["key"]}\n" + fullMessage).Truncate(1990) + "```";
                 await message.ModifyAsync(m => m.Content = newMessage);
             }
-        } 
+        }
         */
 
         [Command("Ping")]
@@ -399,7 +399,7 @@ namespace DiscordBot.Modules
             var rule = _rules.Channel.First(x => x.Id == channel.Id);
             var dm = await Context.User.GetOrCreateDMChannelAsync();
             bool sentMessage = false;
-            
+
             sentMessage = await dm.TrySendMessage($"{rule.Header}{(rule.Content.Length > 0 ? rule.Content : $"There is no special rule for {channel.Name} channel.\nPlease follow global rules (you can get them by typing `!globalrules`)")}");
             if (!sentMessage)
                 await ReplyAsync($"Could not send rules, your DMs are disabled.").DeleteAfterSeconds(seconds: 10);
@@ -440,7 +440,7 @@ namespace DiscordBot.Modules
                 sb.Append((await Context.Guild.GetTextChannelAsync(c.Id))?.Mention).Append(" - ").Append(c.Header).Append("\n");
 
             var dm = await Context.User.GetOrCreateDMChannelAsync();
-            
+
             var messages = sb.ToString().MessageSplitToSize();
             await Context.Message.DeleteAsync();
             foreach (var message in messages)
@@ -472,7 +472,7 @@ namespace DiscordBot.Modules
         {
             var users = await _databaseService.Query().GetTopLevel(10);
             var userList = users.Select(user => (ulong.Parse(user.UserID), user.Level)).ToList();
-            
+
             var embed = GenerateRankEmbedFromList(userList, "Level");
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
@@ -484,7 +484,7 @@ namespace DiscordBot.Modules
         {
             var users = await _databaseService.Query().GetTopKarma(10);
             var userList = users.Select(user => (ulong.Parse(user.UserID), user.Karma)).ToList();
-            
+
             var embed = GenerateRankEmbedFromList(userList, "Karma");
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
@@ -512,7 +512,7 @@ namespace DiscordBot.Modules
 
             return embedBuilder.Build();
         }
-        
+
         [Command("Profile")]
         [Summary("Display your profile card.")]
         public async Task DisplayProfile()
@@ -527,7 +527,7 @@ namespace DiscordBot.Modules
             try
             {
                 var profile = await Context.Channel.SendFileAsync(await _userService.GenerateProfileCard(user));
-                
+
                 await Context.Message.DeleteAfterSeconds(seconds: 1);
                 await profile.DeleteAfterTime(minutes: 3);
             }
@@ -542,7 +542,7 @@ namespace DiscordBot.Modules
         public async Task JoinDate()
         {
             var userId = Context.User.Id;
-            var joinDate = ((IGuildUser) Context.User).JoinedAt;
+            var joinDate = ((IGuildUser)Context.User).JoinedAt;
             await ReplyAsync($"{Context.User.Mention} you joined **{joinDate:dddd dd/MM/yyy HH:mm:ss}**");
             await Context.Message.DeleteAsync();
         }
@@ -602,7 +602,7 @@ namespace DiscordBot.Modules
         public async Task CoinFlip()
         {
             var rand = new Random();
-            var coin = new[] {"Heads", "Tails"};
+            var coin = new[] { "Heads", "Tails" };
 
             await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}**!");
             await Context.Message.DeleteAfterSeconds(seconds: 1);
@@ -622,11 +622,16 @@ namespace DiscordBot.Modules
                 await Context.Message.DeleteAfterSeconds(seconds: 1);
                 return;
             }
-            await ReplyAsync("\n" +
-                             "**Publisher - BOT COMMANDS : ** ``these commands are not case-sensitive.``\n" +
-                             "``!publisher ID`` - Your Publisher ID, assetstore.unity.com/publishers/yourID.\n" +
-                             "``!verify publisherID verifCode`` - Verify your ID with the code sent to your email.");
-            await Context.Message.DeleteAfterSeconds(seconds: 30);
+
+            var builder = new EmbedBuilder()
+                .WithTitle("Publisher Commands")
+                .WithDescription("Use these commands to get the **Asset-Publisher** role.")
+                .AddField("1️⃣  `!publisher <ID>`", "Example: `!publisher 12345`.\nReceive a code on the email associated with your publisher account.\nTo get your ID: assetstore.unity.com/publishers/**YourID**.")
+                .AddField("2️⃣  `!verify <ID> <code>`", "Example: `!publisher 12345 6789`.\nVerify your ID with the code sent to your email.");
+            var embed = builder.Build();
+
+            await ReplyAsync(embed: embed);
+            await Context.Message.DeleteAfterSeconds(seconds: 2);
         }
 
         [Command("Publisher")]
@@ -635,51 +640,32 @@ namespace DiscordBot.Modules
         {
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
-                await ReplyAsync($"Please use the <#{_settings.BotCommandsChannel.Id}> channel!")
-                    .DeleteAfterSeconds(seconds: 4);
-                await Context.Message.DeleteAfterSeconds(seconds: 1);
-                return;
+                await ReplyAsync($"{Context.Message.Author.Mention} please use the <#{_settings.BotCommandsChannel.Id}> channel!").DeleteAfterSeconds(seconds:10);
             }
-
-            if (_settings.Gmail == string.Empty)
+            else if (((SocketGuildUser)Context.Message.Author).Roles.Any(x => x.Id == _settings.PublisherRoleId))
             {
-                await ReplyAsync("Asset Publisher role is currently disabled.").DeleteAfterSeconds(seconds: 5);
-                return;
+                await ReplyAsync($"{Context.Message.Author.Mention} you already have the `Asset-Publisher` role.");
             }
-
-            var verify = await _publisherService.VerifyPublisher(publisherId, Context.User.Username);
-            if (verify.Item1)
-                await ReplyAsync(verify.Item2);
+            else if (_settings.Email == string.Empty)
+            {
+                await ReplyAsync("The `Asset-Publisher` role is currently disabled.");
+            }
             else
             {
-                await ReplyAsync(verify.Item2).DeleteAfterSeconds(seconds: 2);
-                await Context.Message.DeleteAfterSeconds(seconds: 1);
+                var verify = await _publisherService.VerifyPublisher(publisherId, Context.User.Username);
+                await ReplyAsync(verify.Item2);
             }
+            await Context.Message.DeleteAfterSeconds(seconds: 1);
         }
-
-        // No longer works due to change in Unity Store API
-        //x [Command("pkg"), Summary("Add your published package to the daily advertising. Syntax : !pkg packageId")]
-        //x [Alias("package")]
-        //x private async Task Package(uint packageId)
-        //x {
-        //x     if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
-        //x     {
-        //x         await Task.Delay(1000);
-        //x         await Context.Message.DeleteAsync();
-        //x         return;
-        //x     }
-        //x
-        //x     (bool, string) verif = await _publisherService.VerifyPackage(packageId);
-        //x     await ReplyAsync(verif.Item2);
-        //x }
 
         [Command("Verify")]
         [Summary("Verify a publisher with the code received by email. Syntax : !verify publisherId code")]
         public async Task VerifyPackage(uint packageId, string code)
         {
+            await Context.Message.DeleteAfterSeconds(seconds: 0);
             if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
             {
-                await Context.Message.DeleteAfterSeconds(seconds: 1);
+                await ReplyAsync($"{Context.Message.Author.Mention} please use the <#{_settings.BotCommandsChannel.Id}> channel!").DeleteAfterSeconds(seconds:10);
                 return;
             }
             var verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
@@ -717,27 +703,27 @@ namespace DiscordBot.Modules
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.Title = $"Q: {WebUtility.UrlDecode(query)}";
             string resultTitle = string.Empty;
-            
+
             // XPath for DuckDuckGo as of 10/05/2018, if results stop showing up, check this first!
             // Still working (13/05/21)
             foreach (var row in doc.DocumentNode.SelectNodes("/html/body/div[1]/div[3]/div/div/div[*]/div/h2/a"))
             {
                 if (counter > resNum) break;
-                
+
                 // Seems to be some weird additional data attached to links. Fix added (13/05/21)
                 row.Attributes["href"].Value = row.Attributes["href"].Value.Replace("//duckduckgo.com/l/?uddg=", string.Empty);
-                
+
                 // Check if we are within the allowed number of results and if the result is valid (i.e. no evil ads)
                 if (counter <= resNum && IsValidResult(row)) // && IsValidResult(row))
                 {
                     var url = WebUtility.UrlDecode(row.Attributes["href"].Value); // .Replace("/l/?kh=-1&amp;uddg=", "")); <- no longer works (14/05/21)
-                    
+
                     // We count how many & there are, as links with multiple may be broken, so we include a ~ just to try give a bit more info if there is more than 1.
                     int andCount = url.Count(c => c == '&');
                     url = url.Substring(0, url.LastIndexOf('&'));
-                    
+
                     resultTitle += $"{counter}. {(row.InnerText.Length > 60 ? $"{row.InnerText[..60]}.." : row.InnerText)}" + $" [__Read More..__{(andCount > 1 ? "~" : string.Empty)}]({url})\n";
-                    
+
                     counter++;
                 }
             }
@@ -751,7 +737,7 @@ namespace DiscordBot.Modules
             var embed = embedBuilder.Build();
             await ReplyAsync(embed: embed).DeleteAfterSeconds(seconds: 30);
         }
-        
+
         // Utility function for avoiding evil ads from DuckDuckGo
         bool IsValidResult(HtmlNode node)
         {
@@ -1047,7 +1033,7 @@ namespace DiscordBot.Modules
             {
                 var message =
                     $"**{searchName}**'s birthdate: __**{birthdate.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}**__ " +
-                    $"({(int) ((DateTime.Now - birthdate).TotalDays / 365)}yo)";
+                    $"({(int)((DateTime.Now - birthdate).TotalDays / 365)}yo)";
 
                 await ReplyAsync(message).DeleteAfterTime(minutes: 3);
             }

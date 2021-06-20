@@ -12,13 +12,13 @@ namespace DiscordBot.Modules
     public class TicketModule : ModuleBase
     {
         private List<string> _commandList = new List<string>();
-        
+
         private Settings.Deserialized.Settings _settings;
 
         public TicketModule(Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
         {
             _settings = settings;
-            
+
             Task.Run(async () =>
             {
                 var commands = await commandHandlingService.GetCommandList("TicketModule", true, true, false);
@@ -42,7 +42,7 @@ namespace DiscordBot.Modules
 
             var channels = await Context.Guild.GetChannelsAsync();
             // Check if channel with same name already exist in the Complaint Category (if it exists).
-            if (channels.Any(channel => channel.Name == channelName && (!categoryExist || ((INestedChannel) channel).CategoryId == _settings.ComplaintCategoryId)))
+            if (channels.Any(channel => channel.Name == channelName && (!categoryExist || ((INestedChannel)channel).CategoryId == _settings.ComplaintCategoryId)))
             {
                 await ReplyAsync($"{Context.User.Mention}, you already have an open complaint! Please use that channel!")
                     .DeleteAfterSeconds(15);
@@ -119,7 +119,7 @@ namespace DiscordBot.Modules
         }
 
         private string ParseToDiscordChannel(string channelName) => channelName.ToLower().Replace(" ", "-");
-        
+
         #region CommandList
         [RequireModerator]
         [Summary("Does what you see now.")]

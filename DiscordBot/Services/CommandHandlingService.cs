@@ -51,11 +51,11 @@ namespace DiscordBot.Services
             // Simple wait.
             while (!IsInitialized)
                 await Task.Delay(1000);
-            
+
             var commandList = new StringBuilder();
 
             commandList.Append($"__{moduleName} Commands__\n");
-            
+
             var commands = _commandService.Commands.Where(x => x.Module.Name == moduleName);
             // Orders the list either by name or by priority
             commands = orderByName ? commands.OrderBy(c => c.Name) : commands.OrderBy(c => c.Priority);
@@ -72,7 +72,7 @@ namespace DiscordBot.Services
         private string GetArguments(bool getArgs, IReadOnlyList<ParameterInfo> arguments)
         {
             if (!getArgs) return string.Empty;
-            
+
             var args = string.Empty;
             foreach (var info in arguments)
             {

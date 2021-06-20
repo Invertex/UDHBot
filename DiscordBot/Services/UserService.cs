@@ -51,7 +51,7 @@ namespace DiscordBot.Services
         private readonly Random _rand;
 
         public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
-        
+
         public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
                            Settings.Deserialized.Settings settings, UserSettings userSettings)
         {
@@ -113,7 +113,7 @@ namespace DiscordBot.Services
             {
                 Directory.CreateDirectory($"{_settings.ServerRootPath}/images/profiles/");
             }
-            
+
             /*
              Event subscriptions
             */
@@ -182,7 +182,7 @@ namespace DiscordBot.Services
             var user = await _databaseService.Query().GetUser(userId.ToString());
             if (user == null)
             {
-                await _databaseService.AddNewUser((SocketGuildUser) messageParam.Author);
+                await _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
                 user = await _databaseService.Query().GetUser(userId.ToString());
             }
 
@@ -193,20 +193,20 @@ namespace DiscordBot.Services
             bonusXp += baseXp * (1f + user.Karma / 100f);
 
             //Reduce XP for members with no role
-            if (((IGuildUser) messageParam.Author).RoleIds.Count < 2)
+            if (((IGuildUser)messageParam.Author).RoleIds.Count < 2)
                 baseXp *= .9f;
 
             //Lower xp for difference between level and karma
             var reduceXp = 1f;
             if (user.Karma < user.Level) reduceXp = 1 - Math.Min(.9f, (user.Level - user.Karma) * .05f);
 
-            var xpGain = (int) Math.Round((baseXp + bonusXp) * reduceXp);
+            var xpGain = (int)Math.Round((baseXp + bonusXp) * reduceXp);
             //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
             //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
-            await _databaseService.Query().UpdateXp(userId.ToString(), user.Exp + (uint) xpGain);
-            
+            await _databaseService.Query().UpdateXp(userId.ToString(), user.Exp + (uint)xpGain);
+
             _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
 
             await LevelUp(messageParam, userId);
@@ -229,7 +229,7 @@ namespace DiscordBot.Services
                 return;
 
             await _databaseService.Query().UpdateLevel(userId.ToString(), level + 1);
-            
+
             await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(60);
             //TODO Add level up card
         }
@@ -250,7 +250,7 @@ namespace DiscordBot.Services
         public async Task<string> GenerateProfileCard(IUser user)
         {
             var userData = await _databaseService.Query().GetUser(user.Id.ToString());
-            
+
             var xpTotal = userData.Exp;
             var xpRank = await _databaseService.Query().GetLevelRank(userData.UserID, userData.Level);
             var karmaRank = await _databaseService.Query().GetKarmaRank(userData.UserID, userData.Karma);
@@ -259,10 +259,10 @@ namespace DiscordBot.Services
             var xpLow = GetXpLow(level);
             var xpHigh = GetXpHigh(level);
 
-            var xpShown = (uint) (xpTotal - xpLow);
-            var maxXpShown = (uint) (xpHigh - xpLow);
+            var xpShown = (uint)(xpTotal - xpLow);
+            var maxXpShown = (uint)(xpHigh - xpLow);
 
-            var percentage = (float) xpShown / maxXpShown;
+            var percentage = (float)xpShown / maxXpShown;
 
             var u = (IGuildUser)user;
             IRole mainRole = null;
@@ -284,7 +284,7 @@ namespace DiscordBot.Services
                 Level = (uint)level,
                 MainRoleColor = mainRole.Color,
                 MaxXpShown = maxXpShown,
-                Nickname = ((IGuildUser) user).Nickname,
+                Nickname = ((IGuildUser)user).Nickname,
                 UserId = ulong.Parse(userData.UserID),
                 Username = user.Username,
                 XpHigh = xpHigh,
@@ -329,13 +329,13 @@ namespace DiscordBot.Services
                         ? profile.Picture
                         : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
 
-                    background.Composite(image, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
+                    background.Composite(image, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
                 }
 
-                var l = new MagickImage(MagickColors.Transparent, (int) layer.Width, (int) layer.Height);
+                var l = new MagickImage(MagickColors.Transparent, (int)layer.Width, (int)layer.Height);
                 foreach (var module in layer.Modules) module.GetDrawables(profile).Draw(l);
 
-                background.Composite(l, (int) layer.StartX, (int) layer.StartY, CompositeOperator.Over);
+                background.Composite(l, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
             }
 
             using (var result = profileCard.Mosaic())
@@ -406,7 +406,7 @@ namespace DiscordBot.Services
                     return;
                 }
 
-                var joinDate = ((IGuildUser) messageParam.Author).JoinedAt;
+                var joinDate = ((IGuildUser)messageParam.Author).JoinedAt;
                 var j = joinDate + TimeSpan.FromSeconds(_thanksMinJoinTime);
                 if (j > DateTime.Now)
                 {
@@ -435,7 +435,7 @@ namespace DiscordBot.Services
                     await _databaseService.Query().UpdateKarma(user.Id.ToString(), userKarma + 1);
                     sb.Append(user.Username).Append(" , ");
                 }
-                
+
                 // Even if a user gives multiple karma in one message, we only add one.
                 var authorKarmaGiven = await _databaseService.Query().GetKarmaGiven(messageParam.Author.Id.ToString());
                 await _databaseService.Query().UpdateKarmaGiven(messageParam.Author.Id.ToString(), authorKarmaGiven + 1);
@@ -475,7 +475,7 @@ namespace DiscordBot.Services
 
             if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
             {
-                await _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
+                var _ = _canEditThanks.RemoveAfterSeconds(messageParam.Id, 240);
             }
         }
 
@@ -518,7 +518,7 @@ namespace DiscordBot.Services
 
         private async Task ScoldForAtEveryoneUsage(SocketMessage messageParam)
         {
-            if (messageParam.Author.IsBot || ((IGuildUser) messageParam.Author).GuildPermissions.MentionEveryone)
+            if (messageParam.Author.IsBot || ((IGuildUser)messageParam.Author).GuildPermissions.MentionEveryone)
                 return;
             var content = messageParam.Content;
             if (content.Contains("@everyone") || content.Contains("@here"))
@@ -609,11 +609,11 @@ namespace DiscordBot.Services
         private async Task UserLeft(SocketGuildUser user)
         {
             DateTime joinDate = user.JoinedAt.Value.Date;
-            
+
             var timeStayed = DateTime.Now - joinDate;
             await _loggingService.LogAction(
-                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double) timeStayed.Days) + " days" : " ")}" +
-                $" {Math.Floor((double) timeStayed.Hours).ToString(CultureInfo.InvariantCulture)} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double)timeStayed.Days) + " days" : " ")}" +
+                $" {Math.Floor((double)timeStayed.Hours).ToString(CultureInfo.InvariantCulture)} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
             await _databaseService.DeleteUser(user.Id);
         }
 

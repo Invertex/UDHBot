@@ -59,7 +59,7 @@ namespace DiscordBot
                 _client.GetGuild(_settings.GuildId)
                     ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
                     ?.SendMessageAsync($"Bot Started.");
-                
+
                 //_audio.Music();
                 return Task.CompletedTask;
             };

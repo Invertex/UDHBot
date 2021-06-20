@@ -31,8 +31,8 @@ namespace DiscordBot.Services
         {
             try
             {
-                var webRequest = (HttpWebRequest) WebRequest.Create(url);
-                var webResponse = (HttpWebResponse) webRequest.GetResponse();
+                var webRequest = (HttpWebRequest)WebRequest.Create(url);
+                var webResponse = (HttpWebResponse)webRequest.GetResponse();
                 var dataStream = webResponse.GetResponseStream();
                 var streamReader = new StreamReader(dataStream, Encoding.UTF8);
                 var response = streamReader.ReadToEnd();

@@ -17,12 +17,12 @@ namespace DiscordBot.Services
 
         public IServerUserRepo Query() => _connection;
         private readonly IServerUserRepo _connection;
-        
+
         public DatabaseService(ILoggingService logging, Settings.Deserialized.Settings settings)
         {
             ConnectionString = settings.DbConnectionString;
             _logging = logging;
-            
+
             DbConnection c = null;
             try
             {
@@ -34,12 +34,12 @@ namespace DiscordBot.Services
                 Console.WriteLine(e);
                 throw;
             }
-            
+
             try
             {
                 _connection.TestConnection();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine("Table 'users' does not exist, attempting to generate..");
                 c.ExecuteSql(
@@ -91,7 +91,7 @@ namespace DiscordBot.Services
             await _logging.LogAction(
                 $"Database Synchronized {counter.ToString()} Users Successfully.\n{newAdd.ToString()} missing users added.");
         }
-        
+
         public async Task AddNewUser(SocketGuildUser socketUser)
         {
             try
@@ -132,7 +132,7 @@ namespace DiscordBot.Services
                 await _logging.LogAction($"Error when trying to delete user {id} from the database : {e}", true, false);
             }
         }
-        
+
         public async Task<bool> UserExists(ulong id)
         {
             return (await Query().GetUser(id.ToString()) != null);
