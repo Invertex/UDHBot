@@ -59,8 +59,8 @@ namespace DiscordBot.Services
 
             // Generates a list of commands that doesn't include any that have the ``HideFromHelp`` attribute.
             var commands = _commandService.Commands.Where(x => x.Module.Name == moduleName && !x.Attributes.Contains(new HideFromHelpAttribute()));
-            // Orders the list either by name or by priority
-            commands = orderByName ? commands.OrderBy(c => c.Name) : commands.OrderBy(c => c.Priority);
+            // Orders the list either by name or by priority, if no priority is given we push it to the end.
+            commands = orderByName ? commands.OrderBy(c => c.Name) : commands.OrderBy(c => (c.Priority > 0 ? c.Priority : 1000));
             
             foreach (var c in commands)
             {
