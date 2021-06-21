@@ -38,7 +38,6 @@ namespace DiscordBot.Services
         private readonly int _thanksMinJoinTime;
 
         private readonly string _thanksRegex;
-        private readonly int _thanksReminderCooldownTime;
         private readonly UpdateService _updateService;
 
         private readonly Dictionary<ulong, DateTime> _xpCooldown;
@@ -65,7 +64,6 @@ namespace DiscordBot.Services
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _canEditThanks = new HashSet<ulong>(32);
             _thanksCooldown = new Dictionary<ulong, DateTime>();
-            ThanksReminderCooldown = new Dictionary<ulong, DateTime>();
             CodeReminderCooldown = new Dictionary<ulong, DateTime>();
 
             //TODO We should make this into a config file that we can confiure during runtime.
@@ -94,7 +92,6 @@ namespace DiscordBot.Services
             sbThanks.Append(")\\b");
             _thanksRegex = sbThanks.ToString();
             _thanksCooldownTime = userSettings.ThanksCooldown;
-            _thanksReminderCooldownTime = userSettings.ThanksReminderCooldown;
             _thanksMinJoinTime = userSettings.ThanksMinJoinTime;
 
             /*
@@ -129,8 +126,6 @@ namespace DiscordBot.Services
             UpdateLoop();
         }
 
-        public Dictionary<ulong, DateTime> ThanksReminderCooldown { get; private set; }
-
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
 
         private async void UpdateLoop()
@@ -147,7 +142,6 @@ namespace DiscordBot.Services
         {
             var data = _updateService.GetUserData();
             MutedUsers = data.MutedUsers ?? new Dictionary<ulong, DateTime>();
-            ThanksReminderCooldown = data.ThanksReminderCooldown ?? new Dictionary<ulong, DateTime>();
             CodeReminderCooldown = data.CodeReminderCooldown ?? new Dictionary<ulong, DateTime>();
         }
 
@@ -156,7 +150,6 @@ namespace DiscordBot.Services
             var data = new UserData
             {
                 MutedUsers = MutedUsers,
-                ThanksReminderCooldown = ThanksReminderCooldown,
                 CodeReminderCooldown = CodeReminderCooldown
             };
             _updateService.SetUserData(data);
@@ -456,8 +449,6 @@ namespace DiscordBot.Services
                 if ((mentionedSelf || mentionedBot) && mentions.Count == 1 || mentionedBot && mentionedSelf && mentions.Count == 2)
                     return;
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
-                //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
-                ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
             }

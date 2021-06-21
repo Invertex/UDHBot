@@ -22,7 +22,6 @@
         "谢谢"
     ],
     "thanksCooldown": 60, //In seconds
-    "thanksReminderCooldown": 86400, //24 hours in seconds
     "thanksMinJoinTime": 600,
     /*Xp parameters*/
     "xpMinPerMessage": 10,

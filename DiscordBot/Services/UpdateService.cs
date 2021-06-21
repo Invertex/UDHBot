@@ -24,12 +24,10 @@ namespace DiscordBot.Services
         public UserData()
         {
             MutedUsers = new Dictionary<ulong, DateTime>();
-            ThanksReminderCooldown = new Dictionary<ulong, DateTime>();
             CodeReminderCooldown = new Dictionary<ulong, DateTime>();
         }
 
         public Dictionary<ulong, DateTime> MutedUsers { get; set; }
-        public Dictionary<ulong, DateTime> ThanksReminderCooldown { get; set; }
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get; set; }
     }
 
