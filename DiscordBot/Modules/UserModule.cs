@@ -76,24 +76,6 @@ namespace DiscordBot.Modules
             }
             await Context.Message.DeleteAsync();
         }
-
-        [Command("DisableThanksReminder")]
-        [Summary("Stops thank mention reminders.")]
-        public async Task DisableThanksReminder()
-        {
-            var userId = Context.User.Id;
-            if (_userService.ThanksReminderCooldown.IsPermanent(userId))
-            {
-                await Context.Message.DeleteAsync();
-                return;
-            }
-
-            _userService.ThanksReminderCooldown.SetPermanent(Context.User.Id, true);
-
-            await Context.Message.DeleteAsync();
-            await ReplyAsync($"{Context.User.Username}, you will no longer be reminded about mention thanking.").DeleteAfterTime(20);
-        }
-
         #region Quote
 
         [Command("Quote"), Priority(-1)]
