@@ -142,17 +142,10 @@ namespace DiscordBot.Modules
                                   .WithName(message.Author.Username)
                                   .WithIconUrl(message.Author.GetAvatarUrl());
                           });
-            var messageTitle = "Original message";
-            if (msgContent == string.Empty)
-            {
-                messageTitle = $"~~{messageTitle}~~";
-                if (msgAttachment != string.Empty)
-                    msgContent = "📸";
-            }
+            if (msgContent == string.Empty && msgAttachment != string.Empty) msgContent = "📸";
 
-            builder.AddField(messageTitle, $"{msgContent}\n\n" +
-                                           $"[**Linkback**]({messageLink})" +
-                                           $"{msgAttachment}");
+            msgContent += $"\n\n***[Linkback]({messageLink})***";
+            builder.Description = msgContent;
 
             await ReplyAsync(embed: builder.Build());
             await Context.Message.DeleteAfterSeconds(1.0);
