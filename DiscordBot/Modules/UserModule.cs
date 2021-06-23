@@ -102,7 +102,7 @@ namespace DiscordBot.Modules
             else
                 await QuoteMessage(channel, targetChannel);
         }
-        
+
         [Command("Quote"), HideFromHelp]
         [Summary("Quote a message. Syntax : !quote messageid (#channel)")]
         public async Task QuoteMessage(ulong messageId, IMessageChannel channel = null)
@@ -149,10 +149,10 @@ namespace DiscordBot.Modules
                     msgContent = "📸";
             }
 
-            builder.AddField(messageTitle, $"{msgContent}\n" +
+            builder.AddField(messageTitle, $"{msgContent}\n\n" +
                                            $"[**Linkback**]({messageLink})" +
                                            $"{msgAttachment}");
-            
+
             await ReplyAsync(embed: builder.Build());
             await Context.Message.DeleteAfterSeconds(1.0);
         }
