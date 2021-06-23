@@ -510,31 +510,44 @@ namespace DiscordBot.Services
 
         private async Task UserJoined(SocketGuildUser user)
         {
-            var socketTextChannel = _client.GetChannel(_settings.GeneralChannel.Id) as SocketTextChannel;
+            // Send them the Welcome DM first.
+            await DMFormattedWelcome(user);
 
+            var socketTextChannel = _client.GetChannel(_settings.GeneralChannel.Id) as SocketTextChannel;
             await _databaseService.AddNewUser(user);
 
-            //Check for existing mute
-            if (MutedUsers.HasUser(user.Id))
+            // Check if moderator commands are enabled, and if so we check if they were previously muted.
+            if (_settings.ModeratorCommandsEnabled)
             {
-                await user.AddRoleAsync(socketTextChannel?.Guild.GetRole(_settings.MutedRoleId));
-                await _loggingService.LogAction(
-                    $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
-                if (socketTextChannel != null)
-                    await socketTextChannel.SendMessageAsync(
-                        $"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
-                MutedUsers.AddCooldown(user.Id, hours: 72);
-                return;
+                if (MutedUsers.HasUser(user.Id))
+                {
+                    await user.AddRoleAsync(socketTextChannel?.Guild.GetRole(_settings.MutedRoleId));
+                    await _loggingService.LogAction(
+                        $"Currently muted user rejoined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+                    if (socketTextChannel != null)
+                        await socketTextChannel.SendMessageAsync(
+                            $"{user.Mention} tried to rejoin the server to avoid their mute. Mute time increased by 72 hours.");
+                    MutedUsers.AddCooldown(user.Id, hours: 72);
+                    return;
+                }
             }
 
             await _loggingService.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
-            var em = WelcomeMessage(user);
-
-            if (socketTextChannel != null) await socketTextChannel.SendMessageAsync(string.Empty, false, em);
-
-            await DMFormattedWelcome(user);
+            // We push into new Task to avoid blocking gateway
+            Task.Run(async () =>
+            {
+                // We wait X amount of seconds before posting a welcome message in chat.
+                await Task.Delay(_settings.WelcomeMessageDelaySeconds * 1000);
+                var userTest = _client.GetGuild(_settings.GuildId).GetUser(user.Id);
+                if (userTest != null)
+                {
+                    var em = WelcomeMessage(user);
+                    if (socketTextChannel != null)
+                        await socketTextChannel.SendMessageAsync(string.Empty, false, em);
+                }
+            });
         }
 
         public async Task<bool> DMFormattedWelcome(SocketGuildUser user)

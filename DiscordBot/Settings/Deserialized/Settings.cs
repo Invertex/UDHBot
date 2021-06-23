@@ -24,6 +24,7 @@ namespace DiscordBot.Settings.Deserialized
         public UserAssignableRoles UserAssignableRoles { get; set; }
 
         public GeneralChannel GeneralChannel { get; set; }
+        public int WelcomeMessageDelaySeconds { get; set; } = 300;
 
         public BotAnnouncementChannel BotAnnouncementChannel { get; set; }
 

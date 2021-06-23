@@ -271,7 +271,7 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAsync();
         }
 
-        [Group("Role")]
+        [Group("Role"), BotChannelOnly]
         public class RoleModule : ModuleBase
         {
             private readonly ILoggingService _logging;
@@ -285,12 +285,6 @@ namespace DiscordBot.Modules
             [Summary("Add a role to yourself. Syntax : !role add role")]
             public async Task AddRoleUser(IRole role)
             {
-                if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
-                {
-                    await Context.Message.DeleteAfterSeconds(seconds: 1);
-                    return;
-                }
-
                 if (!_settings.UserAssignableRoles.Roles.Contains(role.Name))
                 {
                     await ReplyAsync("This role is not assignable");
@@ -309,12 +303,6 @@ namespace DiscordBot.Modules
             [Alias("delete")]
             public async Task RemoveRoleUser(IRole role)
             {
-                if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
-                {
-                    await Context.Message.DeleteAfterSeconds(seconds: 1);
-                    return;
-                }
-
                 if (!_settings.UserAssignableRoles.Roles.Contains(role.Name))
                 {
                     await ReplyAsync("Role is not assigneable");
@@ -332,12 +320,6 @@ namespace DiscordBot.Modules
             [Summary("List of available roles. Syntax : !role list")]
             public async Task ListRole()
             {
-                if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
-                {
-                    await Context.Message.DeleteAfterSeconds(seconds: 1);
-                    return;
-                }
-
                 await ReplyAsync("**The following roles are available on this server** :\n" +
                                  "We offer multiple roles to show what you specialize in, whether it's professionally or as a hobby, so if there's something you're good at, assign the corresponding role! \n" +
                                  "You can assign as much roles as you want, but try to keep them for what you're good at :) \n");
@@ -363,7 +345,6 @@ namespace DiscordBot.Modules
                 await ReplyAsync("```To get the publisher role type **!pinfo** and follow the instructions.```\n");
             }
         }
-
         #region Rules
 
         [Command("Rules"), Priority(1)]
@@ -595,17 +576,11 @@ namespace DiscordBot.Modules
 
         #region Publisher
 
-        [Command("PInfo"), Priority(11)]
+        [Command("PInfo"), BotChannelOnly, Priority(11)]
         [Summary("Information on how to get publisher role.")]
         [Alias("publisherinfo")]
         public async Task PublisherInfo()
         {
-            if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
-            {
-                await Context.Message.DeleteAfterSeconds(seconds: 1);
-                return;
-            }
-
             var builder = new EmbedBuilder()
                 .WithTitle("Publisher Commands")
                 .WithDescription("Use these commands to get the **Asset-Publisher** role.")
@@ -617,15 +592,11 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAfterSeconds(seconds: 2);
         }
 
-        [Command("Publisher"), HideFromHelp]
+        [Command("Publisher"), BotChannelOnly, HideFromHelp]
         [Summary("Get the Asset-Publisher role by verifying who you are. Syntax: !publisher publisherID")]
         public async Task Publisher(uint publisherId)
         {
-            if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
-            {
-                await ReplyAsync($"{Context.Message.Author.Mention} please use the <#{_settings.BotCommandsChannel.Id}> channel!").DeleteAfterSeconds(seconds:10);
-            }
-            else if (((SocketGuildUser)Context.Message.Author).Roles.Any(x => x.Id == _settings.PublisherRoleId))
+            if (((SocketGuildUser)Context.Message.Author).Roles.Any(x => x.Id == _settings.PublisherRoleId))
             {
                 await ReplyAsync($"{Context.Message.Author.Mention} you already have the `Asset-Publisher` role.");
             }
@@ -641,16 +612,11 @@ namespace DiscordBot.Modules
             await Context.Message.DeleteAfterSeconds(seconds: 1);
         }
 
-        [Command("Verify"), HideFromHelp]
+        [Command("Verify"), BotChannelOnly, HideFromHelp]
         [Summary("Verify a publisher with the code received by email. Syntax : !verify publisherId code")]
         public async Task VerifyPackage(uint packageId, string code)
         {
             await Context.Message.DeleteAfterSeconds(seconds: 0);
-            if (Context.Channel.Id != _settings.BotCommandsChannel.Id)
-            {
-                await ReplyAsync($"{Context.Message.Author.Mention} please use the <#{_settings.BotCommandsChannel.Id}> channel!").DeleteAfterSeconds(seconds:10);
-                return;
-            }
             var verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
             await ReplyAsync(verif);
         }
