@@ -38,7 +38,6 @@ namespace DiscordBot.Services
         private readonly int _thanksMinJoinTime;
 
         private readonly string _thanksRegex;
-        private readonly int _thanksReminderCooldownTime;
         private readonly UpdateService _updateService;
 
         private readonly Dictionary<ulong, DateTime> _xpCooldown;
@@ -61,12 +60,10 @@ namespace DiscordBot.Services
             _loggingService = loggingService;
             _updateService = updateService;
             _settings = settings;
-            var userSettings1 = userSettings;
             MutedUsers = new Dictionary<ulong, DateTime>();
             _xpCooldown = new Dictionary<ulong, DateTime>();
             _canEditThanks = new HashSet<ulong>(32);
             _thanksCooldown = new Dictionary<ulong, DateTime>();
-            ThanksReminderCooldown = new Dictionary<ulong, DateTime>();
             CodeReminderCooldown = new Dictionary<ulong, DateTime>();
 
             //TODO We should make this into a config file that we can confiure during runtime.
@@ -78,30 +75,29 @@ namespace DiscordBot.Services
             /*
             Init XP
             */
-            _xpMinPerMessage = userSettings1.XpMinPerMessage;
-            _xpMaxPerMessage = userSettings1.XpMaxPerMessage;
-            _xpMinCooldown = userSettings1.XpMinCooldown;
-            _xpMaxCooldown = userSettings1.XpMaxCooldown;
+            _xpMinPerMessage = userSettings.XpMinPerMessage;
+            _xpMaxPerMessage = userSettings.XpMaxPerMessage;
+            _xpMinCooldown = userSettings.XpMinCooldown;
+            _xpMaxCooldown = userSettings.XpMaxCooldown;
 
             /*
             Init thanks
             */
             var sbThanks = new StringBuilder();
-            var thx = userSettings1.Thanks;
+            var thx = userSettings.Thanks;
             sbThanks.Append("(?i)\\b(");
             foreach (var t in thx) sbThanks.Append(t).Append("|");
 
             sbThanks.Length--; //Efficiently remove the final pipe that gets added in final loop, simplifying loop
             sbThanks.Append(")\\b");
             _thanksRegex = sbThanks.ToString();
-            _thanksCooldownTime = userSettings1.ThanksCooldown;
-            _thanksReminderCooldownTime = userSettings1.ThanksReminderCooldown;
-            _thanksMinJoinTime = userSettings1.ThanksMinJoinTime;
+            _thanksCooldownTime = userSettings.ThanksCooldown;
+            _thanksMinJoinTime = userSettings.ThanksMinJoinTime;
 
             /*
              Init Code analysis
             */
-            _codeReminderCooldownTime = userSettings1.CodeReminderCooldown;
+            _codeReminderCooldownTime = userSettings.CodeReminderCooldown;
             CodeFormattingExample = @"\`\`\`cs" + Environment.NewLine +
                                      "Write your code on new line here." + Environment.NewLine +
                                      @"\`\`\`" + Environment.NewLine;
@@ -130,8 +126,6 @@ namespace DiscordBot.Services
             UpdateLoop();
         }
 
-        public Dictionary<ulong, DateTime> ThanksReminderCooldown { get; private set; }
-
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
 
         private async void UpdateLoop()
@@ -148,7 +142,6 @@ namespace DiscordBot.Services
         {
             var data = _updateService.GetUserData();
             MutedUsers = data.MutedUsers ?? new Dictionary<ulong, DateTime>();
-            ThanksReminderCooldown = data.ThanksReminderCooldown ?? new Dictionary<ulong, DateTime>();
             CodeReminderCooldown = data.CodeReminderCooldown ?? new Dictionary<ulong, DateTime>();
         }
 
@@ -157,7 +150,6 @@ namespace DiscordBot.Services
             var data = new UserData
             {
                 MutedUsers = MutedUsers,
-                ThanksReminderCooldown = ThanksReminderCooldown,
                 CodeReminderCooldown = CodeReminderCooldown
             };
             _updateService.SetUserData(data);
@@ -352,7 +344,7 @@ namespace DiscordBot.Services
             icon = string.IsNullOrEmpty(icon) ? "https://cdn.discordapp.com/embed/avatars/0.png" : icon;
 
             var builder = new EmbedBuilder()
-                          .WithDescription($"Welcome to Unity Developer Community **{user.Mention}**!")
+                          .WithDescription($"Welcome to Unity Developer Community **{user.Username}#{user.Discriminator}**!")
                           .WithColor(new Color(0x12D687))
                           .WithAuthor(author =>
                           {
@@ -457,20 +449,8 @@ namespace DiscordBot.Services
                 if ((mentionedSelf || mentionedBot) && mentions.Count == 1 || mentionedBot && mentionedSelf && mentions.Count == 2)
                     return;
                 _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
-                //Add thanks reminder cooldown after thanking to avoid casual thanks triggering remind afterwards
-                ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
                 await messageParam.Channel.SendMessageAsync(sb.ToString());
                 await _loggingService.LogAction(sb + " in channel " + messageParam.Channel.Name);
-            }
-            else if (messageParam.Channel.Name != "general-chat" && !ThanksReminderCooldown.IsPermanent(userId) &&
-                     !ThanksReminderCooldown.HasUser(userId) && !_thanksCooldown.HasUser(userId))
-            {
-                ThanksReminderCooldown.AddCooldown(userId, _thanksReminderCooldownTime);
-                await messageParam.Channel.SendMessageAsync(
-                                      $"{messageParam.Author.Mention} , if you are thanking someone, please @mention them when you say \"thanks\" so they may receive karma for their help." +
-                                      Environment.NewLine +
-                                      "If you want me to stop reminding you about this, please type \"!disablethanksreminder\".")
-                                  .DeleteAfterTime(defaultDelTime);
             }
 
             if (mentions.Count == 0 && _canEditThanks.Add(messageParam.Id))
@@ -589,7 +569,7 @@ namespace DiscordBot.Services
                     ":white_small_square: Do not post the same question in multiple channels.\n" +
                     ":white_small_square: Only post links to your games in the appropriate channels.\n" +
                     ":white_small_square: Some channels have additional rules, please check pinned messages.\n" +
-                    $":white_small_square: A more inclusive list of rules can be found in <#{_settings.RulesChannel.Id.ToString()}>"
+                    $":white_small_square: A more inclusive list of rules can be found in {(_settings.RulesChannel is null || _settings.RulesChannel.Id == 0 ? "#rules" : $"<#{_settings.RulesChannel.Id.ToString()}>")}"
                 )
                 .AddField("__PROGRAMMING RESOURCES__",
                     ":white_small_square: Good for New Devs [Official Unity Tutorials](https://unity3d.com/learn/tutorials)\n" +
