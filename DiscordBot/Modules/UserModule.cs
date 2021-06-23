@@ -330,11 +330,6 @@ namespace DiscordBot.Modules
                     "!role add/remove Students - If you're currently studying in a game-dev related field. \n" +
                     "!role add/remove XR-Developers - If you're a VR, AR or MR sorcerer. \n" +
                     "!role add/remove Writers - If you like writing lore, scenarios, characters and stories. \n" +
-                    "======Below are special roles that will get pinged for specific reasons====== \n" +
-                    "!role add/remove Subs-Gamejam - Will be pinged when there is UDC Game-Jam related news. \n" +
-                    "!role add/remove Subs-Poll - Will be pinged when there is new public polls. \n" +
-                    "!role add/remove Subs-Releases - Will be pinged when there is new unity releases (beta and stable versions). \n" +
-                    "!role add/remove Subs-News - Will be pinged when there is new unity news (mainly blog posts). \n" +
                     "```");
                 await ReplyAsync("```To get the publisher role type **!pinfo** and follow the instructions.```\n");
             }
