@@ -133,7 +133,8 @@ namespace DiscordBot.Modules
                           .WithFooter(footer =>
                           {
                               footer
-                                  .WithText($"In channel {message.Channel.Name}");
+                                  .WithText($"Quoted by {Context.User.Username}#{Context.User.Discriminator} • From channel {message.Channel.Name}")
+                                  .WithIconUrl(Context.User.GetAvatarUrl());
                           })
                           .WithAuthor(author =>
                           {
