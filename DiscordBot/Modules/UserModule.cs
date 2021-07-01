@@ -673,7 +673,7 @@ namespace DiscordBot.Modules
             embedBuilder.Footer = new EmbedFooterBuilder().WithText("Results sourced from DuckDuckGo.");
 
             var embed = embedBuilder.Build();
-            await ReplyAsync(embed: embed).DeleteAfterSeconds(seconds: 30);
+            await ReplyAsync(embed: embed);
         }
 
         // Utility function for avoiding evil ads from DuckDuckGo
