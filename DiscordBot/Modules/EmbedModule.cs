@@ -104,16 +104,24 @@ namespace DiscordBot.Modules
             switch (uriResult.Host)
             {
                 case "hastebin.com":
-                    download_url = $"https://hastebin.com/raw{uriResult.AbsolutePath}";
+                case "gdl.space":
+                    download_url = $"https://{uriResult.Host}/raw{uriResult.AbsolutePath}";
+                    break;
+                case "hastepaste.com":
+                    download_url = $"https://hastepaste.com/raw{uriResult.AbsolutePath.Substring(5)}";
                     break;
                 case "pastebin.com":
                     download_url = $"https://pastebin.com/raw{uriResult.AbsolutePath}";
                     break;
+                case "pastie.org":
+                    download_url = $"{url}/raw";
+                    break;
                 default:
-                    await ReplyAsync($"{Context.User.Mention}, only those URLs are supported: [`hastebin.com`, `pastebin.com`].").DeleteAfterSeconds(5);
+                    await ReplyAsync($"{Context.User.Mention}, only those URLs are supported: [https://hastebin.com, https://pastebin.com, https://gdl.space, https://hastepaste.com, http://pastie.org].").DeleteAfterSeconds(5);
                     return;
             }
 
+            Console.WriteLine($"Downloading JSON from {download_url}");
             WebClient webClient = new WebClient();
             byte[] buffer = webClient.DownloadData(download_url);
             webClient.Dispose();
