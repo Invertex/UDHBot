@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
-using DiscordBot.Services;
 using Newtonsoft.Json;
 
 // ReSharper disable all UnusedMember.Local
@@ -60,14 +59,6 @@ namespace DiscordBot.Modules
             public Field[] fields;
         }
 #pragma warning restore 0649
-
-        private Settings.Deserialized.Settings _settings;
-
-        public EmbedModule(Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
-        {
-            _settings = settings;
-        }
-
 
         /// <summary>
         /// Generate an embed
@@ -156,7 +147,7 @@ namespace DiscordBot.Modules
                 if (embed_data.author != null)
                 {
                     embedBuilder.Author = new EmbedAuthorBuilder();
-                    if (!String.IsNullOrEmpty(embed_data.author.icon_url)) embedBuilder.Author.IconUrl = embed_data.author.icon_url; ;
+                    if (!String.IsNullOrEmpty(embed_data.author.icon_url)) embedBuilder.Author.IconUrl = embed_data.author.icon_url;
                     if (!String.IsNullOrEmpty(embed_data.author.name)) embedBuilder.Author.Name = embed_data.author.name;
                     if (!String.IsNullOrEmpty(embed_data.author.url)) embedBuilder.Author.Url = embed_data.author.url;
                 }
