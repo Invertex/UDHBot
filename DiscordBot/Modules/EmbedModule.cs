@@ -72,6 +72,7 @@ namespace DiscordBot.Modules
         /// <summary>
         /// Generate an embed
         /// </summary>
+        [RequireAdmin]
         [Command("embed"), Summary("Generate an embed.")]
         public async Task EmbedCommand()
         {
