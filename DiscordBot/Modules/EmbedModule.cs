@@ -85,8 +85,9 @@ namespace DiscordBot.Modules
 
             var attachment = Context.Message.Attachments.ElementAt(0);
 
-            WebClient myWebClient = new WebClient();
-            byte[] buffer = myWebClient.DownloadData(attachment.Url);
+            WebClient webClient = new WebClient();
+            byte[] buffer = webClient.DownloadData(attachment.Url);
+            webClient.Dispose();
             string json = Encoding.UTF8.GetString(buffer);
 
             await ReplyAsync(embed: BuildEmbed(json));
@@ -121,8 +122,9 @@ namespace DiscordBot.Modules
                     return;
             }
 
-            WebClient myWebClient = new WebClient();
-            byte[] buffer = myWebClient.DownloadData(download_url);
+            WebClient webClient = new WebClient();
+            byte[] buffer = webClient.DownloadData(download_url);
+            webClient.Dispose();
             string json = Encoding.UTF8.GetString(buffer);
 
             await ReplyAsync(embed: BuildEmbed(json));
