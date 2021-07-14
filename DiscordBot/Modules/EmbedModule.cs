@@ -117,7 +117,7 @@ namespace DiscordBot.Modules
                     download_url = $"{url}/raw";
                     break;
                 default:
-                    await ReplyAsync($"{Context.User.Mention}, only those URLs are supported: [https://hastebin.com, https://pastebin.com, https://gdl.space, https://hastepaste.com, http://pastie.org].").DeleteAfterSeconds(5);
+                    await ReplyAsync($"{Context.User.Mention}, supported URLs: [https://hastebin.com, https://pastebin.com, https://gdl.space, https://hastepaste.com, http://pastie.org].").DeleteAfterSeconds(5);
                     return;
             }
 
