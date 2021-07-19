@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -123,7 +124,23 @@ namespace DiscordBot.Modules
             }
 
             var messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + channel.Id + "/" + messageId;
-            var msgContent = message.Content == string.Empty ? "" : message.Content.Truncate(1020);
+
+            var msgContent = message.Content;
+
+            if (msgContent != null)
+            {
+                msgContent = msgContent.Truncate(1020);
+
+                // Searches for embed links such as [Google](https://bing.com/)
+                var regex = new Regex(@"\[([^\[\]\(\)]*)\]\((.*?)\)");
+
+                var matches = regex.Matches(msgContent);
+
+                foreach (var match in matches as IEnumerable<Match>)
+                {
+                    msgContent = msgContent.Replace(match.Value, $"\\{match.Value}");
+                }
+            }
 
             var msgAttachment = string.Empty;
             if (message.Attachments?.Count > 0) msgAttachment = "\t📸";
