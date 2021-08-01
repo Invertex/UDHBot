@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
+using DiscordBot.Data;
 using DiscordBot.Extensions;
 using Newtonsoft.Json;
 
@@ -100,27 +102,13 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            string download_url;
-            switch (uriResult.Host)
+            if (!IsValidHost(uriResult.Host))
             {
-                case "hastebin.com":
-                case "gdl.space":
-                    download_url = $"https://{uriResult.Host}/raw{uriResult.AbsolutePath}";
-                    break;
-                case "hastepaste.com":
-                    download_url = $"https://hastepaste.com/raw{uriResult.AbsolutePath.Substring(5)}";
-                    break;
-                case "pastebin.com":
-                    download_url = $"https://pastebin.com/raw{uriResult.AbsolutePath}";
-                    break;
-                case "pastie.org":
-                    download_url = $"{url}/raw";
-                    break;
-                default:
-                    await ReplyAsync($"{Context.User.Mention}, supported URLs: [https://hastebin.com, https://pastebin.com, https://gdl.space, https://hastepaste.com, http://pastie.org].").DeleteAfterSeconds(5);
-                    return;
+                await ReplyAsync($"{Context.User.Mention}, supported URLs: [https://hastebin.com, https://pastebin.com, https://gdl.space, https://hastepaste.com, http://pastie.org].").DeleteAfterSeconds(5);
+                return;
             }
-
+            string download_url = GetDownUrlFromUri(uriResult);
+            
             Console.WriteLine($"Downloading JSON from {download_url}");
             WebClient webClient = new WebClient();
             byte[] buffer = webClient.DownloadData(download_url);
@@ -129,7 +117,127 @@ namespace DiscordBot.Modules
 
             await ReplyAsync(embed: BuildEmbed(json));
         }
+        
+        private readonly IEmote _thumbUpEmote = new Emoji("👍");
+        [Command("send embed"), Summary("Generate an embed from an URL and posts it to a channel, or edits a message if ID passed in and replaces with new embed.")]
+        public async Task EmbedToChannel(string url, IMessageChannel channel, ulong messageId = 0)
+        {
+            Uri uriResult;
+            bool result = Uri.TryCreate(url, UriKind.Absolute, out uriResult)
+                          && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+            if (!result)
+            {
+                await ReplyAsync($"{Context.User.Mention}, the parameter is not a valid URL.").DeleteAfterSeconds(5);
+                return;
+            }
+            
+            if (!IsValidHost(uriResult.Host))
+            {
+                await ReplyAsync($"{Context.User.Mention}, supported URLs: [https://hastebin.com, https://pastebin.com, https://gdl.space, https://hastepaste.com, http://pastie.org].").DeleteAfterSeconds(5);
+                return;
+            }
+            string download_url = GetDownUrlFromUri(uriResult);
+            
+            WebClient webClient = new WebClient();
+            byte[] buffer = webClient.DownloadData(download_url);
+            webClient.Dispose();
+            string json = Encoding.UTF8.GetString(buffer);
+            
+            // Build our Embed
+            var embed = BuildEmbed(json);
+            if (embed.Length <= 0)
+            {
+                await ReplyAsync("Embed is improperly formatted or corrupt.");
+                return;
+            }
+            
+            // Confirm with user it is correct
+            var tempEmbed = await ReplyAsync(embed: embed);
+            var message = await ReplyAsync("If correct, react to this message within 20 seconds to continue.");
+            await message.AddReactionAsync(_thumbUpEmote);
+            // 20 seconds wait?
+            bool confirmedEmbed = false;
+            for (int i = 0; i < 10; i++)
+            {
+                await Task.Delay(2000);
+                var reactions = await message.GetReactionUsersAsync(_thumbUpEmote, 10).FlattenAsync();
+                if (reactions.Count() > 1)
+                {
+                    foreach (var reaction in reactions)
+                    {
+                        if (reaction.Id == Context.User.Id)
+                        {
+                            confirmedEmbed = true;
+                            break;
+                        }
+                    }
+                }
+                i++;
+            }
+            await tempEmbed.DeleteAsync();
+            await message.DeleteAsync();
+            // If no reaction, we assume it was bad and abort
+            if (!confirmedEmbed)
+            {
+                await ReplyAsync("Reaction not detected, embed aborted.").DeleteAfterSeconds(seconds: 5);
+                return;
+            }
+            
+            if (messageId != 0)
+            {
+                var messageToEdit = await channel.GetMessageAsync(messageId) as IUserMessage;
+                if (messageToEdit == null)
+                {
+                    await ReplyAsync("Bbot doesn't own the message ID passed in").DeleteAfterSeconds(5);
+                    return;
+                }
+                // Modify the old message, we clear any text it might have had.
+                await messageToEdit.ModifyAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = embed;
+                });
+                await ReplyAsync("Message has been replaced!");
+            }
+            else
+            {
+                await channel.SendMessageAsync(embed: embed);
+                await ReplyAsync("Embed posted successfully!").DeleteAfterSeconds(5);
+            }
+        }
 
+        private bool IsValidHost(string url)
+        {
+            switch (url)
+            {
+                case "hastebin.com":
+                case "gdl.space":
+                case "hastepaste.com":
+                case "pastebin.com":
+                case "pastie.org":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private string GetDownUrlFromUri(Uri uri)
+        {
+            switch (uri.Host)
+            {
+                case "hastebin.com":
+                case "gdl.space":
+                    return $"https://{uri.Host}/raw{uri.AbsolutePath}";
+                case "hastepaste.com":
+                    return $"https://hastepaste.com/raw{uri.AbsolutePath.Substring(5)}";
+                case "pastebin.com":
+                    return $"https://pastebin.com/raw{uri.AbsolutePath}";
+                case "pastie.org":
+                    return $"{uri.OriginalString}/raw";
+            }
+            return string.Empty;
+        }
+        
         private Discord.Embed BuildEmbed(string json)
         {
             try
