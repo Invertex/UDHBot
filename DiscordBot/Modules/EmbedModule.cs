@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 // ReSharper disable all UnusedMember.Local
 namespace DiscordBot.Modules
 {
+    [RequireAdmin]
     public class EmbedModule : ModuleBase
     {
 
@@ -74,15 +75,9 @@ namespace DiscordBot.Modules
                 await ReplyAsync($"{Context.User.Mention}, you must provide a JSON file or a JSON url.").DeleteAfterSeconds(5);
                 return;
             }
-
             var attachment = Context.Message.Attachments.ElementAt(0);
-
-            WebClient webClient = new WebClient();
-            byte[] buffer = webClient.DownloadData(attachment.Url);
-            webClient.Dispose();
-            string json = Encoding.UTF8.GetString(buffer);
-
-            await ReplyAsync(embed: BuildEmbed(json));
+            var embed = BuildEmbedFromUrl(attachment.Url);
+            await ReplyAsync(embed: embed);
         }
 
         [Command("embed"), Summary("Generate an embed from an URL (hastebin).")]
@@ -107,13 +102,8 @@ namespace DiscordBot.Modules
             }
             string download_url = GetDownUrlFromUri(uriResult);
             
-            Console.WriteLine($"Downloading JSON from {download_url}");
-            WebClient webClient = new WebClient();
-            byte[] buffer = webClient.DownloadData(download_url);
-            webClient.Dispose();
-            string json = Encoding.UTF8.GetString(buffer);
-
-            await ReplyAsync(embed: BuildEmbed(json));
+            var embed = BuildEmbedFromUrl(download_url);
+            await ReplyAsync(embed: embed);
         }
         
         private readonly IEmote _thumbUpEmote = new Emoji("👍");
@@ -136,13 +126,8 @@ namespace DiscordBot.Modules
             }
             string download_url = GetDownUrlFromUri(uriResult);
             
-            WebClient webClient = new WebClient();
-            byte[] buffer = webClient.DownloadData(download_url);
-            webClient.Dispose();
-            string json = Encoding.UTF8.GetString(buffer);
-            
-            // Build our Embed
-            var embed = BuildEmbed(json);
+            var embed = BuildEmbedFromUrl(download_url);
+            await ReplyAsync(embed: embed);
             if (embed.Length <= 0)
             {
                 await ReplyAsync("Embed is improperly formatted or corrupt.");
@@ -186,7 +171,7 @@ namespace DiscordBot.Modules
                 var messageToEdit = await channel.GetMessageAsync(messageId) as IUserMessage;
                 if (messageToEdit == null)
                 {
-                    await ReplyAsync("Bbot doesn't own the message ID passed in").DeleteAfterSeconds(5);
+                    await ReplyAsync("Bot doesn't own the message passed in").DeleteAfterSeconds(5);
                     return;
                 }
                 // Modify the old message, we clear any text it might have had.
@@ -195,13 +180,23 @@ namespace DiscordBot.Modules
                     x.Content = "";
                     x.Embed = embed;
                 });
-                await ReplyAsync("Message has been replaced!");
+                await ReplyAsync("Message replaced!").DeleteAfterSeconds(5);
             }
             else
             {
                 await channel.SendMessageAsync(embed: embed);
-                await ReplyAsync("Embed posted successfully!").DeleteAfterSeconds(5);
+                await ReplyAsync("Embed Posted!").DeleteAfterSeconds(5);
             }
+        }
+
+        private Discord.Embed BuildEmbedFromUrl(string url)
+        {
+            WebClient webClient = new WebClient();
+            byte[] buffer = webClient.DownloadData(url);
+            webClient.Dispose();
+            string json = Encoding.UTF8.GetString(buffer);
+
+            return BuildEmbed(json);
         }
 
         private bool IsValidHost(string url)
