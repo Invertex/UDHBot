@@ -77,8 +77,11 @@ namespace DiscordBot.Modules
             }
             var attachment = Context.Message.Attachments.ElementAt(0);
             var embed = BuildEmbedFromUrl(attachment.Url);
+            
             await ReplyAsync(embed: embed);
         }
+        
+        
 
         [Command("embed"), Summary("Generate an embed from an URL (hastebin).")]
         public async Task EmbedCommand(string url)
@@ -127,6 +130,78 @@ namespace DiscordBot.Modules
             string download_url = GetDownUrlFromUri(uriResult);
             
             var embed = BuildEmbedFromUrl(download_url);
+            await ReplyAsync(embed: embed);
+            if (embed.Length <= 0)
+            {
+                await ReplyAsync("Embed is improperly formatted or corrupt.");
+                return;
+            }
+            
+            // Confirm with user it is correct
+            var tempEmbed = await ReplyAsync(embed: embed);
+            var message = await ReplyAsync("If correct, react to this message within 20 seconds to continue.");
+            await message.AddReactionAsync(_thumbUpEmote);
+            // 20 seconds wait?
+            bool confirmedEmbed = false;
+            for (int i = 0; i < 10; i++)
+            {
+                await Task.Delay(2000);
+                var reactions = await message.GetReactionUsersAsync(_thumbUpEmote, 10).FlattenAsync();
+                if (reactions.Count() > 1)
+                {
+                    foreach (var reaction in reactions)
+                    {
+                        if (reaction.Id == Context.User.Id)
+                        {
+                            confirmedEmbed = true;
+                            break;
+                        }
+                    }
+                }
+                i++;
+            }
+            await tempEmbed.DeleteAsync();
+            await message.DeleteAsync();
+            // If no reaction, we assume it was bad and abort
+            if (!confirmedEmbed)
+            {
+                await ReplyAsync("Reaction not detected, embed aborted.").DeleteAfterSeconds(seconds: 5);
+                return;
+            }
+            
+            if (messageId != 0)
+            {
+                var messageToEdit = await channel.GetMessageAsync(messageId) as IUserMessage;
+                if (messageToEdit == null)
+                {
+                    await ReplyAsync("Bot doesn't own the message passed in").DeleteAfterSeconds(5);
+                    return;
+                }
+                // Modify the old message, we clear any text it might have had.
+                await messageToEdit.ModifyAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = embed;
+                });
+                await ReplyAsync("Message replaced!").DeleteAfterSeconds(5);
+            }
+            else
+            {
+                await channel.SendMessageAsync(embed: embed);
+                await ReplyAsync("Embed Posted!").DeleteAfterSeconds(5);
+            }
+        }
+        
+        [Command("send embed"), Summary("Generate an embed from an URL and posts it to a channel, or edits a message if ID passed in and replaces with new embed.")]
+        public async Task EmbedToChannel(IMessageChannel channel, ulong messageId = 0)
+        {
+            if (Context.Message.Attachments.Count < 1)
+            {
+                await ReplyAsync($"{Context.User.Mention}, you must provide a JSON file or a JSON url.").DeleteAfterSeconds(5);
+                return;
+            }
+            var attachment = Context.Message.Attachments.ElementAt(0);
+            var embed = BuildEmbedFromUrl(attachment.Url);
             await ReplyAsync(embed: embed);
             if (embed.Length <= 0)
             {
