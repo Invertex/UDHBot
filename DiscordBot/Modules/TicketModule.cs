@@ -55,19 +55,17 @@ namespace DiscordBot.Modules
             });
 
             var userPerms = new OverwritePermissions(viewChannel: PermValue.Allow);
+            var modRole = Context.Guild.Roles.First(r => r.Id == _settings.ModeratorRoleId);
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
             await newChannel.AddPermissionOverwriteAsync(Context.User, userPerms);
-            await newChannel.AddPermissionOverwriteAsync(Context.Guild.Roles.First(r => r.Id == _settings.ModeratorRoleId), userPerms);
+            await newChannel.AddPermissionOverwriteAsync(modRole, userPerms);
             await newChannel.AddPermissionOverwriteAsync(Context.Client.CurrentUser, userPerms);
 
             await newChannel.SendMessageAsync(
-                $"The content of this conversation will stay strictly between you {Context.User.Mention} and the staff.\n" +
+                $"The content of this conversation will stay strictly between you {Context.User.Mention} and the {modRole.Mention}.\n" +
                 "Please stay civil, any insults or offensive language could see you punished.\n" +
                 "Do not ping anyone and wait until a staff member is free to examine your complaint.");
             await newChannel.SendMessageAsync($"A staff member will be able to close this chat by doing !close.");
-
-            /*await newChannel.SendMessageAsync(
-                $"{Context.User.Mention}, this is your chat to voice your complaint to the staff members. When everything is finished between you and the staff, please do !close!");*/
         }
 
         /// <summary>

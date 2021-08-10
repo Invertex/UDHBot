@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -123,7 +124,23 @@ namespace DiscordBot.Modules
             }
 
             var messageLink = "https://discordapp.com/channels/" + Context.Guild.Id + "/" + channel.Id + "/" + messageId;
-            var msgContent = message.Content == string.Empty ? "" : message.Content.Truncate(1020);
+
+            var msgContent = message.Content;
+
+            if (msgContent != null)
+            {
+                msgContent = msgContent.Truncate(1020);
+
+                // Searches for embed links such as [Google](https://bing.com/)
+                var regex = new Regex(@"\[([^\[\]\(\)]*)\]\((.*?)\)");
+
+                var matches = regex.Matches(msgContent);
+
+                foreach (var match in matches as IEnumerable<Match>)
+                {
+                    msgContent = msgContent.Replace(match.Value, $"\\{match.Value}");
+                }
+            }
 
             var msgAttachment = string.Empty;
             if (message.Attachments?.Count > 0) msgAttachment = "\t📸";
@@ -426,7 +443,7 @@ namespace DiscordBot.Modules
             var users = await _databaseService.Query().GetTopLevel(10);
             var userList = users.Select(user => (ulong.Parse(user.UserID), user.Level)).ToList();
 
-            var embed = GenerateRankEmbedFromList(userList, "Level");
+            var embed = await GenerateRankEmbedFromList(userList, "Level");
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
@@ -438,31 +455,24 @@ namespace DiscordBot.Modules
             var users = await _databaseService.Query().GetTopKarma(10);
             var userList = users.Select(user => (ulong.Parse(user.UserID), user.Karma)).ToList();
 
-            var embed = GenerateRankEmbedFromList(userList, "Karma");
+            var embed = await GenerateRankEmbedFromList(userList, "Karma");
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
-        private Embed GenerateRankEmbedFromList(List<(ulong userID, uint value)> data, string labelName)
+        private async Task<Embed> GenerateRankEmbedFromList(List<(ulong userID, uint value)> data, string labelName)
         {
             var embedBuilder = new EmbedBuilder();
             embedBuilder.Title = "Top 10 Users";
             embedBuilder.Description = $"The best of the best, by {labelName}.";
 
-            var rank = new StringBuilder();
-            var nick = new StringBuilder();
-            var level = new StringBuilder();
             for (var i = 0; i < data.Count; i++)
             {
-                rank.Append($"#{i + 1}\n");
-                // rank.Append($"{(i+1)}{i switch { 0 => "st", 1 => "nd", 2 => "rd", _ => "th" }}\n");
-                nick.Append($"<@{data[i].userID}>\n");
-                level.Append($"{data[i].value.ToString()}\n");
+                var user = await Context.Guild.GetUserAsync(data[i].userID);
+                var username = user?.Username ?? "Unknown user"; // For cases where the user has left the guild
+                
+                embedBuilder.AddField($"{i + 1}. {username}", $"{labelName}: {data[i].value}");
             }
-
-            embedBuilder.AddField("Rank", $"**{rank}**", true);
-            embedBuilder.AddField("User", nick, true);
-            embedBuilder.AddField(labelName, $"**{level}**", true);
-
+            
             return embedBuilder.Build();
         }
 

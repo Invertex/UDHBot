@@ -437,12 +437,7 @@ namespace DiscordBot.Services
                 if (mentionedSelf)
                     await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you can't give karma to yourself.").DeleteAfterTime(defaultDelTime);
-
-                if (mentionedBot)
-                    await messageParam.Channel.SendMessageAsync(
-                        $"Very cute of you {messageParam.Author.Mention} but I don't need karma :blush:{Environment.NewLine}" +
-                        "If you'd like to know what Karma is about, type !karma").DeleteAfterTime(defaultDelTime);
-
+                
                 _canEditThanks.Remove(messageParam.Id);
 
                 //Don't give karma cooldown if user only mentioned himself or the bot or both
