@@ -65,9 +65,6 @@ namespace DiscordBot.Modules
                 "Please stay civil, any insults or offensive language could see you punished.\n" +
                 "Do not ping anyone and wait until a staff member is free to examine your complaint.");
             await newChannel.SendMessageAsync($"A staff member will be able to close this chat by doing !close.");
-
-            /*await newChannel.SendMessageAsync(
-                $"{Context.User.Mention}, this is your chat to voice your complaint to the staff members. When everything is finished between you and the staff, please do !close!");*/
         }
 
         /// <summary>
