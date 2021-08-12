@@ -459,6 +459,42 @@ namespace DiscordBot.Modules
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
+        [Command("TopKarmaWeekly"), Priority(5)]
+        [Summary("Display weekly top 10 users by karma.")]
+        [Alias("karmarankweekly", "rankingkarmaweekly")]
+        public async Task TopKarmaWeekly()
+        {
+            var users = await _databaseService.Query().GetTopKarmaWeekly(10);
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.KarmaWeekly)).ToList();
+
+            var embed = await GenerateRankEmbedFromList(userList, "Weekly Karma");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
+        }
+
+        [Command("TopKarmaMonthly"), Priority(5)]
+        [Summary("Display monthly top 10 users by karma.")]
+        [Alias("karmarankmonthly", "rankingkarmamonthly")]
+        public async Task TopKarmaMonthly()
+        {
+            var users = await _databaseService.Query().GetTopKarmaMonthly(10);
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.KarmaMonthly)).ToList();
+
+            var embed = await GenerateRankEmbedFromList(userList, "Monthly Karma");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
+        }
+
+        [Command("TopKarmaYearly"), Priority(5)]
+        [Summary("Display tearly top 10 users by karma.")]
+        [Alias("karmaranktearly", "rankingkarmayearly")]
+        public async Task TopKarmaYearly()
+        {
+            var users = await _databaseService.Query().GetTopKarmaYearly(10);
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.KarmaYearly)).ToList();
+
+            var embed = await GenerateRankEmbedFromList(userList, "Yearly Karma");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
+        }
+
         private async Task<Embed> GenerateRankEmbedFromList(List<(ulong userID, uint value)> data, string labelName)
         {
             var embedBuilder = new EmbedBuilder();
@@ -469,10 +505,10 @@ namespace DiscordBot.Modules
             {
                 var user = await Context.Guild.GetUserAsync(data[i].userID);
                 var username = user?.Username ?? "Unknown user"; // For cases where the user has left the guild
-                
+
                 embedBuilder.AddField($"{i + 1}. {username}", $"{labelName}: {data[i].value}");
             }
-            
+
             return embedBuilder.Build();
         }
 
