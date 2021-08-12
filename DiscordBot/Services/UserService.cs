@@ -557,7 +557,7 @@ namespace DiscordBot.Services
             var em = new EmbedBuilder()
                 .WithColor(new Color(0x12D687))
                 .AddField("Hello " + username,
-                    "Welcome to Unity Developer Community!\nPlease read and respect the rules to keep the community friendly!")
+                    "Welcome to Unity Developer Community!\nPlease read and respect the rules to keep the community friendly!\n*When asking questions, remember to ask your question, [don't ask to ask](https://dontasktoask.com/).*")
                 .AddField("__RULES__",
                     ":white_small_square: Be polite and respectful.\n" +
                     ":white_small_square: No Direct Messages to users without permission.\n" +
@@ -567,10 +567,9 @@ namespace DiscordBot.Services
                     $":white_small_square: A more inclusive list of rules can be found in {(_settings.RulesChannel is null || _settings.RulesChannel.Id == 0 ? "#rules" : $"<#{_settings.RulesChannel.Id.ToString()}>")}"
                 )
                 .AddField("__PROGRAMMING RESOURCES__",
-                    ":white_small_square: Good for New Devs [Official Unity Tutorials](https://unity3d.com/learn/tutorials)\n" +
                     ":white_small_square: Official Unity [Manual](https://docs.unity3d.com/Manual/index.html)\n" +
                     ":white_small_square: Official Unity [Script API](https://docs.unity3d.com/ScriptReference/index.html)\n" +
-                    ":white_small_square: Introductory Tutorials [Brackeys](https://brackeys.com/)\n" +
+                    ":white_small_square: Introductory Tutorials: [Official Unity Tutorials](https://unity3d.com/learn/tutorials)\n" +
                     ":white_small_square: Intermediate Tutorials: [CatLikeCoding](https://catlikecoding.com/unity/tutorials/)\n"
                 )
                 .AddField("__ART RESOURCES__",
@@ -579,7 +578,9 @@ namespace DiscordBot.Services
                     ":white_small_square: Game Assets [itch.io](https://itch.io/game-assets/free)"
                 )
                 .AddField("__GAME DESIGN RESOURCES__",
-                    ":white_small_square: How to write a Game Design Document (GDD) [Gamasutra](https://www.gamasutra.com/blogs/LeandroGonzalez/20160726/277928/How_to_Write_a_Game_Design_Document.php)"
+                    ":white_small_square: How to write a Game Design Document (GDD) [Gamasutra](https://www.gamasutra.com/blogs/LeandroGonzalez/20160726/277928/How_to_Write_a_Game_Design_Document.php)\n" +
+                    ":white_small_square: How to start building video games [CGSpectrum](https://www.cgspectrum.com/blog/game-design-basics-how-to-start-building-video-games)\n" +
+                    ":white_small_square: Keep Things Clear: Don't Confuse Your Players [TutsPlus](https://gamedevelopment.tutsplus.com/articles/keep-things-clear-dont-confuse-your-players--cms-22780)"
                 );
             return (em.Build());
         }
