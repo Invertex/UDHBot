@@ -423,7 +423,6 @@ namespace DiscordBot.Services
                         continue;
                     }
 
-                    var userKarma = await _databaseService.Query().GetKarma(user.Id.ToString());
                     await _databaseService.Query().IncrementKarma(user.Id.ToString());
                     sb.Append(user.Username).Append(" , ");
                 }
