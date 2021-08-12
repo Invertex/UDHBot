@@ -43,7 +43,7 @@ namespace DiscordBot.Services
             {
                 Console.WriteLine("Table 'users' does not exist, attempting to generate..");
                 c.ExecuteSql(
-                    $"CREATE TABLE `users` (`ID` int(11) UNSIGNED  NOT NULL, `UserID` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL, `Karma` int(11) UNSIGNED  NOT NULL DEFAULT 0, `KarmaGiven` int(11) UNSIGNED NOT NULL DEFAULT 0, `Exp` bigint(11) UNSIGNED  NOT NULL DEFAULT 0, `Level` int(11) UNSIGNED NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                    $"CREATE TABLE `users` (`ID` int(11) UNSIGNED  NOT NULL, `UserID` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL, `Karma` int(11) UNSIGNED  NOT NULL DEFAULT 0, `KarmaWeekly` int(11) UNSIGNED  NOT NULL DEFAULT 0, `KarmaMonthly` int(11) UNSIGNED  NOT NULL DEFAULT 0, `KarmaYearly` int(11) UNSIGNED  NOT NULL DEFAULT 0, `KarmaGiven` int(11) UNSIGNED NOT NULL DEFAULT 0, `Exp` bigint(11) UNSIGNED  NOT NULL DEFAULT 0, `Level` int(11) UNSIGNED NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
                 c.ExecuteSql($"ALTER TABLE `users` ADD PRIMARY KEY (`ID`,`UserID`), ADD UNIQUE KEY `UserID` (`UserID`)");
                 c.ExecuteSql($"ALTER TABLE `users` MODIFY `ID` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1");
             }
