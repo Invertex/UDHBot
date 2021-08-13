@@ -423,8 +423,7 @@ namespace DiscordBot.Services
                         continue;
                     }
 
-                    var userKarma = await _databaseService.Query().GetKarma(user.Id.ToString());
-                    await _databaseService.Query().UpdateKarma(user.Id.ToString(), userKarma + 1);
+                    await _databaseService.Query().IncrementKarma(user.Id.ToString());
                     sb.Append(user.Username).Append(" , ");
                 }
 
@@ -437,7 +436,7 @@ namespace DiscordBot.Services
                 if (mentionedSelf)
                     await messageParam.Channel.SendMessageAsync(
                         $"{messageParam.Author.Mention} you can't give karma to yourself.").DeleteAfterTime(defaultDelTime);
-                
+
                 _canEditThanks.Remove(messageParam.Id);
 
                 //Don't give karma cooldown if user only mentioned himself or the bot or both
