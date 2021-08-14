@@ -498,15 +498,29 @@ namespace DiscordBot.Modules
         private async Task<Embed> GenerateRankEmbedFromList(List<(ulong userID, uint value)> data, string labelName)
         {
             var embedBuilder = new EmbedBuilder();
-            embedBuilder.Title = "Top 10 Users";
-            embedBuilder.Description = $"The best of the best, by {labelName}.";
+            embedBuilder.Title = $"Top 10 Users by {labelName}";
+            embedBuilder.Footer = new EmbedFooterBuilder();
+            embedBuilder.Footer.Text = $"The best of the best, by {labelName}.";
 
+            var maxUsernameLength = data
+            .Select(async x => await Context.Guild.GetUserAsync(x.userID))
+            .Select(x => x.Result)
+            .Max(x => (x?.Username ?? "Unknown User").Length);
+
+            try {
+            var str = "";
             for (var i = 0; i < data.Count; i++)
             {
                 var user = await Context.Guild.GetUserAsync(data[i].userID);
-                var username = user?.Username ?? "Unknown user"; // For cases where the user has left the guild
+                var username = user?.Username ?? "Unknown User"; // For cases where the user has left the guild
+                int rankPadding = (int) Math.Floor(Math.Log10(data.Count));
 
-                embedBuilder.AddField($"{i + 1}. {username}", $"{labelName}: {data[i].value}");
+                str += $"`{(i + 1).ToString().PadLeft(rankPadding + 1)}.` **`{username.PadRight(maxUsernameLength, '\u2000')}`** `{labelName}: {data[i].value}`\n";
+            }
+            embedBuilder.Description = str;
+
+            } catch (Exception e) {
+                Console.Error.WriteLine(e);
             }
 
             return embedBuilder.Build();
