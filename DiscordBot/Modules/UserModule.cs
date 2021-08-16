@@ -449,7 +449,7 @@ namespace DiscordBot.Modules
 
         [Command("TopKarma"), Priority(5)]
         [Summary("Display top 10 users by karma.")]
-        [Alias("karmarank", "rankingkarma")]
+        [Alias("karmarank", "rankingkarma", "topk")]
         public async Task TopKarma()
         {
             var users = await _databaseService.Query().GetTopKarma(10);
@@ -461,7 +461,7 @@ namespace DiscordBot.Modules
 
         [Command("TopKarmaWeekly"), Priority(5)]
         [Summary("Display weekly top 10 users by karma.")]
-        [Alias("karmarankweekly", "rankingkarmaweekly")]
+        [Alias("karmarankweekly", "rankingkarmaweekly", "topkw")]
         public async Task TopKarmaWeekly()
         {
             var users = await _databaseService.Query().GetTopKarmaWeekly(10);
@@ -473,7 +473,7 @@ namespace DiscordBot.Modules
 
         [Command("TopKarmaMonthly"), Priority(5)]
         [Summary("Display monthly top 10 users by karma.")]
-        [Alias("karmarankmonthly", "rankingkarmamonthly")]
+        [Alias("karmarankmonthly", "rankingkarmamonthly", "topkm")]
         public async Task TopKarmaMonthly()
         {
             var users = await _databaseService.Query().GetTopKarmaMonthly(10);
@@ -485,7 +485,7 @@ namespace DiscordBot.Modules
 
         [Command("TopKarmaYearly"), Priority(5)]
         [Summary("Display tearly top 10 users by karma.")]
-        [Alias("karmaranktearly", "rankingkarmayearly")]
+        [Alias("karmaranktearly", "rankingkarmayearly", "topky")]
         public async Task TopKarmaYearly()
         {
             var users = await _databaseService.Query().GetTopKarmaYearly(10);
