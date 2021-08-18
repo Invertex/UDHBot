@@ -15,6 +15,7 @@ using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils.Attributes;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
+using DiscordBot.Extensions;
 
 namespace DiscordBot.Modules
 {
@@ -1024,13 +1025,16 @@ namespace DiscordBot.Modules
 
             // Business as usual
             if (birthdate == default)
+            {
                 await ReplyAsync(
-                        $"Sorry, I couldn't find **{searchName}**'s birthday date. They can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform ! :stuck_out_tongue_winking_eye: ")
+                        $"Sorry, I couldn't find **{searchName}**'s birthday date. They can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform !")
                     .DeleteAfterSeconds(30);
+            }
             else
             {
+                var date = birthdate.ToUnixTimestamp();
                 var message =
-                    $"**{searchName}**'s birthdate: __**{birthdate.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}**__ " +
+                    $"**{searchName}**'s birthdate: **<t:{date}:D>** " +
                     $"({(int)((DateTime.Now - birthdate).TotalDays / 365)}yo)";
 
                 await ReplyAsync(message).DeleteAfterTime(minutes: 3);
