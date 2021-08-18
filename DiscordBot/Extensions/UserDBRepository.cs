@@ -29,15 +29,15 @@ namespace DiscordBot.Extensions
         Task<ServerUser> GetUser(string userId);
 
         // Rank Stuff
-        [Sql("SELECT UserID, Karma, Level, Exp FROM users ORDER BY Level DESC LIMIT @n")]
+        [Sql("SELECT UserID, Karma, Level, Exp FROM users ORDER BY Level DESC, RAND() LIMIT @n")]
         Task<IList<ServerUser>> GetTopLevel(int n);
-        [Sql("SELECT UserID, Karma, KarmaGiven FROM users ORDER BY Karma DESC LIMIT @n")]
+        [Sql("SELECT UserID, Karma, KarmaGiven FROM users ORDER BY Karma DESC, RAND() LIMIT @n")]
         Task<IList<ServerUser>> GetTopKarma(int n);
-        [Sql("SELECT UserID, KarmaWeekly FROM users ORDER BY KarmaWeekly DESC LIMIT @n")]
+        [Sql("SELECT UserID, KarmaWeekly FROM users ORDER BY KarmaWeekly DESC, RAND() LIMIT @n")]
         Task<IList<ServerUser>> GetTopKarmaWeekly(int n);
-        [Sql("SELECT UserID, KarmaMonthly FROM users ORDER BY KarmaMonthly DESC LIMIT @n")]
+        [Sql("SELECT UserID, KarmaMonthly FROM users ORDER BY KarmaMonthly DESC, RAND() LIMIT @n")]
         Task<IList<ServerUser>> GetTopKarmaMonthly(int n);
-        [Sql("SELECT UserID, KarmaYearly FROM users ORDER BY KarmaYearly DESC LIMIT @n")]
+        [Sql("SELECT UserID, KarmaYearly FROM users ORDER BY KarmaYearly DESC, RAND() LIMIT @n")]
         Task<IList<ServerUser>> GetTopKarmaYearly(int n);
         [Sql("SELECT COUNT(UserID)+1 FROM users WHERE Level > @level")]
         Task<long> GetLevelRank(string userId, uint level);
