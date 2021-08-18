@@ -15,6 +15,7 @@ using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils.Attributes;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
+using DiscordBot.Extensions;
 
 namespace DiscordBot.Modules
 {
@@ -1024,13 +1025,16 @@ namespace DiscordBot.Modules
 
             // Business as usual
             if (birthdate == default)
+            {
                 await ReplyAsync(
-                        $"Sorry, I couldn't find **{searchName}**'s birthday date. They can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform ! :stuck_out_tongue_winking_eye: ")
+                        $"Sorry, I couldn't find **{searchName}**'s birthday date. They can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform !")
                     .DeleteAfterSeconds(30);
+            }
             else
             {
+                var date = birthdate.ToUnixTimestamp();
                 var message =
-                    $"**{searchName}**'s birthdate: __**{birthdate.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}**__ " +
+                    $"**{searchName}**'s birthdate: **<t:{date}:D>** " +
                     $"({(int)((DateTime.Now - birthdate).TotalDays / 365)}yo)";
 
                 await ReplyAsync(message).DeleteAfterTime(minutes: 3);
@@ -1096,11 +1100,26 @@ namespace DiscordBot.Modules
         {
             from = from.ToUpper();
             to = to.ToUpper();
-
-            // Get USD to fromCurrency rate
-            var fromRate = await _currencyService.GetRate(from);
-            // Get USD to toCurrency rate
-            var toRate = await _currencyService.GetRate(to);
+            
+            double fromRate = -1;
+            double toRate = -1;
+            try
+            {
+                // Get USD to fromCurrency rate
+                fromRate = await _currencyService.GetRate(from);
+                // Get USD to toCurrency rate
+                toRate = await _currencyService.GetRate(to);
+            }
+            catch
+            {
+                var embedBuilder = new EmbedBuilder()
+                    .WithTitle("Currency API Down")
+                    .WithDescription(
+                        "Check [API Status](https://www.currencyconverterapi.com/server-status), and try again in a few minutes.")
+                    .WithColor(Color.Red);
+                await ReplyAsync(embed: embedBuilder.Build()).DeleteAfterSeconds(seconds: 10);
+                return;
+            }
 
             if (!await CurrencyFailedResponse((from, fromRate.Equals(-1)), (from, fromRate.Equals(-1))))
             {
@@ -1116,7 +1135,7 @@ namespace DiscordBot.Modules
         {
             if (from.invalid && to.invalid)
             {
-                await ReplyAsync($"{Context.User.Mention}, {from.name} and {to.name} are invalid currencies or I can't understand them.\nPlease use international currency code (example : **USD** for $, **EUR** for €, **PKR** for pakistani rupee).");
+                await ReplyAsync($"{Context.User.Mention}, {from.name} and {to.name} are invalid currencies or incorrectly used.\nPlease use international currency code (example : **USD** for $, **EUR** for €, **PKR** for pakistani rupee).");
                 return false;
             }
             if (from.invalid)
