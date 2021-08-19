@@ -1121,7 +1121,7 @@ namespace DiscordBot.Modules
                 return;
             }
 
-            if (!await CurrencyFailedResponse((from, fromRate.Equals(-1)), (from, fromRate.Equals(-1))))
+            if (!await CurrencyFailedResponse((from, fromRate.Equals(-1)), (to, toRate.Equals(-1))))
             {
                 await Context.Message.DeleteAfterSeconds(seconds: 1);
                 return;
