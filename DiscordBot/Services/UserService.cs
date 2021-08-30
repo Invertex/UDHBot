@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -28,6 +29,13 @@ namespace DiscordBot.Services
         public readonly string CodeReminderFormattingExample;
         private readonly DatabaseService _databaseService;
         private readonly ILoggingService _loggingService;
+
+        private readonly Regex _x3CodeBlock =
+            new Regex("^(?<CodeBlock>`{3}((?<CS>\\w+?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multiline | RegexOptions.Singleline);
+
+        private readonly Regex _x2CodeBlock = new Regex("^(`{2})[^`].+?([^`]`{2})$", RegexOptions.Multiline);
+        private readonly List<Regex> _codeBlockWarnPatterns;
+        private readonly short _maxCodeBlockLengthWarning = 800;
 
         private readonly List<ulong> _noXpChannels;
 
@@ -101,9 +109,21 @@ namespace DiscordBot.Services
             CodeFormattingExample = @"\`\`\`cs" + Environment.NewLine +
                                      "Write your code on new line here." + Environment.NewLine +
                                      @"\`\`\`" + Environment.NewLine;
-            CodeReminderFormattingExample = CodeFormattingExample + Environment.NewLine +
-                                             "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"";
-
+            
+            CodeReminderFormattingExample = CodeFormattingExample + "*To disable these reminders use \"!disablecodetips\"*";
+            
+            //TODO Detect double code block and tell them to use 3? Seems kinda pointless since all it provides is highlights
+            
+            _codeBlockWarnPatterns = new List<Regex>();
+            // Checks if there is { } in the message
+            _codeBlockWarnPatterns.Add(new Regex(".*?({.+?}).*?", RegexOptions.Singleline));
+            // We look for (if, else if) followed by ( and ) somewhere after. We also check that the ) is end of the line, or followed by comments //
+            _codeBlockWarnPatterns.Add(new Regex("(^if|else\\sif)(\\s?)\\(.+\\)($|.*?\\/\\/)", RegexOptions.Multiline));
+            // Check for a method from start of line (since discord would ignore tab) and if any comments after
+            _codeBlockWarnPatterns.Add(new Regex("^.+?\\(.*?\\);($|.*?\\/\\/)", RegexOptions.Multiline));
+            // Check for some collection of characters being set to some other collection of characters and check if end of line or comment.
+            _codeBlockWarnPatterns.Add(new Regex("^.+? =.+?($|.*?\\/\\/)", RegexOptions.Multiline));
+            
             /* Make sure folders we require exist */
             if (!Directory.Exists($"{_settings.ServerRootPath}/images/profiles/"))
             {
@@ -455,8 +475,10 @@ namespace DiscordBot.Services
 
         public async Task CodeCheck(SocketMessage messageParam)
         {
-            if (messageParam.Author.IsBot)
+            // Don't correct a Bot, don't correct in off-topic
+            if (messageParam.Author.IsBot || messageParam.Channel.Id == _settings.GeneralChannel.Id)
                 return;
+            
             var userId = messageParam.Author.Id;
 
             //Simple check to cover most large code posting cases without being an issue for most non-code messages
@@ -464,31 +486,54 @@ namespace DiscordBot.Services
             if (!CodeReminderCooldown.HasUser(userId))
             {
                 var content = messageParam.Content;
-                //Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
-                var foundCodeTags = Regex.Match(content, ".*?`[^`].*?`", RegexOptions.Singleline).Success;
-                var foundCurlyFries = content.Contains("{") && content.Contains("}");
-                if (!foundCodeTags && foundCurlyFries)
+
+                // We have a smart cookie using ```cs so we assume they're all knowing and abort early to save cpu
+                var foundTrippleCodeBlock = _x3CodeBlock.Match(content);
+                if (foundTrippleCodeBlock.Groups["CS"].Length > 0)
+                    return;
+                else if (foundTrippleCodeBlock.Groups["CodeBlock"].Success)
                 {
-                    CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
-                    var sb = new StringBuilder();
-                    sb.Append(messageParam.Author.Mention)
-                      .AppendLine(
-                          " are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
-                    sb.AppendLine(CodeReminderFormattingExample);
-                    await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 10);
+                    // A ``` codeblock was found, but no CS, let 'em know
+                    await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} when using code blocks remember to use the ***syntax highlights*** to improve readability.\n{CodeReminderFormattingExample}").DeleteAfterSeconds(seconds: 60);
+                    return;
                 }
-                else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.ToLower().Contains("```cs"))
+                
+                // Checks get a bit more expensive from here
+                var foundDoubleCodeBlock = _x2CodeBlock.Match(content).Success;
+
+                int hits = 0;
+                foreach (var regex in _codeBlockWarnPatterns)
                 {
-                    var sb = new StringBuilder();
-                    sb.Append(messageParam.Author.Mention)
-                      .AppendLine(
-                          " Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
-                    sb.AppendLine(CodeReminderFormattingExample);
-                    await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 8);
-                    CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                    hits += regex.Match(content).Captures.Count;
+                }
+                
+                // Some arbitary condition, this means 3 regex captures would be required which should easy enough to trigger without much chance for a false positive.
+                if (!foundDoubleCodeBlock && hits >= 3)
+                {
+                    //! CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                    await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} are you sharing c# scripts? Remember to use codeblocks to help readability!\n{CodeReminderFormattingExample}").DeleteAfterSeconds(seconds: 60);
+                    if (content.Length > _maxCodeBlockLengthWarning)
+                    {
+                        await messageParam.Channel.SendMessageAsync(
+                                $"The code you're sharing is quite long, maybe use a free service like <https://hastebin.com> and share the link here instead.")
+                            .DeleteAfterSeconds(seconds: 60);
+                    }
+                }
+                // If we know there is a codeblock, and at least something that looks like code that isn't just should hopefully be more than {} since 200 characters needed
+                else if (foundDoubleCodeBlock && hits > 0)
+                {
+                    //! CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                    if (content.Length > 200)
+                    {
+                        await messageParam.Channel.SendMessageAsync(
+                            $"{messageParam.Author.Mention} when using code blocks remember to use \\`\\`\\`cs as this will help improve readability for C# scripts.\n{CodeReminderFormattingExample}").DeleteAfterSeconds(seconds: 60);
+                    }
                 }
             }
         }
+        
 
         private async Task ScoldForAtEveryoneUsage(SocketMessage messageParam)
         {
