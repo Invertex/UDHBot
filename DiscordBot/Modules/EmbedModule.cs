@@ -66,10 +66,29 @@ namespace DiscordBot.Modules
         /// </summary>
         [RequireAdmin]
         [Command("embed"), Summary("Generate an embed.")]
-        public async Task EmbedCommand()
+        public async Task EmbedCommand(IMessageChannel channel = null, ulong messageId = 0)
         {
             await Context.Message.DeleteAsync();
-            await EmbedToChannel(Context.Channel);
+            channel ??= Context.Channel;
+            
+            if (Context.Message.Attachments.Count < 1)
+            {
+                await ReplyAsync($"{Context.User.Mention}, you must provide a JSON file or a JSON url.").DeleteAfterSeconds(5);
+                return;
+            }
+            var attachment = Context.Message.Attachments.ElementAt(0);
+            var embed = BuildEmbedFromUrl(attachment.Url);
+
+            await SendEmbedToChannel(embed, channel, messageId);
+        }
+        
+        [Command("embed"), Summary("Generate an embed from an URL (hastebin).")]
+        public async Task EmbedCommand(string url, IMessageChannel channel = null, ulong messageId = 0)
+        {
+            await Context.Message.DeleteAsync();
+            Discord.Embed builtEmbed = await TryGetEmbedFromUrl(url);
+            if (builtEmbed != null)
+                await SendEmbedToChannel(builtEmbed, channel, messageId);
         }
 
         // Checks if the the argument is a url and if the host is supported. If so it will try to return a built embeded object. Returns null if invalid.
@@ -96,42 +115,6 @@ namespace DiscordBot.Modules
                 return null;
             } 
             return builtEmbed;
-        }
-
-        [Command("embed"), Summary("Generate an embed from an URL (hastebin).")]
-        public async Task EmbedCommand(string url)
-        {
-            await Context.Message.DeleteAsync();
-            Discord.Embed builtEmbed = await TryGetEmbedFromUrl(url);
-            if (builtEmbed != null)
-                await SendEmbedToChannel(builtEmbed, Context.Channel);
-        }
-        
-        [Command("send embed"), Summary("Generate an embed from an URL and posts it to a channel, or edits a message if ID passed in and replaces with new embed.")]
-        public async Task EmbedToChannel(string url, IMessageChannel channel, ulong messageId = 0)
-        {
-            Discord.Embed builtEmbed = await TryGetEmbedFromUrl(url);
-            if (builtEmbed != null)
-                await SendEmbedToChannel(builtEmbed, channel, messageId);
-        }
-
-        public async Task CheckThis()
-        {
-            await ReplyAsync("Hel");
-        }
-        
-        [Command("send embed"), Summary("Generate an embed from an URL and posts it to a channel, or edits a message if ID passed in and replaces with new embed.")]
-        public async Task EmbedToChannel(IMessageChannel channel, ulong messageId = 0)
-        {
-            if (Context.Message.Attachments.Count < 1)
-            {
-                await ReplyAsync($"{Context.User.Mention}, you must provide a JSON file or a JSON url.").DeleteAfterSeconds(5);
-                return;
-            }
-            var attachment = Context.Message.Attachments.ElementAt(0);
-            var embed = BuildEmbedFromUrl(attachment.Url);
-
-            await SendEmbedToChannel(embed, channel, messageId);
         }
 
         private Discord.Embed BuildEmbedFromUrl(string url)
