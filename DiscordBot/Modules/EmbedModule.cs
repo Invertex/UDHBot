@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 // ReSharper disable all UnusedMember.Local
 namespace DiscordBot.Modules
 {
+    [RequireAdmin]
     public class EmbedModule : ModuleBase
     {
 
@@ -65,71 +66,99 @@ namespace DiscordBot.Modules
         /// </summary>
         [RequireAdmin]
         [Command("embed"), Summary("Generate an embed.")]
-        public async Task EmbedCommand()
+        public async Task EmbedCommand(IMessageChannel channel = null, ulong messageId = 0)
         {
             await Context.Message.DeleteAsync();
-
+            channel ??= Context.Channel;
+            
             if (Context.Message.Attachments.Count < 1)
             {
                 await ReplyAsync($"{Context.User.Mention}, you must provide a JSON file or a JSON url.").DeleteAfterSeconds(5);
                 return;
             }
-
             var attachment = Context.Message.Attachments.ElementAt(0);
+            var embed = BuildEmbedFromUrl(attachment.Url);
 
-            WebClient webClient = new WebClient();
-            byte[] buffer = webClient.DownloadData(attachment.Url);
-            webClient.Dispose();
-            string json = Encoding.UTF8.GetString(buffer);
-
-            await ReplyAsync(embed: BuildEmbed(json));
+            await SendEmbedToChannel(embed, channel, messageId);
         }
-
+        
         [Command("embed"), Summary("Generate an embed from an URL (hastebin).")]
-        public async Task EmbedCommand(string url)
+        public async Task EmbedCommand(string url, IMessageChannel channel = null, ulong messageId = 0)
         {
             await Context.Message.DeleteAsync();
+            Discord.Embed builtEmbed = await TryGetEmbedFromUrl(url);
+            if (builtEmbed != null)
+                await SendEmbedToChannel(builtEmbed, channel, messageId);
+        }
 
+        // Checks if the the argument is a url and if the host is supported. If so it will try to return a built embeded object. Returns null if invalid.
+        private async Task<Discord.Embed> TryGetEmbedFromUrl(string url)
+        {
             Uri uriResult;
-            bool result = Uri.TryCreate(url, UriKind.Absolute, out uriResult)
-                && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-
+            bool result = Uri.TryCreate(url, UriKind.Absolute, out uriResult) 
+                          && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
             if (!result)
             {
                 await ReplyAsync($"{Context.User.Mention}, the parameter is not a valid URL.").DeleteAfterSeconds(5);
-                return;
+                return null;
             }
-
-            string download_url;
-            switch (uriResult.Host)
+            if (!IsValidHost(uriResult.Host))
             {
-                case "hastebin.com":
-                case "gdl.space":
-                    download_url = $"https://{uriResult.Host}/raw{uriResult.AbsolutePath}";
-                    break;
-                case "hastepaste.com":
-                    download_url = $"https://hastepaste.com/raw{uriResult.AbsolutePath.Substring(5)}";
-                    break;
-                case "pastebin.com":
-                    download_url = $"https://pastebin.com/raw{uriResult.AbsolutePath}";
-                    break;
-                case "pastie.org":
-                    download_url = $"{url}/raw";
-                    break;
-                default:
-                    await ReplyAsync($"{Context.User.Mention}, supported URLs: [https://hastebin.com, https://pastebin.com, https://gdl.space, https://hastepaste.com, http://pastie.org].").DeleteAfterSeconds(5);
-                    return;
+                await ReplyAsync($"{Context.User.Mention}, supported URLs: [https://hastebin.com, https://pastebin.com, https://gdl.space, https://hastepaste.com, http://pastie.org].").DeleteAfterSeconds(5);
+                return null;
             }
+            string download_url = GetDownUrlFromUri(uriResult);
+            var builtEmbed = BuildEmbedFromUrl(download_url);
+            if (builtEmbed.Length == 0)
+            {
+                await ReplyAsync($"Failed to generate embed from url.").DeleteAfterSeconds(seconds: 10f);
+                return null;
+            } 
+            return builtEmbed;
+        }
 
-            Console.WriteLine($"Downloading JSON from {download_url}");
+        private Discord.Embed BuildEmbedFromUrl(string url)
+        {
             WebClient webClient = new WebClient();
-            byte[] buffer = webClient.DownloadData(download_url);
+            byte[] buffer = webClient.DownloadData(url);
             webClient.Dispose();
             string json = Encoding.UTF8.GetString(buffer);
 
-            await ReplyAsync(embed: BuildEmbed(json));
+            return BuildEmbed(json);
         }
 
+        private bool IsValidHost(string url)
+        {
+            switch (url)
+            {
+                case "hastebin.com":
+                case "gdl.space":
+                case "hastepaste.com":
+                case "pastebin.com":
+                case "pastie.org":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private string GetDownUrlFromUri(Uri uri)
+        {
+            switch (uri.Host)
+            {
+                case "hastebin.com":
+                case "gdl.space":
+                    return $"https://{uri.Host}/raw{uri.AbsolutePath}";
+                case "hastepaste.com":
+                    return $"https://hastepaste.com/raw{uri.AbsolutePath.Substring(5)}";
+                case "pastebin.com":
+                    return $"https://pastebin.com/raw{uri.AbsolutePath}";
+                case "pastie.org":
+                    return $"{uri.OriginalString}/raw";
+            }
+            return string.Empty;
+        }
+        
         private Discord.Embed BuildEmbed(string json)
         {
             try
@@ -183,5 +212,78 @@ namespace DiscordBot.Modules
             return null;
         }
 
+        private readonly IEmote _thumbUpEmote = new Emoji("👍");
+
+        private async Task SendEmbedToChannel(Discord.Embed embed, IMessageChannel channel, ulong messageId = 0)
+        {
+            if (embed == null || embed.Length <= 0)
+            {
+                await ReplyAsync("Embed is improperly formatted or corrupt.");
+                return;
+            }
+
+            // If context.channel is same as channel we don't need to confirm details
+            if (Context.Channel != channel)
+            {
+                // Confirm with user it is correct
+                var tempEmbed = await ReplyAsync(embed: embed);
+                var message = await ReplyAsync("If correct, react to this message within 20 seconds to continue.");
+                await message.AddReactionAsync(_thumbUpEmote);
+                // 20 seconds wait?
+                bool confirmedEmbed = false;
+                for (int i = 0; i < 10; i++)
+                {
+                    await Task.Delay(2000);
+                    var reactions = await message.GetReactionUsersAsync(_thumbUpEmote, 10).FlattenAsync();
+                    if (reactions.Count() > 1)
+                    {
+                        // Just in case other people are trying to react to the message,we check all reactions and confirm we got one from the user generating the embed.
+                        foreach (var reaction in reactions)
+                        {
+                            if (reaction.Id == Context.User.Id)
+                            {
+                                confirmedEmbed = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    i++;
+                }
+
+                await tempEmbed.DeleteAsync();
+                await message.DeleteAsync();
+                // If no reaction, we assume it was bad and abort
+                if (!confirmedEmbed)
+                {
+                    await ReplyAsync("Reaction not detected, embed aborted.").DeleteAfterSeconds(seconds: 5);
+                    return;
+                }
+            }
+
+            if (messageId != 0)
+            {
+                var messageToEdit = await channel.GetMessageAsync(messageId) as IUserMessage;
+                if (messageToEdit == null)
+                {
+                    await ReplyAsync($"Bot doesn't own the message ID ``{messageId}`` used").DeleteAfterSeconds(5);
+                    return;
+                }
+
+                // Modify the old message, we clear any text it might have had.
+                await messageToEdit.ModifyAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = embed;
+                });
+                await ReplyAsync("Message replaced!").DeleteAfterSeconds(5);
+            }
+            else
+            {
+                await channel.SendMessageAsync(embed: embed);
+                if (Context.Channel != channel)
+                    await ReplyAsync("Embed Posted!").DeleteAfterSeconds(5);
+            }
+        }
     }
 }
