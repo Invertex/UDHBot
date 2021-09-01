@@ -15,6 +15,7 @@ using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils.Attributes;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
+using DiscordBot.Extensions;
 
 namespace DiscordBot.Modules
 {
@@ -449,7 +450,7 @@ namespace DiscordBot.Modules
 
         [Command("TopKarma"), Priority(5)]
         [Summary("Display top 10 users by karma.")]
-        [Alias("karmarank", "rankingkarma")]
+        [Alias("karmarank", "rankingkarma", "topk")]
         public async Task TopKarma()
         {
             var users = await _databaseService.Query().GetTopKarma(10);
@@ -459,20 +460,70 @@ namespace DiscordBot.Modules
             await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
         }
 
+        [Command("TopKarmaWeekly"), Priority(5)]
+        [Summary("Display weekly top 10 users by karma.")]
+        [Alias("karmarankweekly", "rankingkarmaweekly", "topkw")]
+        public async Task TopKarmaWeekly()
+        {
+            var users = await _databaseService.Query().GetTopKarmaWeekly(10);
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.KarmaWeekly)).ToList();
+
+            var embed = await GenerateRankEmbedFromList(userList, "Weekly Karma");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
+        }
+
+        [Command("TopKarmaMonthly"), Priority(5)]
+        [Summary("Display monthly top 10 users by karma.")]
+        [Alias("karmarankmonthly", "rankingkarmamonthly", "topkm")]
+        public async Task TopKarmaMonthly()
+        {
+            var users = await _databaseService.Query().GetTopKarmaMonthly(10);
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.KarmaMonthly)).ToList();
+
+            var embed = await GenerateRankEmbedFromList(userList, "Monthly Karma");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
+        }
+
+        [Command("TopKarmaYearly"), Priority(5)]
+        [Summary("Display tearly top 10 users by karma.")]
+        [Alias("karmaranktearly", "rankingkarmayearly", "topky")]
+        public async Task TopKarmaYearly()
+        {
+            var users = await _databaseService.Query().GetTopKarmaYearly(10);
+            var userList = users.Select(user => (ulong.Parse(user.UserID), user.KarmaYearly)).ToList();
+
+            var embed = await GenerateRankEmbedFromList(userList, "Yearly Karma");
+            await ReplyAsync(embed: embed).DeleteAfterTime(minutes: 1);
+        }
+
         private async Task<Embed> GenerateRankEmbedFromList(List<(ulong userID, uint value)> data, string labelName)
         {
             var embedBuilder = new EmbedBuilder();
-            embedBuilder.Title = "Top 10 Users";
-            embedBuilder.Description = $"The best of the best, by {labelName}.";
+            embedBuilder.Title = $"Top 10 Users by {labelName}";
+            embedBuilder.Footer = new EmbedFooterBuilder();
+            embedBuilder.Footer.Text = $"The best of the best, by {labelName}.";
 
+            var maxUsernameLength = data
+            .Select(async x => await Context.Guild.GetUserAsync(x.userID))
+            .Select(x => x.Result)
+            .Max(x => (x?.Username ?? "Unknown User").Length);
+
+            try {
+            var str = "";
             for (var i = 0; i < data.Count; i++)
             {
                 var user = await Context.Guild.GetUserAsync(data[i].userID);
-                var username = user?.Username ?? "Unknown user"; // For cases where the user has left the guild
-                
-                embedBuilder.AddField($"{i + 1}. {username}", $"{labelName}: {data[i].value}");
+                var username = user?.Username ?? "Unknown User"; // For cases where the user has left the guild
+                int rankPadding = (int) Math.Floor(Math.Log10(data.Count));
+
+                str += $"`{(i + 1).ToString().PadLeft(rankPadding + 1)}.` **`{username.PadRight(maxUsernameLength, '\u2000')}`** `{labelName}: {data[i].value}`\n";
             }
-            
+            embedBuilder.Description = str;
+
+            } catch (Exception e) {
+                Console.Error.WriteLine(e);
+            }
+
             return embedBuilder.Build();
         }
 
@@ -974,13 +1025,16 @@ namespace DiscordBot.Modules
 
             // Business as usual
             if (birthdate == default)
+            {
                 await ReplyAsync(
-                        $"Sorry, I couldn't find **{searchName}**'s birthday date. They can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform ! :stuck_out_tongue_winking_eye: ")
+                        $"Sorry, I couldn't find **{searchName}**'s birthday date. They can add it at https://docs.google.com/forms/d/e/1FAIpQLSfUglZtJ3pyMwhRk5jApYpvqT3EtKmLBXijCXYNwHY-v-lKxQ/viewform !")
                     .DeleteAfterSeconds(30);
+            }
             else
             {
+                var date = birthdate.ToUnixTimestamp();
                 var message =
-                    $"**{searchName}**'s birthdate: __**{birthdate.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}**__ " +
+                    $"**{searchName}**'s birthdate: **<t:{date}:D>** " +
                     $"({(int)((DateTime.Now - birthdate).TotalDays / 365)}yo)";
 
                 await ReplyAsync(message).DeleteAfterTime(minutes: 3);
@@ -1046,13 +1100,28 @@ namespace DiscordBot.Modules
         {
             from = from.ToUpper();
             to = to.ToUpper();
+            
+            double fromRate = -1;
+            double toRate = -1;
+            try
+            {
+                // Get USD to fromCurrency rate
+                fromRate = await _currencyService.GetRate(from);
+                // Get USD to toCurrency rate
+                toRate = await _currencyService.GetRate(to);
+            }
+            catch
+            {
+                var embedBuilder = new EmbedBuilder()
+                    .WithTitle("Currency API Down")
+                    .WithDescription(
+                        "Check [API Status](https://www.currencyconverterapi.com/server-status), and try again in a few minutes.")
+                    .WithColor(Color.Red);
+                await ReplyAsync(embed: embedBuilder.Build()).DeleteAfterSeconds(seconds: 10);
+                return;
+            }
 
-            // Get USD to fromCurrency rate
-            var fromRate = await _currencyService.GetRate(from);
-            // Get USD to toCurrency rate
-            var toRate = await _currencyService.GetRate(to);
-
-            if (!await CurrencyFailedResponse((from, fromRate.Equals(-1)), (from, fromRate.Equals(-1))))
+            if (!await CurrencyFailedResponse((from, fromRate.Equals(-1)), (to, toRate.Equals(-1))))
             {
                 await Context.Message.DeleteAfterSeconds(seconds: 1);
                 return;
@@ -1066,7 +1135,7 @@ namespace DiscordBot.Modules
         {
             if (from.invalid && to.invalid)
             {
-                await ReplyAsync($"{Context.User.Mention}, {from.name} and {to.name} are invalid currencies or I can't understand them.\nPlease use international currency code (example : **USD** for $, **EUR** for €, **PKR** for pakistani rupee).");
+                await ReplyAsync($"{Context.User.Mention}, {from.name} and {to.name} are invalid currencies or incorrectly used.\nPlease use international currency code (example : **USD** for $, **EUR** for €, **PKR** for pakistani rupee).");
                 return false;
             }
             if (from.invalid)
