@@ -58,6 +58,7 @@ namespace DiscordBot.Settings.Deserialized
         public string ComplaintChannelPrefix { get; set; }
         public ulong ClosedComplaintCategoryId { get; set; }
         public string ClosedComplaintChannelPrefix { get; set; }
+        public string IPGeolocationAPIKey { get; set; }
     }
 
     #region Role Group Collections
