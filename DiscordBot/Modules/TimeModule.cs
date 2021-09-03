@@ -44,20 +44,11 @@ namespace DiscordBot.Modules
             public int dst_savings;
         }
 #pragma warning restore 0649
-
-        private List<string> _commandList = new List<string>();
-
         private Settings.Deserialized.Settings _settings;
 
         public TimeModule(Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
         {
             _settings = settings;
-
-            Task.Run(async () =>
-            {
-                var commands = await commandHandlingService.GetCommandList("TimeModule", true, true, false);
-                _commandList = commands.MessageSplitToSize();
-            });
         }
 
         [Command("time"), Alias("timezone"), Summary("Find the locale time of a location.")]
