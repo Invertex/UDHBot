@@ -83,7 +83,7 @@ namespace DiscordBot.Modules
             catch (Exception e)
             {
                 Console.Error.WriteLine(e);
-                await ReplyAsync($"{e.Message}");
+                await ReplyAsync("Provided location was not found or the API is down.");
             }
         }
     }
