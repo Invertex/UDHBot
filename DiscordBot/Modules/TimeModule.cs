@@ -4,8 +4,6 @@ using System.Net;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using DiscordBot.Extensions;
-using DiscordBot.Services;
 using Newtonsoft.Json;
 
 // ReSharper disable all UnusedMember.Local
@@ -46,7 +44,7 @@ namespace DiscordBot.Modules
 #pragma warning restore 0649
         private readonly Settings.Deserialized.Settings _settings;
 
-        public TimeModule(Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
+        public TimeModule(Settings.Deserialized.Settings settings)
         {
             _settings = settings;
         }
