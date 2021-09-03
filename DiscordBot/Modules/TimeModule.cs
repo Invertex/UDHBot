@@ -44,7 +44,7 @@ namespace DiscordBot.Modules
             public int dst_savings;
         }
 #pragma warning restore 0649
-        private Settings.Deserialized.Settings _settings;
+        private readonly Settings.Deserialized.Settings _settings;
 
         public TimeModule(Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
         {
