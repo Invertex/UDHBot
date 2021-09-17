@@ -16,6 +16,7 @@ using DiscordBot.Utils.Attributes;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
 using DiscordBot.Extensions;
+using DiscordBot.Utils;
 using Newtonsoft.Json.Linq;
 
 
@@ -1054,6 +1055,7 @@ namespace DiscordBot.Modules
         public async Task FahrenheitToCelsius(float f)
         {
             await ReplyAsync($"{Context.User.Mention} {f}°F is {Math.Round((f - 32) * 0.555555f, 2)}°C.");
+            await ReplyAsync($"{Context.User.Mention} {f}°F is {MathUtility.FahrenheitToCelsius(f)}°C.");
         }
 
         [Command("CtoF"), Priority(28)]
@@ -1061,6 +1063,7 @@ namespace DiscordBot.Modules
         public async Task CelsiusToFahrenheit(float c)
         {
             await ReplyAsync($"{Context.User.Mention}  {c}°C is {Math.Round(c * 1.8f + 32, 2)}°F");
+            await ReplyAsync($"{Context.User.Mention}  {c}°C is {MathUtility.CelsiusToFahrenheit(c)}°F");
         }
 
         #endregion
