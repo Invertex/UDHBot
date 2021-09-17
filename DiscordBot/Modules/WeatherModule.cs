@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 namespace DiscordBot.Modules
 {
     // Allows UserModule !help to show commands from this module
-    [Group("UserModule")]
+    [Group("UserModule"), Alias("")]
     public class WeatherModule : ModuleBase
     {
         #region Weather Results
