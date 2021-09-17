@@ -1054,7 +1054,6 @@ namespace DiscordBot.Modules
         [Summary("Converts a temperature in fahrenheit to celsius. Syntax : !ftoc temperature")]
         public async Task FahrenheitToCelsius(float f)
         {
-            await ReplyAsync($"{Context.User.Mention} {f}°F is {Math.Round((f - 32) * 0.555555f, 2)}°C.");
             await ReplyAsync($"{Context.User.Mention} {f}°F is {MathUtility.FahrenheitToCelsius(f)}°C.");
         }
 
@@ -1062,7 +1061,6 @@ namespace DiscordBot.Modules
         [Summary("Converts a temperature in celsius to fahrenheit. Syntax : !ftoc temperature")]
         public async Task CelsiusToFahrenheit(float c)
         {
-            await ReplyAsync($"{Context.User.Mention}  {c}°C is {Math.Round(c * 1.8f + 32, 2)}°F");
             await ReplyAsync($"{Context.User.Mention}  {c}°C is {MathUtility.CelsiusToFahrenheit(c)}°F");
         }
 
