@@ -178,9 +178,8 @@ namespace DiscordBot.Services
                 user = await _databaseService.Query().GetUser(userId.ToString());
             }
 
-            if (messageParam.Author.Activity != null)
-                if (Regex.Match(messageParam.Author.Activity.Name, "(Unity.+)").Length > 0)
-                    bonusXp += baseXp / 4;
+            if (messageParam.Author.Activities.Any(a => Regex.Match(a.Name, "(Unity.+)").Length > 0))
+                bonusXp += baseXp / 4;
 
             bonusXp += baseXp * (1f + user.Karma / 100f);
 
@@ -584,8 +583,9 @@ namespace DiscordBot.Services
             return (em.Build());
         }
 
-        private async Task UserUpdated(SocketGuildUser oldUser, SocketGuildUser user)
+        private async Task UserUpdated(Cacheable<SocketGuildUser, ulong> oldUserCached, SocketGuildUser user)
         {
+            var oldUser = await oldUserCached.GetOrDownloadAsync();
             if (oldUser.Nickname != user.Nickname)
             {
                 await _loggingService.LogAction(
