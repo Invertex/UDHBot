@@ -15,7 +15,6 @@ using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils.Attributes;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
-using DiscordBot.Extensions;
 
 namespace DiscordBot.Modules
 {
