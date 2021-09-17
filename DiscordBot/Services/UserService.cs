@@ -546,7 +546,7 @@ namespace DiscordBot.Services
 
         public async Task<bool> DMFormattedWelcome(SocketGuildUser user)
         {
-            var dm = await user.GetOrCreateDMChannelAsync();
+            var dm = await user.CreateDMChannelAsync();
             return await dm.TrySendMessage(embed: GetWelcomeEmbed(user.Username));
         }
 
