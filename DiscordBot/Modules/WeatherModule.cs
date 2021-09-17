@@ -4,11 +4,12 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
-using DiscordBot.Utils;
 using Newtonsoft.Json;
 
 namespace DiscordBot.Modules
 {
+    // Allows UserModule !help to show commands from this module
+    [Group("UserModule")]
     public class WeatherModule : ModuleBase
     {
         #region Weather Results
@@ -79,15 +80,15 @@ namespace DiscordBot.Modules
 #pragma warning restore 0649
 
         #endregion
-        
+
         [Command("Temperature")]
         [Summary("Attempts to provide the temperature of the city provided.")]
-        [Alias("temp")]
+        [Alias("temp"), Priority(20)]
         public async Task WeatherTemperature(params string[] city)
         {
             string cityName = string.Join(" ", city);
             Result res = await GetWeather(city: cityName);
-            
+
             // We could show the age of the data, but prob isn't worth it.
             // var dataAge = DateTime.UtcNow - DateTimeOffset.FromUnixTimeSeconds(res.dt);
 
@@ -96,7 +97,7 @@ namespace DiscordBot.Modules
                 await ReplyAsync("API Returned no results.");
                 return;
             }
-            
+
             EmbedBuilder builder = new EmbedBuilder()
                 .WithTitle($"{res.name} Temperature")
                 .AddField($"Currently: **{Math.Round(res.main.Temp, 1)}°C** [Feels like {Math.Round(res.main.Feels, 1)}°C]",
@@ -105,18 +106,18 @@ namespace DiscordBot.Modules
                 .WithFooter($"Requested by {Context.User}");
 
             await ReplyAsync(embed: builder.Build());
-            
+
             await Context.Message.DeleteAfterSeconds(seconds: 60f);
         }
 
         // https://openweathermap.org/current#call
-        [Command("Weather")]
+        [Command("Weather"), Priority(20)]
         [Summary("Attempts to provide the weather of the city provided.")]
         public async Task WeatherWeather(params string[] city)
         {
             string cityName = string.Join(" ", city);
             Result res = await GetWeather(city: cityName);
-            
+
             // We could show the age of the data, but prob isn't worth it.
             // var dataAge = DateTime.UtcNow - DateTimeOffset.FromUnixTimeSeconds(res.dt);
 
@@ -125,17 +126,17 @@ namespace DiscordBot.Modules
                 await ReplyAsync("API Returned no results.");
                 return;
             }
-            
+
             EmbedBuilder builder = new EmbedBuilder()
                 .WithTitle($"{res.name} Weather")
                 .AddField($"Weather: **{Math.Round(res.main.Temp, 1)}°C** with {res.weather[0].Description}",
                     $"Min: **{Math.Round(res.main.Min, 1)}°C** | Max: **{Math.Round(res.main.Max, 1)}°C**\n" +
-                    $"Wind Speed: {Math.Round((res.wind.Speed*60f*60f) / 1000f, 2)} km/h, Cloud cover: {res.clouds.all}%")
+                    $"Wind Speed: {Math.Round((res.wind.Speed * 60f * 60f) / 1000f, 2)} km/h, Cloud cover: {res.clouds.all}%")
                 .WithThumbnailUrl($"https://openweathermap.org/img/wn/{res.weather[0].Icon}@2x.png")
                 .WithFooter($"Requested by {Context.User}");
 
             await ReplyAsync(embed: builder.Build());
-            
+
             await Context.Message.DeleteAfterSeconds(seconds: 60f);
         }
 
