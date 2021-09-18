@@ -4,152 +4,259 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
+using DiscordBot.Utils;
 using Newtonsoft.Json;
 
 namespace DiscordBot.Modules
 {
+    // https://openweathermap.org/current#call
+    
     // Allows UserModule !help to show commands from this module
     [Group("UserModule"), Alias("")]
     public class WeatherModule : ModuleBase
     {
         #region Weather Results
+
 #pragma warning disable 0649
         // ReSharper disable InconsistentNaming
-        public class Coord
+        public class WeatherCotainer
         {
-            public double Lon { get; set; }
-            public double Lat { get; set; }
-        }
+            public class Coord
+            {
+                public double Lon { get; set; }
+                public double Lat { get; set; }
+            }
 
-        public class Weather
-        {
-            public int id { get; set; }
-            [JsonProperty("main")] public string Name { get; set; }
-            public string Description { get; set; }
-            public string Icon { get; set; }
-        }
+            public class Weather
+            {
+                public int id { get; set; }
+                [JsonProperty("main")] public string Name { get; set; }
+                public string Description { get; set; }
+                public string Icon { get; set; }
+            }
 
-        public class Main
-        {
-            public float Temp { get; set; }
-            [JsonProperty("feels_like")] public double Feels { get; set; }
-            [JsonProperty("temp_min")] public double Min { get; set; }
-            [JsonProperty("temp_max")] public double Max { get; set; }
-            public int Pressure { get; set; }
-            public int Humidity { get; set; }
-        }
+            public class Main
+            {
+                public float Temp { get; set; }
+                [JsonProperty("feels_like")] public double Feels { get; set; }
+                [JsonProperty("temp_min")] public double Min { get; set; }
+                [JsonProperty("temp_max")] public double Max { get; set; }
+                public int Pressure { get; set; }
+                public int Humidity { get; set; }
+            }
 
-        public class Wind
-        {
-            public double Speed { get; set; }
-            public int Deg { get; set; }
-        }
+            public class Wind
+            {
+                public double Speed { get; set; }
+                public int Deg { get; set; }
+            }
 
-        public class Clouds
-        {
-            public int all { get; set; }
-        }
+            public class Clouds
+            {
+                public int all { get; set; }
+            }
 
-        public class Sys
-        {
-            public int type { get; set; }
-            public int id { get; set; }
-            public double message { get; set; }
-            public string country { get; set; }
-            public int sunrise { get; set; }
-            public int sunset { get; set; }
-        }
+            public class Sys
+            {
+                public int type { get; set; }
+                public int id { get; set; }
+                public double message { get; set; }
+                public string country { get; set; }
+                public int sunrise { get; set; }
+                public int sunset { get; set; }
+            }
 
-        public class Result
-        {
-            public Coord coord { get; set; }
-            public List<Weather> weather { get; set; }
-            public string @base { get; set; }
-            public Main main { get; set; }
-            public int visibility { get; set; }
-            public Wind wind { get; set; }
-            public Clouds clouds { get; set; }
-            public int dt { get; set; }
-            public Sys sys { get; set; }
-            public int timezone { get; set; }
-            public int id { get; set; }
-            public string name { get; set; }
-            public int cod { get; set; }
+            public class Result
+            {
+                public Coord coord { get; set; }
+                public List<Weather> weather { get; set; }
+                public string @base { get; set; }
+                public Main main { get; set; }
+                public int visibility { get; set; }
+                public Wind wind { get; set; }
+                public Clouds clouds { get; set; }
+                public int dt { get; set; }
+                public Sys sys { get; set; }
+                public int timezone { get; set; }
+                public int id { get; set; }
+                public string name { get; set; }
+                public int cod { get; set; }
+            }
         }
-        // ReSharper restore InconsistentNaming
-#pragma warning restore 0649
 
         #endregion
+        #region Pollution Results
+
+        public class PollutionContainer
+        {
+            public class Coord
+            {
+                public double lon { get; set; }
+                public double lat { get; set; }
+            }
+            public class Main
+            {
+                public int aqi { get; set; }
+            }
+            public class Components
+            {
+                [JsonProperty("co")] public double CarbonMonoxide { get; set; }
+                [JsonProperty("no")] public double NitrogenMonoxide { get; set; }
+                [JsonProperty("no2")] public double NitrogenDioxide { get; set; }
+                [JsonProperty("o3")] public double Ozone { get; set; }
+                [JsonProperty("so2")] public double SulphurDioxide { get; set; }
+                [JsonProperty("pm2_5")] public double FineParticles { get; set; }
+                [JsonProperty("pm10")] public double CoarseParticulate { get; set; }
+                [JsonProperty("nh3")] public double Ammonia { get; set; }
+            }
+
+            public class List
+            {
+                public Main main { get; set; }
+                public Components components { get; set; }
+                public int dt { get; set; }
+            }
+            public class Result
+            {
+                public Coord coord { get; set; }
+                public List<List> list { get; set; }
+            }
+        }
+
+        private List<string> AQI_Index = new List<string>()
+            {"Invalid", "Good", "Fair", "Moderate", "Poor", "Very Poor"};
+        
+        // ReSharper restore InconsistentNaming
+#pragma warning restore 0649
+        #endregion
+        
+        private readonly string _weatherApiKey;
+
+        public WeatherModule(Settings.Deserialized.Settings settings)
+        {
+            _weatherApiKey = settings.WeatherAPIKey;
+        }
+        
+        [Command("WeatherHelp")]
+        [Summary("How to use the weather module.")]
+        [Priority(100)]
+        public async Task WeatherHelp()
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+                .WithTitle("Weather Module Help")
+                .WithDescription(
+                    "If the city isn't correct you will need to include the correct [city codes](https://www.iso.org/obp/ui/#search).\n**Example Usage**: *!Weather Wellington, UK*");
+            await Context.Message.DeleteAsync();
+            await ReplyAsync(embed:builder.Build()).DeleteAfterSeconds(seconds: 30);
+        }
 
         [Command("Temperature")]
         [Summary("Attempts to provide the temperature of the city provided.")]
         [Alias("temp"), Priority(20)]
-        public async Task WeatherTemperature(params string[] city)
+        public async Task Temperature(params string[] city)
         {
-            string cityName = string.Join(" ", city);
-            Result res = await GetWeather(city: cityName);
-
-            // We could show the age of the data, but prob isn't worth it.
-            // var dataAge = DateTime.UtcNow - DateTimeOffset.FromUnixTimeSeconds(res.dt);
-
-            if (res == null)
-            {
-                await ReplyAsync("API Returned no results.");
+            WeatherCotainer.Result res = await GetWeather(city: string.Join(" ", city));
+            if (! await IsResultsValid(res))
                 return;
-            }
 
             EmbedBuilder builder = new EmbedBuilder()
-                .WithTitle($"{res.name} Temperature")
-                .AddField($"Currently: **{Math.Round(res.main.Temp, 1)}°C** [Feels like {Math.Round(res.main.Feels, 1)}°C]",
-                    $"Humidity: {res.main.Humidity}% | Weather: {res.weather[0].Name} (*{res.weather[0].Description}*)")
-                .WithThumbnailUrl($"https://openweathermap.org/img/wn/{res.weather[0].Icon}@2x.png")
-                .WithFooter($"Requested by {Context.User}");
+                .WithTitle($"{res.name} Temperature ({res.sys.country})")
+                .WithDescription(
+                    $"Currently: **{Math.Round(res.main.Temp, 1)}°C** [Feels like **{Math.Round(res.main.Feels, 1)}°C**]")
+                .WithColor(GetColour(res.main.Temp));
 
             await ReplyAsync(embed: builder.Build());
-
-            await Context.Message.DeleteAfterSeconds(seconds: 60f);
         }
-
-        // https://openweathermap.org/current#call
+        
         [Command("Weather"), Priority(20)]
         [Summary("Attempts to provide the weather of the city provided.")]
-        public async Task WeatherWeather(params string[] city)
+        public async Task CurentWeather(params string[] city)
         {
-            string cityName = string.Join(" ", city);
-            Result res = await GetWeather(city: cityName);
-
-            // We could show the age of the data, but prob isn't worth it.
-            // var dataAge = DateTime.UtcNow - DateTimeOffset.FromUnixTimeSeconds(res.dt);
-
-            if (res == null)
-            {
-                await ReplyAsync("API Returned no results.");
+            WeatherCotainer.Result res = await GetWeather(city: string.Join(" ", city));
+            if (! await IsResultsValid(res))
                 return;
-            }
-
+            
             EmbedBuilder builder = new EmbedBuilder()
-                .WithTitle($"{res.name} Weather")
-                .AddField($"Weather: **{Math.Round(res.main.Temp, 1)}°C** with {res.weather[0].Description}",
-                    $"Min: **{Math.Round(res.main.Min, 1)}°C** | Max: **{Math.Round(res.main.Max, 1)}°C**\n" +
-                    $"Wind Speed: {Math.Round((res.wind.Speed * 60f * 60f) / 1000f, 2)} km/h, Cloud cover: {res.clouds.all}%")
+                .WithTitle($"{res.name} Weather ({res.sys.country})")
+                .AddField(
+                    $"Weather: **{Math.Round(res.main.Temp, 1)}°C** [Feels like **{Math.Round(res.main.Feels, 1)}°C**]",
+                    $"Min: **{Math.Round(res.main.Min, 1)}°C** | Max: **{Math.Round(res.main.Max, 1)}°C**\n")
                 .WithThumbnailUrl($"https://openweathermap.org/img/wn/{res.weather[0].Icon}@2x.png")
-                .WithFooter($"Requested by {Context.User}");
+                .WithFooter(
+                    $"{res.clouds.all}% cloud cover with {Math.Round((res.wind.Speed * 60f * 60f) / 1000f, 2)} km/h winds & {res.main.Humidity}% humidity.")
+                .WithColor(GetColour(res.main.Temp));
 
             await ReplyAsync(embed: builder.Build());
+        }
+        
+        [Command("Pollution"), Priority(21)]
+        [Summary("Attempts to provide the pollution conditions of the city provided.")]
+        public async Task Pollution(params string[] city)
+        {
+            WeatherCotainer.Result res = await GetWeather(city: string.Join(" ", city));
+            if (! await IsResultsValid(res))
+                return;
 
-            await Context.Message.DeleteAfterSeconds(seconds: 60f);
+            // We can't really combine the call as having WeatherResults helps with other details
+            PollutionContainer.Result polResult = await GetPollution(Math.Round(res.coord.Lon, 4), Math.Round(res.coord.Lat, 4));
+
+            EmbedBuilder builder = new EmbedBuilder()
+                .WithTitle($"{res.name} Pollution")
+                .WithDescription(
+                    $"Air Quality Index: **{AQI_Index[polResult.list[0].main.aqi]}**\n" +
+                    $"CO: {polResult.list[0].components.CarbonMonoxide}, NO: {polResult.list[0].components.NitrogenMonoxide}, " +
+                    $"NO2: {polResult.list[0].components.NitrogenDioxide}, O3: {polResult.list[0].components.Ozone}\n" +
+                    $"SO2: {polResult.list[0].components.SulphurDioxide}, PM2.5: {polResult.list[0].components.FineParticles}, " +
+                    $"PM10 : {polResult.list[0].components.CoarseParticulate}, NH3 : {polResult.list[0].components.Ammonia}");
+
+            await ReplyAsync(embed: builder.Build());
         }
 
-        public async Task<Result> GetWeather(string city, string countryCode = "",
-            string unit = "metric")
+        public async Task<WeatherCotainer.Result> GetWeather(string city, string unit = "metric")
         {
-            var api = "b091072fdf96759332a05b63d06d1d44";
-            var query =
-                $"https://api.openweathermap.org/data/2.5/weather?q={city}{countryCode}&appid={api}&units={unit}";
+            var query = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={_weatherApiKey}&units={unit}";
+            return await  GetAndDeserializedObject<WeatherCotainer.Result>(query);
+        }
+        
+        public async Task<PollutionContainer.Result> GetPollution(double lon, double lat)
+        {
+            var query = $"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={_weatherApiKey}";
+            return await GetAndDeserializedObject<PollutionContainer.Result>(query);
+        }
 
+        private async Task<T> GetAndDeserializedObject<T>(string query)
+        {
             var result = await InternetExtensions.GetHttpContents(query);
-
-            return JsonConvert.DeserializeObject<Result>(result);
+            var resultObject = JsonConvert.DeserializeObject<T>(result);
+            if (resultObject == null)
+            {
+                ConsoleLogger.Log($"WeatherModule Failed to Deserialize object", Severity.Error);
+            }
+            return resultObject;
+        }
+        
+        private async Task<bool> IsResultsValid<T>(T res)
+        {
+            if (res != null) return true;
+            
+            await ReplyAsync("API Returned no results.");
+            return false;
+        }
+        /// <summary>
+        /// Crude fixed colour to temp range.
+        /// </summary>
+        private Color GetColour(float temp)
+        {
+            // We could lerp between values, but colour lerping is weird
+            return temp switch
+            {
+                < 0f => new Color(187, 221, 255),
+                < 10f => new Color(187, 255, 255),
+                < 20f => new Color(230, 253, 249),
+                < 30f => new Color(253, 234, 230),
+                < 40f => new Color(255, 102, 102),
+                _ => new Color(255, 0, 0)
+            };
         }
     }
 }
