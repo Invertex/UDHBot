@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -198,16 +199,40 @@ namespace DiscordBot.Modules
                 return;
 
             // We can't really combine the call as having WeatherResults helps with other details
-            PollutionContainer.Result polResult = await GetPollution(Math.Round(res.coord.Lon, 4), Math.Round(res.coord.Lat, 4));
+            PollutionContainer.Result polResult =
+                await GetPollution(Math.Round(res.coord.Lon, 4), Math.Round(res.coord.Lat, 4));
+
+
+            var comp = polResult.list[0].components;
+            double combined = comp.CarbonMonoxide + comp.NitrogenMonoxide + comp.NitrogenDioxide + comp.Ozone +
+                              comp.SulphurDioxide + comp.FineParticles + comp.CoarseParticulate + comp.Ammonia;
+
+            List<(string, string)> visibleData = new List<(string, string)>()
+            {
+                ("CO", $"{((comp.CarbonMonoxide / combined) * 100f):F2}%"),
+                ("NO", $"{((comp.NitrogenMonoxide / combined) * 100f):F2}%"),
+                ("NO2", $"{((comp.NitrogenDioxide / combined) * 100f):F2}%"),
+                ("O3", $"{((comp.Ozone / combined) * 100f):F2}%"),
+                ("SO2", $"{((comp.SulphurDioxide / combined) * 100f):F2}%"),
+                ("PM25", $"{((comp.FineParticles / combined) * 100f):F2}%"),
+                ("PM10", $"{((comp.CoarseParticulate / combined) * 100f):F2}%"),
+                ("NH3", $"{((comp.Ammonia / combined) * 100f):F2}%"),
+            };
+
+            var maxPercentLength = visibleData.Max(x => x.Item2.Length);
+            var maxNameLength = visibleData.Max(x => x.Item1.Length);
+
+            var desc = string.Empty;
+            for (var i = 0; i < visibleData.Count; i++)
+            {
+                desc += $"`{visibleData[i].Item1.PadLeft(maxNameLength)} {visibleData[i].Item2.PadLeft(maxPercentLength, '\u2000')}`|";
+                if (i == 3)
+                    desc += "\n";
+            }
 
             EmbedBuilder builder = new EmbedBuilder()
-                .WithTitle($"{res.name} Pollution")
-                .WithDescription(
-                    $"Air Quality Index: **{AQI_Index[polResult.list[0].main.aqi]}**\n" +
-                    $"CO: {polResult.list[0].components.CarbonMonoxide}, NO: {polResult.list[0].components.NitrogenMonoxide}, " +
-                    $"NO2: {polResult.list[0].components.NitrogenDioxide}, O3: {polResult.list[0].components.Ozone}\n" +
-                    $"SO2: {polResult.list[0].components.SulphurDioxide}, PM2.5: {polResult.list[0].components.FineParticles}, " +
-                    $"PM10 : {polResult.list[0].components.CoarseParticulate}, NH3 : {polResult.list[0].components.Ammonia}");
+                .WithTitle($"{res.name} Pollution ({res.sys.country})")
+                .AddField($"Air Quality: **{AQI_Index[polResult.list[0].main.aqi]}** [Pollutants {combined:F2}μg/m3]\n", desc);
 
             await ReplyAsync(embed: builder.Build());
         }
