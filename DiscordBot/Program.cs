@@ -32,7 +32,8 @@ namespace DiscordBot
             {
                 LogLevel = LogSeverity.Verbose,
                 AlwaysDownloadUsers = true,
-                MessageCacheSize = 50
+                MessageCacheSize = 50,
+                GatewayIntents = GatewayIntents.All,
             });
 
             _commandService = new CommandService(new CommandServiceConfig

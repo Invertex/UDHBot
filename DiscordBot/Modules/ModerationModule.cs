@@ -126,7 +126,7 @@ namespace DiscordBot.Modules
             await _logging.LogAction(
                 $"{Context.User.Username} has muted {u.Username} ({u.Id}) for {Utils.Utils.FormatTime(seconds)} ({seconds} seconds). Reason : {message}");
 
-            var dm = await user.GetOrCreateDMChannelAsync(new RequestOptions());
+            var dm = await user.CreateDMChannelAsync(new RequestOptions());
             if (!await dm.TrySendMessage(
                 $"You have been muted from UDC for **{Utils.Utils.FormatTime(seconds)}** for the following reason : **{message}**. " +
                 "This is not appealable and any tentative to avoid it will result in your permanent ban."))
