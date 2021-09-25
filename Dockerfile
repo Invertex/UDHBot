@@ -14,7 +14,7 @@ FROM mcr.microsoft.com/dotnet/runtime:5.0
 
 WORKDIR /app/
 
-COPY --from=build /app/bin/Release/netcoreapp3.1/ ./
+COPY --from=build /app/bin/Release/netcoreapp5.0/ ./
 
 RUN echo "deb http://httpredir.debian.org/debian buster main contrib" > /etc/apt/sources.list
 RUN echo "deb http://security.debian.org/ buster/updates main contrib" >> /etc/apt/sources.list
