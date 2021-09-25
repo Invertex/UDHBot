@@ -150,14 +150,14 @@ namespace DiscordBot.Services
             _isRunning = await StartService();
         }
 
-        private async Task ReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
+        private async Task ReactionAdded(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
             if (!_isRunning)
                 return;
             if (_reactMessages.ContainsKey(message.Id)) await ReactionChangedAsync(reaction.User.Value as IGuildUser, reaction.Emote as Emote, true);
         }
 
-        private async Task ReactionRemoved(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
+        private async Task ReactionRemoved(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
             if (!_isRunning)
                 return;
