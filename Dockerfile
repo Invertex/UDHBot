@@ -10,7 +10,7 @@ RUN dotnet build --configuration Release --no-restore
 
 
 # Build finale image
-FROM mcr.microsoft.com/dotnet/runtime:3.0
+FROM mcr.microsoft.com/dotnet/runtime:5.0
 
 WORKDIR /app/
 
