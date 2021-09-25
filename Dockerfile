@@ -1,5 +1,5 @@
 # Builds application using dotnet's sdk
-FROM mcr.microsoft.com/dotnet/core/sdk:5.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 
 WORKDIR /
 COPY ./DiscordBot/ ./app/
@@ -10,7 +10,7 @@ RUN dotnet build --configuration Release --no-restore
 
 
 # Build finale image
-FROM mcr.microsoft.com/dotnet/core/runtime:3.0
+FROM mcr.microsoft.com/dotnet/runtime:3.0
 
 WORKDIR /app/
 
