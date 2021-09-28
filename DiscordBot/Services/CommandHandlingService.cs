@@ -100,7 +100,15 @@ namespace DiscordBot.Services
             // Execute the command. (result does not indicate a return value,
             // rather an object stating if the command executed successfully)
             var result = await _commandService.ExecuteAsync(context, argPos, _services);
-            if (!result.IsSuccess) await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
+
+            if (!result.IsSuccess)
+            {
+                // If it was 1 character it was likely someone just typing !
+                if (message.Content.Length == 1)
+                    return;
+                
+                await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
+            }
         }
     }
 }
