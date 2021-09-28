@@ -103,10 +103,10 @@ namespace DiscordBot.Services
 
             if (!result.IsSuccess)
             {
-                // If it was 1 character it was likely someone just typing !
-                if (message.Content.Length == 1)
+                // If the whole message is only ! or ? or space
+                if (message.Content.All(letter => letter is '!' or '?' or ' '))
                     return;
-                
+
                 await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
             }
         }
