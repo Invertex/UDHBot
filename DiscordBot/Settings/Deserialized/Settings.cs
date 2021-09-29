@@ -61,6 +61,8 @@ namespace DiscordBot.Settings.Deserialized
         public string IPGeolocationAPIKey { get; set; }
 
         public string WeatherAPIKey { get; set; }
+
+        public List<string> UserModuleSlapChoices { get; set; } = new List<string>(){"trout", "duck", "truck", "paddle", "magikarp", "sausage", "student loan", "low poly donut"};
     }
 
     #region Role Group Collections
