@@ -33,6 +33,7 @@ namespace DiscordBot.Services
 
         private readonly Settings.Deserialized.Settings _settings;
         private readonly Dictionary<ulong, DateTime> _thanksCooldown;
+        private readonly Dictionary<ulong, DateTime> _everyoneScoldCooldown = new Dictionary<ulong, DateTime>();
 
         private readonly int _thanksCooldownTime;
         private readonly int _thanksMinJoinTime;
@@ -495,10 +496,16 @@ namespace DiscordBot.Services
                 return;
             var content = messageParam.Content;
             if (content.Contains("@everyone") || content.Contains("@here"))
+            {
+                if (_everyoneScoldCooldown.ContainsKey(messageParam.Author.Id) &&
+                    _everyoneScoldCooldown[messageParam.Author.Id] > DateTime.Now)
+                    return;
+                // We add to dictionary with the time it must be passed before they'll be notified again.
+                _everyoneScoldCooldown[messageParam.Author.Id] = DateTime.Now.AddSeconds(_settings.EveryoneScoldPeriodSeconds);
+                
                 await messageParam.Channel.SendMessageAsync(
-                                      $"That is very rude of you to try and alert **everyone** on the server {messageParam.Author.Mention}!{Environment.NewLine}" +
-                                      "Thankfully, you do not have permission to do so. If you are asking a question, people will help you when they have time.")
-                                  .DeleteAfterTime(minutes: 5);
+                        $"Please don't try to alert **everyone** on the server {messageParam.Author.Mention}!\nIf you are asking a question, people will help you when they have time.").DeleteAfterTime(minutes: 2);
+            }
         }
 
         private async Task UserJoined(SocketGuildUser user)

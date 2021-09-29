@@ -61,6 +61,9 @@ namespace DiscordBot.Settings.Deserialized
         public string IPGeolocationAPIKey { get; set; }
 
         public string WeatherAPIKey { get; set; }
+
+        // How long between when the bot will scold a user for trying to ping everyone. Default 6 hours
+        public ulong EveryoneScoldPeriodSeconds { get; set; } = 21600;
     }
 
     #region Role Group Collections
