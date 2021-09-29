@@ -33,6 +33,8 @@ namespace DiscordBot.Modules
         private readonly UpdateService _updateService;
         private readonly UserService _userService;
 
+        private readonly Random _random;
+
         public UserModule(IServiceProvider serviceProvider, Settings.Deserialized.Settings settings, Rules rules)
         {
             _databaseService = serviceProvider.GetService<DatabaseService>();
@@ -43,6 +45,8 @@ namespace DiscordBot.Modules
             _rules = rules;
             _settings = settings;
 
+            _random = new Random();
+            
             var commandHandlingService = serviceProvider.GetService<CommandHandlingService>();
             Task.Run(async () =>
             {
@@ -593,19 +597,16 @@ namespace DiscordBot.Modules
         #endregion
 
         #region Fun
-
-        private readonly string[] _slapObjects = { "trout", "duck", "truck", "paddle", "magikarp", "sausage", "student loan" };
         [Command("Slap"), Priority(21)]
         [Summary("Slap the specified user(s). Syntax : !slap @user1 [@user2 @user3...]")]
         public async Task SlapUser(params IUser[] users)
         {
             var sb = new StringBuilder();
-            var random = new Random();
 
             sb.Append("**").Append(Context.User.Username).Append("** Slaps ");
             foreach (var user in users) sb.Append(user.Mention).Append(" ");
 
-            sb.Append("around a bit with a large ").Append(_slapObjects[random.Next() % _slapObjects.Length]).Append(".");
+            sb.Append("around a bit with a large ").Append(_settings.UserModuleSlapChoices[_random.Next() % _settings.UserModuleSlapChoices.Count]).Append(".");
 
             await Context.Channel.SendMessageAsync(sb.ToString());
             await Context.Message.DeleteAfterSeconds(seconds: 1);
@@ -616,10 +617,9 @@ namespace DiscordBot.Modules
         [Alias("flipcoin")]
         public async Task CoinFlip()
         {
-            var rand = new Random();
             var coin = new[] { "Heads", "Tails" };
 
-            await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[rand.Next() % 2]}**!");
+            await ReplyAsync($"**{Context.User.Username}** flipped a coin and got **{coin[_random.Next() % 2]}**!");
             await Context.Message.DeleteAfterSeconds(seconds: 1);
         }
 
