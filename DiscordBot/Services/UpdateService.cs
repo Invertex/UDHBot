@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
@@ -306,6 +307,11 @@ namespace DiscordBot.Services
                         }
                         else
                             page.Extract = page.Extract.Replace("\n", Environment.NewLine);
+
+                        //TODO Not a perfect solution. ``!wiki Quaternion`` and a few other formula pages due to formatting will result a mess without this marked by "displaystyle" currently, so we just sanitize the text if we see that.
+                        // This will also help shrink embeds, but it removes paragraphs as well, making it a wall of text.
+                        if (page.Extract.Contains("displaystyle"))
+                            page.Extract = Regex.Replace(page.Extract, @"\s+", " ");
 
                         return (page.Title + ":", page.Extract, page.FullUrl.ToString());
                     }
