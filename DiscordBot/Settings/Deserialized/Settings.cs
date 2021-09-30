@@ -65,6 +65,8 @@ namespace DiscordBot.Settings.Deserialized
         public List<string> UserModuleSlapChoices { get; set; } = new List<string>(){"trout", "duck", "truck", "paddle", "magikarp", "sausage", "student loan", "low poly donut"};
         // How long between when the bot will scold a user for trying to ping everyone. Default 6 hours
         public ulong EveryoneScoldPeriodSeconds { get; set; } = 21600;
+        public List<AutoThreadChannel> AutoThreadChannels { get; set; } = new List<AutoThreadChannel>();
+        public List<string> AutoThreadExclusionPrefixes { get; set; } = new List<string>();
     }
 
     #region Role Group Collections
@@ -88,6 +90,12 @@ namespace DiscordBot.Settings.Deserialized
     public class ChannelInfo
     {
         public string Desc { get; set; }
+        public ulong Id { get; set; }
+    }
+
+    public class AutoThreadChannel
+    {
+        public string Title { get; set; }
         public ulong Id { get; set; }
     }
 

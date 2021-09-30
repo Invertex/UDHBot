@@ -119,6 +119,7 @@ namespace DiscordBot.Services
             _client.MessageUpdated += ThanksEdited;
             _client.MessageReceived += CodeCheck;
             _client.MessageReceived += ScoldForAtEveryoneUsage;
+            _client.MessageReceived += AutoCreateThread;
             _client.UserJoined += UserJoined;
             _client.GuildMemberUpdated += UserUpdated;
             _client.UserLeft += UserLeft;
@@ -610,6 +611,36 @@ namespace DiscordBot.Services
                 $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double)timeStayed.Days) + " days" : " ")}" +
                 $" {Math.Floor((double)timeStayed.Hours).ToString(CultureInfo.InvariantCulture)} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
             await _databaseService.DeleteUser(user.Id);
+        }
+
+        private async Task AutoCreateThread(SocketMessage messageParam)
+        {
+            if (messageParam.Author.IsBot) return;
+
+            foreach (var prefix in _settings.AutoThreadExclusionPrefixes)
+                if (messageParam.Content.StartsWith(prefix)) return;
+
+            foreach (var AutoThreadChannel in _settings.AutoThreadChannels)
+            {
+                var channel = messageParam.Channel as SocketTextChannel;
+                if (channel.Id.Equals(AutoThreadChannel.Id))
+                {
+                    try
+                    {
+                        // var user = await this._client.GetUserAsync(messageParam.Author.Id);
+                        var author = channel.Guild.GetUser(messageParam.Author.Id);
+                        var authorName = author.Nickname;
+                        if (String.IsNullOrEmpty(authorName)) authorName = author.Username;
+                        var title = $"{AutoThreadChannel.Title} - {authorName}";
+                        var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, Discord.ThreadArchiveDuration.OneDay, messageParam);
+                    }
+                    catch (Exception err)
+                    {
+                        Console.WriteLine(err);
+                    }
+                }
+            }
+
         }
 
         #endregion
