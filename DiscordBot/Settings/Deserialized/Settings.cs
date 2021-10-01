@@ -102,19 +102,19 @@ namespace DiscordBot.Settings.Deserialized
         public bool CanArchive { get; set; } = false;
         public string TitleArchived { get; set; }
 
-        private string AuthorName(IUser author)
+        private static string AuthorName(IUser author)
         {
             return ((IGuildUser)author).Nickname ?? author.Username;
         }
 
         public string GenerateTitle(IUser author)
         {
-            return String.Format(this.Title, this.AuthorName(author));
+            return String.Format(this.Title, AuthorName(author));
         }
 
         public string GenerateTitleArchived(IUser author)
         {
-            return String.Format(this.TitleArchived, this.AuthorName(author));
+            return String.Format(this.TitleArchived, AuthorName(author));
         }
     }
 
