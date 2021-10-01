@@ -1166,8 +1166,7 @@ namespace DiscordBot.Modules
             await currentThread.ModifyAsync(x =>
             {
                 x.Archived = true;
-                var title = autoTheadConfig.GenerateTitleArchived(Context.User);
-                x.Name = title;
+                x.Name = autoTheadConfig.GenerateTitleArchived(Context.User);
             });
         }
 
@@ -1183,8 +1182,7 @@ namespace DiscordBot.Modules
 
             await currentThread.ModifyAsync(x =>
             {
-                var title = autoTheadConfig.GenerateTitle(Context.User);
-                x.Name = title;
+                x.Name = autoTheadConfig.GenerateTitle(Context.User);
             });
         }
 
