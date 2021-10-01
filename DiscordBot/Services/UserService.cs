@@ -503,7 +503,7 @@ namespace DiscordBot.Services
                     return;
                 // We add to dictionary with the time it must be passed before they'll be notified again.
                 _everyoneScoldCooldown[messageParam.Author.Id] = DateTime.Now.AddSeconds(_settings.EveryoneScoldPeriodSeconds);
-                
+
                 await messageParam.Channel.SendMessageAsync(
                         $"Please don't try to alert **everyone** on the server {messageParam.Author.Mention}!\nIf you are asking a question, people will help you when they have time.").DeleteAfterTime(minutes: 2);
             }
@@ -627,12 +627,11 @@ namespace DiscordBot.Services
                 {
                     try
                     {
-                        // var user = await this._client.GetUserAsync(messageParam.Author.Id);
                         var author = channel.Guild.GetUser(messageParam.Author.Id);
                         var authorName = author.Nickname;
                         if (String.IsNullOrEmpty(authorName)) authorName = author.Username;
                         var title = $"{AutoThreadChannel.Title} - {authorName}";
-                        var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, Discord.ThreadArchiveDuration.OneDay, messageParam);
+                        await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, Discord.ThreadArchiveDuration.OneDay, messageParam);
                     }
                     catch (Exception err)
                     {
