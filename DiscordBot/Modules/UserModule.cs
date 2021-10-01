@@ -1153,6 +1153,41 @@ namespace DiscordBot.Modules
             return true;
         }
 
+        [Command("close")]
+        [Alias("archive")]
+        public async Task CloseAutoThread()
+        {
+            try
+            {
+                var currentThread = Context.Message.Channel as SocketThreadChannel;
+                if (currentThread == null) return;
+
+                var messages = await currentThread.GetPinnedMessagesAsync();
+                var firstMessage = messages.LastOrDefault();
+
+                if (firstMessage == null) return;
+
+                if (!firstMessage.MentionedUsers.Any(x => x.Id == Context.User.Id)) return;
+
+                foreach (var AutoThreadChannel in _settings.AutoThreadChannels)
+                {
+                    if (currentThread.ParentChannel.Id == AutoThreadChannel.Id && AutoThreadChannel.CanArchive)
+                    {
+                        await currentThread.ModifyAsync(x =>
+                        {
+                            x.Archived = true;
+                            var title = AutoThreadChannel.GenerateTitleArchived(Context.User);
+                            x.Name = title;
+                        });
+                    }
+                }
+            }
+            catch (Exception err)
+            {
+                Console.Error.WriteLine(err);
+            }
+        }
+
         #endregion
     }
 }

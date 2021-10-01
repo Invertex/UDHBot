@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Discord;
 
 namespace DiscordBot.Settings.Deserialized
 {
@@ -97,6 +99,23 @@ namespace DiscordBot.Settings.Deserialized
     {
         public string Title { get; set; }
         public ulong Id { get; set; }
+        public bool CanArchive { get; set; } = false;
+        public string TitleArchived { get; set; }
+
+        private string AuthorName(IUser author)
+        {
+            return ((IGuildUser)author).Nickname ?? author.Username;
+        }
+
+        public string GenerateTitle(IUser author)
+        {
+            return String.Format(this.Title, this.AuthorName(author));
+        }
+
+        public string GenerateTitleArchived(IUser author)
+        {
+            return String.Format(this.TitleArchived, this.AuthorName(author));
+        }
     }
 
     public class GeneralChannel : ChannelInfo

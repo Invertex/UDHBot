@@ -627,11 +627,13 @@ namespace DiscordBot.Services
                 {
                     try
                     {
-                        var author = channel.Guild.GetUser(messageParam.Author.Id);
-                        var authorName = author.Nickname;
-                        if (String.IsNullOrEmpty(authorName)) authorName = author.Username;
-                        var title = $"{AutoThreadChannel.Title} - {authorName}";
-                        await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, Discord.ThreadArchiveDuration.OneDay, messageParam);
+                        var title = AutoThreadChannel.GenerateTitle(messageParam.Author);
+                        var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, Discord.ThreadArchiveDuration.OneDay, messageParam);
+                        if (AutoThreadChannel.CanArchive)
+                        {
+                            var message = await thread.SendMessageAsync($"{messageParam.Author.Mention} this is your thread. You can do `!close` to archive it when you're done!");
+                            await message.PinAsync();
+                        }
                     }
                     catch (Exception err)
                     {
