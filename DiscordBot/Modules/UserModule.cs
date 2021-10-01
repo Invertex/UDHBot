@@ -1171,6 +1171,23 @@ namespace DiscordBot.Modules
             });
         }
 
+        [Command("reopen")]
+        [Alias("open")]
+        [RequireAutoThreadAuthor]
+        public async Task ReopenClosedAutoThread()
+        {
+            var currentThread = Context.Message.Channel as SocketThreadChannel;
+            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id && x.CanArchive);
+
+            if (autoTheadConfig == null) return;
+
+            await currentThread.ModifyAsync(x =>
+            {
+                var title = autoTheadConfig.GenerateTitle(Context.User);
+                x.Name = title;
+            });
+        }
+
         #endregion
     }
 }
