@@ -1155,37 +1155,20 @@ namespace DiscordBot.Modules
 
         [Command("close")]
         [Alias("archive")]
+        [RequireAutoThreadAuthor]
         public async Task CloseAutoThread()
         {
-            try
+            var currentThread = Context.Message.Channel as SocketThreadChannel;
+            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id && x.CanArchive);
+
+            if (autoTheadConfig == null) return;
+
+            await currentThread.ModifyAsync(x =>
             {
-                var currentThread = Context.Message.Channel as SocketThreadChannel;
-                if (currentThread == null) return;
-
-                var messages = await currentThread.GetPinnedMessagesAsync();
-                var firstMessage = messages.LastOrDefault();
-
-                if (firstMessage == null) return;
-
-                if (!firstMessage.MentionedUsers.Any(x => x.Id == Context.User.Id)) return;
-
-                foreach (var AutoThreadChannel in _settings.AutoThreadChannels)
-                {
-                    if (currentThread.ParentChannel.Id == AutoThreadChannel.Id && AutoThreadChannel.CanArchive)
-                    {
-                        await currentThread.ModifyAsync(x =>
-                        {
-                            x.Archived = true;
-                            var title = AutoThreadChannel.GenerateTitleArchived(Context.User);
-                            x.Name = title;
-                        });
-                    }
-                }
-            }
-            catch (Exception err)
-            {
-                Console.Error.WriteLine(err);
-            }
+                x.Archived = true;
+                var title = autoTheadConfig.GenerateTitleArchived(Context.User);
+                x.Name = title;
+            });
         }
 
         #endregion
