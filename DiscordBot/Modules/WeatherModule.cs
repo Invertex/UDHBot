@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 namespace DiscordBot.Modules
 {
     // https://openweathermap.org/current#call
-    
+
     // Allows UserModule !help to show commands from this module
     [Group("UserModule"), Alias("")]
     public class WeatherModule : ModuleBase
@@ -126,18 +126,18 @@ namespace DiscordBot.Modules
 
         private List<string> AQI_Index = new List<string>()
             {"Invalid", "Good", "Fair", "Moderate", "Poor", "Very Poor"};
-        
+
         // ReSharper restore InconsistentNaming
 #pragma warning restore 0649
         #endregion
-        
+
         private readonly string _weatherApiKey;
 
         public WeatherModule(Settings.Deserialized.Settings settings)
         {
             _weatherApiKey = settings.WeatherAPIKey;
         }
-        
+
         [Command("WeatherHelp")]
         [Summary("How to use the weather module.")]
         [Priority(100)]
@@ -148,7 +148,7 @@ namespace DiscordBot.Modules
                 .WithDescription(
                     "If the city isn't correct you will need to include the correct [city codes](https://www.iso.org/obp/ui/#search).\n**Example Usage**: *!Weather Wellington, UK*");
             await Context.Message.DeleteAsync();
-            await ReplyAsync(embed:builder.Build()).DeleteAfterSeconds(seconds: 30);
+            await ReplyAsync(embed: builder.Build()).DeleteAfterSeconds(seconds: 30);
         }
 
         [Command("Temperature")]
@@ -157,7 +157,7 @@ namespace DiscordBot.Modules
         public async Task Temperature(params string[] city)
         {
             WeatherCotainer.Result res = await GetWeather(city: string.Join(" ", city));
-            if (! await IsResultsValid(res))
+            if (!await IsResultsValid(res))
                 return;
 
             EmbedBuilder builder = new EmbedBuilder()
@@ -168,15 +168,15 @@ namespace DiscordBot.Modules
 
             await ReplyAsync(embed: builder.Build());
         }
-        
+
         [Command("Weather"), Priority(20)]
         [Summary("Attempts to provide the weather of the city provided.")]
         public async Task CurentWeather(params string[] city)
         {
             WeatherCotainer.Result res = await GetWeather(city: string.Join(" ", city));
-            if (! await IsResultsValid(res))
+            if (!await IsResultsValid(res))
                 return;
-            
+
             EmbedBuilder builder = new EmbedBuilder()
                 .WithTitle($"{res.name} Weather ({res.sys.country})")
                 .AddField(
@@ -189,13 +189,13 @@ namespace DiscordBot.Modules
 
             await ReplyAsync(embed: builder.Build());
         }
-        
+
         [Command("Pollution"), Priority(21)]
         [Summary("Attempts to provide the pollution conditions of the city provided.")]
         public async Task Pollution(params string[] city)
         {
             WeatherCotainer.Result res = await GetWeather(city: string.Join(" ", city));
-            if (! await IsResultsValid(res))
+            if (!await IsResultsValid(res))
                 return;
 
             // We can't really combine the call as having WeatherResults helps with other details
@@ -240,9 +240,9 @@ namespace DiscordBot.Modules
         public async Task<WeatherCotainer.Result> GetWeather(string city, string unit = "metric")
         {
             var query = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={_weatherApiKey}&units={unit}";
-            return await  GetAndDeserializedObject<WeatherCotainer.Result>(query);
+            return await GetAndDeserializedObject<WeatherCotainer.Result>(query);
         }
-        
+
         public async Task<PollutionContainer.Result> GetPollution(double lon, double lat)
         {
             var query = $"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={_weatherApiKey}";
@@ -259,11 +259,11 @@ namespace DiscordBot.Modules
             }
             return resultObject;
         }
-        
+
         private async Task<bool> IsResultsValid<T>(T res)
         {
             if (res != null) return true;
-            
+
             await ReplyAsync("API Returned no results.");
             return false;
         }
