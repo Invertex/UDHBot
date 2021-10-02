@@ -15,7 +15,7 @@ namespace DiscordBot.Modules
 {
     public class ModerationModule : ModuleBase
     {
-        private static List<string> _commandList = new List<string>();
+        private List<string> _commandList;
 
         private readonly DatabaseService _database;
         private readonly ILoggingService _logging;

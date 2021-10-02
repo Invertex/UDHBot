@@ -82,13 +82,8 @@ namespace DiscordBot.Extensions
                 return source1Length;
 
             // Initialization of matrix with row size source1Length and columns size source2Length
-            for (var i = 0; i <= source1Length; matrix[i, 0] = i++)
-            {
-            }
-
-            for (var j = 0; j <= source2Length; matrix[0, j] = j++)
-            {
-            }
+            for (var i = 0; i <= source1Length; matrix[i, 0] = i++) ;
+            for (var j = 0; j <= source2Length; matrix[0, j] = j++) ;
 
             // Calculate rows and collumns distances
             for (var i = 1; i <= source1Length; i++)

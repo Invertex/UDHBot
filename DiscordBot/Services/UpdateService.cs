@@ -54,7 +54,6 @@ namespace DiscordBot.Services
     //TODO Download all avatars to cache them
     public class UpdateService
     {
-        private readonly DatabaseService _databaseService;
         private readonly FeedService _feedService;
         private readonly Settings.Deserialized.Settings _settings;
         private readonly CancellationToken _token;
@@ -72,7 +71,6 @@ namespace DiscordBot.Services
             DatabaseService databaseService, Settings.Deserialized.Settings settings, FeedService feedService)
         {
             _client = client;
-            _databaseService = databaseService;
             _feedService = feedService;
 
             _settings = settings;

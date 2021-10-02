@@ -11,9 +11,9 @@ namespace DiscordBot.Modules
 {
     public class TicketModule : ModuleBase
     {
-        private List<string> _commandList = new List<string>();
+        private List<string> _commandList;
 
-        private Settings.Deserialized.Settings _settings;
+        private readonly Settings.Deserialized.Settings _settings;
 
         public TicketModule(Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
         {

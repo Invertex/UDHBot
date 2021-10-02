@@ -13,7 +13,7 @@ namespace DiscordBot.Modules
     {
         // The Priority Attribute is used for !reactrole help ordering, there are no overloads.
 
-        private static string _commandList = string.Empty;
+        private string _commandList;
 
         private readonly ILoggingService _logging;
         private readonly ReactRoleService _reactRoleService;
