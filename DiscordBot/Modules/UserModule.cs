@@ -1172,6 +1172,8 @@ namespace DiscordBot.Modules
             });
         }
 
+        // Command disabled as there is a rate limit of 2 channel name update every 10 minutes.
+        /*
         [Command("reopen")]
         [Alias("open")]
         [RequireAutoThreadAuthor]
@@ -1189,6 +1191,7 @@ namespace DiscordBot.Modules
                 x.Name = newName;
             });
         }
+        */
 
         #endregion
     }
