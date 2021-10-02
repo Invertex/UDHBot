@@ -1153,6 +1153,10 @@ namespace DiscordBot.Modules
             return true;
         }
 
+        #endregion
+
+        #region AutoThread
+
         [Command("close")]
         [Alias("archive")]
         [RequireAutoThreadAuthor]
