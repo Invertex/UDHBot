@@ -1163,10 +1163,12 @@ namespace DiscordBot.Modules
 
             if (autoTheadConfig == null) return;
 
+            var newName = autoTheadConfig.GenerateTitleArchived(Context.User);
+            if (currentThread.Name.Equals(newName)) return;
             await currentThread.ModifyAsync(x =>
             {
                 x.Archived = true;
-                x.Name = autoTheadConfig.GenerateTitleArchived(Context.User);
+                x.Name = newName;
             });
         }
 
@@ -1180,9 +1182,11 @@ namespace DiscordBot.Modules
 
             if (autoTheadConfig == null) return;
 
+            var newName = autoTheadConfig.GenerateTitle(Context.User);
+            if (currentThread.Name.Equals(newName)) return;
             await currentThread.ModifyAsync(x =>
             {
-                x.Name = autoTheadConfig.GenerateTitle(Context.User);
+                x.Name = newName;
             });
         }
 
