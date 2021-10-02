@@ -63,16 +63,19 @@ namespace DiscordBot
             var currentThread = context.Message.Channel as SocketThreadChannel;
             if (currentThread == null) return await Task.FromResult(PreconditionResult.FromError(string.Empty));
 
+            var settings = services.GetRequiredService<Settings.Deserialized.Settings>();
+            if (!settings.AutoThreadChannels.Any(x => currentThread.ParentChannel.Id == x.Id && x.CanArchive))
+                return await Task.FromResult(PreconditionResult.FromError(string.Empty));
+
+            var user = (SocketGuildUser)context.Message.Author;
+            if (user.GuildPermissions.ManageThreads) return await Task.FromResult(PreconditionResult.FromSuccess());
+
             var messages = await currentThread.GetPinnedMessagesAsync();
             var firstMessage = messages.LastOrDefault();
 
             if (firstMessage == null) return await Task.FromResult(PreconditionResult.FromError(string.Empty));
 
             if (!firstMessage.MentionedUsers.Any(x => x.Id == context.User.Id)) return await Task.FromResult(PreconditionResult.FromError(string.Empty));
-
-            var settings = services.GetRequiredService<Settings.Deserialized.Settings>();
-            if (!settings.AutoThreadChannels.Any(x => currentThread.ParentChannel.Id == x.Id && x.CanArchive))
-                return await Task.FromResult(PreconditionResult.FromError(string.Empty));
 
             return await Task.FromResult(PreconditionResult.FromSuccess());
         }
