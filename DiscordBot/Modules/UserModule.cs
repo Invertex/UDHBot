@@ -1173,27 +1173,6 @@ namespace DiscordBot.Modules
             });
         }
 
-        // Command disabled as there is a rate limit of 2 channel name update every 10 minutes.
-        /*
-        [Command("reopen")]
-        [Alias("open")]
-        [RequireAutoThreadAuthor]
-        public async Task ReopenClosedAutoThread()
-        {
-            var currentThread = Context.Message.Channel as SocketThreadChannel;
-            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id && x.CanArchive);
-
-            if (autoTheadConfig == null) return;
-
-            var newName = autoTheadConfig.GenerateTitle(Context.User);
-            if (currentThread.Name.Equals(newName)) return;
-            await currentThread.ModifyAsync(x =>
-            {
-                x.Name = newName;
-            });
-        }
-        */
-
         #endregion
     }
 }
