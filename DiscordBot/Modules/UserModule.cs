@@ -1168,6 +1168,7 @@ namespace DiscordBot.Modules
             await currentThread.ModifyAsync(x =>
             {
                 x.Archived = true;
+                x.Locked = true;
                 x.Name = newName;
             });
         }
