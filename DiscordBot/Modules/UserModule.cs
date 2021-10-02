@@ -22,7 +22,7 @@ namespace DiscordBot.Modules
 {
     public class UserModule : ModuleBase
     {
-        private static List<string> _commandList;
+        private List<string> _commandList;
 
         private static Settings.Deserialized.Settings _settings;
         private readonly CurrencyService _currencyService;
