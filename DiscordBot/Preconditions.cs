@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,7 +34,7 @@ namespace DiscordBot
             return Task.FromResult(PreconditionResult.FromError(user + " attempted to use a moderator command!"));
         }
     }
-    
+
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class BotChannelOnlyAttribute : PreconditionAttribute
     {
@@ -52,6 +52,32 @@ namespace DiscordBot
                 .DeleteAfterSeconds(seconds: 8);
             await context.Message.DeleteAfterSeconds(seconds: 4);
             return await Task.FromResult(PreconditionResult.FromError(string.Empty));
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+    public class RequireAutoThreadAuthorAttribute : PreconditionAttribute
+    {
+        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        {
+            var currentThread = context.Message.Channel as SocketThreadChannel;
+            if (currentThread == null) return await Task.FromResult(PreconditionResult.FromError(string.Empty));
+
+            var settings = services.GetRequiredService<Settings.Deserialized.Settings>();
+            if (!settings.AutoThreadChannels.Any(x => currentThread.ParentChannel.Id == x.Id && x.CanArchive))
+                return await Task.FromResult(PreconditionResult.FromError(string.Empty));
+
+            var user = (SocketGuildUser)context.Message.Author;
+            if (user.GuildPermissions.ManageThreads) return await Task.FromResult(PreconditionResult.FromSuccess());
+
+            var messages = await currentThread.GetPinnedMessagesAsync();
+            var firstMessage = messages.LastOrDefault();
+
+            if (firstMessage == null) return await Task.FromResult(PreconditionResult.FromError(string.Empty));
+
+            if (!firstMessage.MentionedUsers.Any(x => x.Id == context.User.Id)) return await Task.FromResult(PreconditionResult.FromError(string.Empty));
+
+            return await Task.FromResult(PreconditionResult.FromSuccess());
         }
     }
 }

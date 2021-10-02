@@ -70,7 +70,7 @@ namespace DiscordBot.Modules
         {
             await Context.Message.DeleteAsync();
             channel ??= Context.Channel;
-            
+
             if (Context.Message.Attachments.Count < 1)
             {
                 await ReplyAsync($"{Context.User.Mention}, you must provide a JSON file or a JSON url.").DeleteAfterSeconds(5);
@@ -81,7 +81,7 @@ namespace DiscordBot.Modules
 
             await SendEmbedToChannel(embed, channel, messageId);
         }
-        
+
         [Command("embed"), Summary("Generate an embed from an URL (hastebin).")]
         public async Task EmbedCommand(string url, IMessageChannel channel = null, ulong messageId = 0)
         {
@@ -95,7 +95,7 @@ namespace DiscordBot.Modules
         private async Task<Discord.Embed> TryGetEmbedFromUrl(string url)
         {
             Uri uriResult;
-            bool result = Uri.TryCreate(url, UriKind.Absolute, out uriResult) 
+            bool result = Uri.TryCreate(url, UriKind.Absolute, out uriResult)
                           && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
             if (!result)
             {
@@ -113,7 +113,7 @@ namespace DiscordBot.Modules
             {
                 await ReplyAsync($"Failed to generate embed from url.").DeleteAfterSeconds(seconds: 10f);
                 return null;
-            } 
+            }
             return builtEmbed;
         }
 
@@ -158,7 +158,7 @@ namespace DiscordBot.Modules
             }
             return string.Empty;
         }
-        
+
         private Discord.Embed BuildEmbed(string json)
         {
             try
