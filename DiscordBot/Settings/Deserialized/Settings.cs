@@ -61,8 +61,8 @@ namespace DiscordBot.Settings.Deserialized
         public string IPGeolocationAPIKey { get; set; }
 
         public string WeatherAPIKey { get; set; }
-        
-        public List<string> UserModuleSlapChoices { get; set; } = new List<string>(){"trout", "duck", "truck", "paddle", "magikarp", "sausage", "student loan", "low poly donut"};
+
+        public List<string> UserModuleSlapChoices { get; set; } = new List<string>() { "trout", "duck", "truck", "paddle", "magikarp", "sausage", "student loan", "low poly donut" };
         // How long between when the bot will scold a user for trying to ping everyone. Default 6 hours
         public ulong EveryoneScoldPeriodSeconds { get; set; } = 21600;
     }

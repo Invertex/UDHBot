@@ -61,7 +61,7 @@ namespace DiscordBot.Services
             var commands = _commandService.Commands.Where(x => x.Module.Name == moduleName && !x.Attributes.Contains(new HideFromHelpAttribute()));
             // Orders the list either by name or by priority, if no priority is given we push it to the end.
             commands = orderByName ? commands.OrderBy(c => c.Name) : commands.OrderBy(c => (c.Priority > 0 ? c.Priority : 1000));
-            
+
             foreach (var c in commands)
             {
                 commandList.Append($"**{(includeModuleName ? moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {GetArguments(includeArgs, c.Parameters)}\n");
