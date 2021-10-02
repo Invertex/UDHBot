@@ -102,6 +102,8 @@ namespace DiscordBot.Settings.Deserialized
         public bool CanArchive { get; set; } = false;
         public string TitleArchived { get; set; }
 
+        public string FirstMessage { get; set; }
+
         private static string AuthorName(IUser author)
         {
             return ((IGuildUser)author).Nickname ?? author.Username;
@@ -115,6 +117,11 @@ namespace DiscordBot.Settings.Deserialized
         public string GenerateTitleArchived(IUser author)
         {
             return String.Format(this.TitleArchived, AuthorName(author));
+        }
+
+        public string GenerateFirstMessage(IUser author)
+        {
+            return String.Format(this.FirstMessage, author.Mention);
         }
     }
 

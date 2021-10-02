@@ -631,7 +631,7 @@ namespace DiscordBot.Services
                         var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, Discord.ThreadArchiveDuration.OneDay, messageParam);
                         if (AutoThreadChannel.CanArchive)
                         {
-                            var message = await thread.SendMessageAsync($"{messageParam.Author.Mention} this is your thread. You can do `!close` to archive it when you're done!");
+                            var message = await thread.SendMessageAsync(AutoThreadChannel.GenerateFirstMessage(messageParam.Author));
                             await message.PinAsync();
                         }
                     }
