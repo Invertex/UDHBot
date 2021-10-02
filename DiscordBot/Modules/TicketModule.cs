@@ -65,13 +65,13 @@ namespace DiscordBot.Modules
                 $"The content of this conversation will stay strictly between you {Context.User.Mention} and the {modRole.Mention}.\n" +
                 "Please stay civil, any insults or offensive language could see you punished.\n" +
                 "Do not ping anyone and wait until a staff member is free to examine your complaint.");
-            await newChannel.SendMessageAsync($"A staff member will be able to close this chat by doing !close.");
+            await newChannel.SendMessageAsync($"A staff member will be able to close this chat by doing `!ticket close`.");
         }
 
         /// <summary>
         ///     Archives the ticket.
         /// </summary>
-        [Command("Close"), Alias("end", "done", "bye", "archive"), Summary("Closes the ticket.")]
+        [Command("Ticket Close"), Alias("Ticket end", "Ticket done", "Ticket archive"), Summary("Closes the ticket.")]
         [RequireModerator]
         public async Task Close()
         {
@@ -103,7 +103,7 @@ namespace DiscordBot.Modules
         /// <summary>
         ///     Delete the ticket.
         /// </summary>
-        [Command("Delete"), Summary("Deletes the ticket.")]
+        [Command("Ticket Delete"), Summary("Deletes the ticket.")]
         [RequireAdmin]
         private async Task Delete()
         {

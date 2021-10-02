@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Discord;
 
 namespace DiscordBot.Settings.Deserialized
 {
@@ -65,6 +67,8 @@ namespace DiscordBot.Settings.Deserialized
         public List<string> UserModuleSlapChoices { get; set; } = new List<string>() { "trout", "duck", "truck", "paddle", "magikarp", "sausage", "student loan", "low poly donut" };
         // How long between when the bot will scold a user for trying to ping everyone. Default 6 hours
         public ulong EveryoneScoldPeriodSeconds { get; set; } = 21600;
+        public List<AutoThreadChannel> AutoThreadChannels { get; set; } = new List<AutoThreadChannel>();
+        public List<string> AutoThreadExclusionPrefixes { get; set; } = new List<string>();
     }
 
     #region Role Group Collections
@@ -89,6 +93,36 @@ namespace DiscordBot.Settings.Deserialized
     {
         public string Desc { get; set; }
         public ulong Id { get; set; }
+    }
+
+    public class AutoThreadChannel
+    {
+        public string Title { get; set; }
+        public ulong Id { get; set; }
+        public bool CanArchive { get; set; } = false;
+        public string TitleArchived { get; set; }
+
+        public string FirstMessage { get; set; }
+
+        private static string AuthorName(IUser author)
+        {
+            return ((IGuildUser)author).Nickname ?? author.Username;
+        }
+
+        public string GenerateTitle(IUser author)
+        {
+            return String.Format(this.Title, AuthorName(author));
+        }
+
+        public string GenerateTitleArchived(IUser author)
+        {
+            return String.Format(this.TitleArchived, AuthorName(author));
+        }
+
+        public string GenerateFirstMessage(IUser author)
+        {
+            return String.Format(this.FirstMessage, author.Mention);
+        }
     }
 
     public class GeneralChannel : ChannelInfo

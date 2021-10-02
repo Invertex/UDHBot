@@ -1157,5 +1157,29 @@ namespace DiscordBot.Modules
         }
 
         #endregion
+
+        #region AutoThread
+
+        [Command("close")]
+        [Alias("archive")]
+        [RequireAutoThreadAuthor]
+        public async Task CloseAutoThread()
+        {
+            var currentThread = Context.Message.Channel as SocketThreadChannel;
+            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id && x.CanArchive);
+
+            if (autoTheadConfig == null) return;
+
+            var newName = autoTheadConfig.GenerateTitleArchived(Context.User);
+            if (currentThread.Name.Equals(newName)) return;
+            await currentThread.ModifyAsync(x =>
+            {
+                x.Archived = true;
+                x.Locked = true;
+                x.Name = newName;
+            });
+        }
+
+        #endregion
     }
 }
