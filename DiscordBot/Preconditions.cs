@@ -34,7 +34,7 @@ namespace DiscordBot
             return Task.FromResult(PreconditionResult.FromError(user + " attempted to use a moderator command!"));
         }
     }
-    
+
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class BotChannelOnlyAttribute : PreconditionAttribute
     {

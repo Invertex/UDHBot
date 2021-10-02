@@ -46,7 +46,7 @@ namespace DiscordBot.Modules
             _settings = settings;
 
             _random = new Random();
-            
+
             var commandHandlingService = serviceProvider.GetService<CommandHandlingService>();
             Task.Run(async () =>
             {
@@ -97,7 +97,7 @@ namespace DiscordBot.Modules
         public async Task QuoteMessageCommand(ulong messageId, ulong channel)
         {
             // Get channel, if channel doesn't exist, we try get channel from messageID
-            IMessageChannel targetChannel = (IMessageChannel) await Context.Client.GetChannelAsync(channel) ?? (IMessageChannel) await Context.Client.GetChannelAsync(messageId);
+            IMessageChannel targetChannel = (IMessageChannel)await Context.Client.GetChannelAsync(channel) ?? (IMessageChannel)await Context.Client.GetChannelAsync(messageId);
             if (targetChannel == null)
             {
                 await ReplyAsync("Channel or MessageID does not exist").DeleteAfterSeconds(seconds: 5);
@@ -513,19 +513,22 @@ namespace DiscordBot.Modules
             .Select(x => x.Result)
             .Max(x => (x?.Username ?? "Unknown User").Length);
 
-            try {
-            var str = "";
-            for (var i = 0; i < data.Count; i++)
+            try
             {
-                var user = await Context.Guild.GetUserAsync(data[i].userID);
-                var username = user?.Username ?? "Unknown User"; // For cases where the user has left the guild
-                int rankPadding = (int) Math.Floor(Math.Log10(data.Count));
+                var str = "";
+                for (var i = 0; i < data.Count; i++)
+                {
+                    var user = await Context.Guild.GetUserAsync(data[i].userID);
+                    var username = user?.Username ?? "Unknown User"; // For cases where the user has left the guild
+                    int rankPadding = (int)Math.Floor(Math.Log10(data.Count));
 
-                str += $"`{(i + 1).ToString().PadLeft(rankPadding + 1)}.` **`{username.PadRight(maxUsernameLength, '\u2000')}`** `{labelName}: {data[i].value}`\n";
+                    str += $"`{(i + 1).ToString().PadLeft(rankPadding + 1)}.` **`{username.PadRight(maxUsernameLength, '\u2000')}`** `{labelName}: {data[i].value}`\n";
+                }
+                embedBuilder.Description = str;
+
             }
-            embedBuilder.Description = str;
-
-            } catch (Exception e) {
+            catch (Exception e)
+            {
                 Console.Error.WriteLine(e);
             }
 
@@ -1101,7 +1104,7 @@ namespace DiscordBot.Modules
         {
             from = from.ToUpper();
             to = to.ToUpper();
-            
+
             double fromRate = -1;
             double toRate = -1;
             try
