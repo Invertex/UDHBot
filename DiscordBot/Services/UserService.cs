@@ -629,7 +629,7 @@ namespace DiscordBot.Services
                     {
                         var title = AutoThreadChannel.GenerateTitle(messageParam.Author);
                         var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, Discord.ThreadArchiveDuration.OneDay, messageParam);
-                        if (AutoThreadChannel.CanArchive)
+                        if (!String.IsNullOrEmpty(AutoThreadChannel.FirstMessage))
                         {
                             var message = await thread.SendMessageAsync(AutoThreadChannel.GenerateFirstMessage(messageParam.Author));
                             await message.PinAsync();
