@@ -66,7 +66,12 @@ namespace DiscordBot.Services
 
                         if (createThread)
                         {
-                            var threadTitle = $"{item.Title.Text} - Discussion";
+                            var maxTitleLength = 100;
+
+                            var threadTitle = $"{item.Title.Text}";
+                            if (threadTitle.Length > maxTitleLength)
+                                threadTitle = threadTitle.Substring(0, maxTitleLength - 3) + "...";
+
                             SocketThreadChannel thread = null;
                             try
                             {
