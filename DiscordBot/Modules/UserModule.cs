@@ -1160,9 +1160,12 @@ namespace DiscordBot.Modules
 
         #region AutoThread
 
-        [Command("close")]
-        [Alias("archive")]
-        [RequireAutoThreadAuthor]
+        [Command("Autothread close")]
+        [Alias("Autothread archive", "Att close", "Att archive")]
+        [Summary("Archive an auto-thread and rename it automatically according to channel-specific settings.")]
+        [RequireArchivableAutoThread]
+        [RequireAutoThreadAuthor(Group = "AuthorOrMod")]
+        [RequireModerator(Group = "AuthorOrMod")]
         public async Task CloseAutoThread()
         {
             var currentThread = Context.Message.Channel as SocketThreadChannel;
