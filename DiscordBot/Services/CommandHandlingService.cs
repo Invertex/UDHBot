@@ -107,7 +107,12 @@ namespace DiscordBot.Services
                 if (message.Content.All(letter => letter is '!' or '?' or ' '))
                     return;
 
-                await context.Channel.SendMessageAsync(result.ErrorReason).DeleteAfterSeconds(10);
+                var resultString = result.ErrorReason;
+                if (result is PreconditionGroupResult groupResult)
+                {
+                    resultString = groupResult.PreconditionResults.First().ErrorReason;
+                }
+                await context.Channel.SendMessageAsync(resultString).DeleteAfterSeconds(10);
             }
         }
     }
