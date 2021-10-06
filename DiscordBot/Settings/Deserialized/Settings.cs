@@ -100,6 +100,7 @@ namespace DiscordBot.Settings.Deserialized
         public string Title { get; set; }
         public ulong Id { get; set; }
         public bool CanArchive { get; set; } = false;
+        public bool CanDelete { get; set; } = false;
         public string TitleArchived { get; set; }
 
         public string FirstMessage { get; set; }
