@@ -1169,9 +1169,7 @@ namespace DiscordBot.Modules
         public async Task CloseAutoThread()
         {
             var currentThread = Context.Message.Channel as SocketThreadChannel;
-            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id && x.CanArchive);
-
-            if (autoTheadConfig == null) return;
+            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id);
 
             var newName = autoTheadConfig.GenerateTitleArchived(Context.User);
             if (currentThread.Name.Equals(newName)) return;
@@ -1194,9 +1192,8 @@ namespace DiscordBot.Modules
             try
             {
                 var currentThread = Context.Message.Channel as SocketThreadChannel;
-                var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id && x.CanDelete);
+                var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id);
 
-                if (autoTheadConfig == null) return;
                 await currentThread.DeleteAsync();
             }
             catch (Exception e)
