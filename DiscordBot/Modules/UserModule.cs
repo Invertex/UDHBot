@@ -1189,17 +1189,10 @@ namespace DiscordBot.Modules
         [RequireModerator(Group = "AuthorOrMod")]
         public async Task DeleteAutoThread()
         {
-            try
-            {
-                var currentThread = Context.Message.Channel as SocketThreadChannel;
-                var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id);
+            var currentThread = Context.Message.Channel as SocketThreadChannel;
+            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id);
 
-                await currentThread.DeleteAsync();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
+            await currentThread.DeleteAsync();
         }
     }
 
