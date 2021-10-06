@@ -1183,6 +1183,28 @@ namespace DiscordBot.Modules
             });
         }
 
-        #endregion
+        [Command("Autothread delete")]
+        [Alias("Att delete")]
+        [Summary("Delete an auto-thread.")]
+        [RequireDeletableAutoThread]
+        [RequireAutoThreadAuthor(Group = "AuthorOrMod")]
+        [RequireModerator(Group = "AuthorOrMod")]
+        public async Task DeleteAutoThread()
+        {
+            try
+            {
+                var currentThread = Context.Message.Channel as SocketThreadChannel;
+                var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id && x.CanDelete);
+
+                if (autoTheadConfig == null) return;
+                await currentThread.DeleteAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
     }
+
+    #endregion
 }
