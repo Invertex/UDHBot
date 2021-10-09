@@ -75,7 +75,7 @@ namespace DiscordBot.Services
 
                             SocketThreadChannel thread = null;
                             Discord.ThreadArchiveDuration duration = ThreadArchiveDuration.OneDay;
-                            if (_client.GetGuild(_settings.GuildId).PremiumTier == PremiumTier.Tier1) duration = ThreadArchiveDuration.ThreeDays;
+                            if (_client.GetGuild(_settings.GuildId).PremiumTier >= PremiumTier.Tier1) duration = ThreadArchiveDuration.ThreeDays;
                             thread = await (channel as SocketTextChannel).CreateThreadAsync(threadTitle, Discord.ThreadType.NewsThread, duration, postedMessage);
                             var summary = Regex.Replace(item.Summary.Text, "<.*?>", String.Empty);
                             var firstThreadPost = string.Format("Summary: \n>>> {0}", summary);
