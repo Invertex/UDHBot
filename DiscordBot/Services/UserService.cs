@@ -627,8 +627,11 @@ namespace DiscordBot.Services
                 {
                     try
                     {
+                        Discord.ThreadArchiveDuration duration = ThreadArchiveDuration.OneDay;
+                        if (_client.GetGuild(_settings.GuildId).PremiumTier == PremiumTier.Tier1) duration = ThreadArchiveDuration.ThreeDays;
                         var title = AutoThreadChannel.GenerateTitle(messageParam.Author);
-                        var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, Discord.ThreadArchiveDuration.OneDay, messageParam);
+                        var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, duration, messageParam);
+
                         if (!String.IsNullOrEmpty(AutoThreadChannel.FirstMessage))
                         {
                             var message = await thread.SendMessageAsync(AutoThreadChannel.GenerateFirstMessage(messageParam.Author));
