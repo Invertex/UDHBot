@@ -627,7 +627,10 @@ namespace DiscordBot.Services
                 {
                     try
                     {
-                        Discord.ThreadArchiveDuration duration = Utils.Utils.GetMaxThreadDuration(ThreadArchiveDuration.ThreeDays, _client.GetGuild(_settings.GuildId));
+                        ThreadArchiveDuration wantedDuration;
+                        if (!Enum.TryParse<ThreadArchiveDuration>(AutoThreadChannel.Duration, out wantedDuration))
+                            wantedDuration = ThreadArchiveDuration.ThreeDays;
+                        Discord.ThreadArchiveDuration duration = Utils.Utils.GetMaxThreadDuration(wantedDuration, _client.GetGuild(_settings.GuildId));
                         var title = AutoThreadChannel.GenerateTitle(messageParam.Author);
                         var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, duration, messageParam);
 
