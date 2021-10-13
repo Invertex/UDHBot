@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
+using Discord;
 using Discord.WebSocket;
 
 namespace DiscordBot.Services
@@ -73,15 +74,9 @@ namespace DiscordBot.Services
                                 threadTitle = threadTitle.Substring(0, maxTitleLength - 3) + "...";
 
                             SocketThreadChannel thread = null;
-                            try
-                            {
-                                // This will fail is the server is not boost level 1
-                                thread = await (channel as SocketTextChannel).CreateThreadAsync(threadTitle, Discord.ThreadType.NewsThread, Discord.ThreadArchiveDuration.ThreeDays, postedMessage);
-                            }
-                            catch (Exception)
-                            {
-                                thread = await (channel as SocketTextChannel).CreateThreadAsync(threadTitle, Discord.ThreadType.NewsThread, Discord.ThreadArchiveDuration.OneDay, postedMessage);
-                            }
+                            Discord.ThreadArchiveDuration duration = ThreadArchiveDuration.OneDay;
+                            if (_client.GetGuild(_settings.GuildId).PremiumTier >= PremiumTier.Tier1) duration = ThreadArchiveDuration.ThreeDays;
+                            thread = await (channel as SocketTextChannel).CreateThreadAsync(threadTitle, Discord.ThreadType.NewsThread, duration, postedMessage);
                             var summary = Regex.Replace(item.Summary.Text, "<.*?>", String.Empty);
                             var firstThreadPost = string.Format("Summary: \n>>> {0}", summary);
                             await thread.SendMessageAsync(firstThreadPost);
