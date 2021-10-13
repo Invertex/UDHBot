@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Discord;
 
 namespace DiscordBot.Utils
 {
@@ -66,5 +67,15 @@ namespace DiscordBot.Utils
             character >= 0x20 && character <= 0xD7FF ||
             character >= 0xE000 && character <= 0xFFFD ||
             character >= 0x10000 && character <= 0x10FFFF;
+
+        public static ThreadArchiveDuration GetMaxThreadDuration(ThreadArchiveDuration wantedDuration, IGuild guild)
+        {
+            var maxDuration = ThreadArchiveDuration.OneDay;
+            if (guild.PremiumTier >= PremiumTier.Tier2) maxDuration = ThreadArchiveDuration.OneWeek;
+            else if (guild.PremiumTier >= PremiumTier.Tier1) maxDuration = ThreadArchiveDuration.ThreeDays;
+
+            if (wantedDuration > maxDuration) return maxDuration;
+            return wantedDuration;
+        }
     }
 }
