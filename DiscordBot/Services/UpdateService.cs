@@ -221,7 +221,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                LoggingService.LogToConsole($"Failed to download manual/api file\nEx:{e.ToString()}", Severity.Error);
             }
         }
 
@@ -277,7 +277,7 @@ namespace DiscordBot.Services
             }
             catch
             {
-                Console.WriteLine("Wikipedia method failed loading URL: " + wikiSearchUri);
+                LoggingService.LogToConsole($"Wikipedia method failed loading URL: {wikiSearchUri}", Severity.Warning);
                 return (null, null, null);
             }
 
@@ -320,8 +320,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                Console.WriteLine("Wikipedia method likely failed to parse JSON response from: " + wikiSearchUri);
+                LoggingService.LogToConsole($"Wikipedia method likely failed to parse JSON response from: {wikiSearchUri}.\nEx:{e.ToString()}");
             }
 
             return (null, null, null);

@@ -56,7 +56,7 @@ namespace DiscordBot
 
             _client.Ready += () =>
             {
-                Console.WriteLine("Bot is connected");
+                LoggingService.LogToConsole($"Bot is connected.", Severity.Info);
 
                 _client.GetGuild(_settings.GuildId)
                     ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
