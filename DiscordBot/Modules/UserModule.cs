@@ -672,7 +672,7 @@ namespace DiscordBot.Modules
         public async Task VerifyPackage(uint packageId, string code)
         {
             await Context.Message.DeleteAfterSeconds(seconds: 0);
-            var verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
+            var verif = await _publisherService.ValidatePublisherWithCode(Context.Message.Author, packageId, code);
             await ReplyAsync(verif);
         }
 
