@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
+using DiscordBot.Services.Logging;
 using DiscordBot.Utils;
 using Newtonsoft.Json;
 
@@ -255,7 +256,7 @@ namespace DiscordBot.Modules
             var resultObject = JsonConvert.DeserializeObject<T>(result);
             if (resultObject == null)
             {
-                ConsoleLogger.Log($"WeatherModule Failed to Deserialize object", Severity.Error);
+                LoggingService.LogToConsole($"WeatherModule Failed to Deserialize object", Severity.Error);
             }
             return resultObject;
         }

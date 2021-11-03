@@ -4,6 +4,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Services;
+using DiscordBot.Services.Logging;
 using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils;
 using Microsoft.Extensions.DependencyInjection;

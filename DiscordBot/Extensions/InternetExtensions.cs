@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using DiscordBot.Utils;
+using DiscordBot.Services.Logging;
 
 namespace DiscordBot.Extensions
 {
@@ -25,8 +25,8 @@ namespace DiscordBot.Extensions
             }
             catch (Exception e)
             {
-                ConsoleLogger.Log($"Error trying to load HTTP content.\rER: {e.Message}", Severity.Warning);
-                return "";
+                LoggingService.LogToConsole($"Error trying to load HTTP content.\rER: {e.Message}", Severity.Warning);
+                return string.Empty;
             }
         }
     }

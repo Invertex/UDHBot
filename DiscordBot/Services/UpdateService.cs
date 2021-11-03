@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
+using DiscordBot.Services.Logging;
 using DiscordBot.Utils;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
@@ -189,9 +190,9 @@ namespace DiscordBot.Services
                 _apiDatabase = ConvertJsToArray(apiInput, false);
 
                 if (!SerializeUtil.SerializeFile($"{_settings.ServerRootPath}/unitymanual.json", _manualDatabase))
-                    ConsoleLogger.Log("Failed to save unitymanual.json", Severity.Warning);
+                    LoggingService.LogToConsole("Failed to save unitymanual.json", Severity.Warning);
                 if (!SerializeUtil.SerializeFile($"{_settings.ServerRootPath}/unityapi.json", _apiDatabase))
-                    ConsoleLogger.Log("Failed to save unityapi.json", Severity.Warning);
+                    LoggingService.LogToConsole("Failed to save unityapi.json", Severity.Warning);
 
                 string[][] ConvertJsToArray(string data, bool isManual)
                 {

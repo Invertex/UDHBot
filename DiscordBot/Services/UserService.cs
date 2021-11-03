@@ -15,6 +15,7 @@ using DiscordBot.Settings.Deserialized;
 using DiscordBot.Skin;
 using ImageMagick;
 using Newtonsoft.Json;
+using DiscordBot.Services.Logging;
 
 namespace DiscordBot.Services
 {

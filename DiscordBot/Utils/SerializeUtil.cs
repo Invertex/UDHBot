@@ -1,5 +1,6 @@
 using System.IO;
 using System.Threading.Tasks;
+using DiscordBot.Services.Logging;
 using Newtonsoft.Json;
 
 namespace DiscordBot.Utils
@@ -13,7 +14,7 @@ namespace DiscordBot.Utils
             {
                 if (newFileIfNotExists)
                 {
-                    ConsoleLogger.Log(
+                    LoggingService.LogToConsole(
                         $@"Deserialized File at '{path}' does not exist, attempting to generate new file.",
                         Severity.Warning);
                     var deserializedItem = new T();
@@ -21,7 +22,7 @@ namespace DiscordBot.Utils
                 }
                 else
                 {
-                    ConsoleLogger.Log($@"Deserialized File at '{path}' does not exist.", Severity.Error);
+                    LoggingService.LogToConsole($@"Deserialized File at '{path}' does not exist.", Severity.Error);
                 }
             }
 
@@ -35,7 +36,7 @@ namespace DiscordBot.Utils
         {
             if (objectToSerialize == null)
             {
-                ConsoleLogger.Log($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
+                LoggingService.LogToConsole($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
                     Severity.Warning);
                 return false;
             }
@@ -48,7 +49,7 @@ namespace DiscordBot.Utils
         {
             if (objectToSerialize == null)
             {
-                ConsoleLogger.Log($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
+                LoggingService.LogToConsole($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
                     Severity.Warning);
                 return false;
             }
