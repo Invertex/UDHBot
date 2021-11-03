@@ -85,7 +85,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                LoggingService.LogToConsole(e.ToString(), Severity.Error);
+                LoggingService.LogToConsole(e.ToString(), LogSeverity.Error);
             }
         }
 

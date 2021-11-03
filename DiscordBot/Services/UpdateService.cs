@@ -190,9 +190,9 @@ namespace DiscordBot.Services
                 _apiDatabase = ConvertJsToArray(apiInput, false);
 
                 if (!SerializeUtil.SerializeFile($"{_settings.ServerRootPath}/unitymanual.json", _manualDatabase))
-                    LoggingService.LogToConsole("Failed to save unitymanual.json", Severity.Warning);
+                    LoggingService.LogToConsole("Failed to save unitymanual.json", LogSeverity.Warning);
                 if (!SerializeUtil.SerializeFile($"{_settings.ServerRootPath}/unityapi.json", _apiDatabase))
-                    LoggingService.LogToConsole("Failed to save unityapi.json", Severity.Warning);
+                    LoggingService.LogToConsole("Failed to save unityapi.json", LogSeverity.Warning);
 
                 string[][] ConvertJsToArray(string data, bool isManual)
                 {
@@ -221,7 +221,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                LoggingService.LogToConsole($"Failed to download manual/api file\nEx:{e.ToString()}", Severity.Error);
+                LoggingService.LogToConsole($"Failed to download manual/api file\nEx:{e.ToString()}", LogSeverity.Error);
             }
         }
 
@@ -277,7 +277,7 @@ namespace DiscordBot.Services
             }
             catch
             {
-                LoggingService.LogToConsole($"Wikipedia method failed loading URL: {wikiSearchUri}", Severity.Warning);
+                LoggingService.LogToConsole($"Wikipedia method failed loading URL: {wikiSearchUri}", LogSeverity.Warning);
                 return (null, null, null);
             }
 

@@ -256,7 +256,7 @@ namespace DiscordBot.Modules
             var resultObject = JsonConvert.DeserializeObject<T>(result);
             if (resultObject == null)
             {
-                LoggingService.LogToConsole($"WeatherModule Failed to Deserialize object", Severity.Error);
+                LoggingService.LogToConsole($"WeatherModule Failed to Deserialize object", LogSeverity.Error);
             }
             return resultObject;
         }

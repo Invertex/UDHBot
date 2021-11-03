@@ -71,7 +71,7 @@ namespace DiscordBot.Services
             }
             catch (Exception ex)
             {
-                LoggingService.LogToConsole($"Failed to Deserialize 'ReactionRoles.Json' err: {ex.Message}", Severity.Fail);
+                LoggingService.LogToConsole($"Failed to Deserialize 'ReactionRoles.Json' err: {ex.Message}", LogSeverity.Error);
                 _isRunning = false;
             }
         }
@@ -85,7 +85,7 @@ namespace DiscordBot.Services
             }
             catch (Exception ex)
             {
-                LoggingService.LogToConsole($"Failed to Serialize 'ReactionRoles.Json' err: {ex.Message}", Severity.Fail);
+                LoggingService.LogToConsole($"Failed to Serialize 'ReactionRoles.Json' err: {ex.Message}", LogSeverity.Error);
                 _isRunning = false;
             }
         }
@@ -105,7 +105,7 @@ namespace DiscordBot.Services
             var serverGuild = _client.GetGuild(_settings.GuildId);
             if (serverGuild == null)
             {
-                LoggingService.LogToConsole("ReactRoleService failed to start, could not return guild information.", Severity.Warning);
+                LoggingService.LogToConsole("ReactRoleService failed to start, could not return guild information.", LogSeverity.Warning);
                 await _loggingService.LogAction("ReactRoleService failed to start.");
                 return false;
             }
@@ -117,7 +117,7 @@ namespace DiscordBot.Services
                 var messageChannel = _client.GetChannel(reactMessage.ChannelId) as IMessageChannel;
                 if (messageChannel == null)
                 {
-                    LoggingService.LogToConsole($"ReactRoleService: Channel {reactMessage.ChannelId} does not exist.", Severity.Warning);
+                    LoggingService.LogToConsole($"ReactRoleService: Channel {reactMessage.ChannelId} does not exist.", LogSeverity.Warning);
                     continue;
                 }
 
@@ -135,7 +135,7 @@ namespace DiscordBot.Services
                     // If our message doesn't have the emote, we add it.
                     if (!_reactMessages[reactMessage.MessageId].Reactions.ContainsKey(_guildEmotes[reactMessage.Reactions[i].EmojiId]))
                     {
-                        LoggingService.LogToConsole($"Added Reaction to Message {reactMessage.MessageId} which was missing.", Severity.Info);
+                        LoggingService.LogToConsole($"Added Reaction to Message {reactMessage.MessageId} which was missing.", LogSeverity.Info);
                         // We could add these in bulk, but that'd require a bit more setup
                         await _reactMessages[reactMessage.MessageId].AddReactionAsync(emote);
                     }

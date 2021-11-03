@@ -25,7 +25,7 @@ namespace DiscordBot.Extensions
             }
             catch (Exception e)
             {
-                LoggingService.LogToConsole($"Error trying to load HTTP content.\rER: {e.Message}", Severity.Warning);
+                LoggingService.LogToConsole($"Error trying to load HTTP content.\rER: {e.Message}", Discord.LogSeverity.Warning);
                 return string.Empty;
             }
         }

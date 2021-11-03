@@ -28,24 +28,60 @@ namespace DiscordBot.Services.Logging
 
             if (logToFile)
                 File.AppendAllText(_settings.ServerRootPath + @"/log.txt",
-                    $"[{DateTime.Now:d/M/yy HH:mm:ss}] {action} {Environment.NewLine}");
+                    $"[{ConsistantDateTimeFormat()}] {action} {Environment.NewLine}");
         }
 
         public void LogXp(string channel, string user, float baseXp, float bonusXp, float xpReduce, int totalXp)
         {
             File.AppendAllText(_settings.ServerRootPath + @"/logXP.txt",
-                $"[{DateTime.Now:d/M/yy HH:mm:ss}] - {user} gained {totalXp}xp (base: {baseXp}, bonus : {bonusXp}, reduce : {xpReduce}) in channel {channel} {Environment.NewLine}");
+                $"[{ConsistantDateTimeFormat()}] - {user} gained {totalXp}xp (base: {baseXp}, bonus : {bonusXp}, reduce : {xpReduce}) in channel {channel} {Environment.NewLine}");
         }
 
+        // Returns DateTime.Now in format: d/M/yy HH:mm:ss
+        public static string ConsistantDateTimeFormat()
+        {
+            return DateTime.Now.ToString("d/M/yy HH:mm:ss");
+        }
+
+        // Logs DiscordNet specific messages, this shouldn't be used for normal logging
+        public static Task DiscordNetLogger(LogMessage message)
+        {
+            LoggingService.LogToConsole($"{message.Source} | {message.Message}", message.Severity);
+            return Task.CompletedTask;
+        }
 #region Console Messages
-        public static void LogToConsole(string message, Severity severity = Severity.Info) 
+        // Logs message to console without changing the colour
+        public static void LogConsole(string message) {
+            Console.WriteLine($"[{ConsistantDateTimeFormat()}] {message}");
+        }
+        public static void LogToConsole(string message, LogSeverity severity = LogSeverity.Info) 
         {
             ConsoleColor restoreColour = Console.ForegroundColor;
-            Console.ForegroundColor = (ConsoleColor)severity;
+            SetConsoleColour(severity);
 
-            Console.WriteLine($"[{DateTime.Now:d/M/yy HH:mm:ss}] - {severity} - {message}");
+            Console.WriteLine($"[{ConsistantDateTimeFormat()}] {message} [{severity}]");
 
             Console.ForegroundColor = restoreColour;
+        }
+        private static void SetConsoleColour(LogSeverity severity)
+        {
+            switch (severity)
+            {
+                case LogSeverity.Critical:
+                case LogSeverity.Error:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    break;
+                case LogSeverity.Warning:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    break;
+                case LogSeverity.Info:
+                    Console.ForegroundColor = ConsoleColor.White;
+                    break;
+                case LogSeverity.Verbose:
+                case LogSeverity.Debug:
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    break;
+            }
         }
 #endregion
     }
@@ -54,15 +90,5 @@ namespace DiscordBot.Services.Logging
     {
         Task LogAction(string action, bool logToFile = true, bool logToChannel = true, Embed embed = null);
         void LogXp(string channel, string user, float baseXp, float bonusXp, float xpReduce, int totalXp);
-    }
-
-    // Enum to indicate the severity of messages sent to the Console, we use ConsoleColor as the enum to make it easier to change the colour of the text.
-    public enum Severity
-    {
-        Info = ConsoleColor.Gray,
-        Warning = ConsoleColor.Yellow,
-        Error = ConsoleColor.Red,
-        Fail = ConsoleColor.DarkRed,
-        Pass = ConsoleColor.Green
     }
 }

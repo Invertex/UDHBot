@@ -306,7 +306,7 @@ namespace DiscordBot.Services
                 }
                 catch (Exception e)
                 {
-                    LoggingService.LogToConsole($"Failed to download user profile image for ProfileCard.\nEx:{e.Message}", Severity.Warning);
+                    LoggingService.LogToConsole($"Failed to download user profile image for ProfileCard.\nEx:{e.Message}", LogSeverity.Warning);
                     profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
                 }
 
@@ -641,7 +641,7 @@ namespace DiscordBot.Services
                     }
                     catch (Exception err)
                     {
-                        LoggingService.LogToConsole($"Failed to CreateThread.\nEx: {err.ToString()}", Severity.Error);
+                        LoggingService.LogToConsole($"Failed to CreateThread.\nEx: {err.ToString()}", LogSeverity.Error);
                     }
                 }
             }
