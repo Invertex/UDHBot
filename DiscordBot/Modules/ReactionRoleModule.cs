@@ -4,6 +4,7 @@ using Discord;
 using Discord.Commands;
 using DiscordBot.Extensions;
 using DiscordBot.Services;
+using DiscordBot.Services.Logging;
 using DiscordBot.Settings.Deserialized;
 
 namespace DiscordBot.Modules

@@ -1,6 +1,8 @@
 using System.IO;
 using System.Threading.Tasks;
+using DiscordBot.Services.Logging;
 using Newtonsoft.Json;
+using Discord;
 
 namespace DiscordBot.Utils
 {
@@ -13,15 +15,14 @@ namespace DiscordBot.Utils
             {
                 if (newFileIfNotExists)
                 {
-                    ConsoleLogger.Log(
-                        $@"Deserialized File at '{path}' does not exist, attempting to generate new file.",
-                        Severity.Warning);
+                    LoggingService.LogToConsole($@"Deserialized File at '{path}' does not exist, attempting to generate new file.",
+                        LogSeverity.Warning);
                     var deserializedItem = new T();
                     File.WriteAllText(path, JsonConvert.SerializeObject(deserializedItem));
                 }
                 else
                 {
-                    ConsoleLogger.Log($@"Deserialized File at '{path}' does not exist.", Severity.Error);
+                    LoggingService.LogToConsole($@"Deserialized File at '{path}' does not exist.", LogSeverity.Error);
                 }
             }
 
@@ -35,8 +36,8 @@ namespace DiscordBot.Utils
         {
             if (objectToSerialize == null)
             {
-                ConsoleLogger.Log($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
-                    Severity.Warning);
+                LoggingService.LogToConsole($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
+                    LogSeverity.Warning);
                 return false;
             }
 
@@ -48,8 +49,8 @@ namespace DiscordBot.Utils
         {
             if (objectToSerialize == null)
             {
-                ConsoleLogger.Log($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
-                    Severity.Warning);
+                LoggingService.LogToConsole($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
+                    LogSeverity.Warning);
                 return false;
             }
             await File.WriteAllTextAsync(path, JsonConvert.SerializeObject(objectToSerialize));

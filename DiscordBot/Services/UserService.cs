@@ -15,6 +15,7 @@ using DiscordBot.Settings.Deserialized;
 using DiscordBot.Skin;
 using ImageMagick;
 using Newtonsoft.Json;
+using DiscordBot.Services.Logging;
 
 namespace DiscordBot.Services
 {
@@ -194,9 +195,7 @@ namespace DiscordBot.Services
             if (user.Karma < user.Level) reduceXp = 1 - Math.Min(.9f, (user.Level - user.Karma) * .05f);
 
             var xpGain = (int)Math.Round((baseXp + bonusXp) * reduceXp);
-            //Console.WriteLine($"basexp {baseXp} karma {karma}  bonus {bonusXp}");
             _xpCooldown.AddCooldown(userId, waitTime);
-            //Console.WriteLine($"{_xpCooldown[id].Minute}  {_xpCooldown[id].Second}");
 
             await _databaseService.Query().UpdateXp(userId.ToString(), user.Exp + (uint)xpGain);
 
@@ -307,7 +306,7 @@ namespace DiscordBot.Services
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    LoggingService.LogToConsole($"Failed to download user profile image for ProfileCard.\nEx:{e.Message}", LogSeverity.Warning);
                     profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
                 }
 
@@ -627,8 +626,10 @@ namespace DiscordBot.Services
                 {
                     try
                     {
-                        Discord.ThreadArchiveDuration duration = ThreadArchiveDuration.OneDay;
-                        if (_client.GetGuild(_settings.GuildId).PremiumTier >= PremiumTier.Tier1) duration = ThreadArchiveDuration.ThreeDays;
+                        ThreadArchiveDuration wantedDuration;
+                        if (!Enum.TryParse<ThreadArchiveDuration>(AutoThreadChannel.Duration, out wantedDuration))
+                            wantedDuration = ThreadArchiveDuration.ThreeDays;
+                        Discord.ThreadArchiveDuration duration = Utils.Utils.GetMaxThreadDuration(wantedDuration, _client.GetGuild(_settings.GuildId));
                         var title = AutoThreadChannel.GenerateTitle(messageParam.Author);
                         var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, duration, messageParam);
 
@@ -640,7 +641,7 @@ namespace DiscordBot.Services
                     }
                     catch (Exception err)
                     {
-                        Console.WriteLine(err);
+                        LoggingService.LogToConsole($"Failed to CreateThread.\nEx: {err.ToString()}", LogSeverity.Error);
                     }
                 }
             }

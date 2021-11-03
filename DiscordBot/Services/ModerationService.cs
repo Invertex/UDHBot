@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Services.Logging;
 
 namespace DiscordBot.Services
 {

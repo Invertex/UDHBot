@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
-using DiscordBot.Utils;
+using DiscordBot.Services.Logging;
 using Insight.Database;
 using MySql.Data.MySqlClient;
 
@@ -32,7 +32,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                ConsoleLogger.Log($"SQL Exception: Failed to create DatabaseService.\nMessage: {e}", Severity.Error);
+                LoggingService.LogToConsole($"SQL Exception: Failed to create DatabaseService.\nMessage: {e}", LogSeverity.Error);
                 throw;
             }
 
@@ -43,12 +43,12 @@ namespace DiscordBot.Services
             }
             catch (Exception)
             {
-                ConsoleLogger.Log($"DatabaseService: Table 'users' does not exist, attempting to generate table.", Severity.Warning);
+                LoggingService.LogToConsole($"DatabaseService: Table 'users' does not exist, attempting to generate table.", LogSeverity.Warning);
                 c.ExecuteSql(
                     $"CREATE TABLE `users` (`ID` int(11) UNSIGNED  NOT NULL, `UserID` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL, `Karma` int(11) UNSIGNED  NOT NULL DEFAULT 0, `KarmaWeekly` int(11) UNSIGNED  NOT NULL DEFAULT 0, `KarmaMonthly` int(11) UNSIGNED  NOT NULL DEFAULT 0, `KarmaYearly` int(11) UNSIGNED  NOT NULL DEFAULT 0, `KarmaGiven` int(11) UNSIGNED NOT NULL DEFAULT 0, `Exp` bigint(11) UNSIGNED  NOT NULL DEFAULT 0, `Level` int(11) UNSIGNED NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
                 c.ExecuteSql($"ALTER TABLE `users` ADD PRIMARY KEY (`ID`,`UserID`), ADD UNIQUE KEY `UserID` (`UserID`)");
                 c.ExecuteSql($"ALTER TABLE `users` MODIFY `ID` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1");
-                ConsoleLogger.Log($"DatabaseService: Table 'users' generated without errors.", Severity.Pass);
+                LoggingService.LogToConsole($"DatabaseService: Table 'users' generated without errors.", LogSeverity.Info);
             }
             // Generate and add events if they don't exist
             try
@@ -62,7 +62,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                ConsoleLogger.Log($"SQL Exception: Failed to generate leaderboard events.\nMessage: {e}", Severity.Error);
+                LoggingService.LogToConsole($"SQL Exception: Failed to generate leaderboard events.\nMessage: {e}", LogSeverity.Error);
             }
         }
 

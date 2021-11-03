@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Services.Logging;
 
 namespace DiscordBot.Services
 {
@@ -74,8 +75,7 @@ namespace DiscordBot.Services
                                 threadTitle = threadTitle.Substring(0, maxTitleLength - 3) + "...";
 
                             SocketThreadChannel thread = null;
-                            Discord.ThreadArchiveDuration duration = ThreadArchiveDuration.OneDay;
-                            if (_client.GetGuild(_settings.GuildId).PremiumTier >= PremiumTier.Tier1) duration = ThreadArchiveDuration.ThreeDays;
+                            Discord.ThreadArchiveDuration duration = Utils.Utils.GetMaxThreadDuration(ThreadArchiveDuration.ThreeDays, _client.GetGuild(_settings.GuildId));
                             thread = await (channel as SocketTextChannel).CreateThreadAsync(threadTitle, Discord.ThreadType.NewsThread, duration, postedMessage);
                             var summary = Regex.Replace(item.Summary.Text, "<.*?>", String.Empty);
                             var firstThreadPost = string.Format("Summary: \n>>> {0}", summary);
@@ -85,7 +85,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                LoggingService.LogToConsole(e.ToString(), LogSeverity.Error);
             }
         }
 

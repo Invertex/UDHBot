@@ -11,6 +11,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
 using DiscordBot.Services;
+using DiscordBot.Services.Logging;
 using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils;
 using DiscordBot.Utils.Attributes;
@@ -671,7 +672,7 @@ namespace DiscordBot.Modules
         public async Task VerifyPackage(uint packageId, string code)
         {
             await Context.Message.DeleteAfterSeconds(seconds: 0);
-            var verif = await _publisherService.ValidatePackageWithCode(Context.Message.Author, packageId, code);
+            var verif = await _publisherService.ValidatePublisherWithCode(Context.Message.Author, packageId, code);
             await ReplyAsync(verif);
         }
 
@@ -1160,15 +1161,16 @@ namespace DiscordBot.Modules
 
         #region AutoThread
 
-        [Command("close")]
-        [Alias("archive")]
-        [RequireAutoThreadAuthor]
+        [Command("Autothread close")]
+        [Alias("Autothread archive", "Att close", "Att archive")]
+        [Summary("Archive an auto-thread and rename it automatically according to channel-specific settings.")]
+        [RequireArchivableAutoThread]
+        [RequireAutoThreadAuthor(Group = "AuthorOrMod")]
+        [RequireModerator(Group = "AuthorOrMod")]
         public async Task CloseAutoThread()
         {
             var currentThread = Context.Message.Channel as SocketThreadChannel;
-            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id && x.CanArchive);
-
-            if (autoTheadConfig == null) return;
+            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id);
 
             var newName = autoTheadConfig.GenerateTitleArchived(Context.User);
             if (currentThread.Name.Equals(newName)) return;
@@ -1180,6 +1182,20 @@ namespace DiscordBot.Modules
             });
         }
 
-        #endregion
+        [Command("Autothread delete")]
+        [Alias("Att delete")]
+        [Summary("Delete an auto-thread.")]
+        [RequireDeletableAutoThread]
+        [RequireAutoThreadAuthor(Group = "AuthorOrMod")]
+        [RequireModerator(Group = "AuthorOrMod")]
+        public async Task DeleteAutoThread()
+        {
+            var currentThread = Context.Message.Channel as SocketThreadChannel;
+            var autoTheadConfig = _settings.AutoThreadChannels.Find(x => currentThread.ParentChannel.Id == x.Id);
+
+            await currentThread.DeleteAsync();
+        }
     }
+
+    #endregion
 }

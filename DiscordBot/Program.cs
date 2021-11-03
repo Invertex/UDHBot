@@ -4,6 +4,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Services;
+using DiscordBot.Services.Logging;
 using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,14 +49,14 @@ namespace DiscordBot
 
             await _commandHandlingService.Initialize();
 
-            _client.Log += Logger;
+            _client.Log += LoggingService.DiscordNetLogger;
 
             await _client.LoginAsync(TokenType.Bot, _settings.Token);
             await _client.StartAsync();
 
             _client.Ready += () =>
             {
-                Console.WriteLine("Bot is connected");
+                LoggingService.LogToConsole($"Bot is connected.", LogSeverity.Info);
 
                 _client.GetGuild(_settings.GuildId)
                     ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
@@ -86,32 +87,6 @@ namespace DiscordBot
                 .AddSingleton<CurrencyService>()
                 .AddSingleton<ReactRoleService>()
                 .BuildServiceProvider();
-
-        private static Task Logger(LogMessage message)
-        {
-            var cc = Console.ForegroundColor;
-            switch (message.Severity)
-            {
-                case LogSeverity.Critical:
-                case LogSeverity.Error:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    break;
-                case LogSeverity.Warning:
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    break;
-                case LogSeverity.Info:
-                    Console.ForegroundColor = ConsoleColor.White;
-                    break;
-                case LogSeverity.Verbose:
-                case LogSeverity.Debug:
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    break;
-            }
-
-            Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message}");
-            Console.ForegroundColor = cc;
-            return Task.CompletedTask;
-        }
 
         private static void DeserializeSettings()
         {

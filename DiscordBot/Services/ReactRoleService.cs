@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Services.Logging;
 using DiscordBot.Settings.Deserialized;
 using Newtonsoft.Json;
 
@@ -70,7 +71,7 @@ namespace DiscordBot.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to Deserialize 'ReactionRoles.Json' err: {ex.Message}");
+                LoggingService.LogToConsole($"Failed to Deserialize 'ReactionRoles.Json' err: {ex.Message}", LogSeverity.Error);
                 _isRunning = false;
             }
         }
@@ -84,7 +85,7 @@ namespace DiscordBot.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to Serialize 'ReactionRoles.Json' err: {ex.Message}");
+                LoggingService.LogToConsole($"Failed to Serialize 'ReactionRoles.Json' err: {ex.Message}", LogSeverity.Error);
                 _isRunning = false;
             }
         }
@@ -104,7 +105,7 @@ namespace DiscordBot.Services
             var serverGuild = _client.GetGuild(_settings.GuildId);
             if (serverGuild == null)
             {
-                Console.WriteLine("ReactRoleService failed to start, could not return guild information.");
+                LoggingService.LogToConsole("ReactRoleService failed to start, could not return guild information.", LogSeverity.Warning);
                 await _loggingService.LogAction("ReactRoleService failed to start.");
                 return false;
             }
@@ -116,7 +117,7 @@ namespace DiscordBot.Services
                 var messageChannel = _client.GetChannel(reactMessage.ChannelId) as IMessageChannel;
                 if (messageChannel == null)
                 {
-                    Console.WriteLine($"ReactRoleService: Channel {reactMessage.ChannelId} does not exist.");
+                    LoggingService.LogToConsole($"ReactRoleService: Channel {reactMessage.ChannelId} does not exist.", LogSeverity.Warning);
                     continue;
                 }
 
@@ -134,7 +135,7 @@ namespace DiscordBot.Services
                     // If our message doesn't have the emote, we add it.
                     if (!_reactMessages[reactMessage.MessageId].Reactions.ContainsKey(_guildEmotes[reactMessage.Reactions[i].EmojiId]))
                     {
-                        Console.WriteLine($"Added Reaction to Message {reactMessage.MessageId} which was missing.");
+                        LoggingService.LogToConsole($"Added Reaction to Message {reactMessage.MessageId} which was missing.", LogSeverity.Info);
                         // We could add these in bulk, but that'd require a bit more setup
                         await _reactMessages[reactMessage.MessageId].AddReactionAsync(emote);
                     }
