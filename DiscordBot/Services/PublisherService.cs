@@ -1,115 +1,30 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using DiscordBot.Data;
 using MailKit.Net.Smtp;
 using MimeKit;
-using Newtonsoft.Json;
 
 namespace DiscordBot.Services
 {
     public class PublisherService
     {
-        private readonly DiscordSocketClient _client;
-
         private readonly Settings.Deserialized.Settings _settings;
-
         private readonly Dictionary<uint, string> _verificationCodes;
 
-        public PublisherService(DiscordSocketClient client, Settings.Deserialized.Settings settings)
+        public PublisherService(Settings.Deserialized.Settings settings)
         {
-            _client = client;
             _verificationCodes = new Dictionary<uint, string>();
             _settings = settings;
         }
 
         /*
-        (No longer works) DailyObject => https://www.assetstore.unity3d.com/api/en-US/sale/results/10.json
-        (No longer works) PackageOBject => https://www.assetstore.unity3d.com/api/en-US/content/overview/[PACKAGEID].json
-        (No longer works) PriceObject (€) => https://www.assetstore.unity3d.com/api/en-US/content/price/[PACKAGEID].json
-        (No longer works) PackageHead => https://www.assetstore.unity3d.com/api/en-US/head/package/[PACKAGEID].json
-        blogfeed (xml) => https://blogs.unity3d.com/feed/
+            blogfeed (xml) => https://blogs.unity3d.com/feed/
         */
-
-        public async Task<DailyObject> GetDaily()
-        {
-            using (var httpClient = new HttpClient())
-            {
-                var json = await httpClient.GetStringAsync(
-                    "https://www.assetstore.unity3d.com/api/en-US/sale/results/10.json");
-                return JsonConvert.DeserializeObject<DailyObject>(json);
-            }
-        }
-
-        public async Task<PackageObject> GetPackage(uint packageId)
-        {
-            using (var httpClient = new HttpClient())
-            {
-                var json = await httpClient.GetStringAsync(
-                    $"https://www.assetstore.unity3d.com/api/en-US/content/overview/{packageId}.json");
-                return JsonConvert.DeserializeObject<PackageObject>(json);
-            }
-        }
-
-        public async Task<PackageHeadObject> GetPackageHead(uint packageId)
-        {
-            using (var httpClient = new HttpClient())
-            {
-                var json = await httpClient.GetStringAsync(
-                    $"https://www.assetstore.unity3d.com/api/en-US/head/package/{packageId}.json");
-                return JsonConvert.DeserializeObject<PackageHeadObject>(json);
-            }
-        }
-
-        public async Task<PriceObject> GetPackagePrice(uint packageId)
-        {
-            using (var httpClient = new HttpClient())
-            {
-                httpClient.Timeout = TimeSpan.FromSeconds(10);
-                var json = await httpClient.GetStringAsync(
-                    $"https://www.assetstore.unity3d.com/api/en-US/content/price/{packageId}.json");
-                return JsonConvert.DeserializeObject<PriceObject>(json);
-            }
-        }
-
-        public async Task<(string, Stream)> GetPublisherAdvertisting(ulong userid, PackageObject package,
-                                                                     PackageHeadObject packageHead, PriceObject packagePrice)
-        {
-            var descStrippedHtml = Regex.Replace(package.Content.Description, "<.*?>", string.Empty);
-            descStrippedHtml = Regex.Replace(descStrippedHtml, "&nbsp;", string.Empty);
-
-            var sb = new StringBuilder();
-            sb.Append("**--- Publisher everyday Advertising ---**\n\n");
-            sb.Append($"Today's daily advertisting goes to {_client.GetUser(userid).Mention} (**{packageHead.Result.Publisher}**)\n");
-            sb.Append($"With their package : {packageHead.Result.Title}, priced at {packagePrice.Price}\n");
-            sb.Append("For any inquiry you can contact them here on **Unity Developer Hub** by mentioning them in the chat or PM.\n\n");
-            sb.Append("*Rating* ");
-            for (var i = 0; i < package.Content.Rating.Average; i++)
-                sb.Append("★");
-            sb.Append($"(:bust_in_silhouette:{package.Content.Rating.Count})\n");
-            sb.Append($"Unity Asset Store Link - https://www.assetstore.unity3d.com/en/#!/content/{package.Content.Link.Id}?utm_source=udh&utm_medium=discord\n");
-            sb.Append($"```{descStrippedHtml.Substring(0, 250)}[...]```\n");
-            sb.Append("To be part of this kind of advertising use `!pInfo` for more informations.");
-            //TODO add image
-
-            Stream image;
-            using (var httpClient = new HttpClient())
-            {
-                httpClient.Timeout = TimeSpan.FromSeconds(30);
-                image = await httpClient.GetStreamAsync($"https:{package.Content.Keyimage.Big}");
-                //image = ImageSharp.Image.Load(img);
-            }
-
-            return (sb.ToString(), image);
-        }
 
         public async Task<(bool, string)> VerifyPublisher(uint publisherId, string name)
         {
@@ -135,29 +50,8 @@ namespace DiscordBot.Services
                         return (true, "An email with a validation code was sent.\nPlease type `!verify <ID> <code>` to verify your publisher account.\nThis code will be valid for 30 minutes.");
                     }
                 }
-
                 return (false, "We failed to confirm this Publisher ID, double check and try again in a few minutes.");
             }
-        }
-
-        public async Task<(bool, string)> VerifyPackage(uint packageId)
-        {
-            Console.WriteLine("enters verify package");
-            var package = await GetPackage(packageId);
-            if (package.Content == null) //Package doesn't exist
-                return (false, $"The package id {packageId} doesn't exist.");
-            if (package.Content.Publisher.SupportEmail.Length < 2)
-                return (false, "Your package must have a support email defined to be validated.");
-
-            var name = (await GetPackageHead(packageId)).Result.Publisher;
-
-            Console.WriteLine("before sending verification code");
-
-            await SendVerificationCode(name, package.Content.Publisher.SupportEmail, packageId);
-            Console.WriteLine("after sending verification code");
-            return (true,
-                    "An email with a validation code was sent. Please type !verify *packageId* *code* to validate your package.\nThis code will be valid for 30 minutes."
-                );
         }
 
         public async Task SendVerificationCode(string name, string email, uint packageId)
