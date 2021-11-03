@@ -8,6 +8,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
 using DiscordBot.Services;
+using DiscordBot.Services.Logging;
 using DiscordBot.Settings.Deserialized;
 using Pathoschild.NaturalTimeParser.Parser;
 

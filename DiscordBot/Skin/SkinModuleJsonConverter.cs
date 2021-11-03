@@ -1,6 +1,8 @@
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using DiscordBot.Services.Logging;
+using Discord;
 
 namespace DiscordBot.Skin
 {
@@ -22,7 +24,7 @@ namespace DiscordBot.Skin
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                LoggingService.LogToConsole($"{e.ToString()}", LogSeverity.Error);
                 throw;
             }
         }

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Services.Logging;
 
 namespace DiscordBot.Services
 {
@@ -84,7 +85,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                LoggingService.LogToConsole(e.ToString(), LogSeverity.Error);
             }
         }
 

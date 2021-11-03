@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 
-namespace DiscordBot.Services
+namespace DiscordBot.Services.Logging
 {
     public class LoggingService : ILoggingService
     {
@@ -28,14 +28,62 @@ namespace DiscordBot.Services
 
             if (logToFile)
                 File.AppendAllText(_settings.ServerRootPath + @"/log.txt",
-                    $"[{DateTime.Now:d/M/yy HH:mm:ss}] {action} {Environment.NewLine}");
+                    $"[{ConsistantDateTimeFormat()}] {action} {Environment.NewLine}");
         }
 
         public void LogXp(string channel, string user, float baseXp, float bonusXp, float xpReduce, int totalXp)
         {
             File.AppendAllText(_settings.ServerRootPath + @"/logXP.txt",
-                $"[{DateTime.Now:d/M/yy HH:mm:ss}] - {user} gained {totalXp}xp (base: {baseXp}, bonus : {bonusXp}, reduce : {xpReduce}) in channel {channel} {Environment.NewLine}");
+                $"[{ConsistantDateTimeFormat()}] - {user} gained {totalXp}xp (base: {baseXp}, bonus : {bonusXp}, reduce : {xpReduce}) in channel {channel} {Environment.NewLine}");
         }
+
+        // Returns DateTime.Now in format: d/M/yy HH:mm:ss
+        public static string ConsistantDateTimeFormat()
+        {
+            return DateTime.Now.ToString("d/M/yy HH:mm:ss");
+        }
+
+        // Logs DiscordNet specific messages, this shouldn't be used for normal logging
+        public static Task DiscordNetLogger(LogMessage message)
+        {
+            LoggingService.LogToConsole($"{message.Source} | {message.Message}", message.Severity);
+            return Task.CompletedTask;
+        }
+#region Console Messages
+        // Logs message to console without changing the colour
+        public static void LogConsole(string message) {
+            Console.WriteLine($"[{ConsistantDateTimeFormat()}] {message}");
+        }
+        public static void LogToConsole(string message, LogSeverity severity = LogSeverity.Info) 
+        {
+            ConsoleColor restoreColour = Console.ForegroundColor;
+            SetConsoleColour(severity);
+
+            Console.WriteLine($"[{ConsistantDateTimeFormat()}] {message} [{severity}]");
+
+            Console.ForegroundColor = restoreColour;
+        }
+        private static void SetConsoleColour(LogSeverity severity)
+        {
+            switch (severity)
+            {
+                case LogSeverity.Critical:
+                case LogSeverity.Error:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    break;
+                case LogSeverity.Warning:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    break;
+                case LogSeverity.Info:
+                    Console.ForegroundColor = ConsoleColor.White;
+                    break;
+                case LogSeverity.Verbose:
+                case LogSeverity.Debug:
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    break;
+            }
+        }
+#endregion
     }
 
     public interface ILoggingService

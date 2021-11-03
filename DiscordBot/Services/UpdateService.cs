@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using DiscordBot.Extensions;
+using DiscordBot.Services.Logging;
 using DiscordBot.Utils;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
@@ -189,9 +190,9 @@ namespace DiscordBot.Services
                 _apiDatabase = ConvertJsToArray(apiInput, false);
 
                 if (!SerializeUtil.SerializeFile($"{_settings.ServerRootPath}/unitymanual.json", _manualDatabase))
-                    ConsoleLogger.Log("Failed to save unitymanual.json", Severity.Warning);
+                    LoggingService.LogToConsole("Failed to save unitymanual.json", LogSeverity.Warning);
                 if (!SerializeUtil.SerializeFile($"{_settings.ServerRootPath}/unityapi.json", _apiDatabase))
-                    ConsoleLogger.Log("Failed to save unityapi.json", Severity.Warning);
+                    LoggingService.LogToConsole("Failed to save unityapi.json", LogSeverity.Warning);
 
                 string[][] ConvertJsToArray(string data, bool isManual)
                 {
@@ -220,7 +221,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                LoggingService.LogToConsole($"Failed to download manual/api file\nEx:{e.ToString()}", LogSeverity.Error);
             }
         }
 
@@ -276,7 +277,7 @@ namespace DiscordBot.Services
             }
             catch
             {
-                Console.WriteLine("Wikipedia method failed loading URL: " + wikiSearchUri);
+                LoggingService.LogToConsole($"Wikipedia method failed loading URL: {wikiSearchUri}", LogSeverity.Warning);
                 return (null, null, null);
             }
 
@@ -319,8 +320,7 @@ namespace DiscordBot.Services
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                Console.WriteLine("Wikipedia method likely failed to parse JSON response from: " + wikiSearchUri);
+                LoggingService.LogToConsole($"Wikipedia method likely failed to parse JSON response from: {wikiSearchUri}.\nEx:{e.ToString()}");
             }
 
             return (null, null, null);
