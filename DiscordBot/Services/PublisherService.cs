@@ -26,6 +26,7 @@ namespace DiscordBot.Services
             blogfeed (xml) => https://blogs.unity3d.com/feed/
         */
 
+        // Attempts to get a publishers email from the unity asset store and emails them with confirmation codes to verify their account.
         public async Task<(bool, string)> VerifyPublisher(uint publisherId, string name)
         {
             // Unity is 1, we probably don't want to email them.
@@ -87,19 +88,22 @@ namespace DiscordBot.Services
             //TODO Delete code after 30min
         }
 
-        public async Task<string> ValidatePackageWithCode(IUser user, uint packageId, string code)
+        // User is verified if they have a code that matches the one in _verificationCodes and given `Asset-Publisher` role if so.
+        public async Task<string> ValidatePublisherWithCode(IUser user, uint packageId, string code)
         {
-            string c;
-            if (!_verificationCodes.TryGetValue(packageId, out c))
-                return "An error occured while trying to veriry your publisher account. Please check your ID is valid.";
+            if (!_verificationCodes.TryGetValue(packageId, out string c))
+                return "An error occurred while trying to verify your publisher account. Please check your ID is valid.";
             if (c != code)
                 return "The verification code is not valid. Please check and try again.";
-
-            var u = (SocketGuildUser)user;
-            IRole publisher = u.Guild.GetRole(_settings.PublisherRoleId);
-            await u.AddRoleAsync(publisher);
-
-            return "Your publisher account has been verified and you know have the `Asset-Publisher` role!";
+            
+            // Give the user the publisher role.
+            await ((SocketGuildUser)user)
+                .AddRoleAsync(((SocketGuildUser)user)
+                .Guild.GetRole(_settings.PublisherRoleId));
+            // Remove this code since it is now used.
+            _verificationCodes.Remove(packageId);
+            
+            return "Your publisher account has been verified and you now have the `Asset-Publisher` role!";
         }
     }
 }
