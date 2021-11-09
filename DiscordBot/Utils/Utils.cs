@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using Discord;
 
 namespace DiscordBot.Utils
@@ -13,7 +14,17 @@ namespace DiscordBot.Utils
             if (span.TotalSeconds == 0) return "0 seconds";
 
             var parts = new List<string>();
-            if (span.Days > 0) parts.Add($"{span.Days} day{(span.Days > 1 ? "s" : "")}");
+
+            int days = span.Days;
+            // if days is over a year
+            if (days >= 365)
+            {
+                int years = days / 365;
+                parts.Add($"{years} year{(years > 1 ? "s" : "")}");
+                days %= 365;
+            }
+
+            if (days > 0) parts.Add($"{days} day{(days > 1 ? "s" : "")}");
 
             if (span.Hours > 0) parts.Add($"{span.Hours} hour{(span.Hours > 1 ? "s" : "")}");
 
@@ -76,6 +87,65 @@ namespace DiscordBot.Utils
 
             if (wantedDuration > maxDuration) return maxDuration;
             return wantedDuration;
+        }
+        
+        // Returns a datetime from a string using common date terms, ie; '1 year 40 days', '30 minutes 10 seconds', '10m 1d 400s', '1d 10h'
+        public static DateTime ParseTimeFromString(string time)
+        {
+            var timeSpan = TimeSpan.Zero;
+            var timeSpanRegex = new Regex(@"(?<value>\d+) *(?<unit>[^\d\W]+)");
+            var matches = timeSpanRegex.Matches(time);
+            foreach (Match match in matches)
+            {
+                var value = int.Parse(match.Groups["value"].Value);
+                var unit = match.Groups["unit"].Value;
+                switch (unit)
+                {
+                    case "s":
+                    case "sec":
+                    case "second":
+                    case "seconds":
+                        timeSpan += TimeSpan.FromSeconds(value);
+                        break;
+                    case "m":
+                    case "min":
+                    case "minute":
+                    case "minutes":
+                        timeSpan += TimeSpan.FromMinutes(value);
+                        break;
+                    case "h":
+                    case "hour":
+                    case "hours":
+                        timeSpan += TimeSpan.FromHours(value);
+                        break;
+                    case "d":
+                    case "day":
+                    case "days":
+                        timeSpan += TimeSpan.FromDays(value);
+                        break;
+                    case "w":
+                    case "week":
+                    case "weeks":
+                        timeSpan += TimeSpan.FromDays(value * 7);
+                        break;
+                    case "mo":
+                    case "month":
+                    case "months":
+                        timeSpan += TimeSpan.FromDays(value * 30);
+                        break;
+                    case "y":
+                    case "year":
+                    case "years":
+                        timeSpan += TimeSpan.FromDays(value * 365);
+                        break;
+                }
+            }
+            return DateTime.Now + timeSpan;
+        }
+        
+        public static string MessageLinkBack(ulong guildId, ulong channelId, ulong messageId)
+        {
+            return $"https://discordapp.com/channels/{guildId}/{channelId}/{messageId}";
         }
     }
 }
