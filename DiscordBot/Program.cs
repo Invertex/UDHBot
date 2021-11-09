@@ -86,6 +86,7 @@ namespace DiscordBot
                 .AddSingleton<UpdateService>()
                 .AddSingleton<CurrencyService>()
                 .AddSingleton<ReactRoleService>()
+                .AddSingleton<ReminderService>()
                 .BuildServiceProvider();
 
         private static void DeserializeSettings()
