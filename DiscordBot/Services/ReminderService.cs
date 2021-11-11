@@ -103,13 +103,14 @@ namespace DiscordBot.Services
         {
             while (true)
             {
+                var now = DateTime.Now;
                 // We wait until we know at least one reminder needs to be checked
-                if (DateTime.Now > _nearestReminder && _reminders.Count > 0)
+                if (now > _nearestReminder && _reminders.Count > 0)
                 {
                     // Iterate through list backwards checking dates and replying to messages
                     for (int i = _reminders.Count - 1; i >= 0; i--)
                     {
-                        if (_reminders[i].When <= DateTime.Now)
+                        if (now > _reminders[i].When)
                         {
                             var channel = _client.GetChannel(_reminders[i].ChannelId) as IMessageChannel;
                             if (channel != null)
@@ -131,8 +132,9 @@ namespace DiscordBot.Services
                             _hasChangedSinceLastSave = true;
                         }
                     }
-                    // Find the nearest reminder in _reminders and set
-                    _nearestReminder = _reminders.Min(x => x.When);
+                    // Find the nearest reminder in _reminders and set if there is at least 1 reminder
+                    if (_reminders.Count > 0)
+                        _nearestReminder = _reminders.Min(x => x.When);
                 }
 
                 // We check if there has been a change to the reminders list since the last update.
