@@ -89,23 +89,18 @@ namespace DiscordBot.Modules
             await Reminders(Context.User);
         }
         
-        // Removes a users reminders for them
-        [RequireModerator]
-        [Command("removereminders"), HideFromHelp]
-        [Summary("Clears user reminders.")]
-        public async Task RemoveReminders(IUser user, int index = 0)
+        // Removes a users reminders themself
+        [Command("removereminder"), Priority(81)]
+        [Summary("Clears all reminders unless an Index is provided.")]
+        [Alias("removereminders")]
+        public async Task RemoveReminders(int index = 0)
         {
-            await Context.Message.DeleteAfterSeconds(seconds: 1);
-            int removedReminders = _reminderService.RemoveReminders(user, index);
-            if (removedReminders == 0)
-                return;
-            if (removedReminders == -1)
-            {
-                await ReplyAsync("Invalid index provided.");
-                return;
-            }
-            await ReplyAsync($"{removedReminders.ToString()} Reminders removed.").DeleteAfterSeconds(seconds: 2);
+            await RemoveReminders(Context.User, index);
         }
+
+
+        #region Moderator Commands
+        // Moderators can use the commands in this space, other methods pass their calls through these to reduce duplicate code.
         
         // Allows a moderator to see reminders of a user
         [RequireModerator]
@@ -138,13 +133,40 @@ namespace DiscordBot.Modules
                     .DeleteAfterSeconds(seconds: 30);
         }
         
-        // Removes a users reminders themself
-        [Command("removereminder"), Priority(81)]
-        [Summary("Clears all reminders unless an Index is provided.")]
-        [Alias("removereminders")]
-        public async Task RemoveReminders(int index = 0)
+        // Removes a users reminders for them
+        [RequireModerator]
+        [Command("removereminders"), HideFromHelp]
+        [Summary("Clears user reminders.")]
+        public async Task RemoveReminders(IUser user, int index = 0)
         {
-            await RemoveReminders(Context.User, index);
+            await Context.Message.DeleteAfterSeconds(seconds: 1);
+            int removedReminders = _reminderService.RemoveReminders(user, index);
+            if (removedReminders == 0)
+                return;
+            if (removedReminders == -1)
+            {
+                await ReplyAsync("Invalid index provided.");
+                return;
+            }
+            await ReplyAsync($"{removedReminders.ToString()} Reminders removed.").DeleteAfterSeconds(seconds: 2);
         }
+
+        [RequireModerator]
+        [Command("remindersreboot"), HideFromHelp]
+        [Summary("Used to restart the reminder service if it has crashed.")]
+        public async Task RebootReminderService()
+        {
+            if (_reminderService.IsRunning())
+            {
+                await ReplyAsync("Reminder service is still running.").DeleteAfterSeconds(seconds: 5);
+                return;
+            }
+            var result = await _reminderService.RestartService();
+            if (result)
+                await ReplyAsync("Reminder service restarted.").DeleteAfterSeconds(seconds: 5);
+            else
+                await ReplyAsync("Reminder service failed to restart.").DeleteAfterSeconds(seconds: 5);
+        }
+        #endregion
     }
 }
