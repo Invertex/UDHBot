@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Services.Logging;
+using DiscordBot.Settings.Deserialized;
 
 namespace DiscordBot.Services
 {
@@ -22,20 +24,17 @@ namespace DiscordBot.Services
         private DateTime _nearestReminder = DateTime.Now;
         
         private readonly DiscordSocketClient _client;
+        private readonly ILoggingService _loggingService;
         private List<ReminderItem> _reminders;
         
         private bool _hasChangedSinceLastSave = false;
-        private DateTime _nextSave;
-        private int _saveInterval = 300;
-        
-        private int _maxUserReminders = 5;
 
-        public ReminderService(DiscordSocketClient client)
+        private int _maxUserReminders = 5;
+        
+        public ReminderService(DiscordSocketClient client, ILoggingService loggingService )
         {
             _client = client;
-            _nextSave = DateTime.Now.AddSeconds(_saveInterval);
-            LoadReminders();
-
+            _loggingService = loggingService;
             client.Ready += OnReady;
         }
 
@@ -43,6 +42,7 @@ namespace DiscordBot.Services
         {
             if (!_isRunning)
             {
+                LoadReminders();
                 Task.Run(CheckReminders);
                 _isRunning = true;
             }
@@ -101,52 +101,74 @@ namespace DiscordBot.Services
         // Check if reminders are due in an async task that loops from the constructor
         public async Task CheckReminders()
         {
-            while (true)
+            try
             {
-                var now = DateTime.Now;
-                // We wait until we know at least one reminder needs to be checked
-                if (now > _nearestReminder && _reminders.Count > 0)
+                while (true)
                 {
-                    // Iterate through list backwards checking dates and replying to messages
-                    for (int i = _reminders.Count - 1; i >= 0; i--)
+                    var now = DateTime.Now;
+                    // We wait until we know at least one reminder needs to be checked
+                    if (now > _nearestReminder && _reminders.Count > 0)
                     {
-                        if (now > _reminders[i].When)
+                        // Iterate through list backwards checking dates and replying to messages
+                        for (int i = _reminders.Count - 1; i >= 0; i--)
                         {
-                            var channel = _client.GetChannel(_reminders[i].ChannelId) as IMessageChannel;
-                            if (channel != null)
+                            if (now > _reminders[i].When)
                             {
-                                var message = await channel.GetMessageAsync(_reminders[i].MessageId) as IUserMessage;
-                                if (message != null)
-                                    await message.ReplyAsync(
-                                        $"{message.Author.Mention} reminder: {_reminders[i].Message}");
-                                else
+                                var channel = _client.GetChannel(_reminders[i].ChannelId) as IMessageChannel;
+                                if (channel != null)
                                 {
-                                    var user = _client.GetUser(_reminders[i].UserId);
-                                    if (user != null)
-                                        await channel.SendMessageAsync(
-                                            $"{user.Mention} reminder: {_reminders[i].Message}");
+                                    var message =
+                                        await channel.GetMessageAsync(_reminders[i].MessageId) as IUserMessage;
+                                    if (message != null)
+                                        await message.ReplyAsync(
+                                            $"{message.Author.Mention} reminder: {_reminders[i].Message}");
+                                    else
+                                    {
+                                        var user = _client.GetUser(_reminders[i].UserId);
+                                        if (user != null)
+                                            await channel.SendMessageAsync(
+                                                $"{user.Mention} reminder: {_reminders[i].Message}");
+                                    }
                                 }
+
+                                _reminders.RemoveAt(i);
+                                _hasChangedSinceLastSave = true;
                             }
-
-                            _reminders.RemoveAt(i);
-                            _hasChangedSinceLastSave = true;
                         }
-                    }
-                    // Find the nearest reminder in _reminders and set if there is at least 1 reminder
-                    if (_reminders.Count > 0)
-                        _nearestReminder = _reminders.Min(x => x.When);
-                }
 
-                // We check if there has been a change to the reminders list since the last update.
-                if (_hasChangedSinceLastSave && DateTime.Now > _nextSave)
-                {
-                    Console.WriteLine("Saved");
-                    SaveReminders();
-                    _nextSave = DateTime.Now.AddSeconds(_saveInterval);
-                    _hasChangedSinceLastSave = false;
+                        // Find the nearest reminder in _reminders and set if there is at least 1 reminder
+                        if (_reminders.Count > 0)
+                            _nearestReminder = _reminders.Min(x => x.When);
+                    }
+
+                    // We check if there has been a change to the reminders list since the last update.
+                    if (_hasChangedSinceLastSave)
+                    {
+                        SaveReminders();
+                        _hasChangedSinceLastSave = false;
+                    }
+
+                    await Task.Delay(1000);
                 }
-                await Task.Delay(1000);
             }
+            catch (Exception e)
+            {
+                // Catch and show exception
+                LoggingService.LogToConsole($"Reminder Service Exception during Reminder.\n{e.Message}");
+                await _loggingService.LogAction($"Logging Service has crashed.\nException Msg: {e.Message}.", false, true);
+                _isRunning = false;
+            }
+        }
+        
+        public async Task<bool> RestartService()
+        {
+            await OnReady();
+            return _isRunning;
+        }
+        
+        public bool IsRunning()
+        {
+            return _isRunning;
         }
     }
 }
