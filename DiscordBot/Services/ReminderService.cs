@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using DiscordBot.Services.Logging;
-using DiscordBot.Settings.Deserialized;
 
 namespace DiscordBot.Services
 {
@@ -25,7 +24,7 @@ namespace DiscordBot.Services
         
         private readonly DiscordSocketClient _client;
         private readonly ILoggingService _loggingService;
-        private List<ReminderItem> _reminders;
+        private List<ReminderItem> _reminders = new List<ReminderItem>();
         
         private bool _hasChangedSinceLastSave = false;
 
@@ -43,8 +42,12 @@ namespace DiscordBot.Services
             if (!_isRunning)
             {
                 LoadReminders();
+                if (_reminders == null)
+                {
+                    // Tell the user that we couldn't load the reminders
+                    _loggingService.LogAction("ReminderService: Couldn't load reminders", false);
+                }
                 Task.Run(CheckReminders);
-                _isRunning = true;
             }
             return Task.CompletedTask;
         }
@@ -155,7 +158,7 @@ namespace DiscordBot.Services
             {
                 // Catch and show exception
                 LoggingService.LogToConsole($"Reminder Service Exception during Reminder.\n{e.Message}");
-                await _loggingService.LogAction($"Logging Service has crashed.\nException Msg: {e.Message}.", false, true);
+                await _loggingService.LogAction($"Reminder Service has crashed.\nException Msg: {e.Message}.", false, true);
                 _isRunning = false;
             }
         }
