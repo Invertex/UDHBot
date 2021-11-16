@@ -109,7 +109,7 @@ namespace DiscordBot.Modules
         public async Task Reminders(IUser user)
         {
             await Context.Message.DeleteAsync();
-            var reminders = _reminderService.GetUserReminders(Context.User.Id);
+            var reminders = _reminderService.GetUserReminders(user.Id);
             if (reminders.Count == 0)
             {
                 await ReplyAsync($"{user.Username} has no reminders!").DeleteAfterSeconds(seconds: 5);
@@ -117,7 +117,7 @@ namespace DiscordBot.Modules
             }
             
             var embed = new EmbedBuilder();
-            embed.WithTitle($"{Context.User.Username} Reminders");
+            embed.WithTitle($"{user.Username} Reminders");
             embed.WithColor(new Color(0x89CFF0));
             int index = 1;
             foreach (var reminder in reminders)
