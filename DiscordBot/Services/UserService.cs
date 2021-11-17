@@ -24,7 +24,6 @@ namespace DiscordBot.Services
         private readonly HashSet<ulong> _canEditThanks; //Doesn't need to be saved
         private readonly DiscordSocketClient _client;
         public readonly string CodeFormattingExample;
-
         private readonly int _codeReminderCooldownTime;
         public readonly string CodeReminderFormattingExample;
         private readonly DatabaseService _databaseService;
@@ -35,6 +34,8 @@ namespace DiscordBot.Services
         private readonly Settings.Deserialized.Settings _settings;
         private readonly Dictionary<ulong, DateTime> _thanksCooldown;
         private readonly Dictionary<ulong, DateTime> _everyoneScoldCooldown = new Dictionary<ulong, DateTime>();
+        
+        private readonly List<(ulong id, DateTime time)> _welcomeNoticeUsers = new List<(ulong id, DateTime time)>();
 
         private readonly int _thanksCooldownTime;
         private readonly int _thanksMinJoinTime;
@@ -124,11 +125,18 @@ namespace DiscordBot.Services
             _client.UserJoined += UserJoined;
             _client.GuildMemberUpdated += UserUpdated;
             _client.UserLeft += UserLeft;
+            _client.MessageReceived += EarlyWelcome;
 
             LoadData();
             UpdateLoop();
-        }
 
+            _client.Ready += () =>
+            {
+                Task.Run(DelayedWelcomeService);
+                return Task.CompletedTask;
+            };
+        }
+        
         public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
 
         private async void UpdateLoop()
@@ -508,6 +516,30 @@ namespace DiscordBot.Services
             }
         }
 
+        // Anything relevant to the first time someone connects to the server
+        #region Welcome Service
+        // If a user talks before they've been welcomed, we welcome them and remove them from the welcome list so they're not welcomes a second time.
+        public async Task EarlyWelcome(SocketMessage messageParam)
+        {
+            if (_welcomeNoticeUsers.Count == 0)
+                return;
+            if (messageParam.Author.IsBot)
+                return;
+            if (messageParam.Content == string.Empty)
+                return;
+            
+            if (_welcomeNoticeUsers.Exists(u => u.id == messageParam.Author.Id))
+            {
+                var offTopic = await _client.GetChannelAsync(_settings.GeneralChannel.Id) as SocketTextChannel;
+                var em = WelcomeMessage(messageParam.Author as SocketGuildUser);
+                if (offTopic != null)
+                    await offTopic.SendMessageAsync(string.Empty, false, em);
+                
+                // Remove the user from the welcome list.
+                _welcomeNoticeUsers.RemoveAll(u => u.id == messageParam.Author.Id);
+            }
+        }
+
         private async Task UserJoined(SocketGuildUser user)
         {
             // Send them the Welcome DM first.
@@ -535,21 +567,46 @@ namespace DiscordBot.Services
             await _loggingService.LogAction(
                 $"User Joined - {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
 
-            // We push into new Task to avoid blocking gateway
-            Task.Run(async () =>
+            // We check if they're already in the welcome list, if they are we don't add them again to avoid double posts
+            if (_welcomeNoticeUsers.Count == 0 || !_welcomeNoticeUsers.Exists(u => u.id == user.Id))
             {
-                // We wait X amount of seconds before posting a welcome message in chat.
-                await Task.Delay(_settings.WelcomeMessageDelaySeconds * 1000);
-                var userTest = _client.GetGuild(_settings.GuildId).GetUser(user.Id);
-                if (userTest != null)
-                {
-                    var em = WelcomeMessage(user);
-                    if (socketTextChannel != null)
-                        await socketTextChannel.SendMessageAsync(string.Empty, false, em);
-                }
-            });
+                _welcomeNoticeUsers.Add((user.Id, DateTime.Now.AddSeconds(_settings.WelcomeMessageDelaySeconds * 1000)));
+            }
         }
-
+        
+        // Welcomes users to the server after they've been connected for over x number of seconds.
+        private async Task DelayedWelcomeService()
+        {
+            try
+            {
+                var guild = _client.GetGuild(_settings.GuildId);
+                var offTopic = guild.GetChannel(_settings.GeneralChannel.Id) as SocketTextChannel;
+                
+                while (true)
+                {
+                    var now = DateTime.Now;
+                    while (_welcomeNoticeUsers.Count > 0 && now > _welcomeNoticeUsers[0].time)
+                    {
+                        var user = guild.GetUser(_welcomeNoticeUsers[0].id);
+                        if (user != null)
+                        {
+                            var em = WelcomeMessage(user);
+                            if (offTopic != null)
+                                await offTopic.SendMessageAsync(string.Empty, false, em);
+                        }
+                        _welcomeNoticeUsers.RemoveAt(0);
+                    }
+                    await Task.Delay(10000);
+                }
+            }
+            catch (Exception e)
+            {
+                // Catch and show exception
+                LoggingService.LogToConsole($"UserServer Exception during welcome message.\n{e.Message}", LogSeverity.Error);
+                await _loggingService.LogAction($"UserServer Exception during welcome message.\n{e.Message}.", false, true);
+            }
+        }
+        
         public async Task<bool> DMFormattedWelcome(SocketGuildUser user)
         {
             var dm = await user.CreateDMChannelAsync();
@@ -589,6 +646,7 @@ namespace DiscordBot.Services
                 );
             return (em.Build());
         }
+        #endregion
 
         private async Task UserUpdated(Cacheable<SocketGuildUser, ulong> oldUserCached, SocketGuildUser user)
         {
@@ -647,7 +705,6 @@ namespace DiscordBot.Services
             }
 
         }
-
         #endregion
     }
 }
