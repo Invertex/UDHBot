@@ -37,7 +37,9 @@ namespace DiscordBot.Modules
             var reminderDate = Utils.Utils.ParseTimeFromString(time);
             if (reminderDate < DateTime.Now)
             {
-                await ReplyAsync("You can't set a reminder in the past!");
+                // There isn't really a way to add negative time
+                await ReplyAsync($"Invalid format for reminder.\nCorrect Syntax: ``!remindme <1hour5m> <optional message>``")
+                        .DeleteAfterSeconds(seconds: 10);
                 return;
             }
             // Add 1 second so we don't count the second we're on now as a second past
@@ -60,6 +62,9 @@ namespace DiscordBot.Modules
             // if message is longer than 100 characters, truncate it
             if (message.Length > 100)
                 message = message[..100];
+            
+            if (message == string.Empty)
+                message = "No message specified";
 
             var reminder = new ReminderItem
             {
@@ -78,7 +83,7 @@ namespace DiscordBot.Modules
         [Summary("Reminds users at a certain time. Syntax : !remindme 1hour30min")]
         public async Task RemindMe(string time)
         {
-            await RemindMe(time, "No Message");
+            await RemindMe(time, string.Empty);
         }
         
         // Command where user types !reminders to see all their reminders
