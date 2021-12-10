@@ -17,7 +17,6 @@ using DiscordBot.Utils;
 using DiscordBot.Utils.Attributes;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
 
 namespace DiscordBot.Modules
 {
@@ -29,6 +28,7 @@ namespace DiscordBot.Modules
         private readonly CurrencyService _currencyService;
         private readonly DatabaseService _databaseService;
         private readonly PublisherService _publisherService;
+        private readonly LoggingService _loggingService;
 
         private readonly Rules _rules;
         private readonly UpdateService _updateService;
@@ -43,6 +43,7 @@ namespace DiscordBot.Modules
             _publisherService = serviceProvider.GetService<PublisherService>();
             _updateService = serviceProvider.GetService<UpdateService>();
             _currencyService = serviceProvider.GetService<CurrencyService>();
+            _loggingService = serviceProvider.GetService<LoggingService>();
             _rules = rules;
             _settings = settings;
 
@@ -530,7 +531,7 @@ namespace DiscordBot.Modules
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine(e);
+                await _loggingService.LogAction($"Failed to generate top 10 embed.\n{e}", true, false);
             }
 
             return embedBuilder.Build();
@@ -556,7 +557,7 @@ namespace DiscordBot.Modules
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine(e);
+                await _loggingService.LogAction($"Error while generating profile card for {user.Username}.\nEx:{e}", true, false);
             }
         }
 
