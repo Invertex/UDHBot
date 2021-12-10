@@ -122,10 +122,10 @@ namespace DiscordBot.Services
                     UserID = socketUser.Id.ToString(),
                 };
 
-                await _connection.InsertUser(user);
+                await Query().InsertUser(user);
 
                 await _logging.LogAction(
-                    $"User {socketUser.Username}#{socketUser.DiscriminatorValue.ToString()} succesfully added to the databse.",
+                    $"User {socketUser.Username}#{socketUser.DiscriminatorValue.ToString()} successfully added to the database.",
                     true,
                     false);
             }
@@ -140,13 +140,13 @@ namespace DiscordBot.Services
         {
             try
             {
-                var user = await _connection.GetUser(id.ToString());
+                var user = await Query().GetUser(id.ToString());
                 if (user != null)
-                    await _connection.RemoveUser(user.UserID);
+                    await Query().RemoveUser(user.UserID);
             }
             catch (Exception e)
             {
-                await _logging.LogAction($"Error when trying to delete user {id} from the database : {e}", true, false);
+                await _logging.LogAction($"Error when trying to delete user {id.ToString()} from the database : {e}", true, false);
             }
         }
 
