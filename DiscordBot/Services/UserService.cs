@@ -561,7 +561,7 @@ namespace DiscordBot.Services
             // We check if they're already in the welcome list, if they are we don't add them again to avoid double posts
             if (_welcomeNoticeUsers.Count == 0 || !_welcomeNoticeUsers.Exists(u => u.id == user.Id))
             {
-                _welcomeNoticeUsers.Add((user.Id, DateTime.Now.AddSeconds(_settings.WelcomeMessageDelaySeconds * 1000)));
+                _welcomeNoticeUsers.Add((user.Id, DateTime.Now.AddSeconds(_settings.WelcomeMessageDelaySeconds)));
             }
         }
         
