@@ -10,6 +10,7 @@ using DiscordBot.Extensions;
 using DiscordBot.Services;
 using DiscordBot.Services.Logging;
 using DiscordBot.Settings.Deserialized;
+using DiscordBot.Utils.Attributes;
 using Pathoschild.NaturalTimeParser.Parser;
 
 namespace DiscordBot.Modules
@@ -442,6 +443,29 @@ namespace DiscordBot.Modules
             await _database.FullDbSync(Context.Guild, tracker);
         }
 
+        #region General Utility Commands
+        [Command("WelcomeMessageCount")]
+        [Summary("Returns a count of pending welcome messages.")]
+        [RequireModerator, HideFromHelp]
+        // Simple method to check if there are many welcome messages waiting, and when the next one is due.
+        public async Task WelcomeMessageCount()
+        {
+            var count = _user.WaitingWelcomeMessagesCount;
+            // If there are more than 0 messages waiting, show when nearest one is
+            if (count > 0)
+            {
+                var next = _user.NextWelcomeMessage.ToUnixTimestamp();
+                await ReplyAsync($"There are {count} pending welcome messages. The next one is in <t:{next}:R>").DeleteAfterSeconds(seconds: 10);
+            }
+            else
+            {
+                await ReplyAsync("There are no pending welcome messages.").DeleteAfterSeconds(seconds: 10);
+            }
+            await Context.Message.DeleteAsync();
+        }
+
+        #endregion
+        
         #region CommandList
         [RequireModerator]
         [Summary("Does what you see now.")]
