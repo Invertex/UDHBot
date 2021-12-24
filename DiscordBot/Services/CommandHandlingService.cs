@@ -21,6 +21,10 @@ namespace DiscordBot.Services
         private readonly IServiceProvider _services;
         private readonly Settings.Deserialized.Settings _settings;
 
+        // Tuple of string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true for a dictionary
+        private readonly Dictionary<(string moduleName, bool orderByName, bool includeArgs, bool includeModuleName), string> _commandList;
+        private readonly Dictionary<(string moduleName, bool orderByName, bool includeArgs, bool includeModuleName), List<string>> _commandListMessages;
+
         public CommandHandlingService(
             DiscordSocketClient client,
             CommandService commandService,
@@ -46,27 +50,54 @@ namespace DiscordBot.Services
             IsInitialized = true;
         }
 
-        /// <summary> Generates a command list that can provide users with information. Commands require [Command][Summary] and [Priority](If not ordering by name)</summary>
-        public async Task<string> GetCommandList(string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true)
+        /// <summary> Generates a command list that can provide users with information. Commands require [Command][Summary] and [Priority](If not ordering by name)
+        /// The results are cached, so this method can be called frequently without performance issues.</summary>
+        /// <returns> List of strings that can be sent to the user without worry of being over the message length limit.</returns>
+        public async Task<List<string>> GetCommandListMessages(string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true)
         {
-            // Simple wait.
-            while (!IsInitialized)
-                await Task.Delay(1000);
+            var tupleKey = (moduleName, orderByName, includeArgs, includeModuleName);
+            if (!_commandListMessages.TryGetValue(tupleKey, out List<string> commandResults))
+            {
+                GenerateCommandListOutputs(tupleKey);
+                commandResults = _commandListMessages[tupleKey];
+            }
+            return commandResults;
+        }
 
+        /// <summary> Generates a command list that can provide users with information. Commands require [Command][Summary] and [Priority](If not ordering by name)
+        /// The results are cached, so this method can be called frequently without performance issues.</summary>  <remarks>Strongly suggest using GetCommandListMessages</remarks>
+        /// <returns>A large string with all the formatted commands, may be over text limits and shouldn't be sent directly to user.</returns>
+        public string GetCommandList(string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true)
+        {
+            var tupleKey = (moduleName, orderByName, includeArgs, includeModuleName);
+            if (!_commandList.TryGetValue(tupleKey, out string commandResults))
+            {
+                GenerateCommandListOutputs(tupleKey);
+                commandResults = _commandList[tupleKey];
+            }
+            return commandResults;
+        }
+
+        private void GenerateCommandListOutputs(
+            (string moduleName, bool orderByName, bool includeArgs, bool includeModuleName) input)
+        {
+            // If we don't have the command list, we need to build it.
             var commandList = new StringBuilder();
-
-            commandList.Append($"__{moduleName} Commands__\n");
+            commandList.Append($"__{input.moduleName} Commands__\n");
 
             // Generates a list of commands that doesn't include any that have the ``HideFromHelp`` attribute.
-            var commands = _commandService.Commands.Where(x => x.Module.Name == moduleName && !x.Attributes.Contains(new HideFromHelpAttribute()));
+            var commands = _commandService.Commands.Where(x => x.Module.Name == input.moduleName && !x.Attributes.Contains(new HideFromHelpAttribute()));
             // Orders the list either by name or by priority, if no priority is given we push it to the end.
-            commands = orderByName ? commands.OrderBy(c => c.Name) : commands.OrderBy(c => (c.Priority > 0 ? c.Priority : 1000));
+            commands = input.orderByName ? commands.OrderBy(c => c.Name) : commands.OrderBy(c => (c.Priority > 0 ? c.Priority : 1000));
 
             foreach (var c in commands)
             {
-                commandList.Append($"**{(includeModuleName ? moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {GetArguments(includeArgs, c.Parameters)}\n");
+                commandList.Append($"**{(input.includeModuleName ? input.moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {GetArguments(input.includeArgs, c.Parameters)}\n");
             }
-            return commandList.ToString();
+            
+            string commandListString = commandList.ToString();
+            _commandList[input]  = commandListString;
+            _commandListMessages[input] = commandListString.MessageSplitToSize();
         }
 
         private string GetArguments(bool getArgs, IReadOnlyList<ParameterInfo> arguments)
