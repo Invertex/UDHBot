@@ -21,9 +21,10 @@ namespace DiscordBot.Services
         private readonly IServiceProvider _services;
         private readonly Settings.Deserialized.Settings _settings;
 
+        // While not the most attractive solution, it works, and is fairly cheap compared to the last solution.
         // Tuple of string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true for a dictionary
-        private readonly Dictionary<(string moduleName, bool orderByName, bool includeArgs, bool includeModuleName), string> _commandList;
-        private readonly Dictionary<(string moduleName, bool orderByName, bool includeArgs, bool includeModuleName), List<string>> _commandListMessages;
+        private readonly Dictionary<(string moduleName, bool orderByName, bool includeArgs, bool includeModuleName), string> _commandList = new();
+        private readonly Dictionary<(string moduleName, bool orderByName, bool includeArgs, bool includeModuleName), List<string>> _commandListMessages = new();
 
         public CommandHandlingService(
             DiscordSocketClient client,
@@ -53,7 +54,7 @@ namespace DiscordBot.Services
         /// <summary> Generates a command list that can provide users with information. Commands require [Command][Summary] and [Priority](If not ordering by name)
         /// The results are cached, so this method can be called frequently without performance issues.</summary>
         /// <returns> List of strings that can be sent to the user without worry of being over the message length limit.</returns>
-        public async Task<List<string>> GetCommandListMessages(string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true)
+        public List<string> GetCommandListMessages(string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true)
         {
             var tupleKey = (moduleName, orderByName, includeArgs, includeModuleName);
             if (!_commandListMessages.TryGetValue(tupleKey, out List<string> commandResults))
