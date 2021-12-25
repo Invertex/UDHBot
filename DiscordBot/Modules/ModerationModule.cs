@@ -450,11 +450,11 @@ namespace DiscordBot.Modules
         // Simple method to check if there are many welcome messages waiting, and when the next one is due.
         public async Task WelcomeMessageCount()
         {
-            var count = _user.WaitingWelcomeMessagesCount;
+            var count = UserService.WaitingWelcomeMessagesCount;
             // If there are more than 0 messages waiting, show when nearest one is
             if (count > 0)
             {
-                var next = _user.NextWelcomeMessage.ToUnixTimestamp();
+                var next = UserService.NextWelcomeMessage.ToUnixTimestamp();
                 await ReplyAsync($"There are {count} pending welcome messages. The next one is in <t:{next}:R>").DeleteAfterSeconds(seconds: 10);
             }
             else
