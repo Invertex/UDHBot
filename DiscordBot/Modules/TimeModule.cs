@@ -11,6 +11,11 @@ namespace DiscordBot.Modules
 {
     public class TimeModule : ModuleBase
     {
+        #region Dependency Injection
+        
+        public Settings.Deserialized.Settings Settings { get; set; }
+        
+        #endregion
 
 #pragma warning disable 0649
         private class Response
@@ -42,12 +47,6 @@ namespace DiscordBot.Modules
             public int dst_savings;
         }
 #pragma warning restore 0649
-        private readonly Settings.Deserialized.Settings _settings;
-
-        public TimeModule(Settings.Deserialized.Settings settings)
-        {
-            _settings = settings;
-        }
 
         [Command("time"), Alias("timezone"), Summary("Find the locale time of a location.")]
         public async Task Time(params string[] location)
@@ -56,7 +55,7 @@ namespace DiscordBot.Modules
             {
                 using (var wc = new WebClient())
                 {
-                    var res = await wc.DownloadStringTaskAsync($"https://api.ipgeolocation.io/timezone?apiKey={_settings.IPGeolocationAPIKey}&location={string.Join(" ", location)}");
+                    var res = await wc.DownloadStringTaskAsync($"https://api.ipgeolocation.io/timezone?apiKey={Settings.IPGeolocationAPIKey}&location={string.Join(" ", location)}");
                     var response = JsonConvert.DeserializeObject<Response>(res);
 
                     var embedBuilder = new EmbedBuilder();
