@@ -53,6 +53,8 @@ namespace DiscordBot.Services
         private readonly Random _rand;
 
         public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
+        public int WaitingWelcomeMessagesCount => _welcomeNoticeUsers.Count;
+        public DateTime NextWelcomeMessage => _welcomeNoticeUsers.Any() ? _welcomeNoticeUsers.Min(x => x.time) : DateTime.MaxValue;
 
         public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
                            Settings.Deserialized.Settings settings, UserSettings userSettings)
@@ -125,7 +127,8 @@ namespace DiscordBot.Services
             _client.UserJoined += UserJoined;
             _client.GuildMemberUpdated += UserUpdated;
             _client.UserLeft += UserLeft;
-            _client.MessageReceived += EarlyWelcome;
+
+            _client.UserIsTyping += UserIsTyping;
 
             LoadData();
             UpdateLoop();
@@ -519,27 +522,15 @@ namespace DiscordBot.Services
         // Anything relevant to the first time someone connects to the server
         #region Welcome Service
         // If a user talks before they've been welcomed, we welcome them and remove them from the welcome list so they're not welcomes a second time.
-        public async Task EarlyWelcome(SocketMessage messageParam)
+        private async Task UserIsTyping(Cacheable<IUser, ulong> user, Cacheable<IMessageChannel, ulong> channel)
         {
             if (_welcomeNoticeUsers.Count == 0)
                 return;
-            if (messageParam.Author.IsBot)
+            if (user.Value.IsBot)
                 return;
-            if (messageParam.Content == string.Empty)
-                return;
-            
-            if (_welcomeNoticeUsers.Exists(u => u.id == messageParam.Author.Id))
-            {
-                var offTopic = await _client.GetChannelAsync(_settings.GeneralChannel.Id) as SocketTextChannel;
-                var em = WelcomeMessage(messageParam.Author as SocketGuildUser);
-                if (offTopic != null)
-                    await offTopic.SendMessageAsync(string.Empty, false, em);
-                
-                // Remove the user from the welcome list.
-                _welcomeNoticeUsers.RemoveAll(u => u.id == messageParam.Author.Id);
-            }
-        }
 
+            await ProcessWelcomeUser(user.Id, user.Value);
+        }
         private async Task UserJoined(SocketGuildUser user)
         {
             // Send them the Welcome DM first.
@@ -570,7 +561,7 @@ namespace DiscordBot.Services
             // We check if they're already in the welcome list, if they are we don't add them again to avoid double posts
             if (_welcomeNoticeUsers.Count == 0 || !_welcomeNoticeUsers.Exists(u => u.id == user.Id))
             {
-                _welcomeNoticeUsers.Add((user.Id, DateTime.Now.AddSeconds(_settings.WelcomeMessageDelaySeconds * 1000)));
+                _welcomeNoticeUsers.Add((user.Id, DateTime.Now.AddSeconds(_settings.WelcomeMessageDelaySeconds)));
             }
         }
         
@@ -579,22 +570,14 @@ namespace DiscordBot.Services
         {
             try
             {
-                var guild = _client.GetGuild(_settings.GuildId);
-                var offTopic = guild.GetChannel(_settings.GeneralChannel.Id) as SocketTextChannel;
-                
                 while (true)
                 {
                     var now = DateTime.Now;
-                    while (_welcomeNoticeUsers.Count > 0 && now > _welcomeNoticeUsers[0].time)
+                    // This could be optimized, however the users in this list won't ever really be large enough to matter.
+                    // We loop through our list, anyone that has been in the list for more than x seconds is welcomed.
+                    foreach (var userData in _welcomeNoticeUsers.Where(u => u.time < now))
                     {
-                        var user = guild.GetUser(_welcomeNoticeUsers[0].id);
-                        if (user != null)
-                        {
-                            var em = WelcomeMessage(user);
-                            if (offTopic != null)
-                                await offTopic.SendMessageAsync(string.Empty, false, em);
-                        }
-                        _welcomeNoticeUsers.RemoveAt(0);
+                        await ProcessWelcomeUser(userData.id, null);
                     }
                     await Task.Delay(10000);
                 }
@@ -606,7 +589,27 @@ namespace DiscordBot.Services
                 await _loggingService.LogAction($"UserServer Exception during welcome message.\n{e.Message}.", false, true);
             }
         }
-        
+
+        private async Task ProcessWelcomeUser(ulong userID, IUser user = null)
+        {
+            if (_welcomeNoticeUsers.Exists(u => u.id == userID))
+            {
+                // If we didn't get the user passed in, we try grab it
+                user ??= await _client.GetUserAsync(userID);
+                // if they're null, they've likely left, so we just remove them from the list.
+                if (user != null)
+                {
+                    var offTopic = await _client.GetChannelAsync(_settings.GeneralChannel.Id) as SocketTextChannel;
+                    var em = WelcomeMessage(user as SocketGuildUser);
+                    if (offTopic != null)
+                        await offTopic.SendMessageAsync(string.Empty, false, em);
+                }
+                // Remove the user from the welcome list.
+                _welcomeNoticeUsers.RemoveAll(u => u.id == userID);
+            }
+        }
+
+
         public async Task<bool> DMFormattedWelcome(SocketGuildUser user)
         {
             var dm = await user.CreateDMChannelAsync();
