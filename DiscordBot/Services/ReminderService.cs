@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using DiscordBot.Services.Logging;
+using DiscordBot.Settings.Deserialized;
 
 namespace DiscordBot.Services
 {
@@ -26,14 +27,16 @@ namespace DiscordBot.Services
         private readonly ILoggingService _loggingService;
         private List<ReminderItem> _reminders = new List<ReminderItem>();
         
+        private readonly BotCommandsChannel _botCommandsChannel;
         private bool _hasChangedSinceLastSave = false;
 
         private int _maxUserReminders = 5;
         
-        public ReminderService(DiscordSocketClient client, ILoggingService loggingService )
+        public ReminderService(DiscordSocketClient client, ILoggingService loggingService, Settings.Deserialized.Settings settings)
         {
             _client = client;
             _loggingService = loggingService;
+            _botCommandsChannel = settings.BotCommandsChannel;
             client.Ready += OnReady;
         }
 
@@ -108,42 +111,6 @@ namespace DiscordBot.Services
             {
                 while (true)
                 {
-                    var now = DateTime.Now;
-                    // We wait until we know at least one reminder needs to be checked
-                    if (now > _nearestReminder && _reminders.Count > 0)
-                    {
-                        // Iterate through list backwards checking dates and replying to messages
-                        for (int i = _reminders.Count - 1; i >= 0; i--)
-                        {
-                            if (now > _reminders[i].When)
-                            {
-                                var channel = _client.GetChannel(_reminders[i].ChannelId) as IMessageChannel;
-                                if (channel != null)
-                                {
-                                    var message =
-                                        await channel.GetMessageAsync(_reminders[i].MessageId) as IUserMessage;
-                                    if (message != null)
-                                        await message.ReplyAsync(
-                                            $"{message.Author.Mention} reminder: {_reminders[i].Message}");
-                                    else
-                                    {
-                                        var user = _client.GetUser(_reminders[i].UserId);
-                                        if (user != null)
-                                            await channel.SendMessageAsync(
-                                                $"{user.Mention} reminder: {_reminders[i].Message}");
-                                    }
-                                }
-
-                                _reminders.RemoveAt(i);
-                                _hasChangedSinceLastSave = true;
-                            }
-                        }
-
-                        // Find the nearest reminder in _reminders and set if there is at least 1 reminder
-                        if (_reminders.Count > 0)
-                            _nearestReminder = _reminders.Min(x => x.When);
-                    }
-
                     // We check if there has been a change to the reminders list since the last update.
                     if (_hasChangedSinceLastSave)
                     {
@@ -152,6 +119,41 @@ namespace DiscordBot.Services
                     }
 
                     await Task.Delay(1000);
+                    
+                    var now = DateTime.Now;
+                    // We wait until we know at least one reminder needs to be checked
+                    if (now <= _nearestReminder || _reminders.Count <= 0) continue;
+                    
+                    List<ReminderItem> remindersToCheck = _reminders.Where(r => r.When <= now).ToList();
+                    _hasChangedSinceLastSave = true;
+
+                    foreach (ReminderItem reminder in remindersToCheck)
+                    {
+                        _reminders.Remove(reminder);
+
+                        IUserMessage message = null;
+                        var channel = _client.GetChannel(reminder.ChannelId) as SocketTextChannel;
+                        if (channel != null)
+                            message = await channel.GetMessageAsync(reminder.MessageId) as IUserMessage;
+
+                        // We reply to their original message
+                        if (message != null)
+                        {
+                            await message.ReplyAsync(
+                                $"{message.Author.Mention} reminder: {reminder.Message}");
+                            continue;
+                        }
+                        // If channel is null we get the bot command channel, and send the message there
+                        channel ??= _client.GetChannel(_botCommandsChannel.Id) as SocketTextChannel;
+                        var user = _client.GetUser(reminder.UserId);
+                        if (user != null)
+                            await channel.SendMessageAsync(
+                                $"{user.Mention} reminder: {reminder.Message}");
+                    }
+
+                    // Find the nearest reminder in _reminders and set if there is at least 1 reminder
+                    if (_reminders.Count > 0)
+                        _nearestReminder = _reminders.Min(x => x.When);
                 }
             }
             catch (Exception e)
