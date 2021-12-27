@@ -12,24 +12,14 @@ namespace DiscordBot.Modules
     [Group("ReactRole")]
     public class ReactionRoleModule : ModuleBase
     {
-        // The Priority Attribute is used for !reactrole help ordering, there are no overloads.
+        #region Dependency Injection
 
-        private string _commandList;
+        public CommandHandlingService CommandHandlingService { get; set; }
+        public ILoggingService LoggingService { get; set; }
+        public ReactRoleService ReactRoleService { get; set; }
 
-        private readonly ILoggingService _logging;
-        private readonly ReactRoleService _reactRoleService;
-
-        private readonly IEmote _thumbUpEmote = new Emoji("👍");
-
-        public ReactionRoleModule(ILoggingService loggingService, ReactRoleService reactRoleService, CommandHandlingService commandService)
-        {
-            _logging = loggingService;
-            _reactRoleService = reactRoleService;
-
-            // Generates an individual command list for the Reaction Roles
-            Task.Run(async () => _commandList = await commandService.GetCommandList("ReactRole"));
-        }
-
+        #endregion
+        
         #region Config
 
         [RequireUserPermission(GuildPermission.Administrator)]
@@ -38,8 +28,8 @@ namespace DiscordBot.Modules
         [Priority(99)]
         public async Task SetReactRoleDelay(uint delay)
         {
-            if (_reactRoleService.SetReactRoleDelay(delay))
-                await Context.Message.AddReactionAsync(_thumbUpEmote);
+            if (ReactRoleService.SetReactRoleDelay(delay))
+                await Context.Message.AddReactionAsync(new Emoji("👍"));
         }
 
         [RequireUserPermission(GuildPermission.Administrator)]
@@ -48,8 +38,8 @@ namespace DiscordBot.Modules
         [Priority(98)]
         public async Task SetReactLogState(bool state)
         {
-            if (_reactRoleService.SetReactLogState(state))
-                await Context.Message.AddReactionAsync(_thumbUpEmote);
+            if (ReactRoleService.SetReactLogState(state))
+                await Context.Message.AddReactionAsync(new Emoji("👍"));
         }
 
         #endregion
@@ -62,7 +52,7 @@ namespace DiscordBot.Modules
         [Priority(0)]
         public async Task NewMessageSetup(IMessageChannel channel, ulong messageId, string description = "")
         {
-            if (_reactRoleService.IsPreparingMessage)
+            if (ReactRoleService.IsPreparingMessage)
                 await ReplyAsync("A message is already being prepared, please finish.");
             else
             {
@@ -73,7 +63,7 @@ namespace DiscordBot.Modules
                     return;
                 }
 
-                _reactRoleService.NewMessage = new UserReactMessage
+                ReactRoleService.NewMessage = new UserReactMessage
                 {
                     ChannelId = channel.Id,
                     Description = description,
@@ -92,18 +82,20 @@ namespace DiscordBot.Modules
         [Priority(1)]
         public async Task EditMessageSetup(ulong messageId, string description = "")
         {
-            if (_reactRoleService.IsPreparingMessage)
+            if (ReactRoleService.IsPreparingMessage)
                 await ReplyAsync("A message is already being prepared, please finish.");
             else
             {
-                var foundMessage = _reactRoleService.ReactSettings.UserReactRoleList.Find(reactMessage => reactMessage.MessageId == messageId);
+                var foundMessage =
+                    ReactRoleService.ReactSettings.UserReactRoleList.Find(reactMessage =>
+                        reactMessage.MessageId == messageId);
                 if (foundMessage == null)
                 {
                     await ReplyAsync("No message with that ID exists");
                     return;
                 }
 
-                _reactRoleService.NewMessage = foundMessage;
+                ReactRoleService.NewMessage = foundMessage;
                 await ReplyAsync(
                     $"Message linked, future changes will be made to {foundMessage.MessageLinkBack(Context.Guild.Id)}");
             }
@@ -115,7 +107,7 @@ namespace DiscordBot.Modules
         [Priority(2)]
         public async Task AddEmoteRoles(IRole role, string emoteString = "", string name = "")
         {
-            if (!_reactRoleService.IsPreparingMessage)
+            if (!ReactRoleService.IsPreparingMessage)
             {
                 await ReplyAsync("No message is being prepared, use NewMessage first!");
                 return;
@@ -125,14 +117,14 @@ namespace DiscordBot.Modules
             if (emoteString == string.Empty)
             {
                 var reactionRemove =
-                    _reactRoleService.NewMessage.Reactions?.Find(reactRole => reactRole.RoleId == role.Id);
+                    ReactRoleService.NewMessage.Reactions?.Find(reactRole => reactRole.RoleId == role.Id);
                 if (reactionRemove == null)
                 {
                     await ReplyAsync($"Role {role.Name} was not attached to this message.");
                     return;
                 }
 
-                _reactRoleService.NewMessage.Reactions.Remove(reactionRemove);
+                ReactRoleService.NewMessage.Reactions.Remove(reactionRemove);
                 await ReplyAsync($"Removed Role {role.Name} from message.");
                 return;
             }
@@ -157,12 +149,12 @@ namespace DiscordBot.Modules
                 name = emote.Name;
 
             // Add our Reaction Role
-            _reactRoleService.NewMessage.Reactions ??= new List<ReactRole>();
+            ReactRoleService.NewMessage.Reactions ??= new List<ReactRole>();
             var newRole = new ReactRole(name, role.Id, emote.Id);
-            _reactRoleService.NewMessage.Reactions.Add(newRole);
+            ReactRoleService.NewMessage.Reactions.Add(newRole);
 
             await Context.Message.AddReactionAsync(emote);
-            await Context.Message.AddReactionAsync(_thumbUpEmote);
+            await Context.Message.AddReactionAsync(new Emoji("👍"));
         }
 
         [RequireUserPermission(GuildPermission.Administrator)]
@@ -171,13 +163,13 @@ namespace DiscordBot.Modules
         [Priority(3)]
         public async Task PreviewNewReactionMessage()
         {
-            if (!_reactRoleService.IsPreparingMessage)
+            if (!ReactRoleService.IsPreparingMessage)
             {
                 await ReplyAsync("No message is being prepared, use NewMessage first!");
                 return;
             }
 
-            var config = _reactRoleService.NewMessage;
+            var config = ReactRoleService.NewMessage;
             foreach (var configReaction in config.Reactions)
             {
                 var emote = await Context.Guild.GetEmoteAsync(configReaction.EmojiId);
@@ -191,14 +183,14 @@ namespace DiscordBot.Modules
         [Priority(4)]
         public async Task CancelNewReactionMessage()
         {
-            if (!_reactRoleService.IsPreparingMessage)
+            if (!ReactRoleService.IsPreparingMessage)
             {
                 await ReplyAsync("No message is being prepared!");
                 return;
             }
 
-            _reactRoleService.NewMessage = null;
-            await Context.Message.AddReactionAsync(_thumbUpEmote);
+            ReactRoleService.NewMessage = null;
+            await Context.Message.AddReactionAsync(new Emoji("👍"));
         }
 
         [RequireUserPermission(GuildPermission.Administrator)]
@@ -207,14 +199,14 @@ namespace DiscordBot.Modules
         [Priority(10)]
         public async Task SaveNewReactionMessage()
         {
-            if (!_reactRoleService.IsPreparingMessage)
+            if (!ReactRoleService.IsPreparingMessage)
             {
                 await ReplyAsync("No message is being prepared, use NewMessage first!");
                 return;
             }
 
             await ReplyAsync("Saving Values, use ***reactrole restart*** to enable the changes.");
-            _reactRoleService.StoreNewMessage();
+            ReactRoleService.StoreNewMessage();
         }
 
         #endregion
@@ -227,16 +219,20 @@ namespace DiscordBot.Modules
         [Priority(11)]
         public async Task DeleteReactionRoleConfig(uint messageId)
         {
-            var foundMessage = _reactRoleService.ReactSettings.UserReactRoleList.Find(reactMessage => reactMessage.MessageId == messageId);
+            var foundMessage =
+                ReactRoleService.ReactSettings.UserReactRoleList.Find(reactMessage =>
+                    reactMessage.MessageId == messageId);
             if (foundMessage == null)
             {
                 await ReplyAsync("No message with that ID exists");
                 return;
             }
 
-            _reactRoleService.ReactSettings.UserReactRoleList.Remove(foundMessage);
-            await ReplyAsync("Deleted the configuration for that ID, use \"!reactrole restart\" to enable these changes.");
-            await _logging.LogAction($"{Context.User} deleted the reactionrole configuration for `{foundMessage}`.");
+            ReactRoleService.ReactSettings.UserReactRoleList.Remove(foundMessage);
+            await ReplyAsync(
+                "Deleted the configuration for that ID, use \"!reactrole restart\" to enable these changes.");
+            await LoggingService.LogAction(
+                $"{Context.User} deleted the reactionrole configuration for `{foundMessage}`.");
         }
 
         [RequireUserPermission(GuildPermission.Administrator)]
@@ -245,7 +241,7 @@ namespace DiscordBot.Modules
         [Priority(80)]
         public async Task ListReactionRoleConfig()
         {
-            var messageList = _reactRoleService.ReactSettings.UserReactRoleList;
+            var messageList = ReactRoleService.ReactSettings.UserReactRoleList;
             if (messageList.Count == 0)
             {
                 await ReplyAsync("No messages currently stored.");
@@ -254,7 +250,9 @@ namespace DiscordBot.Modules
 
             foreach (var reactMessage in messageList)
             {
-                var linkedInfoMessage = await ReplyAsync($"Linked Location: {reactMessage.MessageLinkBack(Context.Guild.Id)} which should contain {reactMessage.RoleCount()} emotes.\n");
+                var linkedInfoMessage =
+                    await ReplyAsync(
+                        $"Linked Location: {reactMessage.MessageLinkBack(Context.Guild.Id)} which should contain {reactMessage.RoleCount()} emotes.\n");
                 foreach (var reactRole in reactMessage.Reactions)
                 {
                     var emote = await Context.Guild.GetEmoteAsync(reactRole.EmojiId);
@@ -270,11 +268,11 @@ namespace DiscordBot.Modules
         [Priority(90)]
         public async Task ReactRestartService()
         {
-            await _logging.LogAction($"{Context.User} restarted the ReactionRole service.");
+            await LoggingService.LogAction($"{Context.User} restarted the ReactionRole service.");
             await ReplyAsync("Reaction role service is restarting.");
-            var results = await _reactRoleService.Restart();
+            var results = await ReactRoleService.Restart();
             if (results)
-                await Context.Message.AddReactionAsync(_thumbUpEmote);
+                await Context.Message.AddReactionAsync(new Emoji("👍"));
             else
                 await ReplyAsync("Failed to restart reaction role service.");
         }
@@ -282,14 +280,19 @@ namespace DiscordBot.Modules
         #endregion
 
         #region CommandList
+
         [RequireUserPermission(GuildPermission.Administrator)]
         [Summary("Does what you see now.")]
         [Command("Help")]
         [Priority(100)]
         public async Task ReactionRoleHelp()
         {
-            await ReplyAsync(_commandList);
+            foreach (var textMessage in CommandHandlingService.GetCommandListMessages("ReactRole"))
+            {
+                await ReplyAsync(textMessage);
+            }
         }
+
         #endregion
     }
 }

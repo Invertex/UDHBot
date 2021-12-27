@@ -11,20 +11,12 @@ namespace DiscordBot.Modules
 {
     public class TicketModule : ModuleBase
     {
-        private List<string> _commandList;
+        #region Dependency Injection
 
-        private readonly Settings.Deserialized.Settings _settings;
-
-        public TicketModule(Settings.Deserialized.Settings settings, CommandHandlingService commandHandlingService)
-        {
-            _settings = settings;
-
-            Task.Run(async () =>
-            {
-                var commands = await commandHandlingService.GetCommandList("TicketModule", true, true, false);
-                _commandList = commands.MessageSplitToSize();
-            });
-        }
+        public CommandHandlingService CommandHandlingService { get; set; }
+        public Settings.Deserialized.Settings Settings { get; set; }
+        
+        #endregion
 
         /// <summary>
         ///     Creates a private channel only accessable by the mods, admins, and the user who used the command.
@@ -35,14 +27,14 @@ namespace DiscordBot.Modules
         {
             await Context.Message.DeleteAsync();
 
-            var categoryExist = (await Context.Guild.GetCategoriesAsync()).Any(category => category.Id == _settings.ComplaintCategoryId);
+            var categoryExist = (await Context.Guild.GetCategoriesAsync()).Any(category => category.Id == Settings.ComplaintCategoryId);
 
             var hash = Context.User.Id.ToString().GetSha256().Substring(0, 8);
-            var channelName = ParseToDiscordChannel($"{_settings.ComplaintChannelPrefix}-{hash}");
+            var channelName = ParseToDiscordChannel($"{Settings.ComplaintChannelPrefix}-{hash}");
 
             var channels = await Context.Guild.GetChannelsAsync();
             // Check if channel with same name already exist in the Complaint Category (if it exists).
-            if (channels.Any(channel => channel.Name == channelName && (!categoryExist || ((INestedChannel)channel).CategoryId == _settings.ComplaintCategoryId)))
+            if (channels.Any(channel => channel.Name == channelName && (!categoryExist || ((INestedChannel)channel).CategoryId == Settings.ComplaintCategoryId)))
             {
                 await ReplyAsync($"{Context.User.Mention}, you already have an open complaint! Please use that channel!")
                     .DeleteAfterSeconds(15);
@@ -51,11 +43,11 @@ namespace DiscordBot.Modules
 
             var newChannel = await Context.Guild.CreateTextChannelAsync(channelName, x =>
             {
-                if (categoryExist) x.CategoryId = _settings.ComplaintCategoryId;
+                if (categoryExist) x.CategoryId = Settings.ComplaintCategoryId;
             });
 
             var userPerms = new OverwritePermissions(viewChannel: PermValue.Allow);
-            var modRole = Context.Guild.Roles.First(r => r.Id == _settings.ModeratorRoleId);
+            var modRole = Context.Guild.Roles.First(r => r.Id == Settings.ModeratorRoleId);
             await newChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
             await newChannel.AddPermissionOverwriteAsync(Context.User, userPerms);
             await newChannel.AddPermissionOverwriteAsync(modRole, userPerms);
@@ -77,9 +69,9 @@ namespace DiscordBot.Modules
         {
             await Context.Message.DeleteAsync();
 
-            if (!Context.Channel.Name.StartsWith(_settings.ComplaintChannelPrefix.ToLower())) return;
+            if (!Context.Channel.Name.StartsWith(Settings.ComplaintChannelPrefix.ToLower())) return;
 
-            var categoryExist = (await Context.Guild.GetCategoriesAsync()).Any(category => category.Id == _settings.ClosedComplaintCategoryId);
+            var categoryExist = (await Context.Guild.GetCategoriesAsync()).Any(category => category.Id == Settings.ClosedComplaintCategoryId);
 
             var currentChannel = await Context.Guild.GetChannelAsync(Context.Channel.Id);
 
@@ -92,10 +84,10 @@ namespace DiscordBot.Modules
                 await currentChannel.RemovePermissionOverwriteAsync(user);
             }
 
-            var newName = _settings.ClosedComplaintChannelPrefix + currentChannel.Name;
+            var newName = Settings.ClosedComplaintChannelPrefix + currentChannel.Name;
             await currentChannel.ModifyAsync(x =>
             {
-                if (categoryExist) x.CategoryId = _settings.ClosedComplaintCategoryId;
+                if (categoryExist) x.CategoryId = Settings.ClosedComplaintCategoryId;
                 x.Name = newName;
             });
         }
@@ -109,8 +101,8 @@ namespace DiscordBot.Modules
         {
             await Context.Message.DeleteAsync();
 
-            if (Context.Channel.Name.StartsWith(_settings.ComplaintChannelPrefix.ToLower()) ||
-                Context.Channel.Name.StartsWith(_settings.ClosedComplaintChannelPrefix.ToLower()))
+            if (Context.Channel.Name.StartsWith(Settings.ComplaintChannelPrefix.ToLower()) ||
+                Context.Channel.Name.StartsWith(Settings.ClosedComplaintChannelPrefix.ToLower()))
             {
                 await Context.Guild.GetChannelAsync(Context.Channel.Id).Result.DeleteAsync();
             }
@@ -124,7 +116,7 @@ namespace DiscordBot.Modules
         [Command("Ticket Help")]
         public async Task TicketHelp()
         {
-            foreach (var message in _commandList)
+            foreach (var message in CommandHandlingService.GetCommandListMessages("TicketModule", true, true, false))
             {
                 await ReplyAsync(message);
             }

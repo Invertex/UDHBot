@@ -17,6 +17,12 @@ namespace DiscordBot.Modules
     [Group("UserModule"), Alias("")]
     public class WeatherModule : ModuleBase
     {
+        #region Dependency Injection
+        
+        public Settings.Deserialized.Settings Settings { get; set; }
+        
+        #endregion
+        
         #region Weather Results
 
 #pragma warning disable 0649
@@ -132,13 +138,6 @@ namespace DiscordBot.Modules
 #pragma warning restore 0649
         #endregion
 
-        private readonly string _weatherApiKey;
-
-        public WeatherModule(Settings.Deserialized.Settings settings)
-        {
-            _weatherApiKey = settings.WeatherAPIKey;
-        }
-
         [Command("WeatherHelp")]
         [Summary("How to use the weather module.")]
         [Priority(100)]
@@ -240,13 +239,13 @@ namespace DiscordBot.Modules
 
         public async Task<WeatherCotainer.Result> GetWeather(string city, string unit = "metric")
         {
-            var query = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={_weatherApiKey}&units={unit}";
+            var query = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={Settings.WeatherAPIKey}&units={unit}";
             return await GetAndDeserializedObject<WeatherCotainer.Result>(query);
         }
 
         public async Task<PollutionContainer.Result> GetPollution(double lon, double lat)
         {
-            var query = $"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={_weatherApiKey}";
+            var query = $"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={Settings.WeatherAPIKey}";
             return await GetAndDeserializedObject<PollutionContainer.Result>(query);
         }
 

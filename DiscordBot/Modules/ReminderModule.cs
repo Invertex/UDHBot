@@ -13,56 +13,58 @@ namespace DiscordBot.Modules
     [Group("UserModule"), Alias("")]
     public class ReminderModule : ModuleBase
     {
-        private readonly ReminderService _reminderService;
-        private readonly BotCommandsChannel _botCommandsChannel;
+        #region Dependency Injection
 
-        public ReminderModule(IServiceProvider serviceProvider, Settings.Deserialized.Settings settings)
-        {
-            _botCommandsChannel = settings.BotCommandsChannel;
-            _reminderService = serviceProvider.GetService<ReminderService>();
-        }
-        
+        public ReminderService ReminderService { get; set; }
+        public Settings.Deserialized.Settings Settings { get; set; }
+
+        #endregion
+
         // Command where user types !remindme followed by a time and a message
         // The time is human readable and is converted to a DateTime object
         [Command("remindme"), Alias("reminder"), Priority(80)]
         [Summary("Reminds users of a message based on time. Syntax : !remindme 1hour30min Watch a tutorial")]
         public async Task RemindMe(string time, [Remainder] string message)
         {
-            if (Context.Message.MentionedEveryone || Context.Message.MentionedRoleIds.Count > 0 || Context.Message.MentionedUserIds.Count > 0)
+            if (Context.Message.MentionedEveryone || Context.Message.MentionedRoleIds.Count > 0 ||
+                Context.Message.MentionedUserIds.Count > 0)
             {
                 await ReplyAsync("You can't mention anyone or roles in a reminder.").DeleteAfterSeconds(seconds: 5);
                 return;
             }
-            
+
             var reminderDate = Utils.Utils.ParseTimeFromString(time);
             if (reminderDate < DateTime.Now)
             {
                 // There isn't really a way to add negative time
-                await ReplyAsync($"Invalid format for reminder.\nCorrect Syntax: ``!remindme <1hour5m> <optional message>``")
-                        .DeleteAfterSeconds(seconds: 10);
+                await ReplyAsync(
+                        $"Invalid format for reminder.\nCorrect Syntax: ``!remindme <1hour5m> <optional message>``")
+                    .DeleteAfterSeconds(seconds: 10);
                 return;
             }
+
             // Add 1 second so we don't count the second we're on now as a second past
             reminderDate = reminderDate.AddSeconds(1);
-            
+
             var dateInSeconds = (uint)(reminderDate - DateTime.Now).TotalSeconds;
             if (dateInSeconds < 30)
             {
                 await ReplyAsync("Reminders must be more than 30 seconds away!");
                 return;
             }
-            
+
             // Check if user has to many reminders and tell them to delete some if so
-            if (_reminderService.UserHasTooManyReminders(Context.User.Id))
+            if (ReminderService.UserHasTooManyReminders(Context.User.Id))
             {
-                await ReplyAsync("You have too many reminders! Please delete some before adding more.").DeleteAfterSeconds(seconds: 10);
+                await ReplyAsync("You have too many reminders! Please delete some before adding more.")
+                    .DeleteAfterSeconds(seconds: 10);
                 return;
             }
-            
+
             // if message is longer than 100 characters, truncate it
             if (message.Length > 100)
                 message = message[..100];
-            
+
             if (message == string.Empty)
                 message = "No message specified";
 
@@ -75,8 +77,10 @@ namespace DiscordBot.Modules
                 When = reminderDate
             };
 
-            _reminderService.AddReminder(reminder);
-            await ReplyAsync($"Reminder set for {Utils.Utils.FormatTime((uint)(reminderDate - DateTime.Now).TotalSeconds) }").DeleteAfterSeconds(seconds: 10);
+            ReminderService.AddReminder(reminder);
+            await ReplyAsync(
+                    $"Reminder set for {Utils.Utils.FormatTime((uint)(reminderDate - DateTime.Now).TotalSeconds)}")
+                .DeleteAfterSeconds(seconds: 10);
         }
 
         [Command("remindme"), HideFromHelp]
@@ -85,7 +89,7 @@ namespace DiscordBot.Modules
         {
             await RemindMe(time, string.Empty);
         }
-        
+
         // Command where user types !reminders to see all their reminders
         [Command("reminders"), Priority(81)]
         [Summary("Tell the user of their set reminders in bot channel.")]
@@ -93,7 +97,7 @@ namespace DiscordBot.Modules
         {
             await Reminders(Context.User);
         }
-        
+
         // Removes a users reminders themself
         [Command("removereminder"), Priority(81)]
         [Summary("Clears all reminders unless an Index is provided.")]
@@ -105,8 +109,9 @@ namespace DiscordBot.Modules
 
 
         #region Moderator Commands
+
         // Moderators can use the commands in this space, other methods pass their calls through these to reduce duplicate code.
-        
+
         // Allows a moderator to see reminders of a user
         [RequireModerator]
         [Command("reminders"), HideFromHelp]
@@ -114,13 +119,13 @@ namespace DiscordBot.Modules
         public async Task Reminders(IUser user)
         {
             await Context.Message.DeleteAsync();
-            var reminders = _reminderService.GetUserReminders(user.Id);
+            var reminders = ReminderService.GetUserReminders(user.Id);
             if (reminders.Count == 0)
             {
                 await ReplyAsync($"{user.Username} has no reminders!").DeleteAfterSeconds(seconds: 5);
                 return;
             }
-            
+
             var embed = new EmbedBuilder();
             embed.WithTitle($"{user.Username} Reminders");
             embed.WithColor(new Color(0x89CFF0));
@@ -128,16 +133,18 @@ namespace DiscordBot.Modules
             foreach (var reminder in reminders)
             {
                 var msgLink = Utils.Utils.MessageLinkBack(Context.Guild.Id, reminder.ChannelId, reminder.MessageId);
-                embed.AddField($"#{index++} | {Utils.Utils.FormatTime((uint)(reminder.When - DateTime.Now).TotalSeconds)}", $"[Link]({msgLink}) \"{reminder.Message}\"");
+                embed.AddField(
+                    $"#{index++} | {Utils.Utils.FormatTime((uint)(reminder.When - DateTime.Now).TotalSeconds)}",
+                    $"[Link]({msgLink}) \"{reminder.Message}\"");
             }
-            
-            var botCommands = await Context.Guild.GetChannelAsync(_botCommandsChannel.Id) as IMessageChannel;
+
+            var botCommands = await Context.Guild.GetChannelAsync(Settings.BotCommandsChannel.Id) as IMessageChannel;
             if (botCommands != null)
                 await botCommands
                     .SendMessageAsync(Context.User.Mention, false, embed.Build())
                     .DeleteAfterSeconds(seconds: 30);
         }
-        
+
         // Removes a users reminders for them
         [RequireModerator]
         [Command("removereminders"), HideFromHelp]
@@ -145,7 +152,7 @@ namespace DiscordBot.Modules
         public async Task RemoveReminders(IUser user, int index = 0)
         {
             await Context.Message.DeleteAfterSeconds(seconds: 1);
-            int removedReminders = _reminderService.RemoveReminders(user, index);
+            int removedReminders = ReminderService.RemoveReminders(user, index);
             if (removedReminders == 0)
                 return;
             if (removedReminders == -1)
@@ -153,6 +160,7 @@ namespace DiscordBot.Modules
                 await ReplyAsync("Invalid index provided.");
                 return;
             }
+
             await ReplyAsync($"{removedReminders.ToString()} Reminders removed.").DeleteAfterSeconds(seconds: 2);
         }
 
@@ -161,17 +169,19 @@ namespace DiscordBot.Modules
         [Summary("Used to restart the reminder service if it has crashed.")]
         public async Task RebootReminderService()
         {
-            if (_reminderService.IsRunning())
+            if (ReminderService.IsRunning())
             {
                 await ReplyAsync("Reminder service is still running.").DeleteAfterSeconds(seconds: 5);
                 return;
             }
-            var result = await _reminderService.RestartService();
+
+            var result = await ReminderService.RestartService();
             if (result)
                 await ReplyAsync("Reminder service restarted.").DeleteAfterSeconds(seconds: 5);
             else
                 await ReplyAsync("Reminder service failed to restart.").DeleteAfterSeconds(seconds: 5);
         }
+
         #endregion
     }
 }
