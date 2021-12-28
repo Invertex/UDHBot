@@ -23,7 +23,7 @@ public class UserService
     private readonly ILoggingService _loggingService;
 
     private readonly Regex _x3CodeBlock =
-        new Regex("^(?<CodeBlock>`{3}((?<CS>\\w+?$)|$).+?({.+?}).+?`{3})",
+        new Regex("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})",
             RegexOptions.Multiline | RegexOptions.Singleline);
 
     private readonly Regex _x2CodeBlock = new Regex("^(`{2})[^`].+?([^`]`{2})$", RegexOptions.Multiline);
@@ -119,9 +119,9 @@ public class UserService
         // Checks if there is { } in the message
         _codeBlockWarnPatterns.Add(new Regex(".*?({.+?}).*?", RegexOptions.Singleline));
         // We look for (if, else if) followed by ( and ) somewhere after. We also check that the ) is end of the line, or followed by comments //
-        _codeBlockWarnPatterns.Add(new Regex("(^if|else\\sif)(\\s?)\\(.+\\)($|.*?\\/\\/)", RegexOptions.Multiline));
+        _codeBlockWarnPatterns.Add(new Regex("(if|else\\sif).?\\(.+\\).?($|\\/{2}|\\s?)", RegexOptions.Multiline));
         // Check for a method from start of line (since discord would ignore tab) and if any comments after
-        _codeBlockWarnPatterns.Add(new Regex("^.+?\\(.*?\\);($|.*?\\/\\/)", RegexOptions.Multiline));
+        _codeBlockWarnPatterns.Add(new Regex("^(\\w*.\\w*)\\(\\w*?\\);($|.?($|.*?\\/{2}))", RegexOptions.Multiline));
         // Check for some collection of characters being set to some other collection of characters and check if end of line or comment.
         _codeBlockWarnPatterns.Add(new Regex("^.+? =.+?($|.*?\\/\\/)", RegexOptions.Multiline));
 
@@ -491,6 +491,10 @@ public class UserService
         if (messageParam.Author.IsBot || messageParam.Channel.Id == _settings.GeneralChannel.Id)
             return;
 
+        // We just ignore anything if it is under 200 characters
+        if (messageParam.Content.Length < 200)
+            return;
+        
         var userId = messageParam.Author.Id;
 
         //Simple check to cover most large code posting cases without being an issue for most non-code messages
@@ -503,7 +507,7 @@ public class UserService
             var foundTrippleCodeBlock = _x3CodeBlock.Match(content);
             if (foundTrippleCodeBlock.Groups["CS"].Length > 0)
                 return;
-            else if (foundTrippleCodeBlock.Groups["CodeBlock"].Success)
+            if (foundTrippleCodeBlock.Groups["CodeBlock"].Success)
             {
                 // A ``` codeblock was found, but no CS, let 'em know
                 await messageParam.Channel.SendMessageAsync(
@@ -535,16 +539,13 @@ public class UserService
                         .DeleteAfterSeconds(seconds: 60);
                 }
             }
-            // If we know there is a codeblock, and at least something that looks like code that isn't just should hopefully be more than {} since 200 characters needed
+            // If we know there is a codeblock
             else if (foundDoubleCodeBlock && hits > 0)
             {
                 //! CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
-                if (content.Length > 200)
-                {
-                    await messageParam.Channel.SendMessageAsync(
-                            $"{messageParam.Author.Mention} when using code blocks remember to use \\`\\`\\`cs as this will help improve readability for C# scripts.\n{CodeReminderFormattingExample}")
-                        .DeleteAfterSeconds(seconds: 60);
-                }
+                await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} when using code blocks remember to use \\`\\`\\`cs as this will help improve readability for C# scripts.\n{CodeReminderFormattingExample}")
+                    .DeleteAfterSeconds(seconds: 60);
             }
         }
     }
