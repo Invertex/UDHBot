@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace DiscordBot.Data;
 
 public class Rating

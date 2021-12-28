@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord;
-using Discord.Commands;
-using DiscordBot.Extensions;
+﻿using Discord.Commands;
 using DiscordBot.Services;
 using DiscordBot.Services.Logging;
 using DiscordBot.Settings.Deserialized;

@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Discord;
 using Discord.WebSocket;
 using MailKit.Net.Smtp;
 using MimeKit;

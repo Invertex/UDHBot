@@ -1,9 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Discord;
 using Discord.Commands;
-using DiscordBot.Extensions;
 using DiscordBot.Services;
 
 // ReSharper disable all UnusedMember.Local

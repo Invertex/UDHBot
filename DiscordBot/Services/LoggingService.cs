@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using Discord;
+﻿using System.IO;
 using Discord.WebSocket;
 
 namespace DiscordBot.Services.Logging;

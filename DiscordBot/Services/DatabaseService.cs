@@ -1,9 +1,5 @@
-﻿using System;
-using System.Data.Common;
-using System.Threading.Tasks;
-using Discord;
+﻿using System.Data.Common;
 using Discord.WebSocket;
-using DiscordBot.Extensions;
 using DiscordBot.Services.Logging;
 using Insight.Database;
 using MySql.Data.MySqlClient;

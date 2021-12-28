@@ -1,22 +1,15 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using DiscordBot.Extensions;
 using DiscordBot.Services;
 using DiscordBot.Services.Logging;
 using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils;
 using DiscordBot.Utils.Attributes;
 using HtmlAgilityPack;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot.Modules;
 

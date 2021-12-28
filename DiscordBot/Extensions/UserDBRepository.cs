@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Insight.Database;
 
 namespace DiscordBot.Extensions;

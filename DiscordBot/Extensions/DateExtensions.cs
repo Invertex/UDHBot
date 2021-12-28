@@ -1,5 +1,3 @@
-using System;
-
 namespace DiscordBot.Extensions;
 
 public static class DateExtensions

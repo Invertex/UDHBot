@@ -1,4 +1,3 @@
-using System;
 using DiscordBot.Domain;
 using ImageMagick;
 

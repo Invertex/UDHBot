@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace DiscordBot.Settings.Deserialized;
+﻿namespace DiscordBot.Settings.Deserialized;
 
 public class Rules
 {

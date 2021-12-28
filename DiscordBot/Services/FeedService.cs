@@ -1,13 +1,9 @@
-using System;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.ServiceModel.Syndication;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml;
-using Discord;
 using Discord.WebSocket;
 using DiscordBot.Services.Logging;
 

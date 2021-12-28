@@ -1,7 +1,3 @@
-using System;
-using System.Threading.Tasks;
-using Discord;
-
 namespace DiscordBot.Extensions;
 
 public static class MessageExtensions

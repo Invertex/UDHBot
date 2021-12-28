@@ -1,5 +1,3 @@
-using System;
-
 namespace DiscordBot.Utils;
 
 public static class MathUtility

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord;
-
-namespace DiscordBot.Extensions;
+﻿namespace DiscordBot.Extensions;
 
 public static class TaskExtensions
 {

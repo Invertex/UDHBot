@@ -1,12 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Discord;
 using Discord.Commands;
-using DiscordBot.Extensions;
 using DiscordBot.Services.Logging;
-using DiscordBot.Utils;
 using Newtonsoft.Json;
 
 namespace DiscordBot.Modules;

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using Discord;
-
 namespace DiscordBot.Settings.Deserialized;
 
 public class Settings

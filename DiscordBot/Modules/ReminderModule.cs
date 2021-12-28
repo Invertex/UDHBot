@@ -1,12 +1,6 @@
-using System;
-using System.Threading.Tasks;
-using Discord;
 using Discord.Commands;
-using DiscordBot.Extensions;
 using DiscordBot.Services;
-using DiscordBot.Settings.Deserialized;
 using DiscordBot.Utils.Attributes;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot.Modules;
 

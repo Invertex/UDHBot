@@ -1,8 +1,6 @@
 using System.IO;
-using System.Threading.Tasks;
 using DiscordBot.Services.Logging;
 using Newtonsoft.Json;
-using Discord;
 
 namespace DiscordBot.Utils;
 
