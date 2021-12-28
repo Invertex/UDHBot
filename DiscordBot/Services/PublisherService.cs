@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Discord.WebSocket;
+using DiscordBot.Settings;
 using MailKit.Net.Smtp;
 using MimeKit;
 
@@ -9,10 +10,10 @@ namespace DiscordBot.Services;
 
 public class PublisherService
 {
-    private readonly Settings.Deserialized.Settings _settings;
+    private readonly BotSettings _settings;
     private readonly Dictionary<uint, string> _verificationCodes;
 
-    public PublisherService(Settings.Deserialized.Settings settings)
+    public PublisherService(BotSettings settings)
     {
         _verificationCodes = new Dictionary<uint, string>();
         _settings = settings;

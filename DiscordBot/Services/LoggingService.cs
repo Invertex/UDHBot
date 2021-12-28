@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Discord.WebSocket;
+using DiscordBot.Settings;
 
 namespace DiscordBot.Services.Logging;
 
@@ -7,9 +8,9 @@ public class LoggingService : ILoggingService
 {
     private readonly DiscordSocketClient _client;
 
-    private readonly Settings.Deserialized.Settings _settings;
+    private readonly BotSettings _settings;
 
-    public LoggingService(DiscordSocketClient client, Settings.Deserialized.Settings settings)
+    public LoggingService(DiscordSocketClient client, BotSettings settings)
     {
         _client = client;
         _settings = settings;

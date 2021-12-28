@@ -5,11 +5,10 @@ using System.Text.RegularExpressions;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Services;
-using DiscordBot.Services.Logging;
-using DiscordBot.Settings.Deserialized;
+using DiscordBot.Settings;
 using DiscordBot.Utils;
-using DiscordBot.Utils.Attributes;
 using HtmlAgilityPack;
+using DiscordBot.Attributes;
 
 namespace DiscordBot.Modules;
 
@@ -24,7 +23,7 @@ public class UserModule : ModuleBase
     public PublisherService PublisherService { get; set; }
     public UpdateService UpdateService { get; set; }
     public CommandHandlingService CommandHandlingService { get; set; }
-    public Settings.Deserialized.Settings Settings { get; set; }
+    public BotSettings Settings { get; set; }
     public Rules Rules { get; set; }
         
     #endregion
@@ -267,7 +266,7 @@ public class UserModule : ModuleBase
     [Group("Role"), BotChannelOnly]
     public class RoleModule : ModuleBase
     {
-        public Settings.Deserialized.Settings Settings { get; set; }
+        public BotSettings Settings { get; set; }
         public ILoggingService LoggingService { get; set; }
 
         [Command("Add")]

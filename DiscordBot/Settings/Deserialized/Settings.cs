@@ -1,6 +1,6 @@
-namespace DiscordBot.Settings.Deserialized;
+namespace DiscordBot.Settings;
 
-public class Settings
+public class BotSettings
 {
     public string Token { get; set; }
     public string Invite { get; set; }

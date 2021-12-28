@@ -1,4 +1,4 @@
-﻿namespace DiscordBot.Settings.Deserialized;
+﻿namespace DiscordBot.Settings;
 
 public class UserSettings
 {

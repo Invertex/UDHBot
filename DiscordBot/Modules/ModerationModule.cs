@@ -2,10 +2,9 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Services;
-using DiscordBot.Services.Logging;
-using DiscordBot.Settings.Deserialized;
-using DiscordBot.Utils.Attributes;
+using DiscordBot.Settings;
 using Pathoschild.NaturalTimeParser.Parser;
+using DiscordBot.Attributes;
 
 namespace DiscordBot.Modules;
 
@@ -17,7 +16,7 @@ public class ModerationModule : ModuleBase
     public DatabaseService DatabaseService { get; set; }
     public ILoggingService LoggingService { get; set; }
     public Rules Rules { get; set; }
-    public Settings.Deserialized.Settings Settings { get; set; }
+    public BotSettings Settings { get; set; }
     public UserService UserService { get; set; }
         
     #endregion

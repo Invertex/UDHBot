@@ -1,5 +1,4 @@
 using System.IO;
-using DiscordBot.Services.Logging;
 using Newtonsoft.Json;
 
 namespace DiscordBot.Utils;

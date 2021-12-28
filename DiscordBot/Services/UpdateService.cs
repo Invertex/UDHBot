@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text.RegularExpressions;
 using Discord.WebSocket;
-using DiscordBot.Services.Logging;
+using DiscordBot.Settings;
 using DiscordBot.Utils;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
@@ -49,7 +49,7 @@ public class FeedData
 public class UpdateService
 {
     private readonly FeedService _feedService;
-    private readonly Settings.Deserialized.Settings _settings;
+    private readonly BotSettings _settings;
     private readonly CancellationToken _token;
     private string[][] _apiDatabase;
 
@@ -62,7 +62,7 @@ public class UpdateService
     private UserData _userData;
 
     public UpdateService(DiscordSocketClient client,
-        DatabaseService databaseService, Settings.Deserialized.Settings settings, FeedService feedService)
+        DatabaseService databaseService, BotSettings settings, FeedService feedService)
     {
         _client = client;
         _feedService = feedService;

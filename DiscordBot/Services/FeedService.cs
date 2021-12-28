@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Discord.WebSocket;
-using DiscordBot.Services.Logging;
+using DiscordBot.Settings;
 
 namespace DiscordBot.Services;
 
@@ -18,9 +18,9 @@ public class FeedService
     private const int MaximumCheck = 3;
     private readonly DiscordSocketClient _client;
 
-    private readonly Settings.Deserialized.Settings _settings;
+    private readonly BotSettings _settings;
 
-    public FeedService(DiscordSocketClient client, Settings.Deserialized.Settings settings)
+    public FeedService(DiscordSocketClient client, BotSettings settings)
     {
         _settings = settings;
         _client = client;

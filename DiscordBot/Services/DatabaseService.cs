@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
 using Discord.WebSocket;
-using DiscordBot.Services.Logging;
+using DiscordBot.Settings;
 using Insight.Database;
 using MySql.Data.MySqlClient;
 
@@ -15,7 +15,7 @@ public class DatabaseService
     public IServerUserRepo Query() => _connection;
     private readonly IServerUserRepo _connection;
 
-    public DatabaseService(ILoggingService logging, Settings.Deserialized.Settings settings)
+    public DatabaseService(ILoggingService logging, BotSettings settings)
     {
         ConnectionString = settings.DbConnectionString;
         _logging = logging;

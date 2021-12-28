@@ -5,11 +5,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Discord.WebSocket;
 using DiscordBot.Domain;
-using DiscordBot.Settings.Deserialized;
+using DiscordBot.Settings;
 using DiscordBot.Skin;
 using ImageMagick;
 using Newtonsoft.Json;
-using DiscordBot.Services.Logging;
 
 namespace DiscordBot.Services;
 
@@ -25,7 +24,7 @@ public class UserService
 
     private readonly List<ulong> _noXpChannels;
 
-    private readonly Settings.Deserialized.Settings _settings;
+    private readonly BotSettings _settings;
     private readonly Dictionary<ulong, DateTime> _thanksCooldown;
     private readonly Dictionary<ulong, DateTime> _everyoneScoldCooldown = new Dictionary<ulong, DateTime>();
         
@@ -51,7 +50,7 @@ public class UserService
     public DateTime NextWelcomeMessage => _welcomeNoticeUsers.Any() ? _welcomeNoticeUsers.Min(x => x.time) : DateTime.MaxValue;
 
     public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
-        Settings.Deserialized.Settings settings, UserSettings userSettings)
+        BotSettings settings, UserSettings userSettings)
     {
         _client = client;
         _rand = new Random();

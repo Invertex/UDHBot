@@ -1,5 +1,6 @@
 using Discord.Commands;
 using Discord.WebSocket;
+using DiscordBot.Settings;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot;
@@ -22,7 +23,7 @@ public class RequireModeratorAttribute : PreconditionAttribute
     public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
         var user = (SocketGuildUser)context.Message.Author;
-        var settings = services.GetRequiredService<Settings.Deserialized.Settings>();
+        var settings = services.GetRequiredService<BotSettings>();
 
         if (user.Roles.Any(x => x.Id == settings.ModeratorRoleId)) return Task.FromResult(PreconditionResult.FromSuccess());
         return Task.FromResult(PreconditionResult.FromError(user + " attempted to use a moderator command!"));
@@ -34,7 +35,7 @@ public class BotChannelOnlyAttribute : PreconditionAttribute
 {
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
-        var settings = services.GetRequiredService<Settings.Deserialized.Settings>();
+        var settings = services.GetRequiredService<BotSettings>();
 
         if (context.Channel.Id == settings.BotCommandsChannel.Id)
         {
@@ -64,14 +65,14 @@ public class RequireThreadAttribute : PreconditionAttribute
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class RequireAutoThreadAttribute : RequireThreadAttribute
 {
-    protected Settings.Deserialized.AutoThreadChannel _autoThreadChannel;
+    protected AutoThreadChannel _autoThreadChannel;
 
     public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
     {
         var res = await base.CheckPermissionsAsync(context, command, services);
         if (!res.IsSuccess) return res;
 
-        var settings = services.GetRequiredService<Settings.Deserialized.Settings>();
+        var settings = services.GetRequiredService<BotSettings>();
         this._autoThreadChannel = settings.AutoThreadChannels.Find(x => this._currentThread.ParentChannel.Id == x.Id);
         if (this._autoThreadChannel != null) return await Task.FromResult(PreconditionResult.FromSuccess());
 

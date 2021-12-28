@@ -1,5 +1,6 @@
 using Discord.Commands;
 using DiscordBot.Services;
+using DiscordBot.Settings;
 
 // ReSharper disable all UnusedMember.Local
 namespace DiscordBot.Modules;
@@ -9,7 +10,7 @@ public class TicketModule : ModuleBase
     #region Dependency Injection
 
     public CommandHandlingService CommandHandlingService { get; set; }
-    public Settings.Deserialized.Settings Settings { get; set; }
+    public BotSettings Settings { get; set; }
         
     #endregion
 

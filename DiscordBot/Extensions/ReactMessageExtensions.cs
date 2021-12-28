@@ -1,4 +1,4 @@
-﻿using DiscordBot.Settings.Deserialized;
+﻿using DiscordBot.Settings;
 
 namespace DiscordBot.Extensions;
 

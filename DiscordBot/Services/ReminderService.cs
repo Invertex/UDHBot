@@ -1,6 +1,5 @@
 using Discord.WebSocket;
-using DiscordBot.Services.Logging;
-using DiscordBot.Settings.Deserialized;
+using DiscordBot.Settings;
 
 namespace DiscordBot.Services;
 
@@ -27,7 +26,7 @@ public class ReminderService
 
     private int _maxUserReminders = 5;
         
-    public ReminderService(DiscordSocketClient client, ILoggingService loggingService, Settings.Deserialized.Settings settings)
+    public ReminderService(DiscordSocketClient client, ILoggingService loggingService, BotSettings settings)
     {
         _client = client;
         _loggingService = loggingService;

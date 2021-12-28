@@ -2,7 +2,8 @@
 using System.Text;
 using Discord.Commands;
 using Discord.WebSocket;
-using DiscordBot.Utils.Attributes;
+using DiscordBot.Attributes;
+using DiscordBot.Settings;
 using ParameterInfo = Discord.Commands.ParameterInfo;
 
 namespace DiscordBot.Services;
@@ -14,7 +15,7 @@ public class CommandHandlingService
     private readonly DiscordSocketClient _client;
     private readonly CommandService _commandService;
     private readonly IServiceProvider _services;
-    private readonly Settings.Deserialized.Settings _settings;
+    private readonly BotSettings _settings;
 
     // While not the most attractive solution, it works, and is fairly cheap compared to the last solution.
     // Tuple of string moduleName, bool orderByName = false, bool includeArgs = true, bool includeModuleName = true for a dictionary
@@ -25,7 +26,7 @@ public class CommandHandlingService
         DiscordSocketClient client,
         CommandService commandService,
         IServiceProvider services,
-        Settings.Deserialized.Settings settings
+        BotSettings settings
     )
     {
         _client = client;

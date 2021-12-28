@@ -11,3 +11,4 @@ global using Discord;
 
 // Our code
 global using DiscordBot.Extensions;
+global using DiscordBot.Services.Logging;

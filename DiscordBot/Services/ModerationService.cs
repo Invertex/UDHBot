@@ -1,14 +1,14 @@
 ﻿using Discord.WebSocket;
-using DiscordBot.Services.Logging;
+using DiscordBot.Settings;
 
 namespace DiscordBot.Services;
 
 public class ModerationService
 {
     private readonly ILoggingService _loggingService;
-    private readonly Settings.Deserialized.Settings _settings;
+    private readonly BotSettings _settings;
 
-    public ModerationService(DiscordSocketClient client, Settings.Deserialized.Settings settings, ILoggingService loggingService)
+    public ModerationService(DiscordSocketClient client, BotSettings settings, ILoggingService loggingService)
     {
         _settings = settings;
         _loggingService = loggingService;

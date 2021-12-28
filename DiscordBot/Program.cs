@@ -1,8 +1,7 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Services;
-using DiscordBot.Services.Logging;
-using DiscordBot.Settings.Deserialized;
+using DiscordBot.Settings;
 using DiscordBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,7 +10,7 @@ namespace DiscordBot;
 public class Program
 {
     private static Rules _rules;
-    private static Settings.Deserialized.Settings _settings;
+    private static BotSettings _settings;
     private static UserSettings _userSettings;
     private DiscordSocketClient _client;
     private CommandHandlingService _commandHandlingService;
@@ -88,7 +87,7 @@ public class Program
 
     private static void DeserializeSettings()
     {
-        _settings = SerializeUtil.DeserializeFile<Settings.Deserialized.Settings>(@"Settings/Settings.json");
+        _settings = SerializeUtil.DeserializeFile<BotSettings>(@"Settings/Settings.json");
         _rules = SerializeUtil.DeserializeFile<Rules>(@"Settings/Rules.json");
         _userSettings = SerializeUtil.DeserializeFile<UserSettings>(@"Settings/UserSettings.json");
     }

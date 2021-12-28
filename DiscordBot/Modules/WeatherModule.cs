@@ -1,5 +1,5 @@
 using Discord.Commands;
-using DiscordBot.Services.Logging;
+using DiscordBot.Settings;
 using Newtonsoft.Json;
 
 namespace DiscordBot.Modules;
@@ -11,7 +11,7 @@ public class WeatherModule : ModuleBase
 {
     #region Dependency Injection
         
-    public Settings.Deserialized.Settings Settings { get; set; }
+    public BotSettings Settings { get; set; }
         
     #endregion
         

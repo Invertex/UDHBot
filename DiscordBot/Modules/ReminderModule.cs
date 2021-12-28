@@ -1,6 +1,7 @@
 using Discord.Commands;
 using DiscordBot.Services;
-using DiscordBot.Utils.Attributes;
+using DiscordBot.Settings;
+using DiscordBot.Attributes;
 
 namespace DiscordBot.Modules;
 
@@ -10,7 +11,7 @@ public class ReminderModule : ModuleBase
     #region Dependency Injection
 
     public ReminderService ReminderService { get; set; }
-    public Settings.Deserialized.Settings Settings { get; set; }
+    public BotSettings Settings { get; set; }
 
     #endregion
 

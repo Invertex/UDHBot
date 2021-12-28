@@ -1,6 +1,5 @@
 using System.IO;
 using System.Net;
-using DiscordBot.Services.Logging;
 
 namespace DiscordBot.Extensions;
 

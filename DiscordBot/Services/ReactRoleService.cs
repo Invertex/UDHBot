@@ -1,7 +1,6 @@
 using System.IO;
 using Discord.WebSocket;
-using DiscordBot.Services.Logging;
-using DiscordBot.Settings.Deserialized;
+using DiscordBot.Settings;
 using Newtonsoft.Json;
 
 namespace DiscordBot.Services;
@@ -20,7 +19,7 @@ public class ReactRoleService
     // Dictionaries to simplify lookup
     private readonly Dictionary<ulong, IUserMessage> _reactMessages = new Dictionary<ulong, IUserMessage>();
 
-    private readonly Settings.Deserialized.Settings _settings;
+    private readonly BotSettings _settings;
 
     private bool _isRunning;
 
@@ -28,7 +27,7 @@ public class ReactRoleService
 
     public ReactRoleSettings ReactSettings;
 
-    public ReactRoleService(DiscordSocketClient client, ILoggingService logging, Settings.Deserialized.Settings settings)
+    public ReactRoleService(DiscordSocketClient client, ILoggingService logging, BotSettings settings)
     {
         _loggingService = logging;
         _settings = settings;

@@ -1,6 +1,5 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using DiscordBot.Services.Logging;
 
 namespace DiscordBot.Skin;
 

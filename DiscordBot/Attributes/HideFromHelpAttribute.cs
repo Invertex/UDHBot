@@ -1,4 +1,4 @@
-namespace DiscordBot.Utils.Attributes;
+namespace DiscordBot.Attributes;
 
 public class HideFromHelpAttribute : Attribute
 {

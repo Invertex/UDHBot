@@ -1,5 +1,6 @@
 using System.Net;
 using Discord.Commands;
+using DiscordBot.Settings;
 using Newtonsoft.Json;
 
 // ReSharper disable all UnusedMember.Local
@@ -9,7 +10,7 @@ public class TimeModule : ModuleBase
 {
     #region Dependency Injection
         
-    public Settings.Deserialized.Settings Settings { get; set; }
+    public BotSettings Settings { get; set; }
         
     #endregion
 

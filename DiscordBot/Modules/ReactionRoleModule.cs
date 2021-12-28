@@ -1,7 +1,6 @@
 ﻿using Discord.Commands;
 using DiscordBot.Services;
-using DiscordBot.Services.Logging;
-using DiscordBot.Settings.Deserialized;
+using DiscordBot.Settings;
 
 namespace DiscordBot.Modules;
 
