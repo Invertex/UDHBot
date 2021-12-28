@@ -1,8 +1,7 @@
 using System;
 
-namespace DiscordBot.Utils.Attributes
+namespace DiscordBot.Utils.Attributes;
+
+public class HideFromHelpAttribute : Attribute
 {
-    public class HideFromHelpAttribute : Attribute
-    {
-    }
 }
