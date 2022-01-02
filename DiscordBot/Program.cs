@@ -1,9 +1,11 @@
 ﻿using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
 using DiscordBot.Services;
 using DiscordBot.Settings;
 using DiscordBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
+using RunMode = Discord.Commands.RunMode;
 
 namespace DiscordBot;
 
@@ -13,9 +15,9 @@ public class Program
     private static BotSettings _settings;
     private static UserSettings _userSettings;
     private DiscordSocketClient _client;
-    private CommandHandlingService _commandHandlingService;
 
     private CommandService _commandService;
+    private InteractionService _interactionService;
     private IServiceProvider _services;
 
     public static void Main(string[] args) =>
@@ -32,33 +34,27 @@ public class Program
             MessageCacheSize = 50,
             GatewayIntents = GatewayIntents.All,
         });
-
-        _commandService = new CommandService(new CommandServiceConfig
-        {
-            CaseSensitiveCommands = false,
-            DefaultRunMode = RunMode.Async
-        });
-
-        _services = ConfigureServices();
-        _commandHandlingService = _services.GetRequiredService<CommandHandlingService>();
-        _services.GetRequiredService<ModerationService>();
-
-        await _commandHandlingService.Initialize();
-
         _client.Log += LoggingService.DiscordNetLogger;
 
         await _client.LoginAsync(TokenType.Bot, _settings.Token);
         await _client.StartAsync();
-
+        
         _client.Ready += () =>
         {
-            LoggingService.LogToConsole($"Bot is connected.", LogSeverity.Info);
+            _interactionService = new InteractionService(_client);
+            _commandService = new CommandService(new CommandServiceConfig
+            {
+                CaseSensitiveCommands = false,
+                DefaultRunMode = RunMode.Async
+            });
+
+            _services = ConfigureServices();
 
             _client.GetGuild(_settings.GuildId)
                 ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
                 ?.SendMessageAsync($"Bot Started.");
-
-            //_audio.Music();
+                
+            LoggingService.LogToConsole($"Bot is connected.", LogSeverity.Info);
             return Task.CompletedTask;
         };
 
@@ -72,6 +68,7 @@ public class Program
             .AddSingleton(_userSettings)
             .AddSingleton(_client)
             .AddSingleton(_commandService)
+            .AddSingleton(_interactionService)
             .AddSingleton<CommandHandlingService>()
             .AddSingleton<ILoggingService, LoggingService>()
             .AddSingleton<DatabaseService>()
