@@ -47,14 +47,21 @@ public class CommandHandlingService
         // Initialize the command service
         Task.Run(async () =>
         {
-            // Discover all of the commands in this assembly and load them.
-            await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-            
-            await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(),_services);
-            //TODO Consider global commands? Maybe an attribute?
-            await _interactionService.RegisterCommandsToGuildAsync(_settings.GuildId);
+            try
+            {
+                // Discover all of the commands in this assembly and load them.
+                await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
-            IsInitialized = true;
+                await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+                //TODO Consider global commands? Maybe an attribute?
+                await _interactionService.RegisterCommandsToGuildAsync(_settings.GuildId);
+
+                IsInitialized = true;
+            }
+            catch (Exception e)
+            {
+                LoggingService.LogToConsole($"Failed to initialize the command service while adding modules.\nException: {e}", LogSeverity.Critical);
+            }
         });
     }
     
@@ -87,7 +94,7 @@ public class CommandHandlingService
         }
         return commandResults;
     }
-
+    
     private void GenerateCommandListOutputs(
         (string moduleName, bool orderByName, bool includeArgs, bool includeModuleName) input)
     {

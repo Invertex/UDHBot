@@ -15,6 +15,7 @@ public class Program
     private static BotSettings _settings;
     private static UserSettings _userSettings;
     private DiscordSocketClient _client;
+    private CommandHandlingService _commandHandlingService;
 
     private CommandService _commandService;
     private InteractionService _interactionService;
@@ -49,6 +50,7 @@ public class Program
             });
 
             _services = ConfigureServices();
+            _commandHandlingService = _services.GetRequiredService<CommandHandlingService>();
 
             _client.GetGuild(_settings.GuildId)
                 ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
