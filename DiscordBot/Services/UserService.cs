@@ -334,12 +334,14 @@ public class UserService
             background.Composite(l, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
         }
 
+        var path = $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
+        
         using (var result = profileCard.Mosaic())
         {
-            result.Write($"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png");
+            result.Write(path);
         }
 
-        return $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
+        return path;
     }
 
     public Embed WelcomeMessage(SocketGuildUser user)
