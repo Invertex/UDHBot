@@ -21,7 +21,7 @@ public class UserSlashModule : InteractionModuleBase
     [SlashCommand("help", "Shows available commands")]
     private async Task Help()
     {
-        await Context.Interaction.DeferAsync();
+        await Context.Interaction.DeferAsync(ephemeral: true);
 
         var helpEmbed = HelpEmbed(0);
         ComponentBuilder builder = new ComponentBuilder();
@@ -33,7 +33,7 @@ public class UserSlashModule : InteractionModuleBase
     [ComponentInteraction("user_module_help_next:*")]
     private async Task InteractionHelp(string pageString)
     {
-        await Context.Interaction.DeferAsync();
+        await Context.Interaction.DeferAsync(ephemeral: true);
 
         int page = int.Parse(pageString);
 
@@ -97,7 +97,7 @@ public class UserSlashModule : InteractionModuleBase
     [SlashCommand("roles", "Give or Remove roles for yourself (Programmer, Artist, Designer, etc)")]
     public async Task UserRoles()
     {
-        await Context.Interaction.DeferAsync();
+        await Context.Interaction.DeferAsync(ephemeral: true);
 
         ComponentBuilder builder = new ComponentBuilder();
 
@@ -115,7 +115,7 @@ public class UserSlashModule : InteractionModuleBase
     [ComponentInteraction("user_role_add:*")]
     public async Task UserRoleAdd(string role)
     {
-        await Context.Interaction.DeferAsync();
+        await Context.Interaction.DeferAsync(ephemeral: true);
 
         var user = Context.User as IGuildUser;
         var guild = Context.Guild;
