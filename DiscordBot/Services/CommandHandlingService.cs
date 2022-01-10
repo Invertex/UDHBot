@@ -101,12 +101,10 @@ public class CommandHandlingService
         // If we don't have the command list, we need to build it.
         var commandList = new StringBuilder();
         commandList.Append($"__{input.moduleName} Commands__\n");
-
-        // Generates a list of commands that doesn't include any that have the ``HideFromHelp`` attribute.
-        var commands = _commandService.Commands.Where(x => x.Module.Name == input.moduleName && !x.Attributes.Contains(new HideFromHelpAttribute()));
-        // Orders the list either by name or by priority, if no priority is given we push it to the end.
-        commands = input.orderByName ? commands.OrderBy(c => c.Name) : commands.OrderBy(c => (c.Priority > 0 ? c.Priority : 1000));
-
+        
+        // Gets all of the commands in the module, and sorts them by priority.
+        var commands = GetOrganizedCommandInfo(input);
+        
         foreach (var c in commands)
         {
             commandList.Append($"**{(input.includeModuleName ? input.moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {GetArguments(input.includeArgs, c.Parameters)}\n");
@@ -115,6 +113,26 @@ public class CommandHandlingService
         string commandListString = commandList.ToString();
         _commandList[input]  = commandListString;
         _commandListMessages[input] = commandListString.MessageSplitToSize();
+    }
+
+    /// <summary> Returns a string that will fit in a discord message with commands that fit the search query. These results aren't cached making them a lot more expensive than GetCommandList, not enough to worry about, but not something you want to call in a service unless user is asking for the results directly.</summary>
+    public List<string> SearchForCommand((string moduleName, bool orderByName, bool includeArgs, bool includeModuleName) input, string search)
+    {
+        // If we don't have the command list, we need to build it.
+        var commandList = new StringBuilder();
+        
+        // Gets all of the commands in the module, and sorts them by priority.
+        var commands = GetOrganizedCommandInfo(input, search);
+
+        foreach (var c in commands)
+        {
+            if (c.Name.ToLower().Contains(search.ToLower()))
+            {
+                commandList.Append($"**{(input.includeModuleName ? input.moduleName + " " : string.Empty)}{c.Name}** : {c.Summary} {GetArguments(input.includeArgs, c.Parameters)}\n");
+            }
+        }
+
+        return commandList.ToString().MessageSplitToSize();
     }
     
     private string GetArguments(bool getArgs, IReadOnlyList<ParameterInfo> arguments)
@@ -129,6 +147,22 @@ public class CommandHandlingService
         if (args.Length > 0)
             args = $"- args: *( {args})*";
         return args;
+    }
+
+    private IEnumerable<CommandInfo> GetOrganizedCommandInfo(
+        (string moduleName, bool orderByName, bool includeArgs, bool includeModuleName) input, string search = "")
+    {
+        // Generates a list of commands that doesn't include any that have the ``HideFromHelp`` attribute.
+        // Adds commands that use the same Module, and contains the search query if given.
+        var commands = _commandService.Commands.Where(x =>
+            x.Module.Name == input.moduleName && !x.Attributes.Contains(new HideFromHelpAttribute()) &&
+            (search == string.Empty || x.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)));
+        // Orders the list either by name or by priority, if no priority is given we push it to the end.
+        commands = input.orderByName
+            ? commands.OrderBy(c => c.Name)
+            : commands.OrderBy(c => (c.Priority > 0 ? c.Priority : 1000));
+
+        return commands;
     }
 
     #endregion

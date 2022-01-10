@@ -19,15 +19,23 @@ public class UserSlashModule : InteractionModuleBase
     #region Help
 
     [SlashCommand("help", "Shows available commands")]
-    private async Task Help()
+    private async Task Help(string search = "")
     {
         await Context.Interaction.DeferAsync(ephemeral: true);
 
-        var helpEmbed = HelpEmbed(0);
-        ComponentBuilder builder = new ComponentBuilder();
-        builder.WithButton("Next Page", $"user_module_help_next:{0}");
+        var helpEmbed = HelpEmbed(0, search);
+        if (helpEmbed.Item1 >= 0)
+        {
+            ComponentBuilder builder = new ComponentBuilder();
+            builder.WithButton("Next Page", $"user_module_help_next:{0}");
 
-        await Context.Interaction.FollowupAsync(embed: helpEmbed.Item2, ephemeral: true, components: builder.Build());
+            await Context.Interaction.FollowupAsync(embed: helpEmbed.Item2, ephemeral: true,
+                components: builder.Build());
+        }
+        else
+        {
+            await Context.Interaction.FollowupAsync(embed: helpEmbed.Item2, ephemeral: true);
+        }
     }
 
     [ComponentInteraction("user_module_help_next:*")]
@@ -49,24 +57,34 @@ public class UserSlashModule : InteractionModuleBase
     }
 
     // Returns an embed with the help text for a module, if the page is outside the bounds (high) it will return to the first page.
-    private (int, Embed) HelpEmbed(int page)
+    private (int, Embed) HelpEmbed(int page, string search = "")
     {
-        var helpMessages = CommandHandlingService.GetCommandListMessages("UserModule", false, true, false);
-
-        if (page >= helpMessages.Count)
-            page = 0;
-        else if (page < 0)
-            page = helpMessages.Count - 1;
-
         EmbedBuilder ebuilder = new EmbedBuilder();
         ebuilder.Title = "User Module Commands";
         ebuilder.Color = Color.LighterGrey;
-        ebuilder.WithFooter(text: $"Page {page + 1} of {helpMessages.Count}");
+        
+        List<string> helpMessages = null;
+        if (search == string.Empty)
+        {
+            helpMessages = CommandHandlingService.GetCommandListMessages("UserModule", false, true, false);
 
-        ebuilder.Description = helpMessages[page];
-        var embed = ebuilder.Build();
+            if (page >= helpMessages.Count)
+                page = 0;
+            else if (page < 0)
+                page = helpMessages.Count - 1;
+            
+            ebuilder.WithFooter(text: $"Page {page + 1} of {helpMessages.Count}");
+            ebuilder.Description = helpMessages[page];
+        }
+        else
+        {
+            // We need search results which we don't cache, so we don't want to provide a page number
+            page = -1;
+            helpMessages = CommandHandlingService.SearchForCommand(("UserModule", false, true, false), search);
+            ebuilder.Description = helpMessages[0];
+        }
 
-        return (page, embed);
+        return (page, ebuilder.Build());
     }
 
     #endregion
