@@ -20,9 +20,7 @@ public class ModerationModule : ModuleBase
     public UserService UserService { get; set; }
         
     #endregion
-        
-    private Dictionary<ulong, DateTime> MutedUsers => UserService.MutedUsers;
-
+    
     private async Task<bool> IsModerationEnabled()
     {
         if (Settings.ModeratorCommandsEnabled) return true;
@@ -56,9 +54,9 @@ public class ModerationModule : ModuleBase
         await LoggingService.LogAction(
             $"{Context.User.Username} has muted {u.Username} ({u.Id}) for {Utils.Utils.FormatTime(arg)} ({arg} seconds).");
 
-        MutedUsers.AddCooldown(u.Id, (int)arg, ignoreExisting: true);
+        UserService.MutedUsers.AddCooldown(u.Id, (int)arg, ignoreExisting: true);
 
-        await MutedUsers.AwaitCooldown(u.Id);
+        await UserService.MutedUsers.AwaitCooldown(u.Id);
         await reply.DeleteAsync();
         await UnmuteUser(user, true);
     }
@@ -122,8 +120,8 @@ public class ModerationModule : ModuleBase
             await LoggingService.LogAction($"User {user.Username} has DM blocked and the mute reason couldn't be sent.", true, false);
         }
 
-        MutedUsers.AddCooldown(u.Id, (int)seconds, ignoreExisting: true);
-        await MutedUsers.AwaitCooldown(u.Id);
+        UserService.MutedUsers.AddCooldown(u.Id, (int)seconds, ignoreExisting: true);
+        await UserService.MutedUsers.AwaitCooldown(u.Id);
 
         await UnmuteUser(user, true);
         reply?.DeleteAsync();
@@ -145,7 +143,7 @@ public class ModerationModule : ModuleBase
         if (!fromMute && Context != null && Context.Message != null)
             await Context.Message.DeleteAsync();
 
-        MutedUsers.Remove(user.Id);
+        UserService.MutedUsers.Remove(user.Id);
         await u.RemoveRoleAsync(Context.Guild.GetRole(Settings.MutedRoleId));
         var reply = await ReplyAsync("User " + user + " has been unmuted.");
         reply?.DeleteAfterSeconds(10d);
