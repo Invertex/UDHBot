@@ -59,9 +59,9 @@ public class UserSlashModule : InteractionModuleBase
     // Returns an embed with the help text for a module, if the page is outside the bounds (high) it will return to the first page.
     private (int, Embed) HelpEmbed(int page, string search = "")
     {
-        EmbedBuilder ebuilder = new EmbedBuilder();
-        ebuilder.Title = "User Module Commands";
-        ebuilder.Color = Color.LighterGrey;
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        embedBuilder.Title = "User Module Commands";
+        embedBuilder.Color = Color.LighterGrey;
         
         List<string> helpMessages = null;
         if (search == string.Empty)
@@ -73,18 +73,27 @@ public class UserSlashModule : InteractionModuleBase
             else if (page < 0)
                 page = helpMessages.Count - 1;
             
-            ebuilder.WithFooter(text: $"Page {page + 1} of {helpMessages.Count}");
-            ebuilder.Description = helpMessages[page];
+            embedBuilder.WithFooter(text: $"Page {page + 1} of {helpMessages.Count}");
+            embedBuilder.Description = helpMessages[page];
         }
         else
         {
             // We need search results which we don't cache, so we don't want to provide a page number
             page = -1;
             helpMessages = CommandHandlingService.SearchForCommand(("UserModule", false, true, false), search);
-            ebuilder.Description = helpMessages[0];
+            if (helpMessages[0].Length > 0)
+            {
+                embedBuilder.WithFooter(text: $"Search results for {search}");
+                embedBuilder.Description = helpMessages[0];
+            }
+            else
+            {
+                embedBuilder.WithFooter(text: $"No results for {search}");
+                embedBuilder.Description = "No commands found";
+            }
         }
 
-        return (page, ebuilder.Build());
+        return (page, embedBuilder.Build());
     }
 
     #endregion
