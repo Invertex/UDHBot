@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp5.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>10</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Discord.Net.Labs" Version="3.4.7" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.38" />
+    <PackageReference Include="Discord.Net.Labs" Version="3.5.0" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.40" />
     <PackageReference Include="Insight.Database" Version="6.3.9" />
     <PackageReference Include="Magick.NET-Q8-x64" Version="7.5.0.1" />
     <PackageReference Include="MySql.Data" Version="8.0.27" />
