@@ -148,12 +148,8 @@ public class UserService
 
         LoadData();
         UpdateLoop();
-
-        _client.Ready += () =>
-        {
-            Task.Run(DelayedWelcomeService);
-            return Task.CompletedTask;
-        };
+        
+        Task.Run(DelayedWelcomeService);
     }
 
     public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
@@ -643,9 +639,9 @@ public class UserService
         catch (Exception e)
         {
             // Catch and show exception
-            LoggingService.LogToConsole($"UserServer Exception during welcome message.\n{e.Message}",
+            LoggingService.LogToConsole($"UserService Exception during welcome message.\n{e.Message}",
                 LogSeverity.Error);
-            await _loggingService.LogAction($"UserServer Exception during welcome message.\n{e.Message}.", false, true);
+            await _loggingService.LogAction($"UserService Exception during welcome message.\n{e.Message}.", false, true);
         }
     }
 

@@ -14,7 +14,8 @@ public class ReminderItem {
 
 public class ReminderService
 {
-    private bool _isRunning = false;
+    public bool IsRunning { get; private set; }
+    
     private DateTime _nearestReminder = DateTime.Now;
         
     private readonly DiscordSocketClient _client;
@@ -31,22 +32,22 @@ public class ReminderService
         _client = client;
         _loggingService = loggingService;
         _botCommandsChannel = settings.BotCommandsChannel;
-        client.Ready += OnReady;
+
+        Initialize();
     }
 
-    private Task OnReady()
+    private void Initialize()
     {
-        if (!_isRunning)
+        if (IsRunning) return;
+        
+        LoadReminders();
+        if (_reminders == null)
         {
-            LoadReminders();
-            if (_reminders == null)
-            {
-                // Tell the user that we couldn't load the reminders
-                _loggingService.LogAction("ReminderService: Couldn't load reminders", false);
-            }
-            Task.Run(CheckReminders);
+            // Tell the user that we couldn't load the reminders
+            _loggingService.LogAction("ReminderService: Couldn't load reminders", false);
         }
-        return Task.CompletedTask;
+        IsRunning = true;
+        Task.Run(CheckReminders);
     }
 
     // Serialize Reminders to file
@@ -99,7 +100,7 @@ public class ReminderService
     }
         
     // Check if reminders are due in an async task that loops from the constructor
-    public async Task CheckReminders()
+    private async Task CheckReminders()
     {
         try
         {
@@ -155,18 +156,13 @@ public class ReminderService
             // Catch and show exception
             LoggingService.LogToConsole($"Reminder Service Exception during Reminder.\n{e.Message}");
             await _loggingService.LogAction($"Reminder Service has crashed.\nException Msg: {e.Message}.", false, true);
-            _isRunning = false;
+            IsRunning = false;
         }
     }
         
-    public async Task<bool> RestartService()
+    public bool RestartService()
     {
-        await OnReady();
-        return _isRunning;
-    }
-        
-    public bool IsRunning()
-    {
-        return _isRunning;
+        Initialize();
+        return IsRunning;
     }
 }
