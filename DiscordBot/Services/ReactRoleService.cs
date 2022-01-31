@@ -35,9 +35,8 @@ public class ReactRoleService
         _client = client;
         _client.ReactionAdded += ReactionAdded;
         _client.ReactionRemoved += ReactionRemoved;
-
-        // Event so we can Initialize
-        _client.Ready += ClientIsReady;
+        
+        Task.Run(async () => _isRunning = await StartService());
     }
 
     // These are for the Modules to reference if/when setting up new message roles.
@@ -138,11 +137,6 @@ public class ReactRoleService
 
         _isRunning = true;
         return true;
-    }
-
-    private async Task ClientIsReady()
-    {
-        _isRunning = await StartService();
     }
 
     private async Task ReactionAdded(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)

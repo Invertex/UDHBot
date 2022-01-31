@@ -1,14 +1,18 @@
 ﻿using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
 using DiscordBot.Services;
 using DiscordBot.Settings;
 using DiscordBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
+using RunMode = Discord.Commands.RunMode;
 
 namespace DiscordBot;
 
 public class Program
 {
+    private bool _isInitialized = false;
+    
     private static Rules _rules;
     private static BotSettings _settings;
     private static UserSettings _userSettings;
@@ -16,6 +20,7 @@ public class Program
     private CommandHandlingService _commandHandlingService;
 
     private CommandService _commandService;
+    private InteractionService _interactionService;
     private IServiceProvider _services;
 
     public static void Main(string[] args) =>
@@ -32,33 +37,34 @@ public class Program
             MessageCacheSize = 50,
             GatewayIntents = GatewayIntents.All,
         });
-
-        _commandService = new CommandService(new CommandServiceConfig
-        {
-            CaseSensitiveCommands = false,
-            DefaultRunMode = RunMode.Async
-        });
-
-        _services = ConfigureServices();
-        _commandHandlingService = _services.GetRequiredService<CommandHandlingService>();
-        _services.GetRequiredService<ModerationService>();
-
-        await _commandHandlingService.Initialize();
-
         _client.Log += LoggingService.DiscordNetLogger;
 
         await _client.LoginAsync(TokenType.Bot, _settings.Token);
         await _client.StartAsync();
-
+        
         _client.Ready += () =>
         {
-            LoggingService.LogToConsole($"Bot is connected.", LogSeverity.Info);
+            // Ready can be called additional times if the bot disconnects for long enough,
+            // so we need to make sure we only initialize commands and such for the bot once if it manages to re-establish connection
+            if (!_isInitialized)
+            {
+                _interactionService = new InteractionService(_client);
+                _commandService = new CommandService(new CommandServiceConfig
+                {
+                    CaseSensitiveCommands = false,
+                    DefaultRunMode = RunMode.Async
+                });
 
-            _client.GetGuild(_settings.GuildId)
-                ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
-                ?.SendMessageAsync($"Bot Started.");
+                _services = ConfigureServices();
+                _commandHandlingService = _services.GetRequiredService<CommandHandlingService>();
 
-            //_audio.Music();
+                _client.GetGuild(_settings.GuildId)
+                    ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
+                    ?.SendMessageAsync($"Bot Started.");
+
+                LoggingService.LogToConsole($"Bot is connected.", LogSeverity.Info);
+                _isInitialized = true;
+            }
             return Task.CompletedTask;
         };
 
@@ -72,6 +78,7 @@ public class Program
             .AddSingleton(_userSettings)
             .AddSingleton(_client)
             .AddSingleton(_commandService)
+            .AddSingleton(_interactionService)
             .AddSingleton<CommandHandlingService>()
             .AddSingleton<ILoggingService, LoggingService>()
             .AddSingleton<DatabaseService>()

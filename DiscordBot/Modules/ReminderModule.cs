@@ -164,13 +164,13 @@ public class ReminderModule : ModuleBase
     [Summary("Used to restart the reminder service if it has crashed.")]
     public async Task RebootReminderService()
     {
-        if (ReminderService.IsRunning())
+        if (ReminderService.IsRunning)
         {
             await ReplyAsync("Reminder service is still running.").DeleteAfterSeconds(seconds: 5);
             return;
         }
 
-        var result = await ReminderService.RestartService();
+        var result = ReminderService.RestartService();
         if (result)
             await ReplyAsync("Reminder service restarted.").DeleteAfterSeconds(seconds: 5);
         else

@@ -22,12 +22,20 @@ public class UserService
     private readonly DatabaseService _databaseService;
     private readonly ILoggingService _loggingService;
 
+    private readonly Regex _x3CodeBlock =
+        new Regex("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})",
+            RegexOptions.Multiline | RegexOptions.Singleline);
+
+    private readonly Regex _x2CodeBlock = new Regex("^(`{2})[^`].+?([^`]`{2})$", RegexOptions.Multiline);
+    private readonly List<Regex> _codeBlockWarnPatterns;
+    private readonly short _maxCodeBlockLengthWarning = 800;
+
     private readonly List<ulong> _noXpChannels;
 
     private readonly BotSettings _settings;
     private readonly Dictionary<ulong, DateTime> _thanksCooldown;
     private readonly Dictionary<ulong, DateTime> _everyoneScoldCooldown = new Dictionary<ulong, DateTime>();
-        
+
     private readonly List<(ulong id, DateTime time)> _welcomeNoticeUsers = new List<(ulong id, DateTime time)>();
 
     private readonly int _thanksCooldownTime;
@@ -47,9 +55,12 @@ public class UserService
 
     public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
     public int WaitingWelcomeMessagesCount => _welcomeNoticeUsers.Count;
-    public DateTime NextWelcomeMessage => _welcomeNoticeUsers.Any() ? _welcomeNoticeUsers.Min(x => x.time) : DateTime.MaxValue;
 
-    public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService, UpdateService updateService,
+    public DateTime NextWelcomeMessage =>
+        _welcomeNoticeUsers.Any() ? _welcomeNoticeUsers.Min(x => x.time) : DateTime.MaxValue;
+
+    public UserService(DiscordSocketClient client, DatabaseService databaseService, ILoggingService loggingService,
+        UpdateService updateService,
         BotSettings settings, UserSettings userSettings)
     {
         _client = client;
@@ -99,8 +110,20 @@ public class UserService
         CodeFormattingExample = @"\`\`\`cs" + Environment.NewLine +
                                 "Write your code on new line here." + Environment.NewLine +
                                 @"\`\`\`" + Environment.NewLine;
-        CodeReminderFormattingExample = CodeFormattingExample + Environment.NewLine +
-                                        "Simple as that! If you'd like me to stop reminding you about this, simply type \"!disablecodetips\"";
+
+        CodeReminderFormattingExample = CodeFormattingExample + "*To disable these reminders use \"!disablecodetips\"*";
+
+        //TODO Detect double code block and tell them to use 3? Seems kinda pointless since all it provides is highlights
+
+        _codeBlockWarnPatterns = new List<Regex>();
+        // Checks if there is { } in the message
+        _codeBlockWarnPatterns.Add(new Regex(".*?({.+?}).*?", RegexOptions.Singleline));
+        // We look for (if, else if) followed by ( and ) somewhere after. We also check that the ) is end of the line, or followed by comments //
+        _codeBlockWarnPatterns.Add(new Regex("(if|else\\sif).?\\(.+\\).?($|\\/{2}|\\s?)", RegexOptions.Multiline));
+        // Check for a method from start of line (since discord would ignore tab) and if any comments after
+        _codeBlockWarnPatterns.Add(new Regex("^(\\w*.\\w*)\\(\\w*?\\);($|.?($|.*?\\/{2}))", RegexOptions.Multiline));
+        // Check for some collection of characters being set to some other collection of characters and check if end of line or comment.
+        _codeBlockWarnPatterns.Add(new Regex("^.+? =.+?($|.*?\\/\\/)", RegexOptions.Multiline));
 
         /* Make sure folders we require exist */
         if (!Directory.Exists($"{_settings.ServerRootPath}/images/profiles/"))
@@ -125,12 +148,8 @@ public class UserService
 
         LoadData();
         UpdateLoop();
-
-        _client.Ready += () =>
-        {
-            Task.Run(DelayedWelcomeService);
-            return Task.CompletedTask;
-        };
+      
+        Task.Run(DelayedWelcomeService);
     }
 
     private async Task UserLeft(SocketGuild guild, SocketUser user)
@@ -155,8 +174,8 @@ public class UserService
         }
 
         await _databaseService.DeleteUser(user.Id);
-        }
-
+    }
+  
     public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
 
     private async void UpdateLoop()
@@ -227,7 +246,8 @@ public class UserService
 
         await _databaseService.Query().UpdateXp(userId.ToString(), user.Exp + (uint)xpGain);
 
-        _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp, xpGain);
+        _loggingService.LogXp(messageParam.Channel.Name, messageParam.Author.Username, baseXp, bonusXp, reduceXp,
+            xpGain);
 
         await LevelUp(messageParam, userId);
     }
@@ -293,6 +313,7 @@ public class UserService
                 mainRole = u.Guild.GetRole(id);
             else if (role.Position > mainRole.Position) mainRole = role;
         }
+
         mainRole ??= u.Guild.EveryoneRole;
 
         using var profileCard = new MagickImageCollection();
@@ -334,7 +355,8 @@ public class UserService
             }
             catch (Exception e)
             {
-                LoggingService.LogToConsole($"Failed to download user profile image for ProfileCard.\nEx:{e.Message}", LogSeverity.Warning);
+                LoggingService.LogToConsole($"Failed to download user profile image for ProfileCard.\nEx:{e.Message}",
+                    LogSeverity.Warning);
                 profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
             }
 
@@ -358,12 +380,14 @@ public class UserService
             background.Composite(l, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
         }
 
+        var path = $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
+        
         using (var result = profileCard.Mosaic())
         {
-            result.Write($"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png");
+            result.Write(path);
         }
 
-        return $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
+        return path;
     }
 
     public Embed WelcomeMessage(SocketGuildUser user)
@@ -419,10 +443,11 @@ public class UserService
             if (_thanksCooldown.HasUser(userId))
             {
                 await messageParam.Channel.SendMessageAsync(
-                    $"{messageParam.Author.Mention} you must wait " +
-                    $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
-                    "seconds before giving another karma point." + Environment.NewLine +
-                    "(In the future, if you are trying to thank multiple people, include all their names in the thanks message)").DeleteAfterTime(defaultDelTime);
+                        $"{messageParam.Author.Mention} you must wait " +
+                        $"{DateTime.Now - _thanksCooldown[userId]:ss} " +
+                        "seconds before giving another karma point." + Environment.NewLine +
+                        "(In the future, if you are trying to thank multiple people, include all their names in the thanks message)")
+                    .DeleteAfterTime(defaultDelTime);
                 return;
             }
 
@@ -468,7 +493,8 @@ public class UserService
             _canEditThanks.Remove(messageParam.Id);
 
             //Don't give karma cooldown if user only mentioned himself or the bot or both
-            if ((mentionedSelf || mentionedBot) && mentions.Count == 1 || mentionedBot && mentionedSelf && mentions.Count == 2)
+            if ((mentionedSelf || mentionedBot) && mentions.Count == 1 ||
+                mentionedBot && mentionedSelf && mentions.Count == 2)
                 return;
             _thanksCooldown.AddCooldown(userId, _thanksCooldownTime);
             await messageParam.Channel.SendMessageAsync(sb.ToString());
@@ -483,8 +509,14 @@ public class UserService
 
     public async Task CodeCheck(SocketMessage messageParam)
     {
-        if (messageParam.Author.IsBot)
+        // Don't correct a Bot, don't correct in off-topic
+        if (messageParam.Author.IsBot || messageParam.Channel.Id == _settings.GeneralChannel.Id)
             return;
+
+        // We just ignore anything if it is under 200 characters
+        if (messageParam.Content.Length < 200)
+            return;
+        
         var userId = messageParam.Author.Id;
 
         //Simple check to cover most large code posting cases without being an issue for most non-code messages
@@ -492,31 +524,54 @@ public class UserService
         if (!CodeReminderCooldown.HasUser(userId))
         {
             var content = messageParam.Content;
-            //Changed to a regex check so that bot only alerts when there aren't surrounding backticks, instead of just looking if no triple backticks exist.
-            var foundCodeTags = Regex.Match(content, ".*?`[^`].*?`", RegexOptions.Singleline).Success;
-            var foundCurlyFries = content.Contains("{") && content.Contains("}");
-            if (!foundCodeTags && foundCurlyFries)
+
+            // We have a smart cookie using ```cs so we assume they're all knowing and abort early to save cpu
+            var foundTrippleCodeBlock = _x3CodeBlock.Match(content);
+            if (foundTrippleCodeBlock.Groups["CS"].Length > 0)
+                return;
+            if (foundTrippleCodeBlock.Groups["CodeBlock"].Success)
             {
-                CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
-                var sb = new StringBuilder();
-                sb.Append(messageParam.Author.Mention)
-                    .AppendLine(
-                        " are you trying to post code? If so, please place 3 backticks \\`\\`\\` at the beginning and end of your code, like so:");
-                sb.AppendLine(CodeReminderFormattingExample);
-                await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 10);
+                // A ``` codeblock was found, but no CS, let 'em know
+                await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} when using code blocks remember to use the ***syntax highlights*** to improve readability.\n{CodeReminderFormattingExample}")
+                    .DeleteAfterSeconds(seconds: 60);
+                return;
             }
-            else if (foundCodeTags && foundCurlyFries && content.Contains("```") && !content.ToLower().Contains("```cs"))
+
+            // Checks get a bit more expensive from here
+            var foundDoubleCodeBlock = _x2CodeBlock.Match(content).Success;
+
+            int hits = 0;
+            foreach (var regex in _codeBlockWarnPatterns)
             {
-                var sb = new StringBuilder();
-                sb.Append(messageParam.Author.Mention)
-                    .AppendLine(
-                        " Don't forget to add \"cs\" after your first 3 backticks so that your code receives syntax highlighting:");
-                sb.AppendLine(CodeReminderFormattingExample);
-                await messageParam.Channel.SendMessageAsync(sb.ToString()).DeleteAfterTime(minutes: 8);
-                CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                hits += regex.Match(content).Captures.Count;
+            }
+
+            // Some arbitary condition, this means 3 regex captures would be required which should easy enough to trigger without much chance for a false positive.
+            if (!foundDoubleCodeBlock && hits >= 3)
+            {
+                //! CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} are you sharing c# scripts? Remember to use codeblocks to help readability!\n{CodeReminderFormattingExample}")
+                    .DeleteAfterSeconds(seconds: 60);
+                if (content.Length > _maxCodeBlockLengthWarning)
+                {
+                    await messageParam.Channel.SendMessageAsync(
+                            $"The code you're sharing is quite long, maybe use a free service like <https://hastebin.com> and share the link here instead.")
+                        .DeleteAfterSeconds(seconds: 60);
+                }
+            }
+            // If we know there is a codeblock
+            else if (foundDoubleCodeBlock && hits > 0)
+            {
+                //! CodeReminderCooldown.AddCooldown(userId, _codeReminderCooldownTime);
+                await messageParam.Channel.SendMessageAsync(
+                        $"{messageParam.Author.Mention} when using code blocks remember to use \\`\\`\\`cs as this will help improve readability for C# scripts.\n{CodeReminderFormattingExample}")
+                    .DeleteAfterSeconds(seconds: 60);
             }
         }
     }
+
 
     private async Task ScoldForAtEveryoneUsage(SocketMessage messageParam)
     {
@@ -529,15 +584,19 @@ public class UserService
                 _everyoneScoldCooldown[messageParam.Author.Id] > DateTime.Now)
                 return;
             // We add to dictionary with the time it must be passed before they'll be notified again.
-            _everyoneScoldCooldown[messageParam.Author.Id] = DateTime.Now.AddSeconds(_settings.EveryoneScoldPeriodSeconds);
+            _everyoneScoldCooldown[messageParam.Author.Id] =
+                DateTime.Now.AddSeconds(_settings.EveryoneScoldPeriodSeconds);
 
             await messageParam.Channel.SendMessageAsync(
-                $"Please don't try to alert **everyone** on the server {messageParam.Author.Mention}!\nIf you are asking a question, people will help you when they have time.").DeleteAfterTime(minutes: 2);
+                    $"Please don't try to alert **everyone** on the server {messageParam.Author.Mention}!\nIf you are asking a question, people will help you when they have time.")
+                .DeleteAfterTime(minutes: 2);
         }
     }
 
     // Anything relevant to the first time someone connects to the server
+
     #region Welcome Service
+
     // If a user talks before they've been welcomed, we welcome them and remove them from the welcome list so they're not welcomes a second time.
     private async Task UserIsTyping(Cacheable<IUser, ulong> user, Cacheable<IMessageChannel, ulong> channel)
     {
@@ -548,6 +607,7 @@ public class UserService
 
         await ProcessWelcomeUser(user.Id, user.Value);
     }
+
     private async Task UserJoined(SocketGuildUser user)
     {
         // Send them the Welcome DM first.
@@ -581,7 +641,7 @@ public class UserService
             _welcomeNoticeUsers.Add((user.Id, DateTime.Now.AddSeconds(_settings.WelcomeMessageDelaySeconds)));
         }
     }
-        
+
     // Welcomes users to the server after they've been connected for over x number of seconds.
     private async Task DelayedWelcomeService()
     {
@@ -596,14 +656,16 @@ public class UserService
                 {
                     await ProcessWelcomeUser(userData.id, null);
                 }
+
                 await Task.Delay(10000);
             }
         }
         catch (Exception e)
         {
             // Catch and show exception
-            LoggingService.LogToConsole($"UserServer Exception during welcome message.\n{e.Message}", LogSeverity.Error);
-            await _loggingService.LogAction($"UserServer Exception during welcome message.\n{e.Message}.", false, true);
+            LoggingService.LogToConsole($"UserService Exception during welcome message.\n{e.Message}",
+                LogSeverity.Error);
+            await _loggingService.LogAction($"UserService Exception during welcome message.\n{e.Message}.", false, true);
         }
     }
 
@@ -621,6 +683,7 @@ public class UserService
                 if (offTopic != null)
                     await offTopic.SendMessageAsync(string.Empty, false, em);
             }
+
             // Remove the user from the welcome list.
             _welcomeNoticeUsers.RemoveAll(u => u.id == userID);
         }
@@ -666,6 +729,7 @@ public class UserService
             );
         return (em.Build());
     }
+
     #endregion
 
     private async Task UserUpdated(Cacheable<SocketGuildUser, ulong> oldUserCached, SocketGuildUser user)
@@ -684,7 +748,8 @@ public class UserService
         if (messageParam.Author.IsBot) return;
 
         foreach (var prefix in _settings.AutoThreadExclusionPrefixes)
-            if (messageParam.Content.StartsWith(prefix)) return;
+            if (messageParam.Content.StartsWith(prefix))
+                return;
 
         foreach (var AutoThreadChannel in _settings.AutoThreadChannels)
         {
@@ -696,13 +761,16 @@ public class UserService
                     ThreadArchiveDuration wantedDuration;
                     if (!Enum.TryParse<ThreadArchiveDuration>(AutoThreadChannel.Duration, out wantedDuration))
                         wantedDuration = ThreadArchiveDuration.ThreeDays;
-                    Discord.ThreadArchiveDuration duration = Utils.Utils.GetMaxThreadDuration(wantedDuration, _client.GetGuild(_settings.GuildId));
+                    Discord.ThreadArchiveDuration duration =
+                        Utils.Utils.GetMaxThreadDuration(wantedDuration, _client.GetGuild(_settings.GuildId));
                     var title = AutoThreadChannel.GenerateTitle(messageParam.Author);
-                    var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, duration, messageParam);
+                    var thread = await channel.CreateThreadAsync(title, Discord.ThreadType.PublicThread, duration,
+                        messageParam);
 
                     if (!String.IsNullOrEmpty(AutoThreadChannel.FirstMessage))
                     {
-                        var message = await thread.SendMessageAsync(AutoThreadChannel.GenerateFirstMessage(messageParam.Author));
+                        var message =
+                            await thread.SendMessageAsync(AutoThreadChannel.GenerateFirstMessage(messageParam.Author));
                         await message.PinAsync();
                     }
                 }
@@ -714,5 +782,6 @@ public class UserService
         }
 
     }
+
     #endregion
 }
