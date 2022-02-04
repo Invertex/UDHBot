@@ -148,14 +148,34 @@ public class UserService
 
         LoadData();
         UpdateLoop();
-
-        _client.Ready += () =>
-        {
-            Task.Run(DelayedWelcomeService);
-            return Task.CompletedTask;
-        };
+      
+        Task.Run(DelayedWelcomeService);
     }
 
+    private async Task UserLeft(SocketGuild guild, SocketUser user)
+    {
+        if (user.IsBot) return;
+        // Try get user, may not exist anymore since they've "left"
+        var guildUser = guild.GetUser(user.Id);
+        if (guildUser?.JoinedAt != null)
+        {
+            var joinDate = guildUser.JoinedAt.Value.Date;
+
+            var timeStayed = DateTime.Now - joinDate;
+            await _loggingService.LogAction(
+                $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double)timeStayed.Days) + " days" : " ")}" +
+                $" {Math.Floor((double)timeStayed.Hours).ToString(CultureInfo.InvariantCulture)} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
+        }
+        // If bot is to slow to get user info, we just say they left at current time.
+        else
+        {
+            await _loggingService.LogAction(
+                $"User `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}` - Left at {DateTime.Now}");
+        }
+
+        await _databaseService.DeleteUser(user.Id);
+    }
+  
     public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
 
     private async void UpdateLoop()
@@ -643,9 +663,9 @@ public class UserService
         catch (Exception e)
         {
             // Catch and show exception
-            LoggingService.LogToConsole($"UserServer Exception during welcome message.\n{e.Message}",
+            LoggingService.LogToConsole($"UserService Exception during welcome message.\n{e.Message}",
                 LogSeverity.Error);
-            await _loggingService.LogAction($"UserServer Exception during welcome message.\n{e.Message}.", false, true);
+            await _loggingService.LogAction($"UserService Exception during welcome message.\n{e.Message}.", false, true);
         }
     }
 
@@ -721,17 +741,6 @@ public class UserService
                 $"User {oldUser.Nickname ?? oldUser.Username}#{oldUser.DiscriminatorValue} changed his " +
                 $"username to {user.Nickname ?? user.Username}#{user.DiscriminatorValue}");
         }
-    }
-
-    private async Task UserLeft(SocketGuildUser user)
-    {
-        DateTime joinDate = user.JoinedAt.Value.Date;
-
-        var timeStayed = DateTime.Now - joinDate;
-        await _loggingService.LogAction(
-            $"User Left - After {(timeStayed.Days > 1 ? Math.Floor((double)timeStayed.Days) + " days" : " ")}" +
-            $" {Math.Floor((double)timeStayed.Hours).ToString(CultureInfo.InvariantCulture)} hours {user.Mention} - `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}`");
-        await _databaseService.DeleteUser(user.Id);
     }
 
     private async Task AutoCreateThread(SocketMessage messageParam)

@@ -11,6 +11,8 @@ namespace DiscordBot;
 
 public class Program
 {
+    private bool _isInitialized = false;
+    
     private static Rules _rules;
     private static BotSettings _settings;
     private static UserSettings _userSettings;
@@ -42,21 +44,27 @@ public class Program
         
         _client.Ready += () =>
         {
-            _interactionService = new InteractionService(_client);
-            _commandService = new CommandService(new CommandServiceConfig
+            // Ready can be called additional times if the bot disconnects for long enough,
+            // so we need to make sure we only initialize commands and such for the bot once if it manages to re-establish connection
+            if (!_isInitialized)
             {
-                CaseSensitiveCommands = false,
-                DefaultRunMode = RunMode.Async
-            });
+                _interactionService = new InteractionService(_client);
+                _commandService = new CommandService(new CommandServiceConfig
+                {
+                    CaseSensitiveCommands = false,
+                    DefaultRunMode = RunMode.Async
+                });
 
-            _services = ConfigureServices();
-            _commandHandlingService = _services.GetRequiredService<CommandHandlingService>();
+                _services = ConfigureServices();
+                _commandHandlingService = _services.GetRequiredService<CommandHandlingService>();
 
-            _client.GetGuild(_settings.GuildId)
-                ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
-                ?.SendMessageAsync($"Bot Started.");
-                
-            LoggingService.LogToConsole($"Bot is connected.", LogSeverity.Info);
+                _client.GetGuild(_settings.GuildId)
+                    ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
+                    ?.SendMessageAsync($"Bot Started.");
+
+                LoggingService.LogToConsole($"Bot is connected.", LogSeverity.Info);
+                _isInitialized = true;
+            }
             return Task.CompletedTask;
         };
 
