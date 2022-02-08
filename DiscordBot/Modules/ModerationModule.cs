@@ -18,7 +18,8 @@ public class ModerationModule : ModuleBase
     public Rules Rules { get; set; }
     public BotSettings Settings { get; set; }
     public UserService UserService { get; set; }
-        
+    public ModerationService ModerationService { get; set; }
+    
     #endregion
     
     private async Task<bool> IsModerationEnabled()
