@@ -28,8 +28,9 @@ public class DatabaseService
         }
         catch (Exception e)
         {
-            LoggingService.LogToConsole($"SQL Exception: Failed to create DatabaseService.\nMessage: {e}", LogSeverity.Error);
-            throw;
+            LoggingService.LogToConsole($"SQL Exception: Failed to start DatabaseService.\nMessage: {e}",
+                LogSeverity.Critical);
+            return;
         }
 
         // Test connection, if it fails we create the table and set keys
@@ -58,7 +59,7 @@ public class DatabaseService
         }
         catch (Exception e)
         {
-            LoggingService.LogToConsole($"SQL Exception: Failed to generate leaderboard events.\nMessage: {e}", LogSeverity.Error);
+            LoggingService.LogToConsole($"SQL Exception: Failed to generate leaderboard events.\nMessage: {e}", LogSeverity.Warning);
         }
     }
 
