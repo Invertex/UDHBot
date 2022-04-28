@@ -56,6 +56,18 @@ public class WeatherModule : ModuleBase
             public int all { get; set; }
         }
 
+        public class Rain
+        {
+            [JsonProperty("1h")] public double Rain1h { get; set; }
+            [JsonProperty("3h")] public double Rain3h { get; set; }
+        }
+        
+        public class Snow
+        {
+            [JsonProperty("1h")] public double Snow1h { get; set; }
+            [JsonProperty("3h")] public double Snow3h { get; set; }
+        }
+
         public class Sys
         {
             public int type { get; set; }
@@ -75,6 +87,8 @@ public class WeatherModule : ModuleBase
             public int visibility { get; set; }
             public Wind wind { get; set; }
             public Clouds clouds { get; set; }
+            public Rain rain { get; set; }
+            public Snow snow { get; set; }
             public int dt { get; set; }
             public Sys sys { get; set; }
             public int timezone { get; set; }
@@ -169,17 +183,67 @@ public class WeatherModule : ModuleBase
         if (!await IsResultsValid(res))
             return;
 
+        string extraInfo = string.Empty;
+        
+        DateTime sunrise = DateTime.UnixEpoch.AddSeconds(res.sys.sunrise)
+            .AddSeconds(res.timezone);
+        DateTime sunset = DateTime.UnixEpoch.AddSeconds(res.sys.sunset)
+            .AddSeconds(res.timezone);
+        
+        // Sun rise/set
+        if (res.sys.sunrise > 0)
+            extraInfo += $"Sunrise **{sunrise:hh\\:mmtt}**, ";
+        if (res.sys.sunrise > 0)
+            extraInfo += $"Sunset **{sunset:hh\\:mmtt}**\n";
+
+
+        if (res.main.Temp > 0 && res.rain != null)
+        {
+            if (res.rain.Rain3h > 0)
+                extraInfo += $"**{Math.Round(res.rain.Rain3h, 1)}mm** *of rain in the last 3 hours*\n";
+            else if (res.rain.Rain1h > 0)
+                extraInfo += $"**{Math.Round(res.rain.Rain1h, 1)}mm** *of rain in the last hour*\n";
+        }
+        else if (res.main.Temp <= 0 && res.snow != null)
+        {
+            if (res.snow.Snow3h > 0)
+                extraInfo += $"**{Math.Round(res.snow.Snow3h, 1)}mm** *of snow in the last 3 hours*\n";
+            else if (res.snow.Snow1h > 0)
+                extraInfo += $"**{Math.Round(res.snow.Snow1h, 1)}mm** *of snow in the last hour*\n";
+        }
+
         EmbedBuilder builder = new EmbedBuilder()
             .WithTitle($"{res.name} Weather ({res.sys.country})")
             .AddField(
                 $"Weather: **{Math.Round(res.main.Temp, 1)}°C** [Feels like **{Math.Round(res.main.Feels, 1)}°C**]",
-                $"Min: **{Math.Round(res.main.Min, 1)}°C** | Max: **{Math.Round(res.main.Max, 1)}°C**\n")
+                $"{extraInfo}\n")
             .WithThumbnailUrl($"https://openweathermap.org/img/wn/{res.weather[0].Icon}@2x.png")
             .WithFooter(
-                $"{res.clouds.all}% cloud cover with {Math.Round((res.wind.Speed * 60f * 60f) / 1000f, 2)} km/h winds & {res.main.Humidity}% humidity.")
+                $"{res.clouds.all}% cloud cover with {GetWindDirection((float)res.wind.Deg)} {Math.Round((res.wind.Speed * 60f * 60f) / 1000f, 2)} km/h winds & {res.main.Humidity}% humidity.")
             .WithColor(GetColour(res.main.Temp));
 
         await ReplyAsync(embed: builder.Build());
+    }
+
+    private string GetWindDirection(float windDeg)
+    {
+        if (windDeg < 22.5)
+            return "N";
+        if (windDeg < 67.5)
+            return "NE";
+        if (windDeg < 112.5)
+            return "E";
+        if (windDeg < 157.5)
+            return "SE";
+        if (windDeg < 202.5)
+            return "S";
+        if (windDeg < 247.5)
+            return "SW";
+        if (windDeg < 292.5)
+            return "W";
+        if (windDeg < 337.5)
+            return "NW";
+        return "N";
     }
 
     [Command("Pollution"), Priority(21)]
