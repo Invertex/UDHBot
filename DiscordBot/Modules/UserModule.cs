@@ -1009,7 +1009,7 @@ public class UserModule : ModuleBase
         {
             var date = birthdate.ToUnixTimestamp();
             var message =
-                $"**{searchName}**'s birthdate: **<t:{date}:D>** " +
+                $"**{searchName}**'s birthdate: __**{birthdate.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}**__ " +
                 $"({(int)((DateTime.Now - birthdate).TotalDays / 365)}yo)";
 
             await ReplyAsync(message).DeleteAfterTime(minutes: 3);
