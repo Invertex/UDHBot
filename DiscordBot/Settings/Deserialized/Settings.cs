@@ -89,6 +89,8 @@ public class BotSettings
 
     public string WeatherAPIKey { get; set; }
     public string IPGeolocationAPIKey { get; set; }
+    
+    public string FlightAPIKey { get; set; }
 
     #endregion // API Keys
 
