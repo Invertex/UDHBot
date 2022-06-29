@@ -53,4 +53,18 @@ public static class SerializeUtil
         await File.WriteAllTextAsync(path, JsonConvert.SerializeObject(objectToSerialize));
         return true;
     }
+
+    public static async Task<T> LoadUrlDeserializeResult<T>(string url)
+    {
+        var result = await InternetExtensions.GetHttpContents(url);
+        var resultObject = JsonConvert.DeserializeObject<T>(result);
+        if (resultObject == null)
+        {
+            if (result?.Length > 400)
+                result = result.Substring(0, 400) + "...";
+            LoggingService.LogToConsole($"Failed to deserialize object from {url}\nContent: {result}", LogSeverity.Error);
+        }
+        return resultObject;
+    }
+    
 }

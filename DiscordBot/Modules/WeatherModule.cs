@@ -1,5 +1,5 @@
 using Discord.Commands;
-using DiscordBot.Settings;
+using DiscordBot.Services;
 using Newtonsoft.Json;
 
 namespace DiscordBot.Modules;
@@ -10,8 +10,8 @@ namespace DiscordBot.Modules;
 public class WeatherModule : ModuleBase
 {
     #region Dependency Injection
-        
-    public BotSettings Settings { get; set; }
+    
+    public WeatherService WeatherService { get; set; }
         
     #endregion
         
@@ -162,7 +162,7 @@ public class WeatherModule : ModuleBase
     [Alias("temp"), Priority(20)]
     public async Task Temperature(params string[] city)
     {
-        WeatherCotainer.Result res = await GetWeather(city: string.Join(" ", city));
+        WeatherCotainer.Result res = await WeatherService.GetWeather(city: string.Join(" ", city));
         if (!await IsResultsValid(res))
             return;
 
@@ -179,7 +179,7 @@ public class WeatherModule : ModuleBase
     [Summary("Attempts to provide the weather of the city provided.")]
     public async Task CurentWeather(params string[] city)
     {
-        WeatherCotainer.Result res = await GetWeather(city: string.Join(" ", city));
+        WeatherCotainer.Result res = await WeatherService.GetWeather(city: string.Join(" ", city));
         if (!await IsResultsValid(res))
             return;
 
@@ -250,13 +250,13 @@ public class WeatherModule : ModuleBase
     [Summary("Attempts to provide the pollution conditions of the city provided.")]
     public async Task Pollution(params string[] city)
     {
-        WeatherCotainer.Result res = await GetWeather(city: string.Join(" ", city));
+        WeatherCotainer.Result res = await WeatherService.GetWeather(city: string.Join(" ", city));
         if (!await IsResultsValid(res))
             return;
 
         // We can't really combine the call as having WeatherResults helps with other details
         PollutionContainer.Result polResult =
-            await GetPollution(Math.Round(res.coord.Lon, 4), Math.Round(res.coord.Lat, 4));
+            await WeatherService.GetPollution(Math.Round(res.coord.Lon, 4), Math.Round(res.coord.Lat, 4));
 
 
         var comp = polResult.list[0].components;
@@ -291,29 +291,6 @@ public class WeatherModule : ModuleBase
             .AddField($"Air Quality: **{AQI_Index[polResult.list[0].main.aqi]}** [Pollutants {combined:F2}μg/m3]\n", desc);
 
         await ReplyAsync(embed: builder.Build());
-    }
-
-    public async Task<WeatherCotainer.Result> GetWeather(string city, string unit = "metric")
-    {
-        var query = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={Settings.WeatherAPIKey}&units={unit}";
-        return await GetAndDeserializedObject<WeatherCotainer.Result>(query);
-    }
-
-    public async Task<PollutionContainer.Result> GetPollution(double lon, double lat)
-    {
-        var query = $"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={Settings.WeatherAPIKey}";
-        return await GetAndDeserializedObject<PollutionContainer.Result>(query);
-    }
-
-    private async Task<T> GetAndDeserializedObject<T>(string query)
-    {
-        var result = await InternetExtensions.GetHttpContents(query);
-        var resultObject = JsonConvert.DeserializeObject<T>(result);
-        if (resultObject == null)
-        {
-            LoggingService.LogToConsole($"WeatherModule Failed to Deserialize object", LogSeverity.Error);
-        }
-        return resultObject;
     }
 
     private async Task<bool> IsResultsValid<T>(T res)
