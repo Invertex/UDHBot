@@ -172,8 +172,6 @@ public class UserService
             await _loggingService.LogAction(
                 $"User `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}` - Left at {DateTime.Now}");
         }
-
-        await _databaseService.DeleteUser(user.Id);
     }
   
     public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
