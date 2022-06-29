@@ -73,6 +73,7 @@ public class ReminderModule : ModuleBase
         };
 
         ReminderService.AddReminder(reminder);
+        await Context.Message.AddReactionAsync(new Emoji("✅"));
         await ReplyAsync(
                 $"Reminder set for {Utils.Utils.FormatTime((uint)(reminderDate - DateTime.Now).TotalSeconds)}")
             .DeleteAfterSeconds(seconds: 10);
