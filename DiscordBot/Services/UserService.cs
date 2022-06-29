@@ -143,6 +143,7 @@ public class UserService
         _client.UserJoined += UserJoined;
         _client.GuildMemberUpdated += UserUpdated;
         _client.UserLeft += UserLeft;
+        _client.UserBanned += UserBanned;
 
         _client.UserIsTyping += UserIsTyping;
 
@@ -172,6 +173,13 @@ public class UserService
             await _loggingService.LogAction(
                 $"User `{user.Username}#{user.DiscriminatorValue}` - ID : `{user.Id}` - Left at {DateTime.Now}");
         }
+    }
+    
+    private async Task UserBanned(SocketUser user, SocketGuild guild)
+    {
+        if (user.IsBot) return;
+
+        await _databaseService.DeleteUser(user.Id);
     }
   
     public Dictionary<ulong, DateTime> CodeReminderCooldown { get; private set; }
