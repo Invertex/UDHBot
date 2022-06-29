@@ -19,7 +19,7 @@ public class WeatherModule : ModuleBase
 
 #pragma warning disable 0649
     // ReSharper disable InconsistentNaming
-    public class WeatherCotainer
+    public class WeatherContainer
     {
         public class Coord
         {
@@ -162,7 +162,7 @@ public class WeatherModule : ModuleBase
     [Alias("temp"), Priority(20)]
     public async Task Temperature(params string[] city)
     {
-        WeatherCotainer.Result res = await WeatherService.GetWeather(city: string.Join(" ", city));
+        WeatherContainer.Result res = await WeatherService.GetWeather(city: string.Join(" ", city));
         if (!await IsResultsValid(res))
             return;
 
@@ -179,7 +179,7 @@ public class WeatherModule : ModuleBase
     [Summary("Attempts to provide the weather of the city provided.")]
     public async Task CurentWeather(params string[] city)
     {
-        WeatherCotainer.Result res = await WeatherService.GetWeather(city: string.Join(" ", city));
+        WeatherContainer.Result res = await WeatherService.GetWeather(city: string.Join(" ", city));
         if (!await IsResultsValid(res))
             return;
 
@@ -250,7 +250,7 @@ public class WeatherModule : ModuleBase
     [Summary("Attempts to provide the pollution conditions of the city provided.")]
     public async Task Pollution(params string[] city)
     {
-        WeatherCotainer.Result res = await WeatherService.GetWeather(city: string.Join(" ", city));
+        WeatherContainer.Result res = await WeatherService.GetWeather(city: string.Join(" ", city));
         if (!await IsResultsValid(res))
             return;
 

@@ -20,10 +20,10 @@ public class WeatherService
     }
     
     
-    public async Task<WeatherModule.WeatherCotainer.Result> GetWeather(string city, string unit = "metric")
+    public async Task<WeatherModule.WeatherContainer.Result> GetWeather(string city, string unit = "metric")
     {
         var query = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={_weatherApiKey}&units={unit}";
-        return await SerializeUtil.LoadUrlDeserializeResult<WeatherModule.WeatherCotainer.Result>(query);
+        return await SerializeUtil.LoadUrlDeserializeResult<WeatherModule.WeatherContainer.Result>(query);
     }
 
     public async Task<WeatherModule.PollutionContainer.Result> GetPollution(double lon, double lat)
