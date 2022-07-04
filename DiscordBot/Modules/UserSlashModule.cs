@@ -119,6 +119,61 @@ public class UserSlashModule : InteractionModuleBase
         await Context.Interaction.RespondAsync(text: BotSettings.Invite, ephemeral: true);
     }
 
+    #region Moderation
+
+    [MessageCommand("Report Message")]
+    public async Task ReportMessage(IMessage reportedMessage)
+    {
+        await Context.Interaction.DeferAsync(ephemeral: true);
+        
+        if (reportedMessage.Author.Id == Context.User.Id)
+        {
+            await Context.Interaction.FollowupAsync(text: "You can't report your own messages!", ephemeral: true);
+            return;
+        }
+        if (reportedMessage.Author.IsBot) // Don't report bots
+        {
+            await Context.Interaction.FollowupAsync(text: "You can't report bot messages!", ephemeral: true);
+            return;
+        }
+        if (reportedMessage.Author.IsWebhook) // Don't report webhooks
+        {
+            await Context.Interaction.FollowupAsync(text: "You can't report webhook messages!", ephemeral: true);
+            return;
+        }
+
+        var reportedMessageChannel = await Context.Guild.GetTextChannelAsync(BotSettings.ReportedMessageChannel.Id);
+        if (reportedMessageChannel == null)
+            return;
+
+        var embed = new EmbedBuilder();
+        embed.WithTitle($"Message Reported");
+        embed.WithDescription($"{Context.User.Username}#{Context.User.Discriminator} reported a message in #{Context.Channel.Name}. [GoTo]({reportedMessage.GetJumpUrl()})");
+        embed.WithColor(new Color(0xFF0000));
+        embed.AddField("Reported Content",
+            $"User: {reportedMessage.Author.Username}#{reportedMessage.Author.Discriminator} - {reportedMessage.Author.Id}\n" +
+            $"Content:\n{(reportedMessage.Content.Length > 200 ? reportedMessage.Content.Substring(0, 200) + "..." : reportedMessage.Content)}");
+        
+        // Links to any attachments included in the message so even if deleted, we can still see content
+        if (reportedMessage.Attachments.Count > 0)
+        {
+            var attachments = reportedMessage.Attachments.Select(a => a.Url).ToList();
+            string attachmentString = string.Empty;
+            for (int i = 0; i < attachments.Count; i++)
+            {
+                attachmentString += $"[{i + 1}]({attachments[i]})";
+                if (i < attachments.Count - 1)
+                    attachmentString += "\n";
+            }
+            embed.AddField("Attachments", attachmentString);
+        }
+        await reportedMessageChannel.SendMessageAsync(string.Empty, embed: embed.Build());
+        
+        await Context.Interaction.ModifyOriginalResponseAsync(msg => msg.Content = $"Message has been reported.");
+    }
+
+    #endregion // Moderation
+    
     #region User Roles
     
     [SlashCommand("roles", "Give or Remove roles for yourself (Programmer, Artist, Designer, etc)")]

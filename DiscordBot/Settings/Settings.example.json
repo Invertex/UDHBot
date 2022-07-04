@@ -68,6 +68,10 @@
     "desc": "Collaboration Channel",
     "id": "0" // Currently Unused 29/04/21
   },
+  "ReportedMessageChannel": {
+    "desc": "Reported Message Channel",
+    "id": "0"
+  },
   /* Role Ids */
   "mutedRoleID": "0",
   "publisherRoleID": "0",
