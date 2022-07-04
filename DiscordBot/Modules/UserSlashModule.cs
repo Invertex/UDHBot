@@ -154,6 +154,19 @@ public class UserSlashModule : InteractionModuleBase
             $"User: {reportedMessage.Author.Username}#{reportedMessage.Author.Discriminator} - {reportedMessage.Author.Id}\n" +
             $"Content:\n{(reportedMessage.Content.Length > 200 ? reportedMessage.Content.Substring(0, 200) + "..." : reportedMessage.Content)}");
         
+        // Links to any attachments included in the message so even if deleted, we can still see content
+        if (reportedMessage.Attachments.Count > 0)
+        {
+            var attachments = reportedMessage.Attachments.Select(a => a.Url).ToList();
+            string attachmentString = string.Empty;
+            for (int i = 0; i < attachments.Count; i++)
+            {
+                attachmentString += $"[{i + 1}]({attachments[i]})";
+                if (i < attachments.Count - 1)
+                    attachmentString += "\n";
+            }
+            embed.AddField("Attachments", attachmentString);
+        }
         await botAnnouncementChannel.SendMessageAsync(string.Empty, embed: embed.Build());
         
         await Context.Interaction.ModifyOriginalResponseAsync(msg => msg.Content = $"Message has been reported.");
