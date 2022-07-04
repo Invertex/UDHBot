@@ -56,6 +56,8 @@ public class BotSettings
     public WorkForHireChannel LookingForWork { get; set; }
     public CollaborationChannel CollaborationChannel { get; set; }
     
+    public ChannelInfo ReportedMessageChannel { get; set; }
+    
     #region Complaint Channel
 
     public ulong ComplaintCategoryId { get; set; }

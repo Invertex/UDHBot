@@ -142,8 +142,8 @@ public class UserSlashModule : InteractionModuleBase
             return;
         }
 
-        var botAnnouncementChannel = await Context.Guild.GetTextChannelAsync(BotSettings.BotAnnouncementChannel.Id);
-        if (botAnnouncementChannel == null)
+        var reportedMessageChannel = await Context.Guild.GetTextChannelAsync(BotSettings.ReportedMessageChannel.Id);
+        if (reportedMessageChannel == null)
             return;
 
         var embed = new EmbedBuilder();
@@ -167,7 +167,7 @@ public class UserSlashModule : InteractionModuleBase
             }
             embed.AddField("Attachments", attachmentString);
         }
-        await botAnnouncementChannel.SendMessageAsync(string.Empty, embed: embed.Build());
+        await reportedMessageChannel.SendMessageAsync(string.Empty, embed: embed.Build());
         
         await Context.Interaction.ModifyOriginalResponseAsync(msg => msg.Content = $"Message has been reported.");
     }
