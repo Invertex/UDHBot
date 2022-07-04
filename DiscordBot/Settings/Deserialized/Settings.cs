@@ -2,69 +2,110 @@ namespace DiscordBot.Settings;
 
 public class BotSettings
 {
+    #region Important Settings
+
     public string Token { get; set; }
     public string Invite { get; set; }
+    
+    public string DbConnectionString { get; set; }
+    public string ServerRootPath { get; set; }
+    public char Prefix { get; set; }
+    public ulong GuildId { get; set; }
+
+    #endregion // Important 
+    
+    #region Configuration
+
+    public int WelcomeMessageDelaySeconds { get; set; } = 300;
+    public bool ModeratorCommandsEnabled { get; set; }
+    // How long between when the bot will scold a user for trying to ping everyone. Default 6 hours
+    public ulong EveryoneScoldPeriodSeconds { get; set; } = 21600;
+
+    #region Fun Commands
+
+    public List<string> UserModuleSlapChoices { get; set; } = new List<string>() { "trout", "duck", "truck", "paddle", "magikarp", "sausage", "student loan", "low poly donut" };
+
+    #endregion // Fun Commands
+
+    #endregion // Configuration
+
+    #region Asset Publisher
 
     // Used for Asset Publisher
+
     public string Email { get; set; }
     public string EmailUsername { get; set; }
     public string EmailPassword { get; set; }
     public string EmailSMTPServer { get; set; }
     public int EmailSMTPPort { get; set; }
 
-    public string DbConnectionString { get; set; }
-
-    public string ServerRootPath { get; set; }
-
-    public char Prefix { get; set; }
-    public ulong GuildId { get; set; }
-
-    public UserAssignableRoles UserAssignableRoles { get; set; }
-
+    #endregion // Asset Publisher
+    
+    #region Channels
+    
     public GeneralChannel GeneralChannel { get; set; }
-    public int WelcomeMessageDelaySeconds { get; set; } = 300;
-
     public BotAnnouncementChannel BotAnnouncementChannel { get; set; }
-
     public AnnouncementsChannel AnnouncementsChannel { get; set; }
-
     public BotCommandsChannel BotCommandsChannel { get; set; }
-
     public UnityNewsChannel UnityNewsChannel { get; set; }
-
     public UnityReleasesChannel UnityReleasesChannel { get; set; }
-
     public RulesChannel RulesChannel { get; set; }
 
     // Recruitment Channels
     public WorkForHireChannel LookingToHire { get; set; }
     public WorkForHireChannel LookingForWork { get; set; }
     public CollaborationChannel CollaborationChannel { get; set; }
-
-    public ulong MutedRoleId { get; set; }
-    public ulong SubsReleasesRoleId { get; set; }
-    public ulong SubsNewsRoleId { get; set; }
-    public ulong PublisherRoleId { get; set; }
-    public ulong ModeratorRoleId { get; set; }
-    public bool ModeratorCommandsEnabled { get; set; }
-
-    public string AssetStoreFrontPage { get; set; }
-
-    public string WikipediaSearchPage { get; set; }
+    
+    public ChannelInfo ReportedMessageChannel { get; set; }
+    
+    #region Complaint Channel
 
     public ulong ComplaintCategoryId { get; set; }
     public string ComplaintChannelPrefix { get; set; }
     public ulong ClosedComplaintCategoryId { get; set; }
     public string ClosedComplaintChannelPrefix { get; set; }
-    public string IPGeolocationAPIKey { get; set; }
 
-    public string WeatherAPIKey { get; set; }
+    #endregion // Complaint Channel
 
-    public List<string> UserModuleSlapChoices { get; set; } = new List<string>() { "trout", "duck", "truck", "paddle", "magikarp", "sausage", "student loan", "low poly donut" };
-    // How long between when the bot will scold a user for trying to ping everyone. Default 6 hours
-    public ulong EveryoneScoldPeriodSeconds { get; set; } = 21600;
+    #region Auto-Threads
+
     public List<AutoThreadChannel> AutoThreadChannels { get; set; } = new List<AutoThreadChannel>();
     public List<string> AutoThreadExclusionPrefixes { get; set; } = new List<string>();
+
+    #endregion // Auto-Threads
+    
+    #endregion // Channels
+
+    #region User Roles
+
+    public UserAssignableRoles UserAssignableRoles { get; set; }
+    public ulong MutedRoleId { get; set; }
+    public ulong SubsReleasesRoleId { get; set; }
+    public ulong SubsNewsRoleId { get; set; }
+    public ulong PublisherRoleId { get; set; }
+    public ulong ModeratorRoleId { get; set; }
+
+    #endregion // User Roles
+
+    #region API Keys
+
+    public string WeatherAPIKey { get; set; }
+    public string IPGeolocationAPIKey { get; set; }
+    
+    public string FlightAPIKey { get; set; }
+    public string FlightAPISecret { get; set; }
+    public string FlightAPIId { get; set; }
+    public string AirLabAPIKey { get; set; }
+
+    #endregion // API Keys
+
+    #region Other
+
+    public string AssetStoreFrontPage { get; set; }
+    public string WikipediaSearchPage { get; set; }
+
+    #endregion // Other
+    
 }
 
 #region Role Group Collections
