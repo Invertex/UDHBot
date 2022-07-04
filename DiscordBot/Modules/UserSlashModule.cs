@@ -126,6 +126,22 @@ public class UserSlashModule : InteractionModuleBase
     {
         await Context.Interaction.DeferAsync(ephemeral: true);
         
+        if (reportedMessage.Author.Id == Context.User.Id)
+        {
+            await Context.Interaction.FollowupAsync(text: "You can't report your own messages!", ephemeral: true);
+            return;
+        }
+        if (reportedMessage.Author.IsBot) // Don't report bots
+        {
+            await Context.Interaction.FollowupAsync(text: "You can't report bot messages!", ephemeral: true);
+            return;
+        }
+        if (reportedMessage.Author.IsWebhook) // Don't report webhooks
+        {
+            await Context.Interaction.FollowupAsync(text: "You can't report webhook messages!", ephemeral: true);
+            return;
+        }
+
         var botAnnouncementChannel = await Context.Guild.GetTextChannelAsync(BotSettings.BotAnnouncementChannel.Id);
         if (botAnnouncementChannel == null)
             return;
