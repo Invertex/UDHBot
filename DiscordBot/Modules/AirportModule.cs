@@ -39,6 +39,14 @@ public class AirportModule : ModuleBase
     [Summary("Fly to a city")]
     public async Task FlyTo(string from, string to)
     {
+        // Make sure command is in Bot-Commands or OffTopic
+        if (Context.Channel.Id != Settings.BotCommandsChannel.Id && Context.Channel.Id != Settings.GeneralChannel.Id)
+        {
+            await ReplyAsync($"Command can only be used in <#{Settings.BotCommandsChannel.Id}> or <#{Settings.GeneralChannel.Id}>.").DeleteAfterSeconds(5f);
+            await Context.Message.DeleteAfterSeconds(2f);
+            return;
+        }
+        
         EmbedBuilder embed = new EmbedBuilder();
         embed.Title = "Flight Finder";
 
