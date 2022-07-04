@@ -119,6 +119,32 @@ public class UserSlashModule : InteractionModuleBase
         await Context.Interaction.RespondAsync(text: BotSettings.Invite, ephemeral: true);
     }
 
+    #region Moderation
+
+    [MessageCommand("Report Message")]
+    public async Task ReportMessage(IMessage reportedMessage)
+    {
+        await Context.Interaction.DeferAsync(ephemeral: true);
+        
+        var botAnnouncementChannel = await Context.Guild.GetTextChannelAsync(BotSettings.BotAnnouncementChannel.Id);
+        if (botAnnouncementChannel == null)
+            return;
+
+        var embed = new EmbedBuilder();
+        embed.WithTitle($"Message Reported");
+        embed.WithDescription($"{Context.User.Username}#{Context.User.Discriminator} reported a message in #{Context.Channel.Name}. [GoTo]({reportedMessage.GetJumpUrl()})");
+        embed.WithColor(new Color(0xFF0000));
+        embed.AddField("Reported Content",
+            $"User: {reportedMessage.Author.Username}#{reportedMessage.Author.Discriminator} - {reportedMessage.Author.Id}\n" +
+            $"Content:\n{(reportedMessage.Content.Length > 200 ? reportedMessage.Content.Substring(0, 200) + "..." : reportedMessage.Content)}");
+        
+        await botAnnouncementChannel.SendMessageAsync(string.Empty, embed: embed.Build());
+        
+        await Context.Interaction.ModifyOriginalResponseAsync(msg => msg.Content = $"Message has been reported.");
+    }
+
+    #endregion // Moderation
+    
     #region User Roles
     
     [SlashCommand("roles", "Give or Remove roles for yourself (Programmer, Artist, Designer, etc)")]
