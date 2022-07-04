@@ -85,5 +85,7 @@
   "EveryoneScoldPeriodSeconds": "21600",
   /*API Keys*/
   "WeatherAPIKey": "", // Key for openweathermap.org
-  "FlightAPIKey": "" // Key for https://developers.amadeus.com/
+  "FlightAPIKey": "",
+  "FlightAPISecret": "",
+  "AirLabAPIKey": ""
 }

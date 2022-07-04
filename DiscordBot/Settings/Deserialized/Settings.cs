@@ -91,6 +91,9 @@ public class BotSettings
     public string IPGeolocationAPIKey { get; set; }
     
     public string FlightAPIKey { get; set; }
+    public string FlightAPISecret { get; set; }
+    public string FlightAPIId { get; set; }
+    public string AirLabAPIKey { get; set; }
 
     #endregion // API Keys
 

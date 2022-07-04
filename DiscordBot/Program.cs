@@ -90,6 +90,8 @@ public class Program
             .AddSingleton<CurrencyService>()
             .AddSingleton<ReactRoleService>()
             .AddSingleton<ReminderService>()
+            .AddSingleton<WeatherService>()
+            .AddSingleton<AirportService>()
             .BuildServiceProvider();
 
     private static void DeserializeSettings()
