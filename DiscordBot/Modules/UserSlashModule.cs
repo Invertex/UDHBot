@@ -62,7 +62,7 @@ public class UserSlashModule : InteractionModuleBase
         EmbedBuilder embedBuilder = new EmbedBuilder();
         embedBuilder.Title = "User Module Commands";
         embedBuilder.Color = Color.LighterGrey;
-        
+
         List<string> helpMessages = null;
         if (search == string.Empty)
         {
@@ -72,7 +72,7 @@ public class UserSlashModule : InteractionModuleBase
                 page = 0;
             else if (page < 0)
                 page = helpMessages.Count - 1;
-            
+
             embedBuilder.WithFooter(text: $"Page {page + 1} of {helpMessages.Count}");
             embedBuilder.Description = helpMessages[page];
         }
@@ -173,9 +173,9 @@ public class UserSlashModule : InteractionModuleBase
     }
 
     #endregion // Moderation
-    
+
     #region User Roles
-    
+
     [SlashCommand("roles", "Give or Remove roles for yourself (Programmer, Artist, Designer, etc)")]
     public async Task UserRoles()
     {
@@ -201,7 +201,7 @@ public class UserSlashModule : InteractionModuleBase
 
         var user = Context.User as IGuildUser;
         var guild = Context.Guild;
-        
+
         // Try get the role from the guild
         var roleObj = guild.Roles.FirstOrDefault(r => r.Name == role);
         if (roleObj == null)
@@ -227,6 +227,6 @@ public class UserSlashModule : InteractionModuleBase
             }
         }
     }
-    
+
     #endregion
 }
