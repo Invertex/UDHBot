@@ -62,7 +62,7 @@ public class UserSlashModule : InteractionModuleBase
         EmbedBuilder embedBuilder = new EmbedBuilder();
         embedBuilder.Title = "User Module Commands";
         embedBuilder.Color = Color.LighterGrey;
-        
+
         List<string> helpMessages = null;
         if (search == string.Empty)
         {
@@ -72,7 +72,7 @@ public class UserSlashModule : InteractionModuleBase
                 page = 0;
             else if (page < 0)
                 page = helpMessages.Count - 1;
-            
+
             embedBuilder.WithFooter(text: $"Page {page + 1} of {helpMessages.Count}");
             embedBuilder.Description = helpMessages[page];
         }
@@ -124,8 +124,6 @@ public class UserSlashModule : InteractionModuleBase
     [MessageCommand("Report Message")]
     public async Task ReportMessage(IMessage reportedMessage)
     {
-        await Context.Interaction.DeferAsync(ephemeral: true);
-        
         if (reportedMessage.Author.Id == Context.User.Id)
         {
             await Context.Interaction.FollowupAsync(text: "You can't report your own messages!", ephemeral: true);
@@ -141,41 +139,70 @@ public class UserSlashModule : InteractionModuleBase
             await Context.Interaction.FollowupAsync(text: "You can't report webhook messages!", ephemeral: true);
             return;
         }
+        await Context.Interaction.RespondWithModalAsync<FoodModal>($"report_{reportedMessage.Id}");
+    }
+
+    // Defines the modal that will be sent.
+    public class FoodModal : IModal
+    {
+        public string Title => "Report a message";
+
+        // Additional paremeters can be specified to further customize the input.
+        [InputLabel("Reason")]
+        [ModalTextInput("food_reason", TextInputStyle.Paragraph, maxLength: 500)]
+        public string Reason { get; set; }
+    }
+
+    // Responds to the modal.
+    [ModalInteraction("report_*")]
+    public async Task ModalResponse(ulong id, FoodModal modal)
+    {
+        var reportedMessage = await Context.Channel.GetMessageAsync(id);
 
         var reportedMessageChannel = await Context.Guild.GetTextChannelAsync(BotSettings.ReportedMessageChannel.Id);
         if (reportedMessageChannel == null)
             return;
 
-        var embed = new EmbedBuilder();
-        embed.WithTitle($"Message Reported");
-        embed.WithDescription($"{Context.User.Username}#{Context.User.Discriminator} reported a message in #{Context.Channel.Name}. [GoTo]({reportedMessage.GetJumpUrl()})");
-        embed.WithColor(new Color(0xFF0000));
-        embed.AddField("Reported Content",
-            $"User: {reportedMessage.Author.Username}#{reportedMessage.Author.Discriminator} - {reportedMessage.Author.Id}\n" +
-            $"Content:\n{(reportedMessage.Content.Length > 200 ? reportedMessage.Content.Substring(0, 200) + "..." : reportedMessage.Content)}");
-        
-        // Links to any attachments included in the message so even if deleted, we can still see content
+        var embed = new EmbedBuilder()
+        .WithColor(new Color(0xFF0000))
+        .WithDescription(reportedMessage.Content)
+        .WithTimestamp(reportedMessage.Timestamp)
+        .WithFooter(footer =>
+        {
+            footer
+                .WithText($"Reported by {Context.User.Username}#{Context.User.Discriminator} • From channel {reportedMessage.Channel.Name}")
+                .WithIconUrl(Context.User.GetAvatarUrl());
+        })
+        .WithAuthor(author =>
+        {
+            author
+                .WithName(reportedMessage.Author.Username)
+                .WithIconUrl(reportedMessage.Author.GetAvatarUrl());
+        });
+        embed.Description += $"\n\n***[Linkback]({reportedMessage.GetJumpUrl()})***";
+
         if (reportedMessage.Attachments.Count > 0)
         {
             var attachments = reportedMessage.Attachments.Select(a => a.Url).ToList();
             string attachmentString = string.Empty;
             for (int i = 0; i < attachments.Count; i++)
             {
-                attachmentString += $"[{i + 1}]({attachments[i]})";
+                attachmentString += $"• {attachments[i]}";
                 if (i < attachments.Count - 1)
                     attachmentString += "\n";
             }
             embed.AddField("Attachments", attachmentString);
         }
+        embed.AddField("Reason", modal.Reason);
+
         await reportedMessageChannel.SendMessageAsync(string.Empty, embed: embed.Build());
-        
-        await Context.Interaction.ModifyOriginalResponseAsync(msg => msg.Content = $"Message has been reported.");
+        await RespondAsync("Message has been reported.", ephemeral: true);
     }
 
     #endregion // Moderation
-    
+
     #region User Roles
-    
+
     [SlashCommand("roles", "Give or Remove roles for yourself (Programmer, Artist, Designer, etc)")]
     public async Task UserRoles()
     {
@@ -201,7 +228,7 @@ public class UserSlashModule : InteractionModuleBase
 
         var user = Context.User as IGuildUser;
         var guild = Context.Guild;
-        
+
         // Try get the role from the guild
         var roleObj = guild.Roles.FirstOrDefault(r => r.Name == role);
         if (roleObj == null)
@@ -227,6 +254,6 @@ public class UserSlashModule : InteractionModuleBase
             }
         }
     }
-    
+
     #endregion
 }
