@@ -179,7 +179,7 @@ public class UserSlashModule : InteractionModuleBase
                 .WithName(reportedMessage.Author.Username)
                 .WithIconUrl(reportedMessage.Author.GetAvatarUrl());
         });
-        embed.Description += $"\n\n***[Linkback]({reportedMessage.GetJumpUrl()})***"; ;
+        embed.Description += $"\n\n***[Linkback]({reportedMessage.GetJumpUrl()})***";
 
         if (reportedMessage.Attachments.Count > 0)
         {
