@@ -124,39 +124,38 @@ public class UserSlashModule : InteractionModuleBase
     [MessageCommand("Report Message")]
     public async Task ReportMessage(IMessage reportedMessage)
     {
-        await Context.Interaction.DeferAsync(ephemeral: true);
         if (reportedMessage.Author.Id == Context.User.Id)
         {
-            await Context.Interaction.FollowupAsync(text: "You can't report your own messages!", ephemeral: true);
+            await Context.Interaction.RespondAsync(text: "You can't report your own messages!", ephemeral: true);
             return;
         }
         if (reportedMessage.Author.IsBot) // Don't report bots
         {
-            await Context.Interaction.FollowupAsync(text: "You can't report bot messages!", ephemeral: true);
+            await Context.Interaction.RespondAsync(text: "You can't report bot messages!", ephemeral: true);
             return;
         }
         if (reportedMessage.Author.IsWebhook) // Don't report webhooks
         {
-            await Context.Interaction.FollowupAsync(text: "You can't report webhook messages!", ephemeral: true);
+            await Context.Interaction.RespondAsync(text: "You can't report webhook messages!", ephemeral: true);
             return;
         }
-        await Context.Interaction.RespondWithModalAsync<FoodModal>($"report_{reportedMessage.Id}");
+        await Context.Interaction.RespondWithModalAsync<ReportMessageModal>($"report_{reportedMessage.Id}");
     }
 
     // Defines the modal that will be sent.
-    public class FoodModal : IModal
+    public class ReportMessageModal : IModal
     {
         public string Title => "Report a message";
 
-        // Additional paremeters can be specified to further customize the input.
+        // Additional parameters can be specified to further customize the input.
         [InputLabel("Reason")]
-        [ModalTextInput("food_reason", TextInputStyle.Paragraph, maxLength: 500)]
+        [ModalTextInput("report_reason", TextInputStyle.Paragraph, maxLength: 500)]
         public string Reason { get; set; }
     }
 
     // Responds to the modal.
     [ModalInteraction("report_*")]
-    public async Task ModalResponse(ulong id, FoodModal modal)
+    public async Task ModalResponse(ulong id, ReportMessageModal modal)
     {
         var reportedMessage = await Context.Channel.GetMessageAsync(id);
 
