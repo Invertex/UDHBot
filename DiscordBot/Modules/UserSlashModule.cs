@@ -124,6 +124,7 @@ public class UserSlashModule : InteractionModuleBase
     [MessageCommand("Report Message")]
     public async Task ReportMessage(IMessage reportedMessage)
     {
+        await Context.Interaction.DeferAsync(ephemeral: true);
         if (reportedMessage.Author.Id == Context.User.Id)
         {
             await Context.Interaction.FollowupAsync(text: "You can't report your own messages!", ephemeral: true);
