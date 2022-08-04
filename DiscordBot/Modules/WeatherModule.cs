@@ -211,9 +211,11 @@ public class WeatherModule : ModuleBase
             else if (res.snow.Snow1h > 0)
                 extraInfo += $"**{Math.Round(res.snow.Snow1h, 1)}mm** *of snow in the last hour*\n";
         }
+        // extraInfo += $"Local time: **{DateTime.UtcNow.AddSeconds(res.timezone):hh\\:mmtt}**";
+        
 
         EmbedBuilder builder = new EmbedBuilder()
-            .WithTitle($"{res.name} Weather ({res.sys.country})")
+            .WithTitle($"{res.name} Weather ({res.sys.country}) [{DateTime.UtcNow.AddSeconds(res.timezone):hh\\:mmtt}]")
             .AddField(
                 $"Weather: **{Math.Round(res.main.Temp, 1)}°C** [Feels like **{Math.Round(res.main.Feels, 1)}°C**]",
                 $"{extraInfo}\n")
