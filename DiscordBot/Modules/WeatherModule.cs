@@ -308,11 +308,12 @@ public class WeatherModule : ModuleBase
         // We could lerp between values, but colour lerping is weird
         return temp switch
         {
-            < 0f => new Color(187, 221, 255),
-            < 10f => new Color(187, 255, 255),
-            < 20f => new Color(230, 253, 249),
-            < 30f => new Color(253, 234, 230),
-            < 40f => new Color(255, 102, 102),
+            < -10f => new Color(	161, 191, 255),
+            < 0f => new Color(	223, 231, 255),
+            < 10f => new Color(243, 246, 255),
+            < 20f => new Color(	255, 245, 246),
+            < 30f => new Color(	255, 240, 232),
+            < 40f => new Color(	255, 186, 117),
             _ => new Color(255, 0, 0)
         };
     }
