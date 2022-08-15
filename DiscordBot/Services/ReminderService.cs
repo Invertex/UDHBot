@@ -14,6 +14,9 @@ public class ReminderItem {
 
 public class ReminderService
 {
+    // Bot responds to reminder request, any users who also use this emoji on the message will be pinged when the reminder is triggered.
+    public static readonly Emoji BotResponseEmoji = new Emoji("✅");
+    
     public bool IsRunning { get; private set; }
     
     private DateTime _nearestReminder = DateTime.Now;
@@ -134,8 +137,24 @@ public class ReminderService
                     // We reply to their original message
                     if (message != null)
                     {
-                        await message.ReplyAsync(
-                            $"{message.Author.Mention} reminder: {reminder.Message}");
+                        string botResponse = $"{message.Author.Mention} reminder: \"{reminder.Message}\"";
+                        // Get the people who reacted to the message 
+                        var includeUsers = await message.GetReactionUsersAsync(BotResponseEmoji, 10).FlattenAsync();
+                        string extraUsers = string.Empty;
+                        foreach (IUser includeUser in includeUsers)
+                        {
+                            if (includeUser.IsBot)
+                                continue;
+                            if (includeUser.Id == message.Author.Id)
+                                continue;
+
+                            extraUsers += $"{includeUser.Mention} ";
+                        }
+                        // If there are any extra users, we add them to the bot response
+                        if (extraUsers != string.Empty)
+                            botResponse += $"\n\nReacted Extras: {extraUsers}";
+                        
+                        await message.ReplyAsync(botResponse);
                         continue;
                     }
                     // If channel is null we get the bot command channel, and send the message there
@@ -143,7 +162,7 @@ public class ReminderService
                     var user = _client.GetUser(reminder.UserId);
                     if (user != null)
                         await channel.SendMessageAsync(
-                            $"{user.Mention} reminder: {reminder.Message}");
+                            $"{user.Mention} reminder: \"{reminder.Message}\"");
                 }
 
                 // Find the nearest reminder in _reminders and set if there is at least 1 reminder

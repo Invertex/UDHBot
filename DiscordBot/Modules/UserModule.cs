@@ -1076,16 +1076,20 @@ public class UserModule : ModuleBase
         from = from.ToUpper();
         to = to.ToUpper();
 
-        double fromRate = -1;
-        double toRate = -1;
-        try
-        {
-            // Get USD to fromCurrency rate
-            fromRate = await CurrencyService.GetRate(from);
-            // Get USD to toCurrency rate
-            toRate = await CurrencyService.GetRate(to);
-        }
-        catch
+        // We check if both currencies are valid
+        bool fromValid = await CurrencyService.IsCurrency(from.ToUpper());
+        bool toValid = await CurrencyService.IsCurrency(to.ToUpper());
+        
+        // Response for invalid currencies
+        if (!await CurrencyFailedResponse((from, !fromValid), (to, !toValid)))
+            return;
+        
+        // Currency in USD
+        Rate fromRate =  await CurrencyService.GetRate(from);
+        Rate toRate =await CurrencyService.GetRate(to);
+
+        // Since currency must be valid we can assume the API is dead
+        if (fromRate == null || toRate == null)
         {
             var embedBuilder = new EmbedBuilder()
                 .WithTitle("Currency API Down")
@@ -1096,14 +1100,10 @@ public class UserModule : ModuleBase
             return;
         }
 
-        if (!await CurrencyFailedResponse((from, fromRate.Equals(-1)), (to, toRate.Equals(-1))))
-        {
-            await Context.Message.DeleteAfterSeconds(seconds: 1);
-            return;
-        }
         // Convert fromCurrency amount to USD to toCurrency
-        var value = Math.Round(toRate / fromRate * amount, 2);
-        await ReplyAsync($"{Context.User.Mention}  **{amount} {from}** = **{value} {to}**");
+        var value = Math.Round(toRate.Value / fromRate.Value * amount, 2);
+        bool isStaleConversion = (CurrencyService.IsCurrencyExpired(fromRate) || CurrencyService.IsCurrencyExpired(toRate));
+        await ReplyAsync($"{Context.User.Mention} **{amount} {from}** = **{value} {to}** {(isStaleConversion ? "*(stale)*" : "")}");
     }
 
     private async Task<bool> CurrencyFailedResponse((string name, bool invalid) from, (string name, bool invalid) to)
@@ -1123,7 +1123,6 @@ public class UserModule : ModuleBase
             await ReplyAsync($"{Context.User.Mention}, {to.name} is an invalid currency.");
             return false;
         }
-
         return true;
     }
 
