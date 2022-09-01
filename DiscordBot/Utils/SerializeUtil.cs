@@ -31,7 +31,7 @@ public static class SerializeUtil
     /// <summary> Tests objectToSerialize to confirm not null before saving it to path. </summary>
     public static bool SerializeFile<T>(string path, T objectToSerialize)
     {
-        if (objectToSerialize == null)
+        if (object.Equals(objectToSerialize, default(T)))
         {
             LoggingService.LogToConsole($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
                 LogSeverity.Warning);
@@ -44,7 +44,7 @@ public static class SerializeUtil
 
     public static async Task<bool> SerializeFileAsync<T>(string path, T objectToSerialize)
     {
-        if (objectToSerialize == null)
+        if (object.Equals(objectToSerialize, default(T)))
         {
             LoggingService.LogToConsole($"Object `{path}` passed into SerializeFile is null, ignoring save request.",
                 LogSeverity.Warning);
