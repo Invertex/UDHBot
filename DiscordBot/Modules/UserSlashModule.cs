@@ -26,7 +26,7 @@ public class UserSlashModule : InteractionModuleBase
         var helpEmbed = HelpEmbed(0, search);
         if (helpEmbed.Item1 >= 0)
         {
-            ComponentBuilder builder = new ComponentBuilder();
+            ComponentBuilder builder = new();
             builder.WithButton("Next Page", $"user_module_help_next:{0}");
 
             await Context.Interaction.FollowupAsync(embed: helpEmbed.Item2, ephemeral: true,
@@ -46,7 +46,7 @@ public class UserSlashModule : InteractionModuleBase
         int page = int.Parse(pageString);
 
         var helpEmbed = HelpEmbed(page + 1);
-        ComponentBuilder builder = new ComponentBuilder();
+        ComponentBuilder builder = new();
         builder.WithButton("Next Page", $"user_module_help_next:{helpEmbed.Item1}");
 
         await Context.Interaction.ModifyOriginalResponseAsync(msg =>
@@ -59,7 +59,7 @@ public class UserSlashModule : InteractionModuleBase
     // Returns an embed with the help text for a module, if the page is outside the bounds (high) it will return to the first page.
     private (int, Embed) HelpEmbed(int page, string search = "")
     {
-        EmbedBuilder embedBuilder = new EmbedBuilder();
+        EmbedBuilder embedBuilder = new();
         embedBuilder.Title = "User Module Commands";
         embedBuilder.Color = Color.LighterGrey;
 
@@ -208,7 +208,7 @@ public class UserSlashModule : InteractionModuleBase
     {
         await Context.Interaction.DeferAsync(ephemeral: true);
 
-        ComponentBuilder builder = new ComponentBuilder();
+        ComponentBuilder builder = new();
 
         foreach (var userRole in BotSettings.UserAssignableRoles.Roles)
         {

@@ -47,7 +47,7 @@ public class AirportModule : ModuleBase
             return;
         }
         
-        EmbedBuilder embed = new EmbedBuilder();
+        EmbedBuilder embed = new();
         embed.Title = "Flight Finder";
 
         embed.Description = "Finding cities";
