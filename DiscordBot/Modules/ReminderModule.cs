@@ -133,9 +133,7 @@ public class ReminderModule : ModuleBase
                 $"#{index++} | {Utils.Utils.FormatTime((uint)(reminder.When - DateTime.Now).TotalSeconds)}",
                 $"[Link]({msgLink}) \"{reminder.Message}\"");
         }
-
-        var botCommands = await Context.Guild.GetChannelAsync(Settings.BotCommandsChannel.Id) as IMessageChannel;
-        if (botCommands != null)
+        if (await Context.Guild.GetChannelAsync(Settings.BotCommandsChannel.Id)is IMessageChannel botCommands)
             await botCommands
                 .SendMessageAsync(Context.User.Mention, false, embed.Build())
                 .DeleteAfterSeconds(seconds: 30);

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Services;
@@ -25,9 +25,7 @@ public class ModerationModule : ModuleBase
     private async Task<bool> IsModerationEnabled()
     {
         if (Settings.ModeratorCommandsEnabled) return true;
-
-        var botAnnouncementChannel = await Context.Guild.GetChannelAsync(Settings.BotAnnouncementChannel.Id) as IMessageChannel;
-        if (botAnnouncementChannel != null)
+        if (await Context.Guild.GetChannelAsync(Settings.BotAnnouncementChannel.Id)is IMessageChannel botAnnouncementChannel)
         {
             var sentMessage = await botAnnouncementChannel.SendMessageAsync($"{Context.User.Mention} some moderation commands are disabled, try using Wick.");
             await Context.Message.DeleteAsync();
@@ -113,8 +111,7 @@ public class ModerationModule : ModuleBase
                 $"You have been muted from UDC for **{Utils.Utils.FormatTime(seconds)}** for the following reason : **{message}**. " +
                 "This is not appealable and any tentative to avoid it will result in your permanent ban."))
         {
-            var botCommandChannel = await Context.Guild.GetChannelAsync(Settings.BotCommandsChannel.Id) as ISocketMessageChannel;
-            if (botCommandChannel != null)
+            if (await Context.Guild.GetChannelAsync(Settings.BotCommandsChannel.Id)is ISocketMessageChannel botCommandChannel)
                 await botCommandChannel.SendMessageAsync(
                     $"I could not DM you {user.Mention}!\nYou have been muted from UDC for **{Utils.Utils.FormatTime(seconds)}** for the following reason : **{message}**. " +
                     "This is not appealable and any tentative to avoid it will result in your permanent ban.");
