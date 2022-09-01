@@ -297,7 +297,7 @@ public class WeatherModule : ModuleBase
 
     private async Task<bool> IsResultsValid<T>(T res)
     {
-        if (object.Equals(res, default(T))) return true;
+        if (!object.Equals(res, default(T))) return true;
 
         await ReplyAsync("API Returned no results.");
         return false;
