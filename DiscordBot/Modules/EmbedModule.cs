@@ -106,7 +106,7 @@ public class EmbedModule : ModuleBase
         var builtEmbed = BuildEmbedFromUrl(download_url);
         if (builtEmbed.Length == 0)
         {
-            await ReplyAsync($"Failed to generate embed from url.").DeleteAfterSeconds(seconds: 10f);
+            await ReplyAsync("Failed to generate embed from url.").DeleteAfterSeconds(seconds: 10f);
             return null;
         }
         return builtEmbed;

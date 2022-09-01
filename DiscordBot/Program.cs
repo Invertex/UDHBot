@@ -1,4 +1,4 @@
-﻿using Discord.Commands;
+using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using DiscordBot.Services;
@@ -60,9 +60,9 @@ public class Program
 
                 _client.GetGuild(_settings.GuildId)
                     ?.GetTextChannel(_settings.BotAnnouncementChannel.Id)
-                    ?.SendMessageAsync($"Bot Started.");
+                    ?.SendMessageAsync("Bot Started.");
 
-                LoggingService.LogToConsole($"Bot is connected.", LogSeverity.Info);
+                LoggingService.LogToConsole("Bot is connected.", LogSeverity.Info);
                 _isInitialized = true;
             }
             return Task.CompletedTask;

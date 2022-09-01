@@ -83,7 +83,7 @@ public class AirportModule : ModuleBase
         var flights = await AirportService.GetFlightInfo(fromAirport.iata_code, toAirport.iata_code, daysUntilTuesday);
         if (flights == null)
         {
-            embed.Description += $"\nNo flights found, sorry.";
+            embed.Description += "\\nNo flights found, sorry.";
             await msg.ModifyAsync(x => x.Embed = embed.Build());
             await msg.DeleteAfterSeconds(30f);
             return;

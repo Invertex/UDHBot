@@ -53,7 +53,7 @@ public class TicketModule : ModuleBase
             $"The content of this conversation will stay strictly between you {Context.User.Mention} and the {modRole.Mention}.\n" +
             "Please stay civil, any insults or offensive language could see you punished.\n" +
             "Do not ping anyone and wait until a staff member is free to examine your complaint.");
-        await newChannel.SendMessageAsync($"A staff member will be able to close this chat by doing `!ticket close`.");
+        await newChannel.SendMessageAsync("A staff member will be able to close this chat by doing `!ticket close`.");
     }
 
     /// <summary>

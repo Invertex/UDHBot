@@ -555,7 +555,7 @@ public class UserService
                 if (content.Length > _maxCodeBlockLengthWarning)
                 {
                     await messageParam.Channel.SendMessageAsync(
-                            $"The code you're sharing is quite long, maybe use a free service like <https://hastebin.com> and share the link here instead.")
+"The code you're sharing is quite long, maybe use a free service like <https://hastebin.com> and share the link here instead.")
                         .DeleteAfterSeconds(seconds: 60);
                 }
             }

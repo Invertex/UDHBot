@@ -108,7 +108,7 @@ public class UserSlashModule : InteractionModuleBase
     [SlashCommand("ping", "Bot latency")]
     public async Task Ping()
     {
-        await Context.Interaction.RespondAsync($"Bot latency: ...", ephemeral: true);
+        await Context.Interaction.RespondAsync("Bot latency: ...", ephemeral: true);
         await Context.Interaction.ModifyOriginalResponseAsync(m =>
             m.Content = $"Bot latency: {UserService.GetGatewayPing().ToString()}ms");
     }

@@ -33,7 +33,7 @@ public class ReminderModule : ModuleBase
         {
             // There isn't really a way to add negative time
             await ReplyAsync(
-                    $"Invalid format for reminder.\nCorrect Syntax: ``!remindme <1hour5m> <optional message>``")
+"Invalid format for reminder.\\nCorrect Syntax: ``!remindme <1hour5m> <optional message>``")
                 .DeleteAfterSeconds(seconds: 10);
             return;
         }
