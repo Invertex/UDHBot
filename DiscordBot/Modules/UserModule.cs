@@ -28,7 +28,7 @@ public class UserModule : ModuleBase
         
     #endregion
         
-    private readonly Random _random = new Random();
+    private readonly Random _random = new();
         
     [Command("Help"), Priority(100)]
     [Summary("Does what you see now.")]
@@ -654,7 +654,7 @@ public class UserModule : ModuleBase
     [Alias("s", "ddg")]
     public async Task SearchResults(params string[] messages)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         foreach (var msg in messages)
             sb.Append(msg).Append(" ");
         await SearchResults(sb.ToString());
@@ -674,7 +674,7 @@ public class UserModule : ModuleBase
         var doc = new HtmlWeb().Load(searchQuery);
         var counter = 1;
 
-        EmbedBuilder embedBuilder = new EmbedBuilder();
+        EmbedBuilder embedBuilder = new();
         embedBuilder.Title = $"Q: {WebUtility.UrlDecode(query)}";
         string resultTitle = string.Empty;
 

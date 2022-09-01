@@ -114,7 +114,7 @@ public class EmbedModule : ModuleBase
 
     private Discord.Embed BuildEmbedFromUrl(string url)
     {
-        WebClient webClient = new WebClient();
+        WebClient webClient = new();
         byte[] buffer = webClient.DownloadData(url);
         webClient.Dispose();
         string json = Encoding.UTF8.GetString(buffer);

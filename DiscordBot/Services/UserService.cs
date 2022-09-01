@@ -23,10 +23,9 @@ public class UserService
     private readonly ILoggingService _loggingService;
 
     private readonly Regex _x3CodeBlock =
-        new Regex("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})",
-            RegexOptions.Multiline | RegexOptions.Singleline);
+new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multiline | RegexOptions.Singleline);
 
-    private readonly Regex _x2CodeBlock = new Regex("^(`{2})[^`].+?([^`]`{2})$", RegexOptions.Multiline);
+    private readonly Regex _x2CodeBlock = new("^(`{2})[^`].+?([^`]`{2})$", RegexOptions.Multiline);
     private readonly List<Regex> _codeBlockWarnPatterns;
     private readonly short _maxCodeBlockLengthWarning = 800;
 

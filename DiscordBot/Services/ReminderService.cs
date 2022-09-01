@@ -15,7 +15,7 @@ public class ReminderItem {
 public class ReminderService
 {
     // Bot responds to reminder request, any users who also use this emoji on the message will be pinged when the reminder is triggered.
-    public static readonly Emoji BotResponseEmoji = new Emoji("✅");
+    public static readonly Emoji BotResponseEmoji = new("✅");
     
     public bool IsRunning { get; private set; }
     

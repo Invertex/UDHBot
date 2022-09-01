@@ -210,7 +210,7 @@ public class AirportService
         var url = "https://test.api.amadeus.com/v1/security/oauth2/token";
         var data = "grant_type=client_credentials&client_id=" + _flightApiKey + "&client_secret=" + _flightSecret;
         
-        HttpClient client = new HttpClient();
+        HttpClient client = new();
         var response = await client.PostAsync(url, new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded"));
 
         if (response.IsSuccessStatusCode)
@@ -234,7 +234,7 @@ public class AirportService
         
         var url = _baseRoute + _findCheapestRoute + string.Format(_cheapestRouteParam, from, to, DateTime.Now.AddDays(daysFromNow).ToString("yyyy-MM-dd"));
         
-        HttpClient client = new HttpClient();
+        HttpClient client = new();
         HttpRequestHeaders headers = client.DefaultRequestHeaders;
         headers.Add("Authorization", "Bearer " + _amadeusToken);
         
