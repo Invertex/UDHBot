@@ -139,6 +139,16 @@ public static class Utils
         }
         return DateTime.Now + timeSpan;
     }
+
+    /// <summary>
+    /// Very dirty way to strip html tags, removes anything inside &lt; and &gt; and replaces it with nothing
+    /// </summary>
+    public static string RemoveHtmlTags(string contents)
+    {
+        if (string.IsNullOrEmpty(contents)) return contents;
+        var regex = new Regex("<.*?>");
+        return regex.Replace(contents, string.Empty);
+    }
         
     public static string MessageLinkBack(ulong guildId, ulong channelId, ulong messageId)
     {
