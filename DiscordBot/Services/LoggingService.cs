@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using Discord.WebSocket;
 using DiscordBot.Settings;
 
@@ -61,6 +62,17 @@ public class LoggingService : ILoggingService
 
         Console.ForegroundColor = restoreColour;
     }
+    
+    /// <summary>
+    /// Same behaviour as LogToConsole, however this method is not included in the release build.
+    /// Good if you need more verbose but obvious logging, but don't want it included in release.
+    /// </summary>
+    [Conditional("DEBUG")]
+    public static void DebugLog(string message, LogSeverity severity = LogSeverity.Info)
+    {
+        LogToConsole(message, severity);
+    }
+    
     private static void SetConsoleColour(LogSeverity severity)
     {
         switch (severity)
