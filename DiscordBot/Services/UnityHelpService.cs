@@ -5,12 +5,19 @@ using MessageExtensions = DiscordBot.Extensions.MessageExtensions;
 
 namespace DiscordBot.Services;
 
+// TODO : (James) Better Slash Command Support
+// TODO : (James) Deleting Author messages for follow-up self response
+// TODO : (James) Double check timing for deleting
+// TODO : (James) Change Message Command to be shorter
+// TODO : (James) Embed for missing tags, advice on how to use
+
 public class ThreadContainer
 {
     public ulong Owner { get; set; }
     public ulong FirstMessage { get; set; }
     public ulong ChannelId { get; set; }
     public ulong LatestMessage { get; set; }
+    public ulong PinnedAnswer { get; set; }
 
     public bool IsResolved { get; set; } = false;
     public bool HasInteraction { get; set; } = false;
@@ -385,6 +392,20 @@ public class UnityHelpService
             await CloseThread(channel, true);
         });
     }
+    
+    public async Task<string> OnUserRequestChannelClose(IUser user, SocketThreadChannel channel)
+    {
+        if (channel.ParentChannel.Id != _helpChannel.Id)
+            return string.Empty;
+        if (!_activeThreads.TryGetValue(channel.Id, out var thread))
+            return string.Empty;
+        
+        if (thread.Owner != user.Id)
+            return string.Empty;
+        
+        await CloseThread(channel, true);
+        return "Your thread has been closed.";
+    }
 
     #endregion // Event Handlers
 
@@ -519,6 +540,32 @@ public class UnityHelpService
         var messages = await _helpChannel.GetActiveThreadsAsync();
         var helpThreads = messages.Where(x => x.CategoryId == _helpChannel.Id).ToList();
         return helpThreads;
+    }
+    
+    public async Task<string> MarkResponseAsAnswer(IUser requester, IMessage message)
+    {
+        if (message.Channel is not IThreadChannel channel)
+            return "Invalid Channel";
+        if (!_activeThreads.TryGetValue(channel.Id, out var thread))
+            return "Invalid Thread";
+        
+        if (thread.Owner != requester.Id)
+            return "You are not the owner of this thread";
+        if (message.Author.Id == requester.Id)
+            return "You cannot mark your own message as the answer";
+
+        if (thread.PinnedAnswer != 0)
+        {
+            var oldAnswer = await channel.GetMessageAsync(thread.PinnedAnswer) as IUserMessage;
+            if (oldAnswer != null)
+                await oldAnswer.UnpinAsync();
+        }
+        var newAnswer = await channel.GetMessageAsync(message.Id) as IUserMessage;
+        if (newAnswer != null)
+            await newAnswer.PinAsync();
+            
+        thread.PinnedAnswer = message.Id;
+        return "New answer pinned";
     }
 
     #endregion // Generic Methods
