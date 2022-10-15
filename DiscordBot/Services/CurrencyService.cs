@@ -40,7 +40,15 @@ public class CurrencyService
     }
     
     #region Public Methods
-    
+
+    public async Task<string> GetCurrencyName(string currency)
+    {
+        currency = currency.ToLower();
+        if (!await IsCurrency(currency))
+            return string.Empty;
+        return _currencies[currency].Name;
+    }
+
     // Checks if a provided currency is valid, it also checks is we have a list of currencies to check against and rebuilds it if not. (If the API was down when bot started)
     public async Task<bool> IsCurrency(string currency)
     {

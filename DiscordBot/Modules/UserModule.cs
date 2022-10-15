@@ -1059,6 +1059,19 @@ public class UserModule : ModuleBase
     #endregion
 
     #region Currency
+    
+    [Command("CurrencyName") , Priority(29)]
+    [Summary("Get the name of a currency. Syntax : !currname USD")]
+    [Alias("currname")]
+    public async Task CurrencyName(string currency)
+    {
+        if (Context.HasAnyPingableMention())
+            return;
+        var name = await CurrencyService.GetCurrencyName(currency);
+        if (name == string.Empty)
+            await Context.Message.ReplyAsync($"Sorry, I couldn't find the name of the currency **{currency}**.");
+        await Context.Message.ReplyAsync($"The name of the currency **{currency.ToUpper()}** is **{name}**.");
+    }
 
     [Command("Currency"), HideFromHelp]
     [Summary("Converts a currency. Syntax : !currency fromCurrency toCurrency")]
