@@ -1069,7 +1069,10 @@ public class UserModule : ModuleBase
             return;
         var name = await CurrencyService.GetCurrencyName(currency);
         if (name == string.Empty)
+        {
             await Context.Message.ReplyAsync($"Sorry, I couldn't find the name of the currency **{currency}**.");
+            return;
+        }
         await Context.Message.ReplyAsync($"The name of the currency **{currency.ToUpper()}** is **{name}**.");
     }
 
