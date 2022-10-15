@@ -1059,11 +1059,24 @@ public class UserModule : ModuleBase
     #endregion
 
     #region Currency
+    
+    [Command("CurrencyName") , Priority(29)]
+    [Summary("Get the name of a currency. Syntax : !currname USD")]
+    [Alias("currname")]
+    public async Task CurrencyName(string currency)
+    {
+        if (Context.HasAnyPingableMention())
+            return;
+        var name = await CurrencyService.GetCurrencyName(currency);
+        if (name == string.Empty)
+            await Context.Message.ReplyAsync($"Sorry, I couldn't find the name of the currency **{currency}**.");
+        await Context.Message.ReplyAsync($"The name of the currency **{currency.ToUpper()}** is **{name}**.");
+    }
 
     [Command("Currency"), HideFromHelp]
     [Summary("Converts a currency. Syntax : !currency fromCurrency toCurrency")]
     [Alias("curr")]
-    public async Task ConvertCurrency(string from, string to)
+    public async Task ConvertCurrency(string from, string to = "usd")
     {
         await ConvertCurrency(1, from, to);
     }
@@ -1071,59 +1084,34 @@ public class UserModule : ModuleBase
     [Command("Currency"), Priority(29)]
     [Summary("Converts a currency. Syntax : !currency amount fromCurrency toCurrency")]
     [Alias("curr")]
-    public async Task ConvertCurrency(double amount, string from, string to)
+    public async Task ConvertCurrency(double amount, string from, string to = "usd")
     {
-        from = from.ToUpper();
-        to = to.ToUpper();
+        if (Context.HasAnyPingableMention())
+            return;
+        
+        from = from.ToLower();
+        to = to.ToLower();
 
         // We check if both currencies are valid
-        bool fromValid = await CurrencyService.IsCurrency(from.ToUpper());
-        bool toValid = await CurrencyService.IsCurrency(to.ToUpper());
+        bool fromValid = await CurrencyService.IsCurrency(from.ToLower());
+        bool toValid = await CurrencyService.IsCurrency(to.ToLower());
         
-        // Response for invalid currencies
-        if (!await CurrencyFailedResponse((from, !fromValid), (to, !toValid)))
-            return;
-        
-        // Currency in USD
-        Rate fromRate =  await CurrencyService.GetRate(from);
-        Rate toRate =await CurrencyService.GetRate(to);
-
-        // Since currency must be valid we can assume the API is dead
-        if (fromRate == null || toRate == null)
+        // Check if valid
+        if (!fromValid || !toValid)
         {
-            var embedBuilder = new EmbedBuilder()
-                .WithTitle("Currency API Down")
-                .WithDescription(
-                    "Check [API Status](https://www.currencyconverterapi.com/server-status), and try again in a few minutes.")
-                .WithColor(Color.Red);
-            await ReplyAsync(embed: embedBuilder.Build()).DeleteAfterSeconds(seconds: 10);
+            await Context.Message.ReplyAsync("One of the currencies provided is invalid.");
             return;
         }
 
-        // Convert fromCurrency amount to USD to toCurrency
-        var value = Math.Round(toRate.Value / fromRate.Value * amount, 2);
-        bool isStaleConversion = (CurrencyService.IsCurrencyExpired(fromRate) || CurrencyService.IsCurrencyExpired(toRate));
-        await ReplyAsync($"{Context.User.Mention} **{amount} {from}** = **{value} {to}** {(isStaleConversion ? "*(stale)*" : "")}");
-    }
+        var response = await CurrencyService.GetConversion(to, from);
+        if (Math.Abs(response - (-1)) < 0.01)
+        {
+            await Context.Message.ReplyAsync("An error occured while converting the currency, the API may be down!");
+            return;
+        }
 
-    private async Task<bool> CurrencyFailedResponse((string name, bool invalid) from, (string name, bool invalid) to)
-    {
-        if (from.invalid && to.invalid)
-        {
-            await ReplyAsync($"{Context.User.Mention}, {from.name} and {to.name} are invalid currencies or incorrectly used.\nPlease use international currency code (example : **USD** for $, **EUR** for €, **PKR** for pakistani rupee).");
-            return false;
-        }
-        if (from.invalid)
-        {
-            await ReplyAsync($"{Context.User.Mention}, {from.name} is an invalid currency.");
-            return false;
-        }
-        if (to.invalid)
-        {
-            await ReplyAsync($"{Context.User.Mention}, {to.name} is an invalid currency.");
-            return false;
-        }
-        return true;
+        var totalAmount = Math.Round(amount * response, 2);
+        await Context.Message.ReplyAsync($"**{amount} {from.ToUpper()}** = **{totalAmount} {to.ToUpper()}**");
     }
 
     #endregion

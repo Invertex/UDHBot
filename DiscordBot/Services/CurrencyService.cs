@@ -7,49 +7,54 @@ namespace DiscordBot.Services;
 
 public class CurrencyService
 {
-    private readonly Dictionary<string, Rate> _rates;
+    #region Configuration
 
-    private const string ApiKey = "&apiKey=5d733a03e0274dff3e7f";
-    private const string ApiBaseUrl = "https://free.currconv.com/api/v7/";
-    private const string ApiCurrencyConvert = "convert?q=USD_{0}&compact=ultra";
-    private const string ApiValidCurrency = "currencies?";
+    private const int ApiVersion = 1;
+    private const string ValidCurrenciesEndpoint = "currencies.min.json";
+    private const string ExchangeRatesEndpoint = "currencies";
     
-    // Dictionary of currencies as upper case. EUR, AUD, USD, BTC, etc.
-    private readonly Dictionary<string, bool> _validCurrencies = new Dictionary<string, bool>();
-    
-    public CurrencyService()
+    private class Currency
     {
-        _rates = new Dictionary<string, Rate>();
+        public string Name { get; set; }
+        public string Short { get; set; }
     }
 
-    public async Task<Rate> GetRate(string currency)
+    #endregion // Configuration
+    
+    private readonly Dictionary<string, Currency> _currencies = new Dictionary<string, Currency>();
+
+    private static readonly string ApiUrl = $"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@{ApiVersion}/latest/";
+
+    public async Task<float> GetConversion(string toCurrency, string fromCurrency = "usd")
     {
-        if (!HasValidRate(currency))
-        {
-            try
-            {
-                var rate = await GetNewRate(currency);
-                if (rate != null)
-                    _rates[currency] = rate;
-            }
-            catch (Exception e)
-            {
-                if (_rates.ContainsKey(currency))
-                    return _rates[currency];
-            }
-        }
+        toCurrency = toCurrency.ToLower();
+        fromCurrency = fromCurrency.ToLower();
         
-        return _rates.ContainsKey(currency) ? _rates[currency] : null;
+        var url = $"{ApiUrl}{ExchangeRatesEndpoint}/{fromCurrency.ToLower()}/{toCurrency.ToLower()}.min.json";
+        var response = await GetResponse(url);
+        if (string.IsNullOrEmpty(response))
+            return -1;
+        
+        var json = JObject.Parse(response);
+        return json[$"{toCurrency}"].Value<float>();
     }
     
     #region Public Methods
-    
+
+    public async Task<string> GetCurrencyName(string currency)
+    {
+        currency = currency.ToLower();
+        if (!await IsCurrency(currency))
+            return string.Empty;
+        return _currencies[currency].Name;
+    }
+
     // Checks if a provided currency is valid, it also checks is we have a list of currencies to check against and rebuilds it if not. (If the API was down when bot started)
     public async Task<bool> IsCurrency(string currency)
     {
-        if (_validCurrencies.Count == 0)
+        if (_currencies.Count  <= 1)
             await BuildCurrencyList();
-        return _validCurrencies.ContainsKey(currency);
+        return _currencies.ContainsKey(currency);
     }
 
     #endregion // Public Methods
@@ -58,16 +63,20 @@ public class CurrencyService
 
     private async Task BuildCurrencyList()
     {
-        var url = ApiBaseUrl + ApiValidCurrency + ApiKey;
-        var response = await new HttpClient().GetAsync(url);
+        var url = ApiUrl + ValidCurrenciesEndpoint;
+        var client = new HttpClient();
+        var response = await client.GetAsync(url);
         var json = await response.Content.ReadAsStringAsync();
         var currencies = JObject.Parse(json);
-        currencies = (JObject)currencies["results"];
         
-        foreach (var currency in currencies.Children())
+        // Json is weird format of `Code: Name` each in dependant ie; {"1inch":"1inch Network","aave":"Aave"}
+        foreach (var currency in currencies)
         {
-            var currencyName = currency.Path.Split('.')[1];
-            _validCurrencies.Add(currencyName.ToUpper(), true);
+            _currencies.Add(currency.Key, new Currency
+            {
+                Name = currency.Value!.ToString(),
+                Short = currency.Key
+            });
         }
     }
 
@@ -88,37 +97,4 @@ public class CurrencyService
 
     #endregion // Private Methods
 
-    private async Task<Rate> GetNewRate(string currency)
-    {
-        var result = await GetResponse(ApiBaseUrl + string.Format(ApiCurrencyConvert, currency) + ApiKey);
-        
-        if (string.IsNullOrEmpty(result) || result.Equals("{}")) return null;
-
-        var rate = new Rate
-        {
-            Value = (double)JObject.Parse(result)[$"USD_{currency}"],
-            Expires = DateTime.Now.AddHours(6)
-        };
-
-        return rate;
-    }
-
-    private bool HasValidRate(string currency) => _rates.ContainsKey(currency) && !IsCurrencyExpired(_rates[currency]);
-    
-    public static bool IsCurrencyExpired(Rate rate) => rate.Expires < DateTime.Today;
-    
-}
-
-public class Rate
-{
-    public DateTime Expires { get; set; }
-    public double Value { get; set; }
-
-    public Rate()
-    {
-        Value = -1;
-        Expires = DateTime.MinValue;
-    }
-    
-    public bool IsStale() => Expires < DateTime.Today;
 }
