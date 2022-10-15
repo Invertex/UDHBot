@@ -1073,6 +1073,9 @@ public class UserModule : ModuleBase
     [Alias("curr")]
     public async Task ConvertCurrency(double amount, string from, string to = "usd")
     {
+        if (Context.HasAnyPingableMention())
+            return;
+        
         from = from.ToLower();
         to = to.ToLower();
 
@@ -1083,19 +1086,19 @@ public class UserModule : ModuleBase
         // Check if valid
         if (!fromValid || !toValid)
         {
-            await ReplyAsync("One of the currencies provided is invalid.");
+            await Context.Message.ReplyAsync("One of the currencies provided is invalid.");
             return;
         }
 
         var response = await CurrencyService.GetConversion(to, from);
         if (Math.Abs(response - (-1)) < 0.01)
         {
-            await ReplyAsync("An error occured while converting the currency, the API may be down!");
+            await Context.Message.ReplyAsync("An error occured while converting the currency, the API may be down!");
             return;
         }
 
         var totalAmount = Math.Round(amount * response, 2);
-        await ReplyAsync($"**{amount} {from.ToUpper()}** = **{totalAmount} {to.ToUpper()}**");
+        await Context.Message.ReplyAsync($"**{amount} {from.ToUpper()}** = **{totalAmount} {to.ToUpper()}**");
     }
 
     #endregion
