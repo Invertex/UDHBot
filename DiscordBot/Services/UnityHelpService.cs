@@ -61,7 +61,7 @@ public class UnityHelpService
     private readonly Embed _stealthDeleteEmbed = new EmbedBuilder()
         .WithTitle("Warning: No Activity")
         .WithDescription($"This question has been idle for {NoResponseNotResolvedIdleTime / 60} hours and has no response.\n" +
-                         $"You can keep this thread by adding additional details as a new message, " +
+                         $"You can keep this thread active by adding additional details as a new message, " +
                          $"otherwise it will be closed in {StealthDeleteTime / 60} hours.")
         .WithColor(Color.LightOrange)
         .Build();
@@ -315,6 +315,9 @@ public class UnityHelpService
     
     private Task GatewayOnThreadMemberJoinedThread(SocketThreadUser user)
     {
+        if (user.IsUserBotOrWebhook())
+            return Task.CompletedTask;
+        
         if (!user.Thread.IsThreadInChannel(_helpChannel.Id))
             return Task.CompletedTask;
         if (!_activeThreads.TryGetValue(user.Thread.Id, out var thread))
@@ -539,10 +542,10 @@ public class UnityHelpService
     {
         if (!(await IsValidThread(thread)))
             return;
-        
-        await RemoveContainerPreviousComment(thread);
-        
+
         var expectedShutdownTime = DateTime.Now.AddMinutes(NoResponseNotResolvedIdleTime);
+        
+        await CancelPreviousWarning(thread, expectedShutdownTime);
         var threadChannel = _client.GetChannel(thread.ChannelId) as SocketThreadChannel;
 
         thread.CancellationToken ??= new CancellationTokenSource();
