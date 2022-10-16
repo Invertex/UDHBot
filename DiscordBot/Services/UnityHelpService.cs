@@ -38,7 +38,7 @@ public class UnityHelpService
     
     private static readonly Emoji ThumbUpEmoji = new Emoji("👍");
     
-    private const int TimeBeforeClosedForResolvedTag = 5;
+    private const int TimeBeforeClosedForResolvedTag = 10;
     private readonly Embed _resolvedWarnOfPendingCloseEmbedHasPin = new EmbedBuilder()
         .WithTitle($"Issue Resolved")
         .WithDescription($"This issue has been marked as resolved and will be archived in {TimeBeforeClosedForResolvedTag} minutes.")
@@ -57,7 +57,7 @@ public class UnityHelpService
     private const string HasResponseExtraMessage = $"If you still need help, perhaps include additional details!";
     private static readonly Emoji CloseEmoji = new Emoji(":lock:");
 
-    private const int NoResponseNotResolvedIdleTime = 10; // 60 * 24 * 2;
+    private const int NoResponseNotResolvedIdleTime = 60 * 24 * 2;
     private readonly Embed _stealthDeleteEmbed = new EmbedBuilder()
         .WithTitle("Warning: No Activity")
         .WithDescription($"This question has been idle for {NoResponseNotResolvedIdleTime / 60} hours and has no response.\n" +
@@ -65,7 +65,7 @@ public class UnityHelpService
                          $"otherwise it will be closed in {StealthDeleteTime / 60} hours.")
         .WithColor(Color.LightOrange)
         .Build();
-    private const int StealthDeleteTime = 10; // 60 * 5;
+    private const int StealthDeleteTime = 60 * 5;
     
     private readonly Embed _noAppliedTagsEmbed = new EmbedBuilder()
         .WithTitle("Warning: No Tags Applied")
