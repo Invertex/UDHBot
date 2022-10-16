@@ -14,4 +14,12 @@ public static class MessageExtensions
         }
         return true;
     }
+    
+    /// <summary>
+    /// Returns true if the message includes any RoleID's, UserID's or Mentions Everyone
+    /// </summary>
+    public static bool HasAnyPingableMention(this IUserMessage message)
+    {
+        return message.MentionedUserIds.Count > 0 || message.MentionedRoleIds.Count > 0 || message.MentionedEveryone;
+    }
 }
