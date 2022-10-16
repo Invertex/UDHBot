@@ -6,10 +6,6 @@ using MessageExtensions = DiscordBot.Extensions.MessageExtensions;
 namespace DiscordBot.Services;
 
 // TODO : (James) Better Slash Command Support
-// TODO : (James) Deleting Author messages for follow-up self response
-// TODO : (James) Double check timing for deleting
-// TODO : (James) Change Message Command to be shorter
-// TODO : (James) Embed for missing tags, advice on how to use
 
 public class ThreadContainer
 {
@@ -36,12 +32,24 @@ public class UnityHelpService
 {
     private readonly DiscordSocketClient _client;
     private readonly ILoggingService _logging;
+    private SocketRole ModeratorRole { get; set; }
     
     #region Configuration
     
-    private const int TimeBeforeClosedForResolvedTag = 1;
-    private static readonly string ResolvedWarnOfPendingCloseMessage = $"This issue has been marked as resolved and will be archived in {TimeBeforeClosedForResolvedTag} minutes.";
+    private static readonly Emoji ThumbUpEmoji = new Emoji("👍");
     
+    private const int TimeBeforeClosedForResolvedTag = 5;
+    private readonly Embed _resolvedWarnOfPendingCloseEmbedHasPin = new EmbedBuilder()
+        .WithTitle($"Issue Resolved")
+        .WithDescription($"This issue has been marked as resolved and will be archived in {TimeBeforeClosedForResolvedTag} minutes.")
+        .WithColor(Color.Green)
+        .Build();
+    private readonly Embed _resolvedWarnOfPendingCloseEmbedNoPin = new EmbedBuilder()
+        .WithTitle($"Issue Resolved")
+        .WithDescription($"This issue has been marked as resolved and will be archived in {TimeBeforeClosedForResolvedTag} minutes.")
+        .WithFooter($"Remember to Right click a message and select 'Apps->Correct Answer'")
+        .WithColor(Color.Green)
+        .Build();
     private const int HasResponseIdleTimeSelfUser = 60 * 4;
     private static readonly string HasResponseIdleTimeSelfUserMessage = $"Hello {{0}}! This forum has been inactive for {HasResponseIdleTimeSelfUser / 60} hours. If the question has been appropriately answered, click the {CloseEmoji} emoji to close this thread.";
     private const int HasResponseIdleTimeOtherUser = 60 * 8;
@@ -49,12 +57,25 @@ public class UnityHelpService
     private const string HasResponseExtraMessage = $"If you still need help, perhaps include additional details!";
     private static readonly Emoji CloseEmoji = new Emoji(":lock:");
 
-    private const int NoResponseNotResolvedIdleTime = 1; // 60 * 24 * 2;
-    private static readonly string StealthDeleteMessage = $"This question has been idle for {NoResponseNotResolvedIdleTime / 60} hours and has no response, it will be closed in {StealthDeleteTime / 60} hours if no other activity is detected.";
-    private const int StealthDeleteTime = 2; // 60 * 5;
+    private const int NoResponseNotResolvedIdleTime = 10; // 60 * 24 * 2;
+    private readonly Embed _stealthDeleteEmbed = new EmbedBuilder()
+        .WithTitle("Warning: No Activity")
+        .WithDescription($"This question has been idle for {NoResponseNotResolvedIdleTime / 60} hours and has no response.\n" +
+                         $"You can keep this thread by adding additional details as a new message, " +
+                         $"otherwise it will be closed in {StealthDeleteTime / 60} hours.")
+        .WithColor(Color.LightOrange)
+        .Build();
+    private const int StealthDeleteTime = 10; // 60 * 5;
     
-    private static readonly string NoAppliedTagsUsed = $"It looks like you haven't applied any tags to this thread, be sure to include the appropriate tags to help others find your thread!";
-    
+    private readonly Embed _noAppliedTagsEmbed = new EmbedBuilder()
+        .WithTitle("Warning: No Tags Applied")
+        .WithDescription($"Apply tags to your thread to help others find it!\n" +
+                         $"Right click on the thread title and select 'Edit Tags'!\n")
+        .WithFooter($"Relevant tags help experienced users find you!")
+        .WithColor(Color.LightOrange)
+        .Build();
+
+
     private const int MinimumLengthMessage = 40;
     private readonly Embed _minimumLengthMessageEmbed = new EmbedBuilder()
         .WithTitle("Warning: Short Question!")
@@ -81,6 +102,8 @@ public class UnityHelpService
     {
         _client = client;
         _logging = logging;
+        
+        ModeratorRole = _client.GetGuild(settings.GuildId).GetRole(settings.ModeratorRoleId);
 
         // get the help channel settings.GenericHelpChannel
         _helpChannel = _client.GetChannel(settings.GenericHelpChannel.Id) as IForumChannel;
@@ -88,7 +111,7 @@ public class UnityHelpService
         {
             LoggingService.LogToConsole("[UnityHelpService] Help channel not found", LogSeverity.Error);
         }
-        var resolvedTag = _helpChannel.Tags.FirstOrDefault(x => x.Name == ResolvedTag);
+        var resolvedTag = _helpChannel!.Tags.FirstOrDefault(x => x.Name == ResolvedTag);
         _resolvedForumTag = resolvedTag;
 
         // on reaction added, call method
@@ -108,12 +131,12 @@ public class UnityHelpService
 
     private async Task LoadActiveThreads()
     {
-        var _loadingActiveThreads = await GetHelpActiveThreads();
-        foreach (var thread in _loadingActiveThreads)
+        var loadingActiveThreads = await GetHelpActiveThreads();
+        foreach (var thread in loadingActiveThreads)
         {
             var threadContents = (await _client.GetChannelAsync(thread.Id)) as SocketThreadChannel;
-            var latestMessageId = (thread.MessageCount > 0 ? threadContents.GetMessagesAsync(1).FlattenAsync().Result.FirstOrDefault().Id : 0);
-            var threadOwner = threadContents.Owner.Id;
+            var latestMessageId = (thread.MessageCount > 0 ? threadContents!.GetMessagesAsync(1).FlattenAsync().Result.FirstOrDefault()!.Id : 0);
+            var threadOwner = threadContents!.Owner.Id;
             var threadContainer = new ThreadContainer
             {
                 ChannelId = thread.Id,
@@ -126,8 +149,13 @@ public class UnityHelpService
             if (threadContainer.IsResolved)
             {
                 // Run in new task so we don't block the other threads from being processed
-                Task.Run(() => CloseThreadInTime(threadContainer, ResolvedWarnOfPendingCloseMessage,
-                    TimeBeforeClosedForResolvedTag));
+#pragma warning disable CS4014
+                Task.Run(() => CloseThreadInTime(threadContainer, string.Empty,
+                    TimeBeforeClosedForResolvedTag,
+                    (threadContainer.PinnedAnswer != 0
+                        ? _resolvedWarnOfPendingCloseEmbedHasPin
+                        : _resolvedWarnOfPendingCloseEmbedNoPin)));
+#pragma warning restore CS4014
             }
             else
             {
@@ -139,7 +167,7 @@ public class UnityHelpService
     #region Thread Tracking
     
     // Threads we're currently tracking
-    private Dictionary<ulong, ThreadContainer> _activeThreads = new();
+    private readonly Dictionary<ulong, ThreadContainer> _activeThreads = new();
 
     #region Thread Creation
     
@@ -165,7 +193,7 @@ public class UnityHelpService
         // If not tags attached, let them know they should add some
         if (thread.AppliedTags.Count == 0)
         {
-            var botResponse = await thread.SendMessageAsync(NoAppliedTagsUsed);
+            var botResponse = await thread.SendMessageAsync(embed: _noAppliedTagsEmbed);
             container.NoAppliedTagsMessage = botResponse.Id;
         }
 
@@ -174,18 +202,20 @@ public class UnityHelpService
         await StealthDeleteThreadInTime(container);
     }
     
-    private async Task GatewayOnThreadCreated(SocketThreadChannel thread)
+    private Task GatewayOnThreadCreated(SocketThreadChannel thread)
     {
-        if (thread.ParentChannel.Id != _helpChannel.Id)
-            return;
-        if (thread.Owner.IsBot)
-            return;
+        if (!thread.IsThreadInChannel(_helpChannel.Id))
+            return Task.CompletedTask;
+        if (thread.Owner.IsUserBotOrWebhook())
+            return Task.CompletedTask;
         // Gateway is called twice for forums, not sure why
         if (_activeThreads.ContainsKey(thread.Id))
-            return;
+            return Task.CompletedTask;
         
         LoggingService.DebugLog($"[UnityHelpService] New Thread Created: {thread.Id} - {thread.Name}", LogSeverity.Debug);
         Task.Run(() => OnThreadCreated(thread));
+        
+        return Task.CompletedTask;
     }
     
     #endregion // Thread Creation
@@ -195,6 +225,18 @@ public class UnityHelpService
     private async Task OnThreadUpdated(SocketThreadChannel before, SocketThreadChannel after)
     {
         var thread = _activeThreads[after.Id];
+
+        if (after.IsArchived)
+        {
+            // Thread has been archived, remove from tracking
+            if (!thread.IsResolved && !after.AppliedTags.Contains(_resolvedForumTag.Id))
+            {
+                await after.SendMessageAsync($"This thread closed without being marked as resolved");
+                await EndThreadTracking(after.Id);
+                return;
+            }
+            return;
+        }
 
         // If the user was informed to add tags and they add some, we revoke the message
         if (thread.NoAppliedTagsMessage != 0 && before.AppliedTags.Count < after.AppliedTags.Count)
@@ -214,7 +256,8 @@ public class UnityHelpService
             thread.IsResolved = true;
             if (_activeThreads.TryGetValue(after.Id, out thread))
             {
-                await CloseThreadInTime(thread, ResolvedWarnOfPendingCloseMessage, TimeBeforeClosedForResolvedTag);
+                var embed = thread.PinnedAnswer != 0 ? _resolvedWarnOfPendingCloseEmbedHasPin : _resolvedWarnOfPendingCloseEmbedNoPin;
+                await CloseThreadInTime(thread, string.Empty, TimeBeforeClosedForResolvedTag, embed);
             }
         }
 
@@ -229,17 +272,19 @@ public class UnityHelpService
     
     private async Task GatewayOnThreadUpdated(Cacheable<SocketThreadChannel, ulong> before, SocketThreadChannel after)
     {
-        if (after.ParentChannel.Id != _helpChannel.Id)
+        if (!after.IsThreadInChannel(_helpChannel.Id))
             return;
         if (!_activeThreads.TryGetValue(after.Id, out var thread))
             return;
 
-        SocketThreadChannel beforeThread = await before.GetOrDownloadAsync();
-        SocketThreadChannel afterThread = after;
+        var beforeThread = await before.GetOrDownloadAsync();
+        var afterThread = after;
         
         LoggingService.DebugLog($"[UnityHelpService] Thread Updated: {after.Id} - {after.Name}", LogSeverity.Debug);
         
-        Task.Run(async () => OnThreadUpdated(beforeThread, afterThread));
+#pragma warning disable CS4014
+        Task.Run(() => OnThreadUpdated(beforeThread, afterThread));
+#pragma warning restore CS4014
     }
     
     #endregion // Thread Update
@@ -248,11 +293,7 @@ public class UnityHelpService
     
     private async Task OnThreadDeleted(SocketThreadChannel channel)
     {
-        var thread = _activeThreads[channel.Id];
-        _activeThreads.Remove(channel.Id);
-
-        // Cancel any pending tasks
-        thread.CancellationToken?.Cancel();
+        await EndThreadTracking(channel.Id);
     }
 
     private async Task GatewayOnThreadDeleted(Cacheable<SocketThreadChannel, ulong> threadId)
@@ -261,30 +302,35 @@ public class UnityHelpService
             return;
         
         LoggingService.DebugLog($"[UnityHelpService] Thread Deleted: {threadId.Id}", LogSeverity.Debug);
+        var thread = await threadId.GetOrDownloadAsync();
 
-        Task.Run(async () => OnThreadDeleted(await threadId.GetOrDownloadAsync()));
+#pragma warning disable CS4014
+        Task.Run(() => OnThreadDeleted(thread));
+#pragma warning restore CS4014
     }
     
     #endregion // Thread Deleted
 
     #region User Joins/Leaves Thread
     
-    private async Task GatewayOnThreadMemberJoinedThread(SocketThreadUser user)
+    private Task GatewayOnThreadMemberJoinedThread(SocketThreadUser user)
     {
-        if (user.Thread.Id != _helpChannel.Id)
-            return;
-
+        if (!user.Thread.IsThreadInChannel(_helpChannel.Id))
+            return Task.CompletedTask;
         if (!_activeThreads.TryGetValue(user.Thread.Id, out var thread))
-            return;
+            return Task.CompletedTask;
 
         thread.HasInteraction = true;
+        return Task.CompletedTask;
     }
 
-    private async Task GatewayOnThreadMemberLeftThread(SocketThreadUser user)
+    private Task GatewayOnThreadMemberLeftThread(SocketThreadUser user)
     {
-        if (user.Thread.Id != _helpChannel.Id)
-            return;
+        if (!user.Thread.IsThreadInChannel(_helpChannel.Id))
+            return Task.CompletedTask;
         
+        return Task.CompletedTask;
+
         // TODO : (James) Check if user was author? If so, close thread?
     }
     
@@ -299,34 +345,38 @@ public class UnityHelpService
         thread.LatestMessage = message.Id;
         // If Author is only one who has interacted with the thread, we don't need to update anything else
         if (!thread.HasInteraction && message.Author.Id == thread.Owner)
+        {
+#pragma warning disable CS4014
+            Task.Run(() => StealthDeleteThreadInTime(thread));
+#pragma warning restore CS4014
             return;
-        
+        }
+
         thread.HasInteraction = true;
-        
+        // Depending on who sent the message we delay the thread closing request by a different amount of time
         var channel = message.Channel as SocketThreadChannel;
-        if (channel.Owner.Id == message.Author.Id)
+        if (channel!.Owner.Id == message.Author.Id)
         {
             await RequestThreadShutdownInTime(thread, HasResponseIdleTimeSelfUserMessage + HasResponseExtraMessage, HasResponseIdleTimeSelfUser);
-            return;
         }
         else
         {
             await RequestThreadShutdownInTime(thread, HasResponseMessageRequestClose + HasResponseExtraMessage, HasResponseIdleTimeOtherUser);
-            return;
         }
     }
     
-    private async Task GatewayOnMessageReceived(SocketMessage message)
+    private Task GatewayOnMessageReceived(SocketMessage message)
     {
-        if (message.Channel.Id != _helpChannel.Id)
-            return;
-        if (message.Author.IsBot)
-            return;
+        if (!message.Channel.IsThreadInChannel(_helpChannel.Id))
+            return Task.CompletedTask;
+        if (message.Author.IsUserBotOrWebhook())
+            return Task.CompletedTask;
         if (!_activeThreads.TryGetValue(message.Channel.Id, out var thread))
-            return;
+            return Task.CompletedTask;
         
         LoggingService.DebugLog($"[UnityHelpService] Help Message Received: {message.Id} - {message.Content}", LogSeverity.Debug);
         Task.Run(() => OnMessageReceived(message));
+        return Task.CompletedTask;
     }
 
     private async Task OnMessageUpdated(IMessage before, IMessage after, SocketThreadChannel channel)
@@ -347,14 +397,17 @@ public class UnityHelpService
     
     private async Task GatewayOnMessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel channel)
     {
-        if (channel is not SocketThreadChannel)
+        if (channel is not SocketThreadChannel threadChannel)
             return;
-        if (((SocketThreadChannel)channel).ParentChannel.Id != _helpChannel.Id)
+        if (!threadChannel.IsThreadInChannel(_helpChannel.Id))
             return;
-        if (after.Author.IsBot)
+        if (after.Author.IsUserBotOrWebhook())
             return;
+        
         if (!_activeThreads.TryGetValue(channel.Id, out var thread))
             return;
+        
+        // This is done a bit late as we may need to check message from other authors
         if (thread.Owner != after.Author.Id)
             return;
         
@@ -363,7 +416,9 @@ public class UnityHelpService
             return;
 
         LoggingService.DebugLog($"[UnityHelpService] Help Message Updated: {after.Id} - {after.Content}", LogSeverity.Debug);
+#pragma warning disable CS4014
         Task.Run(() => OnMessageUpdated(beforeMsg, after, channel as SocketThreadChannel));
+#pragma warning restore CS4014
     }
 
     #endregion // Message Received
@@ -382,7 +437,9 @@ public class UnityHelpService
         if (message == null || message.Author.Id != _client.CurrentUser.Id)
             return;
 
+#pragma warning disable CS4014 
         Task.Run(async () =>
+#pragma warning restore CS4014
         {
             // Check the owner is the one reacting
             var threadOwner = channel.Owner.Id;
@@ -411,8 +468,24 @@ public class UnityHelpService
 
     #region Bulk Behaviour Handler
 
-        private async Task CloseThreadInTime(ThreadContainer thread, string message, int minutes)
+    private async Task CloseThreadInTime(ThreadContainer thread, string message, int minutes, Embed embed = null)
     {
+        await Task.Delay(TimeSpan.FromMinutes(minutes));
+        if (thread.HasInteraction)
+            return;
+        
+        var channel = _client.GetChannel(thread.ChannelId) as SocketThreadChannel;
+        if (channel == null)
+            return;
+        
+        if (!string.IsNullOrEmpty(message))
+            await channel.SendMessageAsync(message);
+        else
+        {
+            await channel.SendMessageAsync(embed: embed);
+        }
+        await CloseThread(channel, false);
+
         if (!(await IsValidThread(thread)))
             return;
         
@@ -467,6 +540,8 @@ public class UnityHelpService
         if (!(await IsValidThread(thread)))
             return;
         
+        await RemoveContainerPreviousComment(thread);
+        
         var expectedShutdownTime = DateTime.Now.AddMinutes(NoResponseNotResolvedIdleTime);
         var threadChannel = _client.GetChannel(thread.ChannelId) as SocketThreadChannel;
 
@@ -478,7 +553,7 @@ public class UnityHelpService
             return;
 
         // We prompt chat that the thread is going to be deleted in x number of hours, which will double as a bump.
-        var botResponse = await threadChannel.SendMessageAsync(StealthDeleteMessage);
+        var botResponse = await threadChannel.SendMessageAsync(embed: _stealthDeleteEmbed);
         thread.BotsLastMessage = botResponse.Id;
         
         // Wait for the next set of time to pass
@@ -510,10 +585,11 @@ public class UnityHelpService
         await EndThreadTracking(channel.Id);
     }
 
-    private async Task EndThreadTracking(ThreadContainer thread)
+    private Task EndThreadTracking(ThreadContainer thread)
     {
         thread.CancellationToken?.Cancel();
         _activeThreads.Remove(thread.ChannelId);
+        return Task.CompletedTask;
     }
     private async Task EndThreadTracking(ulong threadId)
     {
@@ -548,7 +624,11 @@ public class UnityHelpService
             return "Invalid Channel";
         if (!_activeThreads.TryGetValue(channel.Id, out var thread))
             return "Invalid Thread";
-        
+
+        if (IsValidAuthorUser(requester as SocketGuildUser, thread.Owner))
+        {
+            
+        }
         if (thread.Owner != requester.Id)
             return "You are not the owner of this thread";
         if (message.Author.Id == requester.Id)
@@ -558,12 +638,21 @@ public class UnityHelpService
         {
             var oldAnswer = await channel.GetMessageAsync(thread.PinnedAnswer) as IUserMessage;
             if (oldAnswer != null)
+            {
+                await oldAnswer.RemoveReactionAsync(ThumbUpEmoji, _client.CurrentUser);
                 await oldAnswer.UnpinAsync();
+            }
         }
-        var newAnswer = await channel.GetMessageAsync(message.Id) as IUserMessage;
-        if (newAnswer != null)
+
+        if (await channel.GetMessageAsync(message.Id) is IUserMessage newAnswer)
+        {
             await newAnswer.PinAsync();
-            
+            await newAnswer.AddReactionAsync(ThumbUpEmoji);
+        }
+
+        if (!thread.IsResolved)
+            await CloseThread(channel, true);
+        
         thread.PinnedAnswer = message.Id;
         return "New answer pinned";
     }
@@ -598,16 +687,32 @@ public class UnityHelpService
         return true;
     }
     
-    private async Task<bool> IsTaskCancelled(ThreadContainer thread)
+    private Task<bool> IsTaskCancelled(ThreadContainer thread)
     {
         if (thread.CancellationToken == null)
-            return false;
+            return Task.FromResult(false);
         if (thread.CancellationToken.IsCancellationRequested)
         {
             LoggingService.DebugLog($"[UnityHelpService] Task cancelled for Channel {thread.ChannelId}");
-            return true;
+            return Task.FromResult(true);
         }
-        return false;
+        return Task.FromResult(false);
+    }
+    
+    // Check if the user is the expected id and return true if so, if not then return false (Special: Moderator will return true)
+    private bool IsValidAuthorUser(SocketGuildUser user, ulong authorId)
+    {
+        if (user == null || user.IsUserBotOrWebhook())
+            return false;
+        if (user.Id != authorId)
+        {
+            // If the user is moderator they can act on behalf of the author
+            if (user.HasRoleGroup(ModeratorRole))
+                return true;
+            return false;
+        }
+
+        return true;
     }
 
     #endregion // Utility Methods
