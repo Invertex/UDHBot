@@ -17,32 +17,17 @@ public class UnityHelpModule : ModuleBase
 
     [Command("resolve"), Alias("complete")]
     [Summary("When a question is answered, use this command to mark it as resolved.")]
-    public async Task ResolveAsync() 
+    public async Task ResolveAsync()
     {
         if (!IsValidUser() || !IsInHelpChannel())
-        {
             await Context.Message.DeleteAsync();
-        }
         await HelpService.OnUserRequestChannelClose(Context.User, Context.Channel as SocketThreadChannel);
     }
-    
+
     #region Utility
 
-    bool IsInHelpChannel()
-    {
-        if (Context.Channel is SocketThreadChannel threadChannel)
-        {
-            return threadChannel.ParentChannel.Id == BotSettings.GenericHelpChannel.Id;
-        }
-        return false;
-    }
-    
-    bool IsValidUser()
-    {
-        if (Context.User.IsBot || Context.User.IsWebhook)
-            return false;
-        return true;
-    }
+    private bool IsInHelpChannel() => Context.Channel.IsThreadInChannel(BotSettings.GenericHelpChannel.Id);
+    private bool IsValidUser() => !Context.User.IsUserBotOrWebhook();
 
     #endregion // Utility
 }
