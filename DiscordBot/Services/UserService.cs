@@ -226,10 +226,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
             await _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
             user = await _databaseService.Query().GetUser(userId.ToString());
         }
-
-        if (messageParam.Author.Activities.Any(a => Regex.Match(a.Name, "(Unity.+)").Length > 0))
-            bonusXp += baseXp / 4;
-
+        
         bonusXp += baseXp * (1f + user.Karma / 100f);
 
         //Reduce XP for members with no role
