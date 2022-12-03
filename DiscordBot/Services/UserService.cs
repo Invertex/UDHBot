@@ -290,105 +290,122 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
     /// <returns></returns>
     public async Task<string> GenerateProfileCard(IUser user)
     {
-        var userData = await _databaseService.Query().GetUser(user.Id.ToString());
+        string profileCardPath = string.Empty;
 
-        var xpTotal = userData.Exp;
-        var xpRank = await _databaseService.Query().GetLevelRank(userData.UserID, userData.Level);
-        var karmaRank = await _databaseService.Query().GetKarmaRank(userData.UserID, userData.Karma);
-        var karma = userData.Karma;
-        var level = userData.Level;
-        var xpLow = GetXpLow(level);
-        var xpHigh = GetXpHigh(level);
-
-        var xpShown = (uint)(xpTotal - xpLow);
-        var maxXpShown = (uint)(xpHigh - xpLow);
-
-        var percentage = (float)xpShown / maxXpShown;
-
-        var u = (IGuildUser)user;
-        IRole mainRole = null;
-        foreach (var id in u.RoleIds)
+        try
         {
-            var role = u.Guild.GetRole(id);
-            if (mainRole == null)
-                mainRole = u.Guild.GetRole(id);
-            else if (role.Position > mainRole.Position) mainRole = role;
-        }
+            var dbRepo = _databaseService.Query();
+            if (dbRepo == null)
+                return profileCardPath;
+            
+            var userData = await dbRepo.GetUser(user.Id.ToString());
 
-        mainRole ??= u.Guild.EveryoneRole;
+            var xpTotal = userData.Exp;
+            var xpRank = await dbRepo.GetLevelRank(userData.UserID, userData.Level);
+            var karmaRank = await dbRepo.GetKarmaRank(userData.UserID, userData.Karma);
+            var karma = userData.Karma;
+            var level = userData.Level;
+            var xpLow = GetXpLow(level);
+            var xpHigh = GetXpHigh(level);
 
-        using var profileCard = new MagickImageCollection();
-        var skin = GetSkinData();
-        var profile = new ProfileData
-        {
-            Karma = karma,
-            KarmaRank = (uint)karmaRank,
-            Level = (uint)level,
-            MainRoleColor = mainRole.Color,
-            MaxXpShown = maxXpShown,
-            Nickname = ((IGuildUser)user).Nickname,
-            UserId = ulong.Parse(userData.UserID),
-            Username = user.Username,
-            XpHigh = xpHigh,
-            XpLow = xpLow,
-            XpPercentage = percentage,
-            XpRank = (uint)xpRank,
-            XpShown = xpShown,
-            XpTotal = (uint)xpTotal
-        };
+            var xpShown = (uint)(xpTotal - xpLow);
+            var maxXpShown = (uint)(xpHigh - xpLow);
 
-        var background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
+            var percentage = (float)xpShown / maxXpShown;
 
-        var avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
-        if (string.IsNullOrEmpty(avatarUrl))
-            profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
-        else
-            try
+            var u = (IGuildUser)user;
+            IRole mainRole = null;
+            foreach (var id in u.RoleIds)
             {
-                Stream stream;
+                var role = u.Guild.GetRole(id);
+                if (mainRole == null)
+                    mainRole = u.Guild.GetRole(id);
+                else if (role.Position > mainRole.Position) mainRole = role;
+            }
 
-                using (var http = new HttpClient())
+            mainRole ??= u.Guild.EveryoneRole;
+
+            using var profileCard = new MagickImageCollection();
+            var skin = GetSkinData();
+            var profile = new ProfileData
+            {
+                Karma = karma,
+                KarmaRank = (uint)karmaRank,
+                Level = (uint)level,
+                MainRoleColor = mainRole.Color,
+                MaxXpShown = maxXpShown,
+                Nickname = ((IGuildUser)user).Nickname,
+                UserId = ulong.Parse(userData.UserID),
+                Username = user.Username,
+                XpHigh = xpHigh,
+                XpLow = xpLow,
+                XpPercentage = percentage,
+                XpRank = (uint)xpRank,
+                XpShown = xpShown,
+                XpTotal = (uint)xpTotal
+            };
+
+            var background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
+
+            var avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
+            if (string.IsNullOrEmpty(avatarUrl))
+                profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
+            else
+                try
                 {
-                    stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                    Stream stream;
+
+                    using (var http = new HttpClient())
+                    {
+                        stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                    }
+
+                    profile.Picture = new MagickImage(stream);
+                }
+                catch (Exception e)
+                {
+                    LoggingService.LogToConsole(
+                        $"Failed to download user profile image for ProfileCard.\nEx:{e.Message}",
+                        LogSeverity.Warning);
+                    profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
                 }
 
-                profile.Picture = new MagickImage(stream);
-            }
-            catch (Exception e)
+            profile.Picture.Resize(skin.AvatarSize, skin.AvatarSize);
+            profileCard.Add(background);
+
+            foreach (var layer in skin.Layers)
             {
-                LoggingService.LogToConsole($"Failed to download user profile image for ProfileCard.\nEx:{e.Message}",
-                    LogSeverity.Warning);
-                profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
+                if (layer.Image != null)
+                {
+                    var image = layer.Image.ToLower() == "avatar"
+                        ? profile.Picture
+                        : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
+
+                    background.Composite(image, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
+                }
+
+                var l = new MagickImage(MagickColors.Transparent, (int)layer.Width, (int)layer.Height);
+                foreach (var module in layer.Modules) module.GetDrawables(profile).Draw(l);
+
+                background.Composite(l, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
             }
 
-        profile.Picture.Resize(skin.AvatarSize, skin.AvatarSize);
-        profileCard.Add(background);
+            profileCardPath = $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
 
-        foreach (var layer in skin.Layers)
-        {
-            if (layer.Image != null)
+            using (var result = profileCard.Mosaic())
             {
-                var image = layer.Image.ToLower() == "avatar"
-                    ? profile.Picture
-                    : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
-
-                background.Composite(image, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
+                result.Write(profileCardPath);
             }
-
-            var l = new MagickImage(MagickColors.Transparent, (int)layer.Width, (int)layer.Height);
-            foreach (var module in layer.Modules) module.GetDrawables(profile).Draw(l);
-
-            background.Composite(l, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
         }
-
-        var path = $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
+        catch (Exception e)
+        {
+            await _loggingService.LogAction($"Failed to generate profile card for {user.Username}.\nEx:{e.Message}");
+        }
         
-        using (var result = profileCard.Mosaic())
-        {
-            result.Write(path);
-        }
+        if (!string.IsNullOrEmpty(profileCardPath))
+            await Task.Delay(100);
 
-        return path;
+        return profileCardPath;
     }
 
     public Embed WelcomeMessage(SocketGuildUser user)
