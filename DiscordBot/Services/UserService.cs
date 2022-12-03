@@ -269,6 +269,11 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
 
         await _databaseService.Query().UpdateLevel(userId.ToString(), level + 1);
 
+        // First few levels are only a couple messages,
+        // so we hide them to avoid scaring people away and give them slightly longer to naturally see these in the server.
+        if (level <= 3)
+            return;
+
         await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(60);
         //TODO Add level up card
     }
