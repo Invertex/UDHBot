@@ -53,6 +53,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
     private readonly Random _rand;
 
     public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
+    private readonly Color _welcomeColour = new Color(7, 84, 53);
     public int WaitingWelcomeMessagesCount => _welcomeNoticeUsers.Count;
 
     public DateTime NextWelcomeMessage =>
@@ -394,7 +395,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
 
         var builder = new EmbedBuilder()
             .WithDescription($"Welcome to Unity Developer Community **{user.Username}#{user.Discriminator}**!")
-            .WithColor(new Color(0x12D687))
+            .WithColor(_welcomeColour)
             .WithAuthor(author =>
             {
                 author
