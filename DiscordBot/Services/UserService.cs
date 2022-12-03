@@ -144,6 +144,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
         _client.GuildMemberUpdated += UserUpdated;
         _client.UserLeft += UserLeft;
 
+        _client.MessageReceived += CheckForWelcomeMessage;
         _client.UserIsTyping += UserIsTyping;
 
         LoadData();
@@ -424,7 +425,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
         var channel = (SocketGuildChannel)messageParam.Channel;
         var guildId = channel.Guild.Id;
 
-        //Make sure its in the UDH server
+        //Make sure its in the UDC server
         if (guildId != _settings.GuildId) return;
 
         if (messageParam.Author.IsBot)
@@ -605,6 +606,17 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
 
         await ProcessWelcomeUser(user.Id, user.Value);
     }
+    
+    private async Task CheckForWelcomeMessage(SocketMessage messageParam)
+    {
+        if (_welcomeNoticeUsers.Count == 0)
+            return;
+        
+        var user = messageParam.Author;
+        if (user.IsBot)
+            return;
+        await ProcessWelcomeUser(user.Id, user);
+    }
 
     private async Task UserJoined(SocketGuildUser user)
     {
@@ -671,6 +683,9 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
     {
         if (_welcomeNoticeUsers.Exists(u => u.id == userID))
         {
+            // Remove the user from the welcome list.
+            _welcomeNoticeUsers.RemoveAll(u => u.id == userID);
+            
             // If we didn't get the user passed in, we try grab it
             user ??= await _client.GetUserAsync(userID);
             // if they're null, they've likely left, so we just remove them from the list.
@@ -681,9 +696,6 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
                 if (offTopic != null)
                     await offTopic.SendMessageAsync(string.Empty, false, em);
             }
-
-            // Remove the user from the welcome list.
-            _welcomeNoticeUsers.RemoveAll(u => u.id == userID);
         }
     }
 
