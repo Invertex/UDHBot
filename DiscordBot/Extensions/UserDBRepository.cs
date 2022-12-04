@@ -65,5 +65,5 @@ public interface IServerUserRepo
 
     /// <summary>Returns a count of users in the Table, otherwise it fails. </summary>
     [Sql("SELECT COUNT(*) FROM users")]
-    long TestConnection();
+    Task<long> TestConnection();
 }
