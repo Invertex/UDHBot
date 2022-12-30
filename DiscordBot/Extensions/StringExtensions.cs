@@ -118,4 +118,16 @@ public static class StringExtensions
         // Return the hexadecimal string.
         return sb.ToString();
     }
+    
+    public static bool IsAlLCaps(this string str)
+    {
+        return str.All(char.IsUpper);
+    }
+    
+    public static string ToCapitalizeFirstLetter(this string str)
+    {
+        if (string.IsNullOrEmpty(str))
+            return string.Empty;
+        return char.ToUpper(str[0]) + str[1..];
+    }
 }
