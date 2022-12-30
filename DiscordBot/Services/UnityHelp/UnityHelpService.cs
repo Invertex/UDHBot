@@ -620,12 +620,12 @@ public class UnityHelpService
         if (!_activeThreads.TryGetValue(channel.Id, out var thread))
             return "Invalid Thread";
 
-        if (IsValidAuthorUser(requester as SocketGuildUser, thread.Owner))
+        if (!IsValidAuthorUser(requester as SocketGuildUser, thread.Owner))
         {
-            
+            if (thread.Owner != requester.Id)
+                return "You are not the owner of this thread";
+            return "You can't do that!";
         }
-        if (thread.Owner != requester.Id)
-            return "You are not the owner of this thread";
         if (message.Author.Id == requester.Id)
             return "You cannot mark your own message as the answer";
 
@@ -699,15 +699,14 @@ public class UnityHelpService
     {
         if (user == null || user.IsUserBotOrWebhook())
             return false;
-        if (user.Id != authorId)
-        {
-            // If the user is moderator they can act on behalf of the author
-            if (user.HasRoleGroup(ModeratorRole))
-                return true;
-            return false;
-        }
+        
+        if (user.Id == authorId) return true;
+        // If the user is moderator they can act on behalf of the author
+        if (user.HasRoleGroup(ModeratorRole))
+            return true;
+        
+        return false;
 
-        return true;
     }
 
     #endregion // Utility Methods
