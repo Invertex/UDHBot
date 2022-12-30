@@ -5,14 +5,34 @@ using MessageExtensions = DiscordBot.Extensions.MessageExtensions;
 
 namespace DiscordBot.Services;
 
+public enum HelpMessageType
+{
+    NoTags,
+    QuestionLength,
+    AllCapTitle, // Currently toLowers ALL CAP titles
+    HelpInTitle, // Currently unused
+}
+
+public class HelpBotMessage
+{
+    public ulong MessageId { get; set; }
+    public HelpMessageType Type { get; set; }
+    
+    public HelpBotMessage(ulong messageId, HelpMessageType type)
+    {
+        MessageId = messageId;
+        Type = type;
+    }
+}
+
 // TODO : (James) Better Slash Command Support
 
 public class ThreadContainer
 {
     public ulong Owner { get; set; }
-    public ulong FirstMessage { get; set; }
-    public ulong ChannelId { get; set; }
-    public ulong LatestMessage { get; set; }
+    public ulong FirstUserMessage { get; set; }
+    public ulong ThreadId { get; set; }
+    public ulong LatestUserMessage { get; set; }
     public ulong PinnedAnswer { get; set; }
 
     public bool IsResolved { get; set; } = false;
@@ -23,9 +43,15 @@ public class ThreadContainer
     public CancellationTokenSource CancellationToken { get; set; }
     public DateTime ExpectedShutdownTime { get; set; }
     
-    // Additional Helpful ids
-    public ulong NoAppliedTagsMessage { get; set; } = 0;
-    public ulong WarningMessage { get; set; } = 0;
+    /// <summary>
+    /// Any message the bot sends that could need to be tracked/deleted later is stored here.
+    /// </summary>
+    public Dictionary<HelpMessageType, HelpBotMessage> HelpMessages { get; set; } = new();
+    
+    public bool HasMessage(HelpMessageType type) => HelpMessages.ContainsKey(type);
+    public ulong GetMessageId(HelpMessageType type) => HelpMessages[type].MessageId;
+    public void AddMessage(HelpMessageType type, ulong messageId) => HelpMessages.Add(type, new HelpBotMessage(messageId, type));
+    public void RemoveMessage(HelpMessageType type) => HelpMessages.Remove(type);
 }
 
 public class UnityHelpService
@@ -86,7 +112,7 @@ public class UnityHelpService
         .WithFooter("Be descriptive of the problem!")
         .WithColor(Color.LightOrange)
         .Build();
-
+    
     #endregion // Configuration
 
     #region Extra Details
@@ -139,8 +165,8 @@ public class UnityHelpService
             var threadOwner = threadContents!.Owner.Id;
             var threadContainer = new ThreadContainer
             {
-                ChannelId = thread.Id,
-                LatestMessage = latestMessageId,
+                ThreadId = thread.Id,
+                LatestUserMessage = latestMessageId,
                 Owner = threadOwner,
                 // TODO : (James) Work out if this should be resolved/closed already or not
                 IsResolved = thread.AppliedTags.Contains(_resolvedForumTag.Id),
@@ -159,7 +185,7 @@ public class UnityHelpService
             }
             else
             {
-                _activeThreads.Add(threadContainer.ChannelId, threadContainer);
+                _activeThreads.Add(threadContainer.ThreadId, threadContainer);
             }
         }
     }
@@ -175,26 +201,40 @@ public class UnityHelpService
     {
         ThreadContainer container = new()
         {
-            ChannelId = thread.Id,
-            LatestMessage = 0,
+            ThreadId = thread.Id,
+            LatestUserMessage = 0,
             Owner = thread.Owner.Id,
         };
         _activeThreads.Add(thread.Id, container);
         
+        bool warnHelpTitle = false;
+        
+        var threadTitle = thread.Name;
+        if (threadTitle.IsAlLCaps())
+        {
+            threadTitle = thread.Name.ToLower();
+        }
+        await thread.ModifyAsync(x => x.Name = threadTitle.ToCapitalizeFirstLetter());
+
+        if (thread.Name.Contains(" help", StringComparison.CurrentCultureIgnoreCase))
+            warnHelpTitle = true;
+
         // Check message length and inform user if too short
         var firstMessage = (await thread.GetMessagesAsync(1).FlattenAsync()).FirstOrDefault();
-        container.FirstMessage = firstMessage!.Id;
+        container.FirstUserMessage = firstMessage!.Id;
         if (firstMessage.Content.Length < MinimumLengthMessage)
         {
             var botResponse = await thread.SendMessageAsync(embed: _minimumLengthMessageEmbed);
-            container.WarningMessage = botResponse.Id;
+            container.AddMessage(HelpMessageType.QuestionLength, botResponse.Id);
+            // container.WarningMessage = botResponse.Id;
         }
 
         // If not tags attached, let them know they should add some
         if (thread.AppliedTags.Count == 0)
         {
             var botResponse = await thread.SendMessageAsync(embed: _noAppliedTagsEmbed);
-            container.NoAppliedTagsMessage = botResponse.Id;
+            container.AddMessage(HelpMessageType.NoTags, botResponse.Id);
+            // container.NoAppliedTagsMessage = botResponse.Id;
         }
 
         // TODO : (James) Should we push this into a Task.Run?
@@ -239,12 +279,12 @@ public class UnityHelpService
         }
 
         // If the user was informed to add tags and they add some, we revoke the message
-        if (thread.NoAppliedTagsMessage != 0 && before.AppliedTags.Count < after.AppliedTags.Count)
+        if (thread.HasMessage(HelpMessageType.NoTags) && before.AppliedTags.Count < after.AppliedTags.Count)
         {
-            var message = await after.GetMessageAsync(thread.NoAppliedTagsMessage);
+            var message = await after.GetMessageAsync(thread.GetMessageId(HelpMessageType.NoTags));
             if (message != null)
                 await message.DeleteAsync();
-            thread.NoAppliedTagsMessage = 0;
+            thread.RemoveMessage(HelpMessageType.NoTags);
         }
 
         //! Handle when the thread gets resolve tag added to it
@@ -345,7 +385,7 @@ public class UnityHelpService
     {
         var thread = _activeThreads[message.Channel.Id];
         
-        thread.LatestMessage = message.Id;
+        thread.LatestUserMessage = message.Id;
         // If Author is only one who has interacted with the thread, we don't need to update anything else
         if (!thread.HasInteraction && message.Author.Id == thread.Owner)
         {
@@ -386,14 +426,14 @@ public class UnityHelpService
     {
         var thread = _activeThreads[channel.Id];
         
-        if (thread.WarningMessage != 0 && before.Id == thread.FirstMessage)
+        if (thread.HasMessage(HelpMessageType.QuestionLength) && before.Id == thread.FirstUserMessage)
         {
             if (after.Content.Length > MinimumLengthMessage)
             {
-                var warningMessage = await channel.GetMessageAsync(thread.WarningMessage);
+                var warningMessage = await channel.GetMessageAsync(thread.GetMessageId(HelpMessageType.QuestionLength));
                 if (warningMessage != null)
                     await warningMessage.DeleteAsync();
-                thread.WarningMessage = 0;
+                thread.RemoveMessage(HelpMessageType.QuestionLength);
             }
         }
     }
@@ -477,7 +517,7 @@ public class UnityHelpService
         if (thread.HasInteraction)
             return;
         
-        var channel = _client.GetChannel(thread.ChannelId) as SocketThreadChannel;
+        var channel = _client.GetChannel(thread.ThreadId) as SocketThreadChannel;
         if (channel == null)
             return;
         
@@ -493,7 +533,7 @@ public class UnityHelpService
             return;
         
         var expectedShutdownTime = DateTime.Now.AddMinutes(minutes);
-        var threadChannel = _client.GetChannel(thread.ChannelId) as SocketThreadChannel;
+        var threadChannel = _client.GetChannel(thread.ThreadId) as SocketThreadChannel;
         // Check if token already created, each thread shares its own token with any relevant action (close, delete, etc)
         await CancelPreviousWarning(thread, expectedShutdownTime);
         
@@ -517,7 +557,7 @@ public class UnityHelpService
             return;
         
         var expectedWarnTime = DateTime.Now.AddMinutes(minutes);
-        var threadChannel = _client.GetChannel(thread.ChannelId) as SocketThreadChannel;
+        var threadChannel = _client.GetChannel(thread.ThreadId) as SocketThreadChannel;
         // Check if token already created, each thread shares its own token with any relevant action (close, delete, etc)
         await CancelPreviousWarning(thread, expectedWarnTime);
         thread.CancellationToken ??= new CancellationTokenSource();
@@ -531,7 +571,7 @@ public class UnityHelpService
         var sentMessage = await threadChannel.SendMessageAsync(msgString);
         // add the lock reaction
         await sentMessage.AddReactionAsync(CloseEmoji);
-        thread.LatestMessage = sentMessage.Id;
+        thread.LatestUserMessage = sentMessage.Id;
     }
     
     /// <summary>
@@ -546,7 +586,7 @@ public class UnityHelpService
         var expectedShutdownTime = DateTime.Now.AddMinutes(NoResponseNotResolvedIdleTime);
         
         await CancelPreviousWarning(thread, expectedShutdownTime);
-        var threadChannel = _client.GetChannel(thread.ChannelId) as SocketThreadChannel;
+        var threadChannel = _client.GetChannel(thread.ThreadId) as SocketThreadChannel;
 
         thread.CancellationToken ??= new CancellationTokenSource();
         thread.ExpectedShutdownTime = expectedShutdownTime;
@@ -591,7 +631,7 @@ public class UnityHelpService
     private Task EndThreadTracking(ThreadContainer thread)
     {
         thread.CancellationToken?.Cancel();
-        _activeThreads.Remove(thread.ChannelId);
+        _activeThreads.Remove(thread.ThreadId);
         return Task.CompletedTask;
     }
     private async Task EndThreadTracking(ulong threadId)
@@ -668,7 +708,7 @@ public class UnityHelpService
     {
         if (thread.BotsLastMessage == 0)
             return;
-        if (await _client.GetChannelAsync(thread.ChannelId) is SocketThreadChannel threadChannel)
+        if (await _client.GetChannelAsync(thread.ThreadId) is SocketThreadChannel threadChannel)
         {
             var message = await threadChannel.GetMessageAsync(thread.BotsLastMessage);
             if (message != null)
@@ -680,7 +720,7 @@ public class UnityHelpService
 
     private async Task<bool> IsValidThread(ThreadContainer thread)
     {
-        var threadChannel = _client.GetChannel(thread.ChannelId) as SocketThreadChannel;
+        var threadChannel = _client.GetChannel(thread.ThreadId) as SocketThreadChannel;
         // If channel is null, we have problems, we remove them from _activeThreads, cancel the token and return to avoid an exception
         if (threadChannel == null)
         {
@@ -696,7 +736,7 @@ public class UnityHelpService
             return Task.FromResult(false);
         if (thread.CancellationToken.IsCancellationRequested)
         {
-            LoggingService.DebugLog($"[UnityHelpService] Task cancelled for Channel {thread.ChannelId}");
+            LoggingService.DebugLog($"[UnityHelpService] Task cancelled for Channel {thread.ThreadId}");
             return Task.FromResult(true);
         }
         return Task.FromResult(false);

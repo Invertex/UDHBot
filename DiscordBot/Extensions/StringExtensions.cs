@@ -119,9 +119,12 @@ public static class StringExtensions
         return sb.ToString();
     }
     
+    /// <summary>
+    /// Returns true if the string contains only upper case characters, including spaces and all punctuation ie; "I NEED HELP!?!?!?!#$?!" will return true 
+    /// </summary>
     public static bool IsAlLCaps(this string str)
     {
-        return str.All(char.IsUpper);
+        return Regex.IsMatch(str, @"^[A-Z\s\p{P}]+$");
     }
     
     public static string ToCapitalizeFirstLetter(this string str)
