@@ -474,18 +474,22 @@ public class UserModule : ModuleBase
 
     private async Task<Embed> GenerateRankEmbedFromList(List<(ulong userID, uint value)> data, string labelName)
     {
-        var embedBuilder = new EmbedBuilder();
-        embedBuilder.Title = $"Top 10 Users by {labelName}";
-        embedBuilder.Footer = new EmbedFooterBuilder();
-        embedBuilder.Footer.Text = $"The best of the best, by {labelName}.";
-
-        var maxUsernameLength = data
-            .Select(async x => await Context.Guild.GetUserAsync(x.userID))
-            .Select(x => x.Result)
-            .Max(x => (x?.Username ?? "Unknown User").Length);
+        var embedBuilder = new EmbedBuilder
+        {
+            Title = $"Top 10 Users by {labelName}",
+            Footer = new EmbedFooterBuilder
+            {
+                Text = $"The best of the best, by {labelName}."
+            }
+        };
 
         try
         {
+            var maxUsernameLength = data
+                .Select(async x => await Context.Guild.GetUserAsync(x.userID))
+                .Select(x => x.Result)
+                .Max(x => (x?.Username ?? "Unknown User").Length);
+
             var str = "";
             for (var i = 0; i < data.Count; i++)
             {
@@ -493,14 +497,16 @@ public class UserModule : ModuleBase
                 var username = user?.Username ?? "Unknown User"; // For cases where the user has left the guild
                 int rankPadding = (int)Math.Floor(Math.Log10(data.Count));
 
-                str += $"`{(i + 1).ToString().PadLeft(rankPadding + 1)}.` **`{username.PadRight(maxUsernameLength, '\u2000')}`** `{labelName}: {data[i].value}`\n";
+                str +=
+                    $"`{(i + 1).ToString().PadLeft(rankPadding + 1)}.` **`{username.PadRight(maxUsernameLength, '\u2000')}`** `{labelName}: {data[i].value}`\n";
             }
-            embedBuilder.Description = str;
 
+            embedBuilder.Description = str;
         }
         catch (Exception e)
         {
             await LoggingService.LogAction($"Failed to generate top 10 embed.\n{e}", true, false);
+            embedBuilder.Description = "Failed to generate top 10 embed.";
         }
 
         return embedBuilder.Build();
@@ -519,9 +525,16 @@ public class UserModule : ModuleBase
     {
         try
         {
-            var profile = await Context.Channel.SendFileAsync(await UserService.GenerateProfileCard(user));
-
-            await Context.Message.DeleteAfterSeconds(seconds: 1);
+            await Context.Message.DeleteAsync();
+            
+            var profileCard = await UserService.GenerateProfileCard(user);
+            if (string.IsNullOrEmpty(profileCard))
+            {
+                await ReplyAsync("Failed to generate profile card.").DeleteAfterSeconds(seconds: 10);
+                return;
+            }
+            
+            var profile = await Context.Channel.SendFileAsync(profileCard);
             await profile.DeleteAfterTime(minutes: 3);
         }
         catch (Exception e)

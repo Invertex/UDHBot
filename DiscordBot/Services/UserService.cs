@@ -53,6 +53,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
     private readonly Random _rand;
 
     public Dictionary<ulong, DateTime> MutedUsers { get; private set; }
+    private readonly Color _welcomeColour = new Color(7, 84, 53);
     public int WaitingWelcomeMessagesCount => _welcomeNoticeUsers.Count;
 
     public DateTime NextWelcomeMessage =>
@@ -143,6 +144,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
         _client.GuildMemberUpdated += UserUpdated;
         _client.UserLeft += UserLeft;
 
+        _client.MessageReceived += CheckForWelcomeMessage;
         _client.UserIsTyping += UserIsTyping;
 
         LoadData();
@@ -224,10 +226,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
             await _databaseService.AddNewUser((SocketGuildUser)messageParam.Author);
             user = await _databaseService.Query().GetUser(userId.ToString());
         }
-
-        if (messageParam.Author.Activities.Any(a => Regex.Match(a.Name, "(Unity.+)").Length > 0))
-            bonusXp += baseXp / 4;
-
+        
         bonusXp += baseXp * (1f + user.Karma / 100f);
 
         //Reduce XP for members with no role
@@ -267,6 +266,11 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
 
         await _databaseService.Query().UpdateLevel(userId.ToString(), level + 1);
 
+        // First few levels are only a couple messages,
+        // so we hide them to avoid scaring people away and give them slightly longer to naturally see these in the server.
+        if (level <= 3)
+            return;
+
         await messageParam.Channel.SendMessageAsync($"**{messageParam.Author}** has leveled up !").DeleteAfterTime(60);
         //TODO Add level up card
     }
@@ -286,105 +290,122 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
     /// <returns></returns>
     public async Task<string> GenerateProfileCard(IUser user)
     {
-        var userData = await _databaseService.Query().GetUser(user.Id.ToString());
+        string profileCardPath = string.Empty;
 
-        var xpTotal = userData.Exp;
-        var xpRank = await _databaseService.Query().GetLevelRank(userData.UserID, userData.Level);
-        var karmaRank = await _databaseService.Query().GetKarmaRank(userData.UserID, userData.Karma);
-        var karma = userData.Karma;
-        var level = userData.Level;
-        var xpLow = GetXpLow(level);
-        var xpHigh = GetXpHigh(level);
-
-        var xpShown = (uint)(xpTotal - xpLow);
-        var maxXpShown = (uint)(xpHigh - xpLow);
-
-        var percentage = (float)xpShown / maxXpShown;
-
-        var u = (IGuildUser)user;
-        IRole mainRole = null;
-        foreach (var id in u.RoleIds)
+        try
         {
-            var role = u.Guild.GetRole(id);
-            if (mainRole == null)
-                mainRole = u.Guild.GetRole(id);
-            else if (role.Position > mainRole.Position) mainRole = role;
-        }
+            var dbRepo = _databaseService.Query();
+            if (dbRepo == null)
+                return profileCardPath;
+            
+            var userData = await dbRepo.GetUser(user.Id.ToString());
 
-        mainRole ??= u.Guild.EveryoneRole;
+            var xpTotal = userData.Exp;
+            var xpRank = await dbRepo.GetLevelRank(userData.UserID, userData.Level);
+            var karmaRank = await dbRepo.GetKarmaRank(userData.UserID, userData.Karma);
+            var karma = userData.Karma;
+            var level = userData.Level;
+            var xpLow = GetXpLow(level);
+            var xpHigh = GetXpHigh(level);
 
-        using var profileCard = new MagickImageCollection();
-        var skin = GetSkinData();
-        var profile = new ProfileData
-        {
-            Karma = karma,
-            KarmaRank = (uint)karmaRank,
-            Level = (uint)level,
-            MainRoleColor = mainRole.Color,
-            MaxXpShown = maxXpShown,
-            Nickname = ((IGuildUser)user).Nickname,
-            UserId = ulong.Parse(userData.UserID),
-            Username = user.Username,
-            XpHigh = xpHigh,
-            XpLow = xpLow,
-            XpPercentage = percentage,
-            XpRank = (uint)xpRank,
-            XpShown = xpShown,
-            XpTotal = (uint)xpTotal
-        };
+            var xpShown = (uint)(xpTotal - xpLow);
+            var maxXpShown = (uint)(xpHigh - xpLow);
 
-        var background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
+            var percentage = (float)xpShown / maxXpShown;
 
-        var avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
-        if (string.IsNullOrEmpty(avatarUrl))
-            profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
-        else
-            try
+            var u = (IGuildUser)user;
+            IRole mainRole = null;
+            foreach (var id in u.RoleIds)
             {
-                Stream stream;
+                var role = u.Guild.GetRole(id);
+                if (mainRole == null)
+                    mainRole = u.Guild.GetRole(id);
+                else if (role.Position > mainRole.Position) mainRole = role;
+            }
 
-                using (var http = new HttpClient())
+            mainRole ??= u.Guild.EveryoneRole;
+
+            using var profileCard = new MagickImageCollection();
+            var skin = GetSkinData();
+            var profile = new ProfileData
+            {
+                Karma = karma,
+                KarmaRank = (uint)karmaRank,
+                Level = (uint)level,
+                MainRoleColor = mainRole.Color,
+                MaxXpShown = maxXpShown,
+                Nickname = ((IGuildUser)user).Nickname,
+                UserId = ulong.Parse(userData.UserID),
+                Username = user.Username,
+                XpHigh = xpHigh,
+                XpLow = xpLow,
+                XpPercentage = percentage,
+                XpRank = (uint)xpRank,
+                XpShown = xpShown,
+                XpTotal = (uint)xpTotal
+            };
+
+            var background = new MagickImage($"{_settings.ServerRootPath}/skins/{skin.Background}");
+
+            var avatarUrl = user.GetAvatarUrl(ImageFormat.Auto, 256);
+            if (string.IsNullOrEmpty(avatarUrl))
+                profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
+            else
+                try
                 {
-                    stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                    Stream stream;
+
+                    using (var http = new HttpClient())
+                    {
+                        stream = await http.GetStreamAsync(new Uri(avatarUrl));
+                    }
+
+                    profile.Picture = new MagickImage(stream);
+                }
+                catch (Exception e)
+                {
+                    LoggingService.LogToConsole(
+                        $"Failed to download user profile image for ProfileCard.\nEx:{e.Message}",
+                        LogSeverity.Warning);
+                    profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
                 }
 
-                profile.Picture = new MagickImage(stream);
-            }
-            catch (Exception e)
+            profile.Picture.Resize(skin.AvatarSize, skin.AvatarSize);
+            profileCard.Add(background);
+
+            foreach (var layer in skin.Layers)
             {
-                LoggingService.LogToConsole($"Failed to download user profile image for ProfileCard.\nEx:{e.Message}",
-                    LogSeverity.Warning);
-                profile.Picture = new MagickImage($"{_settings.ServerRootPath}/images/default.png");
+                if (layer.Image != null)
+                {
+                    var image = layer.Image.ToLower() == "avatar"
+                        ? profile.Picture
+                        : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
+
+                    background.Composite(image, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
+                }
+
+                var l = new MagickImage(MagickColors.Transparent, (int)layer.Width, (int)layer.Height);
+                foreach (var module in layer.Modules) module.GetDrawables(profile).Draw(l);
+
+                background.Composite(l, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
             }
 
-        profile.Picture.Resize(skin.AvatarSize, skin.AvatarSize);
-        profileCard.Add(background);
+            profileCardPath = $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
 
-        foreach (var layer in skin.Layers)
-        {
-            if (layer.Image != null)
+            using (var result = profileCard.Mosaic())
             {
-                var image = layer.Image.ToLower() == "avatar"
-                    ? profile.Picture
-                    : new MagickImage($"{_settings.ServerRootPath}/skins/{layer.Image}");
-
-                background.Composite(image, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
+                result.Write(profileCardPath);
             }
-
-            var l = new MagickImage(MagickColors.Transparent, (int)layer.Width, (int)layer.Height);
-            foreach (var module in layer.Modules) module.GetDrawables(profile).Draw(l);
-
-            background.Composite(l, (int)layer.StartX, (int)layer.StartY, CompositeOperator.Over);
         }
-
-        var path = $"{_settings.ServerRootPath}/images/profiles/{user.Username}-profile.png";
+        catch (Exception e)
+        {
+            await _loggingService.LogAction($"Failed to generate profile card for {user.Username}.\nEx:{e.Message}");
+        }
         
-        using (var result = profileCard.Mosaic())
-        {
-            result.Write(path);
-        }
+        if (!string.IsNullOrEmpty(profileCardPath))
+            await Task.Delay(100);
 
-        return path;
+        return profileCardPath;
     }
 
     public Embed WelcomeMessage(SocketGuildUser user)
@@ -394,7 +415,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
 
         var builder = new EmbedBuilder()
             .WithDescription($"Welcome to Unity Developer Community **{user.Username}#{user.Discriminator}**!")
-            .WithColor(new Color(0x12D687))
+            .WithColor(_welcomeColour)
             .WithAuthor(author =>
             {
                 author
@@ -423,7 +444,7 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
         var channel = (SocketGuildChannel)messageParam.Channel;
         var guildId = channel.Guild.Id;
 
-        //Make sure its in the UDH server
+        //Make sure its in the UDC server
         if (guildId != _settings.GuildId) return;
 
         if (messageParam.Author.IsBot)
@@ -604,6 +625,17 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
 
         await ProcessWelcomeUser(user.Id, user.Value);
     }
+    
+    private async Task CheckForWelcomeMessage(SocketMessage messageParam)
+    {
+        if (_welcomeNoticeUsers.Count == 0)
+            return;
+        
+        var user = messageParam.Author;
+        if (user.IsBot)
+            return;
+        await ProcessWelcomeUser(user.Id, user);
+    }
 
     private async Task UserJoined(SocketGuildUser user)
     {
@@ -670,6 +702,9 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
     {
         if (_welcomeNoticeUsers.Exists(u => u.id == userID))
         {
+            // Remove the user from the welcome list.
+            _welcomeNoticeUsers.RemoveAll(u => u.id == userID);
+            
             // If we didn't get the user passed in, we try grab it
             user ??= await _client.GetUserAsync(userID);
             // if they're null, they've likely left, so we just remove them from the list.
@@ -680,9 +715,6 @@ new("^(?<CodeBlock>`{3}((?<CS>\\w*?$)|$).+?({.+?}).+?`{3})", RegexOptions.Multil
                 if (offTopic != null)
                     await offTopic.SendMessageAsync(string.Empty, false, em);
             }
-
-            // Remove the user from the welcome list.
-            _welcomeNoticeUsers.RemoveAll(u => u.id == userID);
         }
     }
 
