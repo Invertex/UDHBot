@@ -23,6 +23,8 @@ public class Program
     private InteractionService _interactionService;
     private IServiceProvider _services;
 
+    private UnityHelpService _unityHelpService;
+
     public static void Main(string[] args) =>
         new Program().MainAsync().GetAwaiter().GetResult();
 
@@ -64,6 +66,8 @@ public class Program
 
                 LoggingService.LogToConsole("Bot is connected.", LogSeverity.Info);
                 _isInitialized = true;
+                
+                _unityHelpService = _services.GetRequiredService<UnityHelpService>();
             }
             return Task.CompletedTask;
         };
@@ -86,6 +90,7 @@ public class Program
             .AddSingleton<ModerationService>()
             .AddSingleton<PublisherService>()
             .AddSingleton<FeedService>()
+            .AddSingleton<UnityHelpService>()
             .AddSingleton<UpdateService>()
             .AddSingleton<CurrencyService>()
             .AddSingleton<ReactRoleService>()

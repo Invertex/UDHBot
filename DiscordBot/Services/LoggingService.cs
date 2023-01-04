@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using Discord.WebSocket;
 using DiscordBot.Settings;
 
@@ -25,18 +26,18 @@ public class LoggingService : ILoggingService
         }
 
         if (logToFile)
-            File.AppendAllText(_settings.ServerRootPath + @"/log.txt",
-                $"[{ConsistantDateTimeFormat()}] {action} {Environment.NewLine}");
+            await File.AppendAllTextAsync(_settings.ServerRootPath + @"/log.txt",
+                $"[{ConsistentDateTimeFormat()}] {action} {Environment.NewLine}");
     }
 
     public void LogXp(string channel, string user, float baseXp, float bonusXp, float xpReduce, int totalXp)
     {
         File.AppendAllText(_settings.ServerRootPath + @"/logXP.txt",
-            $"[{ConsistantDateTimeFormat()}] - {user} gained {totalXp}xp (base: {baseXp}, bonus : {bonusXp}, reduce : {xpReduce}) in channel {channel} {Environment.NewLine}");
+            $"[{ConsistentDateTimeFormat()}] - {user} gained {totalXp}xp (base: {baseXp}, bonus : {bonusXp}, reduce : {xpReduce}) in channel {channel} {Environment.NewLine}");
     }
 
     // Returns DateTime.Now in format: d/M/yy HH:mm:ss
-    public static string ConsistantDateTimeFormat()
+    public static string ConsistentDateTimeFormat()
     {
         return DateTime.Now.ToString("d/M/yy HH:mm:ss");
     }
@@ -50,17 +51,28 @@ public class LoggingService : ILoggingService
     #region Console Messages
     // Logs message to console without changing the colour
     public static void LogConsole(string message) {
-        Console.WriteLine($"[{ConsistantDateTimeFormat()}] {message}");
+        Console.WriteLine($"[{ConsistentDateTimeFormat()}] {message}");
     }
     public static void LogToConsole(string message, LogSeverity severity = LogSeverity.Info) 
     {
         ConsoleColor restoreColour = Console.ForegroundColor;
         SetConsoleColour(severity);
 
-        Console.WriteLine($"[{ConsistantDateTimeFormat()}] {message} [{severity}]");
+        Console.WriteLine($"[{ConsistentDateTimeFormat()}] {message} [{severity}]");
 
         Console.ForegroundColor = restoreColour;
     }
+    
+    /// <summary>
+    /// Same behaviour as LogToConsole, however this method is not included in the release build.
+    /// Good if you need more verbose but obvious logging, but don't want it included in release.
+    /// </summary>
+    [Conditional("DEBUG")]
+    public static void DebugLog(string message, LogSeverity severity = LogSeverity.Info)
+    {
+        LogToConsole(message, severity);
+    }
+    
     private static void SetConsoleColour(LogSeverity severity)
     {
         switch (severity)

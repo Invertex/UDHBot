@@ -44,6 +44,8 @@ public class BotSettings
     #region Channels
     
     public GeneralChannel GeneralChannel { get; set; }
+    public GenericHelpChannel GenericHelpChannel { get; set; }
+    
     public BotAnnouncementChannel BotAnnouncementChannel { get; set; }
     public AnnouncementsChannel AnnouncementsChannel { get; set; }
     public BotCommandsChannel BotCommandsChannel { get; set; }
@@ -165,6 +167,11 @@ public class AutoThreadChannel
 
 public class GeneralChannel : ChannelInfo
 {
+}
+
+public class GenericHelpChannel : ChannelInfo
+{
+    
 }
 
 public class BotAnnouncementChannel : ChannelInfo

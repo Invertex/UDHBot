@@ -1,8 +1,6 @@
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using System.ServiceModel.Syndication;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Xml;
 using Discord.WebSocket;
 using DiscordBot.Settings;
@@ -11,92 +9,164 @@ namespace DiscordBot.Services;
 
 public class FeedService
 {
-    private const string BetaUrl = "https://unity3d.com/unity/beta/latest.xml";
-    private const string ReleaseUrl = "https://unity3d.com/unity/releases.xml";
-    private const string BlogUrl = "https://blogs.unity3d.com/feed/";
-
-    private const int MaximumCheck = 3;
     private readonly DiscordSocketClient _client;
-
+    
     private readonly BotSettings _settings;
+    private readonly ILoggingService _logging;
 
-    public FeedService(DiscordSocketClient client, BotSettings settings)
+    #region Configurable Settings
+
+    #region News Feed Config
+
+    private class ForumNewsFeed
     {
-        _settings = settings;
-        _client = client;
+        public string TitleFormat { get; set; }
+        public string Url { get; set; }
+        public List<string> IncludeTags { get; set; }
+        public bool IncludeSummary { get; set; } = false;
     }
 
-    public async Task HandleFeed(FeedData feedData, string url, ulong channelId, ulong? roleId, string message, bool createThread = false)
+    private readonly ForumNewsFeed _betaNews = new()
     {
+        TitleFormat = "Beta Release - {0}",
+        Url = "https://unity3d.com/unity/beta/latest.xml",
+        IncludeTags = new(){ "Beta Update" }
+    };
+    private readonly ForumNewsFeed _releaseNews = new()
+    {
+        TitleFormat = "New Release - {0}",
+        Url = "https://unity3d.com/unity/releases.xml",
+        IncludeTags = new(){"New Release"}
+    };
+    private readonly ForumNewsFeed _blogNews = new()
+    {
+        TitleFormat = "Blog - {0}",
+        Url = "https://blogs.unity3d.com/feed/",
+        IncludeTags = new() { "Unity Blog" },
+        IncludeSummary = true
+    };
+    
+    #endregion // News Feed Config
+    
+    private const int MaximumCheck = 3;
+    private const ThreadArchiveDuration ForumArchiveDuration = ThreadArchiveDuration.OneWeek;
+
+    #endregion // Configurable Settings
+    
+    public FeedService(DiscordSocketClient client, BotSettings settings, ILoggingService logging)
+    {
+        _client = client;
+        _settings = settings;
+        _logging = logging;
+    }
+    
+    private async Task<SyndicationFeed> GetFeedData(string url)
+    {
+        SyndicationFeed feed = null;
         try
         {
-            var webRequest = (HttpWebRequest)WebRequest.Create(url);
-            var webResponse = (HttpWebResponse)webRequest.GetResponse();
-            var dataStream = webResponse.GetResponseStream();
-            var streamReader = new StreamReader(dataStream, Encoding.UTF8);
-            var response = streamReader.ReadToEnd();
-            streamReader.Close();
+            var client = new HttpClient();
+            var response = await client.GetStringAsync(url);
             response = Utils.Utils.SanitizeXml(response);
             XmlReader reader = new XmlTextReader(new StringReader(response));
-
-            var feed = SyndicationFeed.Load(reader);
-            var channel = _client.GetChannel(channelId) as ISocketMessageChannel;
-            foreach (var item in feed.Items.Take(MaximumCheck))
-                if (!feedData.PostedIds.Contains(item.Id))
-                {
-                    feedData.PostedIds.Add(item.Id);
-
-                    var messageToSend = string.Format(message, item.Title.Text, item.Links[0].Uri);
-
-                    var role = _client.GetGuild(_settings.GuildId).GetRole(roleId ?? 0);
-                    var wasRoleMentionable = false;
-                    if (role != null)
-                    {
-                        wasRoleMentionable = role.IsMentionable;
-                        await role.ModifyAsync(properties => { properties.Mentionable = true; });
-                        messageToSend = $"{role.Mention} {messageToSend}";
-                    }
-
-                    var postedMessage = await channel.SendMessageAsync(messageToSend);
-                    if (channel is SocketNewsChannel) await postedMessage.CrosspostAsync();
-
-                    if (role != null) await role.ModifyAsync(properties => { properties.Mentionable = wasRoleMentionable; });
-
-                    if (createThread)
-                    {
-                        var maxTitleLength = 100;
-
-                        var threadTitle = $"{item.Title.Text}";
-                        if (threadTitle.Length > maxTitleLength)
-                            threadTitle = threadTitle.Substring(0, maxTitleLength - 3) + "...";
-
-                        SocketThreadChannel thread = null;
-                        Discord.ThreadArchiveDuration duration = Utils.Utils.GetMaxThreadDuration(ThreadArchiveDuration.ThreeDays, _client.GetGuild(_settings.GuildId));
-                        thread = await (channel as SocketTextChannel).CreateThreadAsync(threadTitle, Discord.ThreadType.NewsThread, duration, postedMessage);
-                        var summary = Regex.Replace(item.Summary.Text, "<.*?>", String.Empty);
-                        var firstThreadPost = string.Format("Summary: \n>>> {0}", summary);
-                        await thread.SendMessageAsync(firstThreadPost);
-                    }
-                }
+            feed = SyndicationFeed.Load(reader);
         }
         catch (Exception e)
         {
             LoggingService.LogToConsole(e.ToString(), LogSeverity.Error);
+            await _logging.LogAction($"Feed Service Error: {e.ToString()}", true, true);
+        }
+
+        // Return the feed, empty feed if null to prevent additional checks for null on return
+        if (feed == null)
+            feed = new SyndicationFeed();
+        return feed;
+    }
+
+    #region Feed Handlers
+
+    private async Task HandleFeed(FeedData feedData, ForumNewsFeed newsFeed, ulong channelId, ulong? roleId)
+    {
+        try
+        {
+            var feed = await GetFeedData(newsFeed.Url);
+            var channel = _client.GetChannel(channelId) as IForumChannel;
+            if (channel == null)
+            {
+                await _logging.LogAction($"Feed Service Error: Channel {channelId} not found", true, true);
+                LoggingService.LogToConsole($"Feed Service Error: Channel {channelId} not found", LogSeverity.Error);
+                return;
+            }
+            foreach (var item in feed.Items.Take(MaximumCheck))
+            {
+                if (feedData.PostedIds.Contains(item.Id))
+                    continue;
+                feedData.PostedIds.Add(item.Id);
+
+                // Title
+                var newsTitle = string.Format(newsFeed.TitleFormat, item.Title.Text);
+                if (newsTitle.Length > 90)
+                    newsTitle = newsTitle.Substring(0, 95) + "...";
+                // Message
+                string newsContent = string.Empty;
+                if (newsFeed.IncludeSummary)
+                {
+                    var summary = Utils.Utils.RemoveHtmlTags(item.Summary.Text);
+                    newsContent = "**__Summary__**\n" + summary;
+                    // Unlikely to be over, but we need space for extra local info
+                    if (newsContent.Length > Constants.MaxLengthChannelMessage - 100)
+                        newsContent = newsContent.Substring(0, Constants.MaxLengthChannelMessage - 100) + "...";
+                }
+                // If a role is provided we add to end of title to ping the role
+                var role = _client.GetGuild(_settings.GuildId).GetRole(roleId ?? 0);
+                if (role != null)
+                    newsContent = $"{(newsContent.Length > 0 ? $"{newsContent}\n" : "")}{role.Mention}";
+                // Link to post
+                if (item.Links.Count > 0)
+                    newsContent += $"\n\n**__Source__**\n{item.Links[0].Uri}";
+                
+                // The Post
+                var post = await channel.CreatePostAsync(newsTitle, ForumArchiveDuration, null, newsContent, null, null, AllowedMentions.All);
+                // If any tags, include them
+                if (newsFeed.IncludeTags != null && newsFeed.IncludeTags.Count > 0)
+                {
+                    var includedTags = new List<ulong>();
+                    foreach (var tag in newsFeed.IncludeTags)
+                    {
+                        var tagContainer = channel.Tags.FirstOrDefault(x => x.Name == tag);
+                        if (tagContainer != null)
+                            includedTags.Add(tagContainer.Id);
+                    }
+
+                    await post.ModifyAsync(properties => { properties.AppliedTags = includedTags; });
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            LoggingService.LogToConsole(e.ToString(), LogSeverity.Error);
+            await _logging.LogAction($"Feed Service Error: {e.ToString()}", true, true);
         }
     }
 
+    #endregion // Feed Handlers
+
+    #region Public Feed Actions
+
     public async Task CheckUnityBetasAsync(FeedData feedData)
     {
-        await HandleFeed(feedData, BetaUrl, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity **beta **release !** {0}** \n <{1}>");
+        await HandleFeed(feedData, _betaNews, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId);
     }
 
     public async Task CheckUnityReleasesAsync(FeedData feedData)
     {
-        await HandleFeed(feedData, ReleaseUrl, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId, "New unity release ! **{0}** \n <{1}>");
+        await HandleFeed(feedData, _releaseNews, _settings.UnityReleasesChannel.Id, _settings.SubsReleasesRoleId);
     }
 
     public async Task CheckUnityBlogAsync(FeedData feedData)
     {
-        await HandleFeed(feedData, BlogUrl, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId, "New unity blog post ! **{0}**\n{1}", true);
+        await HandleFeed(feedData, _blogNews, _settings.UnityNewsChannel.Id, _settings.SubsNewsRoleId);
     }
+
+    #endregion // Feed Actions
 }

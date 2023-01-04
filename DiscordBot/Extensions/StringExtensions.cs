@@ -118,4 +118,19 @@ public static class StringExtensions
         // Return the hexadecimal string.
         return sb.ToString();
     }
+    
+    /// <summary>
+    /// Returns true if the string contains only upper case characters, including spaces and all punctuation ie; "I NEED HELP!?!?!?!#$?!" will return true 
+    /// </summary>
+    public static bool IsAlLCaps(this string str)
+    {
+        return Regex.IsMatch(str, @"^[A-Z\s\p{P}]+$");
+    }
+    
+    public static string ToCapitalizeFirstLetter(this string str)
+    {
+        if (string.IsNullOrEmpty(str))
+            return string.Empty;
+        return char.ToUpper(str[0]) + str[1..];
+    }
 }
