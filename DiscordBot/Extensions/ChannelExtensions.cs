@@ -19,4 +19,9 @@ public static class ChannelExtensions
             return false;
         return ((SocketThreadChannel)channel).ParentChannel.Id == channelId;
     }
+    
+    public static bool IsPinned(this IThreadChannel channel)
+    {
+        return channel.Flags.HasFlag(ChannelFlags.Pinned);
+    }
 }

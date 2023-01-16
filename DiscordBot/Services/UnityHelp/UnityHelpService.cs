@@ -98,6 +98,7 @@ public class UnityHelpService
         _client.ThreadCreated += GatewayOnThreadCreated;
         _client.ThreadUpdated += GatewayOnThreadUpdated;
         _client.ThreadDeleted += GatewayOnThreadDeleted;
+        
         _client.ThreadMemberJoined += GatewayOnThreadMemberJoinedThread;
         _client.ThreadMemberLeft += GatewayOnThreadMemberLeftThread;
         
@@ -200,6 +201,8 @@ public class UnityHelpService
             return Task.CompletedTask;
         if (thread.Owner.IsUserBotOrWebhook())
             return Task.CompletedTask;
+        if (thread.Owner.HasRoleGroup(ModeratorRole))
+            return Task.CompletedTask;
         // Gateway is called twice for forums, not sure why
         if (_activeThreads.ContainsKey(thread.Id))
             return Task.CompletedTask;
@@ -271,7 +274,13 @@ public class UnityHelpService
 
         var beforeThread = await before.GetOrDownloadAsync();
         var afterThread = after;
-        
+
+        if (afterThread.IsPinned())
+        {
+            await EndThreadTracking(thread);
+            return;
+        }
+
         LoggingService.DebugLog($"[UnityHelpService] Thread Updated: {after.Id} - {after.Name}", LogSeverity.Debug);
         
 #pragma warning disable CS4014
@@ -583,6 +592,7 @@ public class UnityHelpService
     private Task EndThreadTracking(ThreadContainer thread)
     {
         thread.CancellationToken?.Cancel();
+        // TODO : (James) Go through the message ids for the thread and delete them
         _activeThreads.Remove(thread.ThreadId);
         return Task.CompletedTask;
     }
