@@ -628,7 +628,7 @@ public class UnityHelpService
         if (message.Channel is not IThreadChannel channel)
             return "Invalid Channel";
         if (!_activeThreads.TryGetValue(channel.Id, out var thread))
-            return "Invalid Thread";
+            return "Thread already closed";
 
         if (!IsValidAuthorUser(requester as SocketGuildUser, thread.Owner))
         {
