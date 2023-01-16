@@ -162,16 +162,6 @@ public class UnityHelpService
         
         bool warnHelpTitle = false;
         
-        var threadTitle = thread.Name;
-        if (threadTitle.IsAlLCaps())
-        {
-            threadTitle = thread.Name.ToLower();
-        }
-        await thread.ModifyAsync(x => x.Name = threadTitle.ToCapitalizeFirstLetter());
-
-        if (thread.Name.Contains(" help", StringComparison.CurrentCultureIgnoreCase))
-            warnHelpTitle = true;
-
         // Check message length and inform user if too short
         var firstMessage = (await thread.GetMessagesAsync(1).FlattenAsync()).FirstOrDefault();
         container.FirstUserMessage = firstMessage!.Id;
@@ -181,6 +171,16 @@ public class UnityHelpService
             container.AddMessage(HelpMessageType.QuestionLength, botResponse.Id);
             // container.WarningMessage = botResponse.Id;
         }
+        
+        var threadTitle = thread.Name;
+        if (threadTitle.IsAlLCaps())
+        {
+            threadTitle = thread.Name.ToLower();
+        }
+        await thread.ModifyAsync(x => x.Name = threadTitle.ToCapitalizeFirstLetter());
+
+        if (thread.Name.Contains(" help", StringComparison.CurrentCultureIgnoreCase))
+            warnHelpTitle = true;
 
         // If not tags attached, let them know they should add some
         if (thread.AppliedTags.Count == 0)
