@@ -28,12 +28,12 @@ public class UnityHelpService
         .WithFooter($"Remember to Right click a message and select 'Apps->Correct Answer'")
         .WithColor(Color.Green)
         .Build();
-    private const int HasResponseIdleTimeSelfUser = 60 * 4;
+    private static readonly Emoji CloseEmoji = new Emoji(":lock:");
+    private const int HasResponseIdleTimeSelfUser = 60 * 8;
     private static readonly string HasResponseIdleTimeSelfUserMessage = $"Hello {{0}}! This forum has been inactive for {HasResponseIdleTimeSelfUser / 60} hours. If the question has been appropriately answered, click the {CloseEmoji} emoji to close this thread.";
-    private const int HasResponseIdleTimeOtherUser = 60 * 8;
+    private const int HasResponseIdleTimeOtherUser = 60 * 12;
     private static readonly string HasResponseMessageRequestClose = $"Hello {{0}}! This forum has been inactive for {HasResponseIdleTimeOtherUser / 60} hours without your input. If the question has been appropriately answered, click the {CloseEmoji} emoji to close this thread.";
     private const string HasResponseExtraMessage = $"If you still need help, perhaps include additional details!";
-    private static readonly Emoji CloseEmoji = new Emoji(":lock:");
 
     private const int NoResponseNotResolvedIdleTime = 60 * 24 * 2;
     private readonly Embed _stealthDeleteEmbed = new EmbedBuilder()
@@ -221,7 +221,7 @@ public class UnityHelpService
     {
         var thread = _activeThreads[after.Id];
 
-        if (after.IsArchived)
+        if (after.IsArchived || after.IsLocked)
         {
             // Thread has been archived, remove from tracking
             if (!thread.IsResolved && !after.AppliedTags.Contains(_resolvedForumTag.Id))
@@ -423,6 +423,16 @@ public class UnityHelpService
 #pragma warning disable CS4014
         Task.Run(() => OnMessageUpdated(beforeMsg, after, channel as SocketThreadChannel));
 #pragma warning restore CS4014
+
+        if (after.Reactions.ContainsKey(CloseEmoji))
+        {
+            var closeReaction = await after.GetReactionUsersAsync(CloseEmoji, 10).FlattenAsync();
+            if (closeReaction.Any(x => x.Id == thread.Owner))
+            {
+                await EndThreadTracking(thread);
+                return;
+            }
+        }
     }
 
     #endregion // Message Received
@@ -579,11 +589,11 @@ public class UnityHelpService
         var appliedTags = channel.AppliedTags.ToList();
         if (includeResolvedTag && !appliedTags.Contains(_resolvedForumTag.Id))
             appliedTags.Add(_resolvedForumTag.Id);
-        
         await channel.ModifyAsync(x =>
         {
             x.Archived = true;
             x.AppliedTags = appliedTags;
+            x.Locked = true;
         });
 
         await EndThreadTracking(channel.Id);
