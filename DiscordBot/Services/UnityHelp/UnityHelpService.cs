@@ -28,12 +28,12 @@ public class UnityHelpService
         .WithFooter($"Remember to Right click a message and select 'Apps->Correct Answer'")
         .WithColor(Color.Green)
         .Build();
-    private const int HasResponseIdleTimeSelfUser = 60 * 4;
+    private static readonly Emoji CloseEmoji = new Emoji(":lock:");
+    private const int HasResponseIdleTimeSelfUser = 60 * 8;
     private static readonly string HasResponseIdleTimeSelfUserMessage = $"Hello {{0}}! This forum has been inactive for {HasResponseIdleTimeSelfUser / 60} hours. If the question has been appropriately answered, click the {CloseEmoji} emoji to close this thread.";
-    private const int HasResponseIdleTimeOtherUser = 60 * 8;
+    private const int HasResponseIdleTimeOtherUser = 60 * 12;
     private static readonly string HasResponseMessageRequestClose = $"Hello {{0}}! This forum has been inactive for {HasResponseIdleTimeOtherUser / 60} hours without your input. If the question has been appropriately answered, click the {CloseEmoji} emoji to close this thread.";
     private const string HasResponseExtraMessage = $"If you still need help, perhaps include additional details!";
-    private static readonly Emoji CloseEmoji = new Emoji(":lock:");
 
     private const int NoResponseNotResolvedIdleTime = 60 * 24 * 2;
     private readonly Embed _stealthDeleteEmbed = new EmbedBuilder()
@@ -98,6 +98,7 @@ public class UnityHelpService
         _client.ThreadCreated += GatewayOnThreadCreated;
         _client.ThreadUpdated += GatewayOnThreadUpdated;
         _client.ThreadDeleted += GatewayOnThreadDeleted;
+        
         _client.ThreadMemberJoined += GatewayOnThreadMemberJoinedThread;
         _client.ThreadMemberLeft += GatewayOnThreadMemberLeftThread;
         
@@ -161,16 +162,6 @@ public class UnityHelpService
         
         bool warnHelpTitle = false;
         
-        var threadTitle = thread.Name;
-        if (threadTitle.IsAlLCaps())
-        {
-            threadTitle = thread.Name.ToLower();
-        }
-        await thread.ModifyAsync(x => x.Name = threadTitle.ToCapitalizeFirstLetter());
-
-        if (thread.Name.Contains(" help", StringComparison.CurrentCultureIgnoreCase))
-            warnHelpTitle = true;
-
         // Check message length and inform user if too short
         var firstMessage = (await thread.GetMessagesAsync(1).FlattenAsync()).FirstOrDefault();
         container.FirstUserMessage = firstMessage!.Id;
@@ -180,6 +171,16 @@ public class UnityHelpService
             container.AddMessage(HelpMessageType.QuestionLength, botResponse.Id);
             // container.WarningMessage = botResponse.Id;
         }
+        
+        var threadTitle = thread.Name;
+        if (threadTitle.IsAlLCaps())
+        {
+            threadTitle = thread.Name.ToLower();
+        }
+        await thread.ModifyAsync(x => x.Name = threadTitle.ToCapitalizeFirstLetter());
+
+        if (thread.Name.Contains(" help", StringComparison.CurrentCultureIgnoreCase))
+            warnHelpTitle = true;
 
         // If not tags attached, let them know they should add some
         if (thread.AppliedTags.Count == 0)
@@ -200,6 +201,8 @@ public class UnityHelpService
             return Task.CompletedTask;
         if (thread.Owner.IsUserBotOrWebhook())
             return Task.CompletedTask;
+        if (thread.Owner.HasRoleGroup(ModeratorRole))
+            return Task.CompletedTask;
         // Gateway is called twice for forums, not sure why
         if (_activeThreads.ContainsKey(thread.Id))
             return Task.CompletedTask;
@@ -218,7 +221,7 @@ public class UnityHelpService
     {
         var thread = _activeThreads[after.Id];
 
-        if (after.IsArchived)
+        if (after.IsArchived || after.IsLocked)
         {
             // Thread has been archived, remove from tracking
             if (!thread.IsResolved && !after.AppliedTags.Contains(_resolvedForumTag.Id))
@@ -271,7 +274,13 @@ public class UnityHelpService
 
         var beforeThread = await before.GetOrDownloadAsync();
         var afterThread = after;
-        
+
+        if (afterThread.IsPinned())
+        {
+            await EndThreadTracking(thread);
+            return;
+        }
+
         LoggingService.DebugLog($"[UnityHelpService] Thread Updated: {after.Id} - {after.Name}", LogSeverity.Debug);
         
 #pragma warning disable CS4014
@@ -414,6 +423,16 @@ public class UnityHelpService
 #pragma warning disable CS4014
         Task.Run(() => OnMessageUpdated(beforeMsg, after, channel as SocketThreadChannel));
 #pragma warning restore CS4014
+
+        if (after.Reactions.ContainsKey(CloseEmoji))
+        {
+            var closeReaction = await after.GetReactionUsersAsync(CloseEmoji, 10).FlattenAsync();
+            if (closeReaction.Any(x => x.Id == thread.Owner))
+            {
+                await EndThreadTracking(thread);
+                return;
+            }
+        }
     }
 
     #endregion // Message Received
@@ -570,11 +589,11 @@ public class UnityHelpService
         var appliedTags = channel.AppliedTags.ToList();
         if (includeResolvedTag && !appliedTags.Contains(_resolvedForumTag.Id))
             appliedTags.Add(_resolvedForumTag.Id);
-        
         await channel.ModifyAsync(x =>
         {
             x.Archived = true;
             x.AppliedTags = appliedTags;
+            x.Locked = true;
         });
 
         await EndThreadTracking(channel.Id);
@@ -583,6 +602,7 @@ public class UnityHelpService
     private Task EndThreadTracking(ThreadContainer thread)
     {
         thread.CancellationToken?.Cancel();
+        // TODO : (James) Go through the message ids for the thread and delete them
         _activeThreads.Remove(thread.ThreadId);
         return Task.CompletedTask;
     }
@@ -618,7 +638,7 @@ public class UnityHelpService
         if (message.Channel is not IThreadChannel channel)
             return "Invalid Channel";
         if (!_activeThreads.TryGetValue(channel.Id, out var thread))
-            return "Invalid Thread";
+            return "Thread already closed";
 
         if (!IsValidAuthorUser(requester as SocketGuildUser, thread.Owner))
         {
